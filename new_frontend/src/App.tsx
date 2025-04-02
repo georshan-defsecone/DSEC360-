@@ -1,19 +1,22 @@
-import { Button } from "@/components/ui/button";4
-import Sidebar from "./components/Sidebar";
-import Header from "./components/header";
-function App() {
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import Profile from "./pages/Profile";
+import Team from "./pages/Team";
+import Header from "./components/Header";
+import Scan from "./pages/Scan";
+
+const App: React.FC = () => {
   return (
-    <div>
+    <Router>
       <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
-          <h1 className="text-2xl">Welcome to My Website</h1>
-        </main>
-      </div>
-      {/*<Button>Click me</Button> We can also use the <Button name="Click me">*/}
-    </div>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/scan" element={<Scan />} />
+        <Route path="/team" element={<Team />} />
+      </Routes>
+    </Router>
   );
-}
+};
 
 export default App;
