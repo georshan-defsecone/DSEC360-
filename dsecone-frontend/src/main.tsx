@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Router from './Router.tsx'
 import './index.css'
-import App from './App.tsx'
 
 const routes = createBrowserRouter(Router)
 
