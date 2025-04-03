@@ -22,11 +22,11 @@ const Header = () => {
                         <DropdownMenuTrigger asChild>
                         <div className="flex gap-4 items-center text-white"><h1>User</h1><CircleUser size={32}/></div>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-64 bg-white text-black border border-t-0  shadow-lg mt-8 mr-2">
+                        <DropdownMenuContent className="w-64 bg-white text-black border border-t-0  shadow-lg mt-2 mr-2">
                             <DropdownMenuItem className="px-4 py-2">
-                                <div className="flex justify-evenly items-center border-b-2 pb-2">
-                                    <CircleUser size={48}></CircleUser>
-                                    <div className="flex flex-col gap-0 items-center">
+                                <div className="flex justify-start items-center gap-10">
+                                    <CircleUser  className="ml-4" size={48}></CircleUser>
+                                    <div className="flex flex-col gap-0 items-start">
                                         <h1>User</h1>
                                         <h1>Gmail.com</h1>
                                     </div>
