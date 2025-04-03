@@ -1,9 +1,9 @@
-import Header from "./components/ui/Header"
+import App from "./App"
 
 const Router = [
     {
         path: "/",
-        element: <Header/>
+        element: <App/>
     },
 ]
 
