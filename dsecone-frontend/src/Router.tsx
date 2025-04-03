@@ -1,9 +1,19 @@
-import App from "./App"
+import Home from "./App"
+import AssetDiscovery from "./pages/AssetDiscovery"
+import Ports from "./pages/Ports"
 
 const Router = [
     {
         path: "/",
-        element: <App/>
+        element: <Home/>
+    },
+    {
+        path: "/asset-discovery",
+        element: <AssetDiscovery/>
+    },
+    {
+        path: "/ports-service-enumeration",
+        element: <Ports/>
     },
 ]
 
