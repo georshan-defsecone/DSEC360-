@@ -1,72 +1,70 @@
 import React from "react";
 import {
-  Home,
-  Info,
-  Phone,
+  ShieldCheck,
   Settings,
-  User,
-  Briefcase,
-  HelpCircle,
+  Server,
+  Terminal,
+  MonitorSmartphone,
+  Network,
 } from "lucide-react"; // Importing icons
+
+const SidebarSection = ({ title, items }: { title: string; items: any[] }) => {
+  return (
+    <div>
+      {/* Section Header */}
+      <h3 className="text-gray-400 uppercase text-xs font-semibold mb-2">
+        {title}
+      </h3>
+
+      {/* List Items */}
+      <ul className="space-y-2">
+        {items.map((item, index) => (
+          <li
+            key={index}
+            className="flex items-center space-x-2 px-3 py-1 rounded-md text-sm hover:bg-gray-700 cursor-pointer transition"
+          >
+            <item.icon size={18} />
+            <span>{item.label}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
 
 const Sidebar = () => {
   return (
-    <aside className="h-screen w-64 bg-gray-900 text-white p-5 flex flex-col">
-      <h2 className="text-2xl font-bold mb-6">My Sidebar</h2>
+    <aside className="h-screen w-64 bg-gray-900 text-white p-4 flex flex-col fixed top-20 left-0 shadow-lg">
+      <h2 className="text-lg font-bold mb-4 text-white">Security Dashboard</h2>
 
-      <nav className="space-y-6">
-        {/* Section 1: Main Navigation */}
-        <div>
-          <h3 className="text-gray-400 uppercase text-sm mb-3">Main</h3>
-          <ul className="space-y-3">
-            <li className="flex items-center space-x-3 hover:text-gray-300 cursor-pointer">
-              <Home size={20} />
-              <span>Home</span>
-            </li>
-            <li className="flex items-center space-x-3 hover:text-gray-300 cursor-pointer">
-              <Info size={20} />
-              <span>About</span>
-            </li>
-            <li className="flex items-center space-x-3 hover:text-gray-300 cursor-pointer">
-              <Phone size={20} />
-              <span>Contact</span>
-            </li>
-          </ul>
-        </div>
+      <nav className="space-y-4">
+        <SidebarSection
+          title="Vulnerability Management"
+          items={[
+            { icon: ShieldCheck, label: "Asset Discovery" },
+            { icon: Server, label: "Ports & Service Enumeration" },
+            { icon: Terminal, label: "Default Scan (Black Box)" },
+            { icon: MonitorSmartphone, label: "Advanced Scan (White Box)" },
+            { icon: Settings, label: "Remediation Status" },
+          ]}
+        />
 
-        {/* Section 2: User Management */}
-        <div>
-          <h3 className="text-gray-400 uppercase text-sm mb-3">
-            User Management
-          </h3>
-          <ul className="space-y-3">
-            <li className="flex items-center space-x-3 hover:text-gray-300 cursor-pointer">
-              <User size={20} />
-              <span>Profile</span>
-            </li>
-            <li className="flex items-center space-x-3 hover:text-gray-300 cursor-pointer">
-              <Briefcase size={20} />
-              <span>Teams</span>
-            </li>
-          </ul>
-        </div>
+        <SidebarSection
+          title="Configuration Audit"
+          items={[
+            { icon: Server, label: "Windows" },
+            { icon: Terminal, label: "Linux" },
+            { icon: Network, label: "Network/Security Devices" },
+          ]}
+        />
 
-        {/* Section 3: Settings & Help */}
-        <div>
-          <h3 className="text-gray-400 uppercase text-sm mb-3">
-            Settings & Help
-          </h3>
-          <ul className="space-y-3">
-            <li className="flex items-center space-x-3 hover:text-gray-300 cursor-pointer">
-              <Settings size={20} />
-              <span>Settings</span>
-            </li>
-            <li className="flex items-center space-x-3 hover:text-gray-300 cursor-pointer">
-              <HelpCircle size={20} />
-              <span>Help & Support</span>
-            </li>
-          </ul>
-        </div>
+        <SidebarSection
+          title="Compromise Assessment"
+          items={[
+            { icon: Server, label: "Windows" },
+            { icon: Terminal, label: "Linux" },
+          ]}
+        />
       </nav>
     </aside>
   );

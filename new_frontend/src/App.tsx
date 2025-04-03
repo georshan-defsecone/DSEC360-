@@ -2,17 +2,18 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import Team from "./pages/Team";
-import Header from "./components/Header";
 import Scan from "./pages/Scan";
+import LoginPage from "./components/Login";
 
 const App: React.FC = () => {
   return (
     <Router>
-      <Header />
       <Routes>
-        <Route path="/" element={<Home />} />
+        {/* Default route set to LoginPage */}
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/home" element={<Home />} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/scan" element={<Scan />} />
+        <Route path="/settings" element={<Scan />} />
         <Route path="/team" element={<Team />} />
       </Routes>
     </Router>
