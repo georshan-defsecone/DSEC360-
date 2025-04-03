@@ -2,6 +2,7 @@ import './App.css';
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Settings from "./pages/Settings"
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { Routes , Route } from 'react-router-dom';
 
 function App() {
