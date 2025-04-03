@@ -1,5 +1,5 @@
 import logo from "../../assets/logo.png"
-
+import { CircleUser } from "lucide-react"
 import { Button } from "./button"
 
 import {
@@ -20,12 +20,24 @@ const Header = () => {
                 <div className="mr-4 text-black">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="text-white bg-[#444]">👤<h1>User</h1>▼</Button>
+                        <div className="flex gap-4 items-center text-white"><h1>User</h1><CircleUser size={32}/></div>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56 bg-[#333] text-white border border-t-0 border-gray-700 shadow-lg">
-                            <DropdownMenuItem className="hover:bg-gray-700 px-4 py-2 transition-all focus:outline-none focus:ring-2 focus:ring-gray-500">Profile</DropdownMenuItem>
-                            <DropdownMenuItem className="hover:bg-gray-700 px-4 py-2 transition-all focus:outline-none focus:ring-2 focus:ring-gray-500">Settings</DropdownMenuItem>
-                            <DropdownMenuItem className="hover:bg-gray-700 px-4 py-2 transition-all focus:outline-none focus:ring-2 focus:ring-gray-500">Logout</DropdownMenuItem>
+                        <DropdownMenuContent className="w-64 bg-white text-black border border-t-0  shadow-lg mt-8 mr-2">
+                            <DropdownMenuItem className="px-4 py-2">
+                                <div className="flex justify-evenly items-center border-b-2 pb-2">
+                                    <CircleUser size={48}></CircleUser>
+                                    <div className="flex flex-col gap-0 items-center">
+                                        <h1>User</h1>
+                                        <h1>Gmail.com</h1>
+                                    </div>
+                                </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="px-4 py-2">
+                                <div className="flex justify-evenly gap-2 pb-2">
+                                    <Button variant="outline" className="text-black w-22">Accounts</Button>
+                                    <Button variant="outline" className="text-black w-22">Logout</Button>
+                                </div>
+                            </DropdownMenuItem>
 
                         </DropdownMenuContent>
                     </DropdownMenu>
