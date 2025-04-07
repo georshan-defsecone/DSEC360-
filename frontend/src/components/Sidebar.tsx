@@ -1,6 +1,7 @@
 import { Settings } from "lucide-react";
 import logo from "@/assets/logo.png";
 import "@/styles/sidebar.css"
+import { Link } from "react-router-dom";
 
 type SidebarProps = {
   scanSettings: boolean;
@@ -14,7 +15,6 @@ const ScanSettingSidebar = () => {
       <h1 className="block w-full text-left px-4 py-2 font-semibold">
         Configuration Audit
       </h1>
-
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Windows
       </button>
@@ -80,24 +80,37 @@ const SettingSidebar = () => {
       </button>
     </nav> </>
   );
-};
+};  
 
 const HomeSettingSidebar = () => {
   return (
-    <div className="flex-1 overflow-y-auto scrollbar-hide p-3 space-y-2">
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-        My Projects
-      </button>
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-        All Projects
-      </button>
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-        Results
-      </button>
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-        Trash
-      </button>
-    </div>
+    <>
+      <nav className="space-y-2">
+        <Link to={"/"}>
+          <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
+            My Projects
+          </button>
+        </Link>
+
+        <Link to={"/dashboard/allprojects"}>
+          <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
+            All Projects
+          </button>
+        </Link>
+
+        <Link to={"/dashboard/results"}>
+          <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
+            Results
+          </button>
+        </Link>
+
+        <Link to={"/dashboard/trash"}>
+          <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
+            Trash
+          </button>
+        </Link>
+      </nav>
+    </>
   );
 };
 
@@ -106,8 +119,7 @@ const HomeSettingSidebar = () => {
 
 const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
   return (
-    <div className="h-screen flex flex-col w-65 p-6 justify-between">
-
+    <div className="fixed top-0 left-0 h-screen w-64 flex flex-col p-6 justify-between  z-10 ">
       <div>
         <div className="flex items-center mb-6">
           <img src={logo} alt="Logo" className="w-10" />
@@ -115,14 +127,12 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
         </div>
       </div>
 
-      
       <div className="flex-1 overflow-y-auto scrollbar-hide">
         {scanSettings && <ScanSettingSidebar />}
         {homeSettings && <HomeSettingSidebar />}
         {settings && <SettingSidebar />}
       </div>    
 
-    
       <div className="mt-4">
         <button className="flex items-center px-4 py-2">
           <Settings className="w-5 h-5 mr-2" />
@@ -131,6 +141,7 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
     </div>
   );
 };
+
 
 
 
