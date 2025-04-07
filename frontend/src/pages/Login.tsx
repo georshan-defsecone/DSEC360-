@@ -3,7 +3,7 @@ import React from "react";
 const Login: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="flex flex-col md:flex-row w-full max-w-2xl h-auto md:h-[360px] rounded-xl overflow-hidden shadow-2xl bg-white">
+      <div className="flex flex-col md:flex-row w-full max-w-2xl h-auto md:h-[400px] rounded-xl overflow-hidden shadow-2xl bg-white">
         {/* Left Panel */}
         <div className="md:w-[30%] w-full bg-neutral-800 flex flex-col items-center justify-center p-6">
           <img
