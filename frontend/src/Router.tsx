@@ -1,5 +1,6 @@
 import Dashboard from "./pages/Dashboard";
-import Login from "./pages/Login";
+import Login from "./pages/Login"; 
+import About from "./pages/About";
 
 const Router = [
     {  
@@ -9,6 +10,10 @@ const Router = [
     {
         path: "/login",
         element: <Login/>
+    },
+    {
+        path: "/settings/about",
+        element: <About/>
     }
 ]
 
