@@ -1,5 +1,5 @@
 import Sidebar from "@/components/Sidebar"
-import Topbar from "@/components/Topbar"
+import Header from "@/components/Header"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 
@@ -72,7 +72,7 @@ function Dashboard() {
     <div className="flex h-screen text-black">
       <Sidebar settings={false} scanSettings={false} homeSettings={true} />
       <div className="flex-1 flex flex-col">
-        <Topbar />
+        <Header />
         <div className="p-4">
           <DashboardContent />
         </div>
