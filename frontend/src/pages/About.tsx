@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import Sidebar from "@/components/Sidebar"
-import Topbar from "@/components/Topbar"
+import Topbar from "@/components/Header"
 
 const About = () => {
     return (<>
