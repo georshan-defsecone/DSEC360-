@@ -14,6 +14,7 @@ const ScanSettingSidebar = () => {
       <h1 className="block w-full text-left px-4 py-2 font-semibold">
         Configuration Audit
       </h1>
+
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Windows
       </button>
