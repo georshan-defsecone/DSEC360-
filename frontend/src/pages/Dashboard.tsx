@@ -1,5 +1,5 @@
-import Sidebar from "@/components/Siderbar"
-import Topbar from "@/components/Topbar"
+import Sidebar from "@/components/Sidebar"
+import Topbar from "@/components/Header"
 import DashboardContent from "@/components/DashboardContent"
 
 function Dashboard() {
