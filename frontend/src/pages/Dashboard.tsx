@@ -1,36 +1,46 @@
 import { Card, CardContent } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import Sidebar from "@/components/Sidebar"
 import Header from "@/components/Header"
-
-const scanData = [
-  { name: "Ram", owner: "test", Date: "", modified: "April 3 at 11:01 AM", status: "✔️" },
-  { name: "Test 2", owner: "test2", Date: "", modified: "", status: "⏳"  },
-  { name: "Test", owner: "def", Date: "", modified: "", status: "✔️"  },
-  { name: "rambo", owner: "rambo", Date: "", modified: "", status: "✔️",  },
-  { name: "defsecone", owner: "defsecone", Date: "", modified: "", status: "✔️" },
-  { name: "vicky", owner: "vicky", Date: "", modified: "  ", status: "✔️",  },
-  { name: "test123", owner: "test", Date: "", modified: "March 18 at 3:35 PM", status: "✔️" },
-]
+import { useEffect, useState } from 'react';
 
 
 function DashboardContent() {
+
+  const [scanData, setScanData] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/scans/');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        setScanData(data);
+      } catch (error) {
+        console.error('Error fetching scan data:', error);
+      }
+    };
+    fetchData();
+  }, []);
+
   return (
     <div className="grid lg:grid-cols-1 gap-4">
       <div className="col-span-2">
         <Card className="mt-3 w-full">
           <CardContent className="p-4">
             <ScrollArea className="rounded-md border">
+
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[40px]"></TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Owner</TableHead>
-                    {/* <TableHead>Schedule</TableHead> */}
-                    <TableHead>Last Modified</TableHead>
+                    <TableHead>Project Name</TableHead>
+                    <TableHead>Scan Name</TableHead>
+                    <TableHead>Scan ID</TableHead>
+                    <TableHead>Scan Author</TableHead>
                     <TableHead>Trash</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -38,10 +48,10 @@ function DashboardContent() {
                   {scanData.map((scan, idx) => (
                     <TableRow key={idx}>
                       <TableCell></TableCell>
-                      <TableCell className="font-medium">{scan.name}</TableCell>
-                      <TableCell>{scan.owner}</TableCell>
-                      {/* <TableCell>{scan.schedule}</TableCell> */}
-                      <TableCell className="font-medium">{scan.modified}</TableCell>
+                      <TableCell className="font-medium">{scan.project_name}</TableCell>
+                      <TableCell>{scan.scan_name}</TableCell>
+                      <TableCell>{scan.scan_id}</TableCell>
+                      <TableCell>{scan.scan_author}</TableCell>
                       <TableCell>❌</TableCell>
                     </TableRow>
                   ))}
