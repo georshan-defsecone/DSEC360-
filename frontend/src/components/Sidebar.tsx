@@ -1,7 +1,7 @@
 import { Settings } from "lucide-react";
+import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import "@/styles/sidebar.css"
-import { Link } from "react-router-dom";
 
 type SidebarProps = {
   scanSettings: boolean;
@@ -15,13 +15,17 @@ const ScanSettingSidebar = () => {
       <h1 className="block w-full text-left px-4 py-2 font-semibold">
         Configuration Audit
       </h1>
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
+      <Link to="/scan/windows">
+      <button className="block w-full text-left px-4 py-2 rounded hover:bg-slate-100 font-medium">
         Windows
       </button>
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
+      </Link>
+      <Link to="/scan/linux">
+      <button className="block w-full text-left px-4 py-2 rounded hover:bg-slate-100 font-medium">
         Linux
       </button>
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
+      </Link>
+      <button className="block w-full text-left px-4 py-2 rounded hover:bg-slate-100 font-medium">
         Firewall
       </button>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
