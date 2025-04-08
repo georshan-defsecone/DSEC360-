@@ -1,7 +1,7 @@
 import { Settings } from "lucide-react";
+import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import "@/styles/sidebar.css"
-import { Link } from "react-router-dom";
 
 type SidebarProps = {
   scanSettings: boolean;
@@ -15,13 +15,17 @@ const ScanSettingSidebar = () => {
       <h1 className="block w-full text-left px-4 py-2 font-semibold">
         Configuration Audit
       </h1>
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
+      <Link to="/scan/windows">
+      <button className="block w-full text-left px-4 py-2 rounded hover:bg-slate-100 font-medium">
         Windows
       </button>
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
+      </Link>
+      <Link to="/scan/linux">
+      <button className="block w-full text-left px-4 py-2 rounded hover:bg-slate-100 font-medium">
         Linux
       </button>
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
+      </Link>
+      <button className="block w-full text-left px-4 py-2 rounded hover:bg-slate-100 font-medium">
         Firewall
       </button>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
@@ -55,29 +59,43 @@ const ScanSettingSidebar = () => {
 const SettingSidebar = () => {
   return (<>
     <nav className="space-y-2">
+    <Link to={"/settings/about"}>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         About
       </button>
+      </Link>
+      <Link to={"/settings/advance"}>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Advance
       </button>
+      </Link>
+      <Link to={"/settings/proxyserver"}>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Proxy Server
       </button>
+      </Link>
+      <Link to={"/settings/smtp"}>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         SMTP Server
       </button>
+      </Link>
+      <Link to={"/settings/ldap"}>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         LDAP
       </button>
+      </Link>
       </nav>
       <nav className="mt-7">
+      <Link to={"/settings/myaccounts"}>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         My accounts
       </button>
+      </Link>
+      <Link to={"/settings/users"}>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Users
       </button>
+      </Link>
     </nav> </>
   );
 };  
