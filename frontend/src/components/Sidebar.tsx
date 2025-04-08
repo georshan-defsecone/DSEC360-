@@ -55,29 +55,43 @@ const ScanSettingSidebar = () => {
 const SettingSidebar = () => {
   return (<>
     <nav className="space-y-2">
+    <Link to={"/settings/about"}>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         About
       </button>
+      </Link>
+      <Link to={"/settings/advance"}>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Advance
       </button>
+      </Link>
+      <Link to={"/settings/proxyserver"}>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Proxy Server
       </button>
+      </Link>
+      <Link to={"/settings/smtp"}>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         SMTP Server
       </button>
+      </Link>
+      <Link to={"/settings/ldap"}>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         LDAP
       </button>
+      </Link>
       </nav>
       <nav className="mt-7">
+      <Link to={"/settings/myaccounts"}>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         My accounts
       </button>
+      </Link>
+      <Link to={"/settings/users"}>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Users
       </button>
+      </Link>
     </nav> </>
   );
 };  

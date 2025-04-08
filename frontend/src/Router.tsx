@@ -6,7 +6,7 @@ import ProxyServer from "./pages/ProxyServer";
 import AllProjects from "./pages/AllProjects";
 import Trash from "./pages/Trash";
 import Result from "./pages/Result";
-
+import Users from "./pages/Users";
 
 const Router = [
     {  

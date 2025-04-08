@@ -1,7 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import Sidebar from "@/components/Sidebar"
 import Header from "@/components/Header"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
     ColumnDef,
@@ -52,7 +51,7 @@ const ProxyServer = () => {
     return (<>
     <div className="flex h-screen text-black">
         <Sidebar settings={true} scanSettings={false} homeSettings={false} />
-        <div className="flex-1 flex flex-col pr-8 pl-8">
+        <div className="flex-1 flex flex-col ml-64 p-8 ">
           <Header title="Proxy Server" />
           <Card className="min-h-130">
             <CardContent className="p-2 pl-12">
