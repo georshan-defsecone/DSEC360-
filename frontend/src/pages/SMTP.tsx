@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import Sidebar from "@/components/Sidebar"
-import Topbar from "@/components/Topbar"
+import Header from "@/components/Header"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
@@ -11,7 +11,7 @@ const SMTP = () => {
     <div className="flex h-screen text-black">
         <Sidebar settings={true} scanSettings={false} homeSettings={false} />
         <div className="flex-1 flex flex-col pr-8 pl-8">
-          <Topbar />
+          <Header />
           <Card className="min-h-130">
             <CardContent className="p-2 pl-12">
               <div className="flex flex-col items-start  space-y-10"> {/* Add space between rows */}
