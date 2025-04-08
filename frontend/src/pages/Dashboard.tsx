@@ -26,6 +26,41 @@ function DashboardContent() {
     fetchData();
   }, []);
 
+
+  const handleMoveToTrash = async (scanId: string) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/scans/${scanId}/trash/`, {
+        method: 'PUT',
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      fetchData(); 
+    } catch (error) {
+      console.error('Error moving  to trash:', error);
+    }
+  }
+
+  const fetchData = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/scans/');
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      setScanData(data);
+    } catch (error) {
+      console.error('Error fetching scan data:', error);
+    }
+  };
+
+  useEffect(() => {
+    const Interval = setInterval(() => {
+      fetchData();
+    }, 3000); 
+    return () => clearInterval(Interval);
+  }, []);
+
   return (
     <div className="grid lg:grid-cols-1 gap-4">
       <div className="col-span-2">
@@ -38,27 +73,22 @@ function DashboardContent() {
                   <TableRow>
                     <TableHead className="w-[40px]"></TableHead>
                     <TableHead>Project Name</TableHead>
-                    <TableHead>Scan Name</TableHead>
-                    <TableHead>Scan ID</TableHead>
                     <TableHead>Scan Author</TableHead>
                     <TableHead>Trash</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {scanData.map((scan, idx) => (
-                    <TableRow key={idx}>
+                  {scanData.map((scan, id) => (
+                    <TableRow key={id}>
                       <TableCell></TableCell>
                       <TableCell className="font-medium">{scan.project_name}</TableCell>
-                      <TableCell>{scan.scan_name}</TableCell>
-                      <TableCell>{scan.scan_id}</TableCell>
                       <TableCell>{scan.scan_author}</TableCell>
-                      <TableCell>❌</TableCell>
+                      <TableCell><button onClick={()=>{handleMoveToTrash(scan.scan_id)}}>❌</button></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </ScrollArea>
-
           </CardContent>
         </Card>
       </div>
