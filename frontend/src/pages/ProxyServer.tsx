@@ -3,20 +3,6 @@ import Sidebar from "@/components/Sidebar"
 import Header from "@/components/Header"
 import { Button } from "@/components/ui/button"
 import {
-    ColumnDef,
-    ColumnFiltersState,
-    SortingState,
-    VisibilityState,
-    flexRender,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    useReactTable,
-  } from "@tanstack/react-table"
-  import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react"
-  import { Checkbox } from "@/components/ui/checkbox"
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -33,21 +19,16 @@ import {
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+  } from "@/components/ui/select"
+  
 
 
 const ProxyServer = () => {
-    const [buttonText, setButtonText] = useState('Open'); // State to hold the button text
-
-    const handleItemClick = (text) => {
-      setButtonText(text); // Update the button text when a dropdown item is clicked
-    };
     return (<>
     <div className="flex h-screen text-black">
         <Sidebar settings={true} scanSettings={false} homeSettings={false} />
@@ -83,20 +64,19 @@ const ProxyServer = () => {
                 {/* Row 5 */}
                 <div className="flex items-center">
                   <p className="text-lg font-semibold w-40">AuthMethod:</p>
-                  <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-      <Button variant="outline">{buttonText}</Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56">
-      <DropdownMenuGroup>
-      <DropdownMenuItem onClick={() => handleItemClick('AutoDetect')}>AutoDetect</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleItemClick('None')}>None</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleItemClick('Basic')}>Basic</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleItemClick('Digest')}>Digest</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleItemClick('NTLM')}>NTLM</DropdownMenuItem>
-       </DropdownMenuGroup>
-      </DropdownMenuContent>   
-      </DropdownMenu>
+                  <Select>
+  <SelectTrigger className="w-[180px]">
+    <SelectValue placeholder="Select" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="light">AutoDetect</SelectItem>
+    <SelectItem value="None">None</SelectItem>
+    <SelectItem value="Basic">Basic</SelectItem>
+    <SelectItem value="Digest">Digest</SelectItem>
+    <SelectItem value="NTLM">NTLM</SelectItem>
+  </SelectContent>
+</Select>
+
                 </div>
 
                 {/* Row 6 */}
