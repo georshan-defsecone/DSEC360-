@@ -127,7 +127,7 @@ const ScanCAWindows = () => {
   return (
     <div className="flex h-screen text-black">
       <Sidebar settings={false} scanSettings={true} homeSettings={false} />
-      <div className="flex-1 flex flex-col pr-8 pl-8">
+      <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
         <Header title="Windows Scan"/>
 
         <Card className="w-full h-[calc(100vh-120px)] mt-4">
