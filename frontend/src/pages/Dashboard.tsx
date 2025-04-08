@@ -1,7 +1,8 @@
 import Sidebar from "@/components/Sidebar"
 import Header from "@/components/Header"
 import { Card, CardContent } from "@/components/ui/card"
-import { title } from "process"
+
+
 
 
 function DashboardContent() {
@@ -75,7 +76,7 @@ function Dashboard() {
     <div className="flex h-screen text-black">
       <Sidebar settings={false} scanSettings={false} homeSettings={true} />
       <div className="flex-1 flex flex-col ml-64">
-        <Header title={title} />
+        <Header title="My Projects" />
         <div className="p-4 overflow-auto max-h-[calc(100vh-100px)]">
           <DashboardContent />
         </div>
