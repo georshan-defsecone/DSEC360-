@@ -16,16 +16,16 @@ const ScanSettingSidebar = () => {
         Configuration Audit
       </h1>
       <Link to="/scan/windows">
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-slate-100 font-medium">
+      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Windows
       </button>
       </Link>
       <Link to="/scan/linux">
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-slate-100 font-medium">
+      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Linux
       </button>
       </Link>
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-slate-100 font-medium">
+      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Firewall
       </button>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">

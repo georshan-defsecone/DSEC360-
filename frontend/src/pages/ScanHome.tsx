@@ -7,7 +7,7 @@ const ScanHome = () => {
     <>
       <div className="flex h-screen text-black">
         <Sidebar settings={false} scanSettings={true} homeSettings={false} />
-        <div className="flex-1 flex flex-col pr-8 pl-8">
+        <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
           <Header title="" />
           <Card className="h-130">
             <CardContent className="p-4 pl-8">
