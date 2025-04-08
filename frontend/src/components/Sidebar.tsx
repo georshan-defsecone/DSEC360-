@@ -2,7 +2,6 @@ import { Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import "@/styles/sidebar.css"
-import { Link } from "react-router-dom";
 
 type SidebarProps = {
   scanSettings: boolean;
