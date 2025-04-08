@@ -10,6 +10,7 @@ import Result from "./pages/Result";
 import ScanHome from "./pages/ScanHome";
 import ScanCAWindows from "./pages/ScanCAWindows";
 import ScanCALinux from "./pages/ScanCALinux";
+import Users from "./pages/Users";
 
 const Router = [
     {
@@ -56,6 +57,11 @@ const Router = [
     {
         path: "/settings/proxyserver",
         element: <ProxyServer/>
+    }
+    ,
+    {
+        path: "/settings/users",
+        element: <Users/>
     }
 ]
 
