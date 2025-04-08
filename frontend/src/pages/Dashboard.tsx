@@ -1,72 +1,60 @@
+import { Card, CardContent } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import Sidebar from "@/components/Sidebar"
 import Header from "@/components/Header"
-import { Card, CardContent } from "@/components/ui/card"
 
-
+const scanData = [
+  { name: "Ram", owner: "test", Date: "", modified: "April 3 at 11:01 AM", status: "✔️" },
+  { name: "Test 2", owner: "test2", Date: "", modified: "", status: "⏳"  },
+  { name: "Test", owner: "def", Date: "", modified: "", status: "✔️"  },
+  { name: "rambo", owner: "rambo", Date: "", modified: "", status: "✔️",  },
+  { name: "defsecone", owner: "defsecone", Date: "", modified: "", status: "✔️" },
+  { name: "vicky", owner: "vicky", Date: "", modified: "  ", status: "✔️",  },
+  { name: "test123", owner: "test", Date: "", modified: "March 18 at 3:35 PM", status: "✔️" },
+]
 
 
 function DashboardContent() {
   return (
-    <div className="grid lg:grid-cols-4 gap-4"> 
-
-      {/* <Card >
-        <CardContent className="p-4">
-          <h3 className="font-semibold text-gray-700">Category name</h3>
-          <div className="mt-2 text-2xl font-bold">12k <span className="text-green-500 text-sm">+432</span></div>
-          <div className="text-sm text-gray-500">JAN</div>
-        </CardContent>
-      </Card> */}
-
-      {/* <Card >
-        <CardContent className="p-4">
-          <h3 className="font-semibold text-gray-700">Category</h3>
-          <div className="text-3xl font-bold mb-2">1282</div>
-          <div className="w-full h-24 bg-gray-200 rounded-lg flex items-end justify-center">
-            <span className="text-xs text-gray-500">Chart</span>
-          </div>
-        </CardContent>
-      </Card> */}
-
-      {/* <Card className=" bg-black text-white">
-        <CardContent className="p-4">
-          <h3 className="font-semibold mb-2">Progress</h3>
-          <div className="text-3xl font-bold">4751</div>
-          <Progress value={75} className="mt-4 bg-gray-800 h-2" />
-          <div className="text-sm mt-1 text-right">75.5%</div>
-        </CardContent>
-      </Card> */}
-
+    <div className="grid lg:grid-cols-1 gap-4">
       <div className="col-span-2">
         <Card className="mt-3 w-full">
           <CardContent className="p-4">
-            <h3 className="font-semibold mb-4">Category name</h3>
-            <div className="text-sm text-gray-500">
-              Table (object names, values, dates) goes here
-            </div>
+            <ScrollArea className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[40px]"></TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Owner</TableHead>
+                    {/* <TableHead>Schedule</TableHead> */}
+                    <TableHead>Last Modified</TableHead>
+                    <TableHead>Trash</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {scanData.map((scan, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell></TableCell>
+                      <TableCell className="font-medium">{scan.name}</TableCell>
+                      <TableCell>{scan.owner}</TableCell>
+                      {/* <TableCell>{scan.schedule}</TableCell> */}
+                      <TableCell className="font-medium">{scan.modified}</TableCell>
+                      <TableCell>❌</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+
           </CardContent>
         </Card>
       </div>
-
-      {/* <Card className=" mt-4">
-        <CardContent className="p-4 space-y-4">
-          <div className="text-md font-semibold">Category name</div>
-          <div className="flex justify-between text-sm">
-            <span>Lorem ipsum</span>
-            <span>40%</span>
-          </div>
-          <Progress value={40} />
-
-          <div className="flex justify-between text-sm">
-            <span>Dolor</span>
-            <span>35%</span>
-          </div>
-          <Progress value={35} className="bg-green-500" />
-        </CardContent>
-      </Card> */}
     </div>
   )
 }
-
 
 
 
