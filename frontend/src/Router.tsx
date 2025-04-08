@@ -11,6 +11,7 @@ import ScanHome from "./pages/ScanHome";
 import ScanCAWindows from "./pages/ScanCAWindows";
 import ScanCALinux from "./pages/ScanCALinux";
 import Users from "./pages/Users";
+import Myaccounts from "./pages/Myaccounts";
 
 const Router = [
     {
@@ -62,6 +63,11 @@ const Router = [
     {
         path: "/settings/users",
         element: <Users/>
+    }
+    ,
+    {
+        path: "/settings/myaccounts",
+        element: <Myaccounts/>
     }
 ]
 
