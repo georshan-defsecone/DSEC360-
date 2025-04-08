@@ -28,7 +28,7 @@ const Users = () => {
       <div className="flex h-screen text-black">
         <Sidebar settings={true} scanSettings={false} homeSettings={false} />
         <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
-          <Header />
+          <Header title="Users" />
           <Table className="bg-white text-black">
             <TableCaption>User Info.</TableCaption>
             <TableHeader>

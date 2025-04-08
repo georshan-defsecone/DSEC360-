@@ -137,7 +137,7 @@ const HomeSettingSidebar = () => {
 
 const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
   return (
-    <div className="fixed top-0 left-0 h-screen w-64 flex flex-col p-6 justify-between  z-10 ">
+    <div className="fixed top-0 left-0 h-screen w-64 flex flex-col p-6 justify-between  z-10 bg-white ">
       <div>
         <div className="flex items-center mb-6">
           <img src={logo} alt="Logo" className="w-10" />
