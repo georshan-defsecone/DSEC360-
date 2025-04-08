@@ -11,7 +11,7 @@ import ScanHome from "./pages/ScanHome";
 import ScanCAWindows from "./pages/ScanCAWindows";
 import ScanCALinux from "./pages/ScanCALinux";
 import Users from "./pages/Users";
-import Myaccounts from "./pages/myaccounts";
+import Myaccounts from "./pages/Myaccounts";
 
 const Router = [
     {
