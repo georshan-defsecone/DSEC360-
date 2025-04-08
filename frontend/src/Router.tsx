@@ -35,6 +35,27 @@ const Router = [
     {
         path: "/settings/about",
         element: <About/>
+    },
+    {
+        path: "/scan",
+        element: <ScanHome/>
+    },
+    {
+        path: "/scan/windows",
+        element: <ScanCAWindows/>
+    },
+    {
+        path: "/scan/linux",
+        element: <ScanCALinux/>
+    },
+    {
+        path: "/settings/SMTP",
+        element: <SMTP/>
+    }
+    ,
+    {
+        path: "/settings/proxyserver",
+        element: <ProxyServer/>
     }
 ]
 
