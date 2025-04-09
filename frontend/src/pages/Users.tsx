@@ -9,20 +9,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useState,useEffect } from "react";
+import axios from 'axios';
 
 const Users = () => {
-  const users = [
-    {
-      name: "name1",
-      lastlogin: "Today",
-      role: "admin",
-    },
-    {
-      name: "name2",
-      lastlogin: "Today",
-      role: "admin",
-    },
-  ];
+  const [users,setUsers]=useState([]);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/api/users/');
+        setUsers(response.data);
+        console.log(response.data);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+
   return (
     <>
       <div className="flex h-screen text-black">
