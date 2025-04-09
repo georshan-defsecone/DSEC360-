@@ -13,6 +13,7 @@ import ScanCALinux from "./pages/ScanCALinux";
 import Users from "./pages/Users";
 import Myaccounts from "./pages/Myaccounts";
 import CreateUser from "./pages/CreateUser";
+import ProjectScans from "./pages/ProjectScans";
 
 const Router = [
     {
@@ -30,6 +31,10 @@ const Router = [
     {
         path: "/dashboard/trash",
         element: <Trash/>
+    },
+    {
+        path: "/project/:projectName",
+        element: <ProjectScans/>
     },
     {
         path: "/login",

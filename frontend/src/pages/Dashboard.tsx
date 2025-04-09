@@ -5,6 +5,7 @@ import Sidebar from "@/components/Sidebar"
 import Header from "@/components/Header"
 import { useEffect, useState } from 'react';
 import api from "./api"
+import { Link } from "react-router-dom"
 
 
 function DashboardContent() {
@@ -58,7 +59,7 @@ function DashboardContent() {
                   {scanData.map((scan, id) => (
                     <TableRow key={id}>
                       <TableCell></TableCell>
-                      <TableCell className="font-medium">{scan.project_name}</TableCell>
+                      <Link to={`/project/${scan.project_name}`}><TableCell className="font-medium">{scan.project_name}</TableCell></Link>
                       <TableCell>{scan.scan_author}</TableCell>
                       <TableCell>
                         <button onClick={() => handleMoveToTrash(scan.scan_id)}>❌</button>
