@@ -24,7 +24,7 @@ const ProxyServer = () => {
     <>
       <div className="flex h-screen text-black">
         <Sidebar settings={true} scanSettings={false} homeSettings={false} />
-        <div className="flex-1 flex flex-col ml-64 p-8">
+        <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
           <Header title="Proxy Server" />
           <Card className="">
             <CardContent className="p-2 pl-12">
