@@ -1,4 +1,4 @@
-import { Settings } from "lucide-react";
+import { Settings,LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import "@/styles/sidebar.css"
@@ -134,6 +134,26 @@ const HomeSettingSidebar = () => {
 };
 
 
+const handleLogout = () => {
+  // Debugging: Check what's in localStorage
+  console.log("Before logout:", localStorage);
+
+  // Remove all relevant items
+  localStorage.removeItem("access");
+  localStorage.removeItem("refresh");
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+
+  // Optionally clear all storage (careful!)
+  // localStorage.clear(); // Uncomment if you want to clear everything
+
+  // Debugging: Confirm it's removed
+  console.log("After logout:", localStorage);
+
+  // Redirect to login page
+  window.location.href = "/login";
+};
+
 
 
 const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
@@ -142,7 +162,7 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
       <div>
         <div className="flex items-center mb-6">
           <img src={logo} alt="Logo" className="w-10" />
-          <h2 className="text-2xl font-bold ml-3">DES360+</h2>
+          <h2 className="text-2xl font-bold ml-3">DSEC360+</h2>
         </div>
       </div>
 
@@ -150,13 +170,28 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
         {scanSettings && <ScanSettingSidebar />}
         {homeSettings && <HomeSettingSidebar />}
         {settings && <SettingSidebar />}
-      </div>    
-
-      <div className="mt-4">
-        <button className="flex items-center px-4 py-2">
-          <Settings className="w-5 h-5 mr-2" />
-        </button>
       </div>
+
+      <div className="mt-auto pt-4 border-t flex justify-between items-center px-4">
+  {/* Settings Button */}
+  <Link
+    to="/settings/about" // or your default settings route
+    className="flex items-center text-gray-700 hover:text-black"
+  >
+    <Settings className="w-5 h-5 mr-2" />
+    <span>Settings</span>
+  </Link>
+
+  {/* Logout Icon Button */}
+  <button
+    onClick={handleLogout}
+    className="flex items-center text-red-600 hover:text-red-800"
+  >
+    <LogOut className="w-5 h-5 mr-2" />
+    <span>Logout</span>
+  </button>
+</div>
+
     </div>
   );
 };

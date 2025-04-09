@@ -49,7 +49,7 @@ const navigate=useNavigate()
             alt="Company Logo"
             className="w-24 h-24 mb-3 shadow-lg rounded-full"
           />
-          <h1 className="text-lg font-semibold text-white">DES360+</h1>
+          <h1 className="text-lg font-semibold text-white">DSEC360+</h1>
         </div>
 
         {/* Right Panel */}
@@ -90,9 +90,6 @@ const navigate=useNavigate()
                   <input type="checkbox" className="mr-2" />
                   Remember Me
                 </label>
-                <a href="#" className="text-neutral-800 hover:underline">
-                  Forgot Password?
-                </a>
               </div>
 
               <button
