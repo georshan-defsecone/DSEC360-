@@ -4,11 +4,14 @@ import { useNavigate } from "react-router-dom";
 const Login: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "">("");
 
-const navigate=useNavigate()
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage(""); // Reset message on submit
 
     try {
       const response = await fetch("http://localhost:8000/api/token/", {
@@ -17,24 +20,30 @@ const navigate=useNavigate()
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: username,
-          password: password,
+          username,
+          password,
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Save tokens (you can use localStorage/sessionStorage)
         localStorage.setItem("access", data.access);
         localStorage.setItem("refresh", data.refresh);
-        alert("Login Successful!");
-        navigate("/")
+        setMessage("Login successful! Redirecting...");
+        setMessageType("success");
+
+        // Delay before navigation to show success message
+        setTimeout(() => {
+          navigate("/");
+        }, 1500);
       } else {
-        alert("Invalid credentials");
-        console.error(data);
+        setMessage("Invalid username or password.");
+        setMessageType("error");
       }
     } catch (error) {
+      setMessage("An error occurred. Please try again.");
+      setMessageType("error");
       console.error("Error:", error);
     }
   };
@@ -63,7 +72,7 @@ const navigate=useNavigate()
                 <input
                   type="text"
                   name="username"
-                  placeholder="username"
+                  placeholder="Username"
                   autoComplete="off"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -98,6 +107,19 @@ const navigate=useNavigate()
               >
                 Login
               </button>
+
+              {/* Message Box */}
+              {message && (
+                <div
+                  className={`mt-4 text-center text-sm px-4 py-2 rounded-md transition-all duration-300 ${
+                    messageType === "success"
+                      ? "bg-green-100 text-green-800 border border-green-300"
+                      : "bg-red-100 text-red-800 border border-red-300"
+                  }`}
+                >
+                  {message}
+                </div>
+              )}
             </form>
           </div>
         </div>
