@@ -4,61 +4,39 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Sidebar from "@/components/Sidebar"
 import Header from "@/components/Header"
 import { useEffect, useState } from 'react';
+import axios from 'axios';
 
 
 function DashboardContent() {
-
   const [scanData, setScanData] = useState([]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/api/scans/');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        setScanData(data);
-      } catch (error) {
-        console.error('Error fetching scan data:', error);
-      }
-    };
-    fetchData();
-  }, []);
-
-
-  const handleMoveToTrash = async (scanId: string) => {
-    try {
-      const response = await fetch(`http://localhost:8000/api/scans/${scanId}/trash/`, {
-        method: 'PUT',
-      });
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      fetchData(); 
-    } catch (error) {
-      console.error('Error moving  to trash:', error);
-    }
-  }
 
   const fetchData = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/scans/');
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const data = await response.json();
-      setScanData(data);
+      const response = await axios.get('http://localhost:8000/api/scans/');
+      setScanData(response.data);
     } catch (error) {
       console.error('Error fetching scan data:', error);
     }
   };
 
   useEffect(() => {
-    const Interval = setInterval(() => {
+    fetchData();
+  }, []);
+
+  const handleMoveToTrash = async (scanId: string) => {
+    try {
+      await axios.put(`http://localhost:8000/api/scans/${scanId}/trash/`);
       fetchData();
-    }, 3000); 
-    return () => clearInterval(Interval);
+    } catch (error) {
+      console.error('Error moving to trash:', error);
+    }
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchData();
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -67,7 +45,6 @@ function DashboardContent() {
         <Card className="mt-3 w-full">
           <CardContent className="p-4">
             <ScrollArea className="rounded-md border">
-
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -83,7 +60,9 @@ function DashboardContent() {
                       <TableCell></TableCell>
                       <TableCell className="font-medium">{scan.project_name}</TableCell>
                       <TableCell>{scan.scan_author}</TableCell>
-                      <TableCell><button onClick={()=>{handleMoveToTrash(scan.scan_id)}}>❌</button></TableCell>
+                      <TableCell>
+                        <button onClick={() => handleMoveToTrash(scan.scan_id)}>❌</button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -93,9 +72,8 @@ function DashboardContent() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
-
 
 
 
