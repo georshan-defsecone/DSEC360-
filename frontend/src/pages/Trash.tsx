@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from "./api"    
 
 export default function Trash() {
 
@@ -13,7 +13,7 @@ export default function Trash() {
   useEffect(() => {
     const fetchTrashedScans = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/scans/trashed/');
+        const response = await api.get('scans/trashed/');
         setTrashedScans(response.data);
       } catch (error) {
         console.error('Error fetching trashed scans:', error);

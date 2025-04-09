@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Sidebar from "@/components/Sidebar"
 import Header from "@/components/Header"
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from "./api"
 
 
 function DashboardContent() {
@@ -12,7 +12,7 @@ function DashboardContent() {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/scans/');
+      const response = await api.get('scans/');
       setScanData(response.data);
     } catch (error) {
       console.error('Error fetching scan data:', error);
@@ -25,7 +25,7 @@ function DashboardContent() {
 
   const handleMoveToTrash = async (scanId: string) => {
     try {
-      await axios.put(`http://localhost:8000/api/scans/${scanId}/trash/`);
+      await api.put(`scans/${scanId}/trash/`);
       fetchData();
     } catch (error) {
       console.error('Error moving to trash:', error);
