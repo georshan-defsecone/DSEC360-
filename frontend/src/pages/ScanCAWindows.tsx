@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -23,24 +24,8 @@ const ScanCAWindows = () => {
 
     // Target Details
     auditMethod: "",
-
-    /* Audit Method can be: Agent, Remote access, or upload config -
-     * Agent: display only download button
-     * Remote access: User input and upload button sidebyside
-     *                Get credentials - password, kerberos, LM Hash, NTLM Hash (if windows)
-     *                                - password, kerberos public key, certificate (if linux)
-     * Upload: User input and upload button sidebyside
-     */
-
     target: "",
     authMethod: "",
-    /*
-     * Authentication method can be: password, NTLM hash, LM hash, Kerberos etc.
-     * If password: get username and password
-     * If NTLM hash: get username and NTLM hash and domain
-     * If LM hash: get username and LM hash and domain
-     * If Kerberos: get username, password, KDC, KDC port, KDC tranport and domain
-     */
     username: "",
     password: "",
     domain: "",
@@ -53,11 +38,17 @@ const ScanCAWindows = () => {
     publicKey: "",
 
     //Get compliance info
+    hostName: "",
     // __________________
 
     //Scan settings
     schedule: "",
+    scheduleFrequency: "",
+    scheduleStartDate: "",
+    scheduleStartTime: "",
+    scheduleTimezone: "",
     notification: "",
+    notificationEmail: "",
   });
 
   const handleInputChange = (
@@ -76,7 +67,6 @@ const ScanCAWindows = () => {
         [name]: value,
       }));
     }
-    console.log("Form data updated:", formData);
   };
 
   const nextPage = () => {
@@ -108,7 +98,7 @@ const ScanCAWindows = () => {
                 placeholder="Scan Name"
                 value={formData.scanName}
                 onChange={handleInputChange}
-                //className="w-full p-2 border rounded"
+                required
               />
             </div>
 
@@ -121,7 +111,7 @@ const ScanCAWindows = () => {
                 placeholder="Project Name"
                 value={formData.projectName}
                 onChange={handleInputChange}
-                //className="w-full p-2 border rounded"
+                required
               />
             </div>
 
@@ -189,6 +179,7 @@ const ScanCAWindows = () => {
                     value={formData.target}
                     onChange={handleInputChange}
                     className="w-80"
+                    required
                     //className="w-full p-2 border rounded"
                   />
 
@@ -228,6 +219,7 @@ const ScanCAWindows = () => {
                         value={formData.username}
                         onChange={handleInputChange}
                         className="w-80"
+                        required
                       />
                     </div>
                     <div className="flex items-center">
@@ -239,6 +231,7 @@ const ScanCAWindows = () => {
                         value={formData.password}
                         onChange={handleInputChange}
                         className="w-80"
+                        required
                       />
                     </div>
                   </div>
@@ -255,6 +248,7 @@ const ScanCAWindows = () => {
                         value={formData.username}
                         onChange={handleInputChange}
                         className="w-80"
+                        required
                       />
                     </div>
                     <div className="flex items-center">
@@ -266,6 +260,7 @@ const ScanCAWindows = () => {
                         value={formData.ntlmHash}
                         onChange={handleInputChange}
                         className="w-80"
+                        required
                       />
                     </div>
                     <div className="flex items-center">
@@ -277,6 +272,7 @@ const ScanCAWindows = () => {
                         value={formData.domain}
                         onChange={handleInputChange}
                         className="w-80"
+                        required
                       />
                     </div>
                   </div>
@@ -292,6 +288,7 @@ const ScanCAWindows = () => {
                         value={formData.username}
                         onChange={handleInputChange}
                         className="w-80"
+                        required
                       />
                     </div>
                     <div className="flex items-center">
@@ -303,6 +300,7 @@ const ScanCAWindows = () => {
                         value={formData.password}
                         onChange={handleInputChange}
                         className="w-80"
+                        required
                       />
                     </div>
                     <div className="flex items-center">
@@ -316,6 +314,7 @@ const ScanCAWindows = () => {
                         value={formData.kdc}
                         onChange={handleInputChange}
                         className="w-80"
+                        required
                       />
                     </div>
                     <div className="flex items-center">
@@ -327,6 +326,7 @@ const ScanCAWindows = () => {
                         value={formData.kdcPort}
                         onChange={handleInputChange}
                         className="w-80"
+                        required
                       />
                     </div>
                     <div className="flex items-center">
@@ -338,12 +338,13 @@ const ScanCAWindows = () => {
                         value={formData.domain}
                         onChange={handleInputChange}
                         className="w-80"
+                        required
                       />
                     </div>
                   </div>
                 )}
                 {formData.authMethod === "lm" && (
-                  <div className="space-y-4">
+                  <div className="space-y-4 border-l-2 border-gray-200">
                     <div className="flex items-center">
                       <p className="block w-70">Username:</p>
                       <Input
@@ -353,6 +354,7 @@ const ScanCAWindows = () => {
                         value={formData.username}
                         onChange={handleInputChange}
                         className="w-80"
+                        required
                       />
                     </div>
                     <div className="flex items-center">
@@ -364,6 +366,7 @@ const ScanCAWindows = () => {
                         value={formData.lmHash}
                         onChange={handleInputChange}
                         className="w-80"
+                        required
                       />
                     </div>
                     <div className="flex items-center">
@@ -375,6 +378,7 @@ const ScanCAWindows = () => {
                         value={formData.domain}
                         onChange={handleInputChange}
                         className="w-80"
+                        required
                       />
                     </div>
                   </div>
@@ -407,7 +411,7 @@ const ScanCAWindows = () => {
               type="text"
               name="hostname"
               placeholder="Hostname"
-              value={formData.scanName}
+              value={formData.hostName}
               onChange={handleInputChange}
               className="w-full p-2 border rounded"
             />
@@ -416,16 +420,129 @@ const ScanCAWindows = () => {
         );
       case 4:
         return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <h2 className="text-xl font-semibold">Scan Settings</h2>
-            <input
-              type="text"
-              name="framework"
-              placeholder="Framework"
-              value={formData.scanName}
-              onChange={handleInputChange}
-              className="w-full p-2 border rounded"
-            />
+
+            {/* Schedule Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <p className="font-medium">Schedule Scan</p>
+                  <p className="text-sm text-gray-500">
+                    Enable to schedule recurring scans
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.schedule === "true"}
+                  onCheckedChange={(checked) =>
+                    handleInputChange(checked.toString(), "schedule")
+                  }
+                />
+              </div>
+
+              {formData.schedule === "true" && (
+                <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+                  <div className="flex items-center">
+                    <p className="block w-70">Frequency:</p>
+                    <Select
+                      value={formData.scheduleFrequency}
+                      onValueChange={(value) =>
+                        handleInputChange(value, "scheduleFrequency")
+                      }
+                    >
+                      <SelectTrigger className="w-80">
+                        <SelectValue placeholder="Select frequency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                        </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center">
+                    <p className="block w-70">Start Date:</p>
+                    <Input
+                      type="date"
+                      name="scheduleStartDate"
+                      value={formData.scheduleStartDate}
+                      onChange={handleInputChange}
+                      className="w-80"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex items-center">
+                    <p className="block w-70">Start Time:</p>
+                    <Input
+                      type="time"
+                      name="scheduleStartTime"
+                      value={formData.scheduleStartTime}
+                      onChange={handleInputChange}
+                      className="w-80"
+                      required
+                    />
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">Timezone:</p>
+                    <Select
+                      value={formData.scheduleTimezone}
+                      onValueChange={(value) =>
+                        handleInputChange(value, "scheduleTimezone")
+                      }
+                    >
+                      <SelectTrigger className="w-80">
+                        <SelectValue placeholder="Select timezone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="IST">IST</SelectItem>
+                        <SelectItem value="UTC">UTC</SelectItem>
+                        <SelectItem value="EST">EST</SelectItem>
+                        <SelectItem value="PST">PST</SelectItem>
+                        {/* Add more timezones as needed */}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Notification Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <p className="font-medium">Email Notifications</p>
+                  <p className="text-sm text-gray-500">
+                    Get notified about scan results
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.notification === "true"}
+                  onCheckedChange={(checked) =>
+                    handleInputChange(checked.toString(), "notification")
+                  }
+                />
+              </div>
+
+              {formData.notification === "true" && (
+                <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+                  <div className="flex items-center">
+                    <p className="block w-70">Email Address:</p>
+                    <Input
+                      type="email"
+                      name="notificationEmail"
+                      placeholder="Enter email address"
+                      value={formData.notificationEmail}
+                      onChange={handleInputChange}
+                      className="w-80"
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         );
       default:
