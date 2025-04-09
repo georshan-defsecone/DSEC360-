@@ -4,26 +4,39 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Sidebar from "@/components/Sidebar"
 import Header from "@/components/Header"
 import { useEffect, useState } from 'react';
+import axios from 'axios';
 
 
 function DashboardContent() {
-
   const [scanData, setScanData] = useState([]);
 
+  const fetchData = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/scans/');
+      setScanData(response.data);
+    } catch (error) {
+      console.error('Error fetching scan data:', error);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/api/scans/');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        setScanData(data);
-      } catch (error) {
-        console.error('Error fetching scan data:', error);
-      }
-    };
     fetchData();
+  }, []);
+
+  const handleMoveToTrash = async (scanId: string) => {
+    try {
+      await axios.put(`http://localhost:8000/api/scans/${scanId}/trash/`);
+      fetchData();
+    } catch (error) {
+      console.error('Error moving to trash:', error);
+    }
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchData();
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -32,40 +45,35 @@ function DashboardContent() {
         <Card className="mt-3 w-full">
           <CardContent className="p-4">
             <ScrollArea className="rounded-md border">
-
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[40px]"></TableHead>
                     <TableHead>Project Name</TableHead>
-                    <TableHead>Scan Name</TableHead>
-                    <TableHead>Scan ID</TableHead>
                     <TableHead>Scan Author</TableHead>
                     <TableHead>Trash</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {scanData.map((scan, idx) => (
-                    <TableRow key={idx}>
+                  {scanData.map((scan, id) => (
+                    <TableRow key={id}>
                       <TableCell></TableCell>
                       <TableCell className="font-medium">{scan.project_name}</TableCell>
-                      <TableCell>{scan.scan_name}</TableCell>
-                      <TableCell>{scan.scan_id}</TableCell>
                       <TableCell>{scan.scan_author}</TableCell>
-                      <TableCell>❌</TableCell>
+                      <TableCell>
+                        <button onClick={() => handleMoveToTrash(scan.scan_id)}>❌</button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </ScrollArea>
-
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }
-
 
 
 
