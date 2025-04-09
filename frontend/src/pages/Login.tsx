@@ -49,7 +49,7 @@ const navigate=useNavigate()
             alt="Company Logo"
             className="w-24 h-24 mb-3 shadow-lg rounded-full"
           />
-          <h1 className="text-lg font-semibold text-white">Defsecone 360+</h1>
+          <h1 className="text-lg font-semibold text-white">DES360+</h1>
         </div>
 
         {/* Right Panel */}
