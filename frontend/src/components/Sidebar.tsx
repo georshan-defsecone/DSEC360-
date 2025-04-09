@@ -2,6 +2,8 @@ import { Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import "@/styles/sidebar.css"
+import {jwtDecode} from "jwt-decode";
+import { useEffect, useState } from 'react';
 
 
 type SidebarProps = {
@@ -9,6 +11,19 @@ type SidebarProps = {
   homeSettings: boolean;
   settings: boolean;
 };
+
+
+
+// //const token = localStorage.getItem("access_token"); // or however you store it
+// const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ0MTg3NDg0LCJpYXQiOjE3NDQxODM4ODQsImp0aSI6IjQ0ODBlMzNjNGJkMTQ5NzFhOTRkZDlkYjk1YWI5NDZiIiwidXNlcl9pZCI6MSwidXNlcm5hbWUiOiJ2aWduZXNoIiwiZW1haWwiOiJ2aWduZXNocmFvMjgyQGdtYWlsLmNvbSIsImlzX2FkbWluIjp0cnVlfQ.F5KZSqHcIBIzwt9ZdGpFdb8fz1IxBLeSyR1ySCKDWJo"
+// let isAdmin = false;
+
+// if (token) {
+//   const decoded = jwtDecode(token);
+//   isAdmin = decoded.is_admin;
+//   console.log("Decoded JWT:", isAdmin);
+// }
+
 
 const ScanSettingSidebar = () => {
   return (
@@ -102,6 +117,21 @@ const SettingSidebar = () => {
 };  
 
 const HomeSettingSidebar = () => {
+
+  const [isAdmin, setIsAdmin] = useState(false);
+
+useEffect(() => {
+  const access = localStorage.getItem("access");
+  if (access) {
+    try {
+      const decoded = jwtDecode(access);
+      setIsAdmin(decoded?.is_admin);
+    } catch (e) {
+      console.error("Invalid token:", e);
+    }
+  }
+}, []);
+
   return (
     <>
       <nav className="space-y-2">
@@ -110,12 +140,13 @@ const HomeSettingSidebar = () => {
             My Projects
           </button>
         </Link>
-
+        {isAdmin && ( 
         <Link to={"/dashboard/allprojects"}>
           <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
             All Projects
           </button>
         </Link>
+        )}
 
         <Link to={"/dashboard/results"}>
           <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
