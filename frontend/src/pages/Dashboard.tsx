@@ -1,79 +1,111 @@
+import { Card, CardContent } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import Sidebar from "@/components/Sidebar"
 import Header from "@/components/Header"
-import { Card, CardContent } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
+import { useEffect, useState } from 'react';
 
 
 function DashboardContent() {
+
+  const [scanData, setScanData] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/scans/');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        setScanData(data);
+      } catch (error) {
+        console.error('Error fetching scan data:', error);
+      }
+    };
+    fetchData();
+  }, []);
+
+
+  const handleMoveToTrash = async (scanId: string) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/scans/${scanId}/trash/`, {
+        method: 'PUT',
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      fetchData(); 
+    } catch (error) {
+      console.error('Error moving  to trash:', error);
+    }
+  }
+
+  const fetchData = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/scans/');
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      setScanData(data);
+    } catch (error) {
+      console.error('Error fetching scan data:', error);
+    }
+  };
+
+  useEffect(() => {
+    const Interval = setInterval(() => {
+      fetchData();
+    }, 3000); 
+    return () => clearInterval(Interval);
+  }, []);
+
   return (
-    <div className="grid lg:grid-cols-4 gap-4">
-
-      <Card >
-        <CardContent className="p-4">
-          <h3 className="font-semibold text-gray-700">Category name</h3>
-          <div className="mt-2 text-2xl font-bold">12k <span className="text-green-500 text-sm">+432</span></div>
-          <div className="text-sm text-gray-500">JAN</div>
-        </CardContent>
-      </Card>
-
-      <Card >
-        <CardContent className="p-4">
-          <h3 className="font-semibold text-gray-700">Category</h3>
-          <div className="text-3xl font-bold mb-2">1282</div>
-          <div className="w-full h-24 bg-gray-200 rounded-lg flex items-end justify-center">
-            <span className="text-xs text-gray-500">Chart</span>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className=" bg-black text-white">
-        <CardContent className="p-4">
-          <h3 className="font-semibold mb-2">Progress</h3>
-          <div className="text-3xl font-bold">4751</div>
-          <Progress value={75} className="mt-4 bg-gray-800 h-2" />
-          <div className="text-sm mt-1 text-right">75.5%</div>
-        </CardContent>
-      </Card>
-
+    <div className="grid lg:grid-cols-1 gap-4">
       <div className="col-span-2">
-        <Card className="mt-3 w-2/3">
+        <Card className="mt-3 w-full">
           <CardContent className="p-4">
-            <h3 className="font-semibold mb-4">Category name</h3>
-            <div className="text-sm text-gray-500">
-              Table (object names, values, dates) goes here
-            </div>
+            <ScrollArea className="rounded-md border">
+
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[40px]"></TableHead>
+                    <TableHead>Project Name</TableHead>
+                    <TableHead>Scan Author</TableHead>
+                    <TableHead>Trash</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {scanData.map((scan, id) => (
+                    <TableRow key={id}>
+                      <TableCell></TableCell>
+                      <TableCell className="font-medium">{scan.project_name}</TableCell>
+                      <TableCell>{scan.scan_author}</TableCell>
+                      <TableCell><button onClick={()=>{handleMoveToTrash(scan.scan_id)}}>❌</button></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </ScrollArea>
           </CardContent>
         </Card>
       </div>
-
-      <Card className=" mt-4">
-        <CardContent className="p-4 space-y-4">
-          <div className="text-md font-semibold">Category name</div>
-          <div className="flex justify-between text-sm">
-            <span>Lorem ipsum</span>
-            <span>40%</span>
-          </div>
-          <Progress value={40} />
-
-          <div className="flex justify-between text-sm">
-            <span>Dolor</span>
-            <span>35%</span>
-          </div>
-          <Progress value={35} className="bg-green-500" />
-        </CardContent>
-      </Card>
     </div>
   )
 }
+
+
 
 
 function Dashboard() {
   return (
     <div className="flex h-screen text-black">
       <Sidebar settings={false} scanSettings={false} homeSettings={true} />
-      <div className="flex-1 flex flex-col">
-        <Header />
-        <div className="p-4">
+      <div className="flex-1 flex flex-col ml-64">
+        <Header title="My Projects" />
+        <div className="p-4 overflow-auto max-h-[calc(100vh-100px)]">
           <DashboardContent />
         </div>
       </div>
