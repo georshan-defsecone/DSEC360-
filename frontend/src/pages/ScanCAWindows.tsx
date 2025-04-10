@@ -1,7 +1,7 @@
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import api from "./api";
+
 const ScanCAWindows = () => {
+  const [complianceData, setComplianceData] = useState([]);
+  const [errors, setErrors] = useState("");
+
   const [page, setPage] = useState(1);
   const [formData, setFormData] = useState({
     // General Info
@@ -50,6 +55,21 @@ const ScanCAWindows = () => {
     notification: "",
     notificationEmail: "",
   });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await api.get("/compliance/windows/"); // Adjust the endpoint as needed
+        console.log("Fetched data:", response.data);
+        setComplianceData(response.data);
+      } catch (error) {
+        console.error("Error fetching compliance data:", error);
+        setErrors("Error fetching compliance data");
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string,
@@ -89,18 +109,6 @@ const ScanCAWindows = () => {
         return (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">General Information</h2>
-            <div className="flex justify-between items-center">
-              <p className="block w-40 ">Scan Name:</p>
-
-              <Input
-                type="text"
-                name="scanName"
-                placeholder="Scan Name"
-                value={formData.scanName}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
 
             <div className="flex justify-between items-center">
               <p className="block w-40 ">Project Name:</p>
@@ -110,6 +118,19 @@ const ScanCAWindows = () => {
                 name="projectName"
                 placeholder="Project Name"
                 value={formData.projectName}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div className="flex justify-between items-center">
+              <p className="block w-40 ">Scan Name:</p>
+
+              <Input
+                type="text"
+                name="scanName"
+                placeholder="Scan Name"
+                value={formData.scanName}
                 onChange={handleInputChange}
                 required
               />
@@ -554,15 +575,11 @@ const ScanCAWindows = () => {
     <div className="flex h-screen text-black">
       <Sidebar settings={false} scanSettings={true} homeSettings={false} />
       <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
-        <Header title="Windows Scan" />
+        <Header title="Windows Configuration Audit Scan" />
 
         <Card className="w-full mt-4">
           <CardContent className="w-full p-6 pl-12">
             <div className="w-[80%] space-y-6">
-              <h1 className="text-2xl font-bold mb-6">
-                Windows Configuration Audit Scan
-              </h1>
-
               {/* Progress indicator
             <div className="flex justify-start gap-8 mb-8">
               {[1, 2, 3, 4].map((step) => (
