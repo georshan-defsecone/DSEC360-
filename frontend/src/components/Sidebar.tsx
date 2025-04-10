@@ -178,10 +178,7 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
   return (
     <div className="fixed top-0 left-0 h-screen w-64 flex flex-col p-6 justify-between  z-10 bg-white ">
       <div>
-        <Link
-          to="/"
-          className="flex items-center mb-6 no-underline"
-        >
+        <Link to="/" className="flex items-center mb-6 no-underline">
           <img src={logo} alt="Logo" className="w-10" />
           <h2 className="text-2xl font-bold ml-3 text-black">DSEC360+</h2>
         </Link>
@@ -193,7 +190,7 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
         {settings && <SettingSidebar />}
       </div>
 
-      <div className="mt-auto pt-4 border-t flex justify-between items-center px-4">
+      <div className="mt-auto pt-6 border-t flex justify-between items-center px-4">
         {/* Settings Button */}
         <Link
           to="/settings/about" // or your default settings route
