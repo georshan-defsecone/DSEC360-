@@ -9,24 +9,24 @@ import { Link } from "react-router-dom"
 
 
 function DashboardContent() {
-  const [scanData, setScanData] = useState([]);
+  const [projectData, setProjectData] = useState([]);
 
   const fetchData = async () => {
     try {
-      const response = await api.get('scans/');
-      setScanData(response.data);
+      const response = await api.get('projects/');
+      setProjectData(response.data);
     } catch (error) {
-      console.error('Error fetching scan data:', error);
-    }
+      console.error('Error fetching project data:', error);
+    } 
   };
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  const handleMoveToTrash = async (scanId: string) => {
+  const handleMoveToTrash = async (projectId: string) => {
     try {
-      await api.put(`scans/${scanId}/trash/`);
+      await api.put(`project/${projectId}/trash/`);
       fetchData();
     } catch (error) {
       console.error('Error moving to trash:', error);
@@ -56,13 +56,17 @@ function DashboardContent() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {scanData.map((scan, id) => (
-                    <TableRow key={id}>
+                  {projectData.map((pro, project_id) => (
+                    <TableRow key={project_id}>
                       <TableCell></TableCell>
-                      <Link to={`/project/${scan.project_name}`}><TableCell className="font-medium">{scan.project_name}</TableCell></Link>
-                      <TableCell>{scan.scan_author}</TableCell>
                       <TableCell>
-                        <button onClick={() => handleMoveToTrash(scan.scan_id)}>❌</button>
+                        <Link to={`/project/${pro.project_name}`}>
+                          {pro.project_name}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{pro.scan_author}</TableCell>
+                      <TableCell>
+                        <button onClick={() => handleMoveToTrash(pro.project_id)}>❌</button>
                       </TableCell>
                     </TableRow>
                   ))}

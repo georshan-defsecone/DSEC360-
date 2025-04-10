@@ -8,15 +8,15 @@ import api from "./api"
 
 export default function Trash() {
 
-  const [trashedScans, setTrashedScans] = useState([]);
+  const [trashedProject, setTrashedProject] = useState([]);
 
   useEffect(() => {
     const fetchTrashedScans = async () => {
       try {
-        const response = await api.get('scans/trashed/');
-        setTrashedScans(response.data);
+        const response = await api.get('project/trash/');
+        setTrashedProject(response.data);
       } catch (error) {
-        console.error('Error fetching trashed scans:', error);
+        console.error('Error fetching trashed project:', error);
       }
     };
 
@@ -47,11 +47,11 @@ export default function Trash() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {trashedScans.map((scan, id) => (
-                    <TableRow key={id}>
+                  {trashedProject.map((pro, project_id) => (
+                    <TableRow key={project_id}>
                       <TableCell></TableCell>
-                      <TableCell className="font-medium">{scan.project_name}</TableCell>
-                      <TableCell>{scan.scan_author}</TableCell>
+                      <TableCell className="font-medium">{pro.project_name}</TableCell>
+                      <TableCell>{pro.scan_author}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
