@@ -1,5 +1,6 @@
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
+import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,8 @@ import api from "./api";
 const ScanCAWindows = () => {
   const [complianceData, setComplianceData] = useState([]);
   const [errors, setErrors] = useState("");
+
+  const formPages = ["General Info", "Target Details", "Compliance Info", "Scan Settings"];
 
   const [page, setPage] = useState(1);
   const [formData, setFormData] = useState({
@@ -43,8 +46,8 @@ const ScanCAWindows = () => {
     publicKey: "",
 
     //Get compliance info
-    hostName: "",
-    // __________________
+    complianceCategory: "",
+    complianceSecurityStandard: "",
 
     //Scan settings
     schedule: "",
@@ -64,7 +67,7 @@ const ScanCAWindows = () => {
         setComplianceData(response.data);
       } catch (error) {
         console.error("Error fetching compliance data:", error);
-        setErrors("Error fetching compliance data");
+        setErrors("Error fetching compliance data. Please try again later.");
       }
     };
 
@@ -425,18 +428,62 @@ const ScanCAWindows = () => {
           </div>
         );
       case 3:
+        //get all categories from complianceData
+        const categories = [
+          ...new Set(complianceData.map((item) => item.Categories)),
+        ];
+
+        //get all standards filtered by category
+        const standards = complianceData
+          .filter((item) => item.Categories === formData.complianceCategory)
+          .map((item) => item["Security Standards"]);
+
         return (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Compliance Information</h2>
-            <input
-              type="text"
-              name="hostname"
-              placeholder="Hostname"
-              value={formData.hostName}
-              onChange={handleInputChange}
-              className="w-full p-2 border rounded"
-            />
-            {/* Add other system info inputs */}
+
+            {/* Operating System Selection */}
+            <div className="flex items-center">
+              <p className="block w-70">Operating System:</p>
+              <Select
+                value={formData.complianceCategory}
+                onValueChange={(value) =>
+                  handleInputChange(value, "complianceCategory")
+                }
+              >
+                <SelectTrigger className="w-80">
+                  <SelectValue placeholder="Select Windows Server Version" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      Windows {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Security Standard Selection */}
+            <div className="flex items-center">
+              <p className="block w-70">Security Standard:</p>
+              <Select
+                value={formData.complianceSecurityStandard}
+                onValueChange={(value) =>
+                  handleInputChange(value, "complianceSecurityStandard")
+                }
+              >
+                <SelectTrigger className="w-80">
+                  <SelectValue placeholder="Select Security Standard" />
+                </SelectTrigger>
+                <SelectContent>
+                  {standards.map((standard) => (
+                    <SelectItem key={standard} value={standard}>
+                      {standard}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         );
       case 4:
@@ -479,7 +526,7 @@ const ScanCAWindows = () => {
                         <SelectItem value="weekly">Weekly</SelectItem>
                         <SelectItem value="monthly">Monthly</SelectItem>
                         <SelectItem value="yearly">Yearly</SelectItem>
-                        </SelectContent>
+                      </SelectContent>
                     </Select>
                   </div>
 
@@ -578,7 +625,8 @@ const ScanCAWindows = () => {
         <Header title="Windows Configuration Audit Scan" />
 
         <Card className="w-full mt-4">
-          <CardContent className="w-full p-6 pl-12">
+          <CardContent className="w-full p-4 pl-12">
+            {errors !== "" ? <><p className="mb-2 text-red-700 font-semibold">{errors}</p></> :<></> }
             <div className="w-[80%] space-y-6">
               {/* Progress indicator
             <div className="flex justify-start gap-8 mb-8">
@@ -613,7 +661,7 @@ const ScanCAWindows = () => {
                   >
                     Previous
                   </button>
-
+                  <Breadcrumbs currentPage={page} pages={formPages} />
                   {page === 4 ? (
                     <button
                       type="submit"
