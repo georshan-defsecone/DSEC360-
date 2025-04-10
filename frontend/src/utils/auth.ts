@@ -11,6 +11,7 @@ export const verifyToken = async (): Promise<boolean> => {
     });
 
     return res.status === 200; // token is valid
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
     return false; // token is invalid or request failed
   }
