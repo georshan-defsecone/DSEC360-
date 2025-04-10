@@ -180,7 +180,7 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
       <div>
         <Link
           to="/"
-          className="flex items-center mb-6 no-underline hover:opacity-80"
+          className="flex items-center mb-6 no-underline"
         >
           <img src={logo} alt="Logo" className="w-10" />
           <h2 className="text-2xl font-bold ml-3 text-black">DSEC360+</h2>
