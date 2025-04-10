@@ -44,11 +44,11 @@ const Router = [
         element: <ScanHome/>
     },
     {
-        path: "/scan/windows",
+        path: "/scan/configaudit/windows",
         element: <ScanCAWindows/>
     },
     {
-        path: "/scan/linux",
+        path: "/scan/configaudit/linux",
         element: <ScanCALinux/>
     },
     {
