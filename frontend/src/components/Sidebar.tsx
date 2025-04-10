@@ -178,10 +178,13 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
   return (
     <div className="fixed top-0 left-0 h-screen w-64 flex flex-col p-6 justify-between  z-10 bg-white ">
       <div>
-        <div className="flex items-center mb-6">
+        <Link
+          to="/"
+          className="flex items-center mb-6 no-underline hover:opacity-80"
+        >
           <img src={logo} alt="Logo" className="w-10" />
-          <h2 className="text-2xl font-bold ml-3">DSEC360+</h2>
-        </div>
+          <h2 className="text-2xl font-bold ml-3 text-black">DSEC360+</h2>
+        </Link>
       </div>
 
       <div className="flex-1 overflow-y-auto scrollbar-hide">
@@ -190,25 +193,23 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
         {settings && <SettingSidebar />}
       </div>
 
-     
       <div className="mt-auto pt-4 border-t flex justify-between items-center px-4">
-  {/* Settings Button */}
-  <Link
-    to="/settings/about" // or your default settings route
-    className="flex items-center text-gray-700 hover:text-black"
-  >
-    <Settings className="w-5 h-5 mr-2" />
-  </Link>
+        {/* Settings Button */}
+        <Link
+          to="/settings/about" // or your default settings route
+          className="flex items-center text-gray-700 hover:text-black"
+        >
+          <Settings className="w-5 h-5 mr-2" />
+        </Link>
 
-  {/* Logout Icon Button */}
-  <button
-    onClick={handleLogout}
-    className="flex items-center text-red-600 hover:text-red-800"
-  >
-    <LogOut className="w-5 h-5 mr-2" />
-  </button>
-</div>
-
+        {/* Logout Icon Button */}
+        <button
+          onClick={handleLogout}
+          className="flex items-center text-red-600 hover:text-red-800"
+        >
+          <LogOut className="w-5 h-5 mr-2" />
+        </button>
+      </div>
     </div>
   );
 };
