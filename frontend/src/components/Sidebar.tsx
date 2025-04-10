@@ -198,7 +198,6 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
     className="flex items-center text-gray-700 hover:text-black"
   >
     <Settings className="w-5 h-5 mr-2" />
-    <span>Settings</span>
   </Link>
 
   {/* Logout Icon Button */}
@@ -207,7 +206,6 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
     className="flex items-center text-red-600 hover:text-red-800"
   >
     <LogOut className="w-5 h-5 mr-2" />
-    <span>Logout</span>
   </button>
 </div>
 
