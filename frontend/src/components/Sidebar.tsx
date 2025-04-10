@@ -2,7 +2,7 @@ import { Settings,LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import "@/styles/sidebar.css"
-import { jwtDecode } from "jwt-decode";
+import { jwtDecode  } from "jwt-decode"
 import { useEffect, useState } from 'react';
 
 
@@ -190,12 +190,7 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
         {settings && <SettingSidebar />}
       </div>
 
-      <div className="mt-4">
-        <button className="flex items-center px-4 py-2">
-          <Settings className="w-5 h-5 mr-2" />
-        </button> 
-      </div>
-
+     
       <div className="mt-auto pt-4 border-t flex justify-between items-center px-4">
   {/* Settings Button */}
   <Link
