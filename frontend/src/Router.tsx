@@ -1,5 +1,3 @@
-import ProtectedRoute from "./components/ProtectedRoute";
-
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import About from "./pages/About";
@@ -8,6 +6,7 @@ import ProxyServer from "./pages/ProxyServer";
 import AllProjects from "./pages/AllProjects";
 import Trash from "./pages/Trash";
 import Result from "./pages/Result";
+
 import ScanHome from "./pages/ScanHome";
 import ScanCAWindows from "./pages/ScanCAWindows";
 import ScanCALinux from "./pages/ScanCALinux";
@@ -16,116 +15,65 @@ import Myaccounts from "./pages/Myaccounts";
 import CreateUser from "./pages/CreateUser";
 
 const Router = [
-  {
-    path: "/",
-    element: (
-      <ProtectedRoute>
-        <Dashboard />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/dashboard/allprojects",
-    element: (
-      <ProtectedRoute>
-        <AllProjects />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/dashboard/results",
-    element: (
-      <ProtectedRoute>
-        <Result />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/dashboard/trash",
-    element: (
-      <ProtectedRoute>
-        <Trash />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/scan",
-    element: (
-      <ProtectedRoute>
-        <ScanHome />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/scan/windows",
-    element: (
-      <ProtectedRoute>
-        <ScanCAWindows />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/scan/linux",
-    element: (
-      <ProtectedRoute>
-        <ScanCALinux />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/settings/SMTP",
-    element: (
-      <ProtectedRoute>
-        <SMTP />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/settings/proxyserver",
-    element: (
-      <ProtectedRoute>
-        <ProxyServer />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/settings/users",
-    element: (
-      <ProtectedRoute>
-        <Users />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/settings/myaccounts",
-    element: (
-      <ProtectedRoute>
-        <Myaccounts />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/settings/users/createuser",
-    element: (
-      <ProtectedRoute>
-        <CreateUser />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/settings/about",
-    element: (
-      <ProtectedRoute>
-        <About />
-      </ProtectedRoute>
-    ),
-  },
+    {
+        path: "/",
+        element: <Dashboard/>
+    },
+    {
+        path: "/dashboard/allprojects",
+        element: <AllProjects/>
+    },
+    {
+        path: "/dashboard/results",
+        element: <Result/>
+    },
+    {
+        path: "/dashboard/trash",
+        element: <Trash/>
+    },
+    {
+        path: "/login",
+        element: <Login/>
+    },
+    {
+        path: "/settings/about",
+        element: <About/>
+    },
+    {
+        path: "/scan",
+        element: <ScanHome/>
+    },
+    {
+        path: "/scan/windows",
+        element: <ScanCAWindows/>
+    },
+    {
+        path: "/scan/linux",
+        element: <ScanCALinux/>
+    },
+    {
+        path: "/settings/SMTP",
+        element: <SMTP/>
+    }
+    ,
+    {
+        path: "/settings/proxyserver",
+        element: <ProxyServer/>
+    }
+    ,
+    {
+        path: "/settings/users",
+        element: <Users/>
+    }
+    ,
+    {
+        path: "/settings/myaccounts",
+        element: <Myaccounts/>
+    },
+    {
+        path: "/settings/users/createuser",
+        element: <CreateUser/>
+    }
+]
 
-  // 🟢 Public routes
-  {
-    path: "/login",
-    element: <Login />,
-  },
-];
-
-export default Router;
+export default Router
