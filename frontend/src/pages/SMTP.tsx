@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch"
+import { Switch } from "@/components/ui/switch";
 
 const SMTP = () => {
   const [isSMTPEnabled, setIsSMTPEnabled] = useState(false);
@@ -19,9 +19,8 @@ const SMTP = () => {
   const [authMethod, setAuthMethod] = useState("none");
 
   const handleSwitchChange = () => {
-    setIsSMTPEnabled(prev => !prev);
+    setIsSMTPEnabled((prev) => !prev);
   };
-
 
   // Handle change in Auth method selection
   const handleAuthMethodChange = (value: string) => {
@@ -38,8 +37,14 @@ const SMTP = () => {
               <div className="flex flex-col items-start space-y-10">
                 {/* SMTP Enable Switch */}
                 <div className="flex items-center">
-                  <Switch id="smtp" checked={isSMTPEnabled} onCheckedChange={handleSwitchChange} />
-                  <label htmlFor="smtp" className="ml-4 text-lg font-semibold">Enable SMTP</label>
+                  <Switch
+                    id="smtp"
+                    checked={isSMTPEnabled}
+                    onCheckedChange={handleSwitchChange}
+                  />
+                  <label htmlFor="smtp" className="ml-4 text-lg font-semibold">
+                    Enable SMTP
+                  </label>
                 </div>
 
                 {/* SMTP Settings - Conditional */}
@@ -47,47 +52,51 @@ const SMTP = () => {
                   <>
                     {/* Host */}
                     <div className="flex items-center">
-                      <p className="text-lg font-semibold w-40">Host:</p>
+                      <p className="  w-60">Host:</p>
                       <Input type="text" className="w-60" placeholder="" />
                     </div>
 
                     {/* Port */}
                     <div className="flex items-center">
-                      <p className="text-lg font-semibold w-40">Port:</p>
+                      <p className="  w-60">Port:</p>
                       <Input type="text" className="w-60" placeholder="" />
                     </div>
 
                     {/* From */}
                     <div className="flex items-center">
-                      <p className="text-lg font-semibold w-40">From:</p>
+                      <p className="  w-60">From:</p>
                       <Input type="text" className="w-60" placeholder="" />
                     </div>
 
                     {/* Encryption */}
                     <div className="flex items-center">
-                      <p className="text-lg font-semibold w-40">Encryption:</p>
+                      <p className="  w-60">Encryption:</p>
                       <Select>
                         <SelectTrigger className="w-[180px]">
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="no encryption">No encryption</SelectItem>
+                          <SelectItem value="no encryption">
+                            No encryption
+                          </SelectItem>
                           <SelectItem value="force ssl">Force SSL</SelectItem>
                           <SelectItem value="force tls">Force TLS</SelectItem>
-                          <SelectItem value="use tls if available">Use TLS If Available</SelectItem>
+                          <SelectItem value="use tls if available">
+                            Use TLS If Available
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
                     {/* Hostname */}
                     <div className="flex items-center">
-                      <p className="text-lg font-semibold w-40">Hostname:</p>
+                      <p className="  w-60">Hostname:</p>
                       <Input type="text" className="w-60" placeholder="" />
                     </div>
 
                     {/* Auth Method */}
                     <div className="flex items-center">
-                      <p className="text-lg font-semibold w-40">Auth method:</p>
+                      <p className="w-60">Auth method:</p>
                       <Select onValueChange={handleAuthMethodChange}>
                         <SelectTrigger className="w-[180px]">
                           <SelectValue placeholder="Select" />
@@ -106,28 +115,35 @@ const SMTP = () => {
                     {authMethod !== "none" && (
                       <>
                         <div className="flex items-center">
-                          <p className="text-lg font-semibold w-40">Username:</p>
-                          <Input type="text" className="w-60" placeholder="Enter username" />
+                          <p className="w-60">Username:</p>
+                          <Input
+                            type="text"
+                            className="w-60"
+                            placeholder="Enter username"
+                          />
                         </div>
 
                         <div className="flex items-center">
-                          <p className="text-lg font-semibold w-40">Password:</p>
-                          <Input type="password" className="w-60" placeholder="Enter password" />
+                          <p className="  w-60">Password:</p>
+                          <Input
+                            type="password"
+                            className="w-60"
+                            placeholder="Enter password"
+                          />
                         </div>
                       </>
                     )}
                   </>
                 )}
+                {/* Save Button - Also Conditional if needed */}
+                {isSMTPEnabled && (
+                  <Button variant="outline" className="w-20 mt-6 ml-auto mr-6">
+                    Save
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
-
-          {/* Save Button - Also Conditional if needed */}
-          {isSMTPEnabled && (
-            <Button variant="outline" className="w-20 mt-6 ml-auto mr-6">
-              Save
-            </Button>
-          )}
         </div>
       </div>
     </>

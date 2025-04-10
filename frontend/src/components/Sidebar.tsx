@@ -65,7 +65,7 @@ const SettingSidebar = () => {
         About
       </button>
       </Link>
-      <Link to={"/settings/advance"}>
+      <Link to={"/settings/advanced"}>
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Advance
       </button>
@@ -153,9 +153,12 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
       </div>    
 
       <div className="mt-4">
+        <Link to={"/settings/about"} >
         <button className="flex items-center px-4 py-2">
           <Settings className="w-5 h-5 mr-2" />
+        
         </button>
+        </Link>
       </div>
     </div>
   );

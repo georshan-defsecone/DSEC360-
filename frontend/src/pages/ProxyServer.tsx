@@ -1,24 +1,24 @@
-import { Card, CardContent } from "@/components/ui/card"
-import Sidebar from "@/components/Sidebar"
-import Header from "@/components/Header"
-import { Button } from "@/components/ui/button"
-import { useState } from "react"
-import { Input } from "@/components/ui/input"
+import { Card, CardContent } from "@/components/ui/card";
+import Sidebar from "@/components/Sidebar";
+import Header from "@/components/Header";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 const ProxyServer = () => {
-  const [isProxyEnabled, setIsProxyEnabled] = useState(false)
+  const [isProxyEnabled, setIsProxyEnabled] = useState(false);
 
   const handleSwitchChange = () => {
-    setIsProxyEnabled(prev => !prev)
-  }
+    setIsProxyEnabled((prev) => !prev);
+  };
 
   return (
     <>
@@ -36,7 +36,10 @@ const ProxyServer = () => {
                     checked={isProxyEnabled}
                     onCheckedChange={handleSwitchChange}
                   />
-                  <label htmlFor="proxyserver" className="ml-4 text-lg font-semibold">
+                  <label
+                    htmlFor="proxyserver"
+                    className="ml-4 text-lg font-semibold"
+                  >
                     Enable Proxy
                   </label>
                 </div>
@@ -46,31 +49,31 @@ const ProxyServer = () => {
                   <>
                     {/* Row 1: Host */}
                     <div className="flex items-center">
-                      <p className="text-lg font-semibold w-40">Host:</p>
+                      <p className="  w-60">Host:</p>
                       <Input type="text" className="w-60" placeholder="" />
                     </div>
 
                     {/* Row 2: Port */}
                     <div className="flex items-center">
-                      <p className="text-lg font-semibold w-40">Port:</p>
+                      <p className="  w-60">Port:</p>
                       <Input type="text" className="w-60" placeholder="" />
                     </div>
 
                     {/* Row 3: Username */}
                     <div className="flex items-center">
-                      <p className="text-lg font-semibold w-40">UserName:</p>
+                      <p className="  w-60">UserName:</p>
                       <Input type="text" className="w-60" placeholder="" />
                     </div>
 
                     {/* Row 4: Password */}
                     <div className="flex items-center">
-                      <p className="text-lg font-semibold w-40">Password:</p>
+                      <p className="  w-60">Password:</p>
                       <Input type="text" className="w-60" placeholder="" />
                     </div>
 
                     {/* Row 5: Auth Method */}
                     <div className="flex items-center">
-                      <p className="text-lg font-semibold w-40">AuthMethod:</p>
+                      <p className="  w-60">AuthMethod:</p>
                       <Select>
                         <SelectTrigger className="w-[180px]">
                           <SelectValue placeholder="Select" />
@@ -87,25 +90,23 @@ const ProxyServer = () => {
 
                     {/* Row 6: User Agent */}
                     <div className="flex items-center">
-                      <p className="text-lg font-semibold w-40">User Agent:</p>
+                      <p className="  w-60">User Agent:</p>
                       <Input type="text" className="w-60" placeholder="" />
                     </div>
                   </>
                 )}
+                {isProxyEnabled && (
+                  <Button variant="outline" className="w-20 mt-6 ml-auto mr-6">
+                    Save
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
-
-          {/* Save Button - Show only if proxy is enabled */}
-          {isProxyEnabled && (
-            <Button variant="outline" className="w-20 mt-6 ml-auto mr-6">
-              Save
-            </Button>
-          )}
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default ProxyServer
+export default ProxyServer;

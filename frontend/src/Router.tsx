@@ -13,6 +13,9 @@ import ScanCALinux from "./pages/ScanCALinux";
 import Users from "./pages/Users";
 import Myaccounts from "./pages/Myaccounts";
 import CreateUser from "./pages/CreateUser";
+import Advanced from "./pages/Advanced";
+import LDAP from "./pages/LDAP";
+import ChangePassword from "./pages/ChangePassword";
 
 const Router = [
     {
@@ -73,6 +76,21 @@ const Router = [
     {
         path: "/settings/users/createuser",
         element: <CreateUser/>
+    }
+    ,
+    {
+        path: "/settings/advanced",
+        element: <Advanced/>
+    }
+    ,
+    {
+        path: "/settings/LDAP",
+        element: <LDAP/>
+    }
+    ,
+    {
+        path: "/settings/myaccounts/changepassword",
+        element: <ChangePassword/>
     }
 ]
 
