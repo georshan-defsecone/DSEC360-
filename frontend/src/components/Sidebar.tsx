@@ -1,4 +1,18 @@
-import { Settings, LogOut } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Shield,
+  Server,
+  Database,
+  Cloud,
+  Box,
+  Globe,
+  SatelliteDish,
+  PanelTop,
+  TerminalSquare,
+  Settings,
+  LogOut
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import "@/styles/sidebar.css";
@@ -11,75 +25,122 @@ type SidebarProps = {
   settings: boolean;
 };
 
+//scan sidebar
+
+const SidebarSection = ({
+  title,
+  links,
+}: {
+  title: string;
+  links: { to: string; label: string; icon: JSX.Element }[];
+}) => {
+  const [isOpen, setIsOpen] = useState(true);
+
+  return (
+    <div>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between w-full text-left px-4 py-3 font-bold text-sm tracking-wide uppercase"
+      >
+        <span>{title}</span>
+        {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+      </button>
+      {isOpen && (
+        <div className="space-y-2 mt-1 font-semibold">
+          {links.map(({ to, label, icon }) => (
+            <Link to={to} key={to}>
+              <button className="flex items-center gap-2 w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium text-sm">
+                {icon} {label}
+              </button>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ScanSettingSidebar = () => {
   return (
     <nav className="space-y-2">
-      <h1 className="block w-full text-left px-4 py-2 font-semibold">
-        Configuration Audit
-      </h1>
-      <Link to="/scan/configaudit/windows">
-        <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-          Windows
-        </button>
-      </Link>
-      <Link to="/scan/configaudit/linux">
-        <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-          Linux
-        </button>
-      </Link>
-      <Link to="/scan/configaudit/firewall">
-        <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-          Firewall
-        </button>
-      </Link>
-      <Link to="/scan/configaudit/WAservers">
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-        Web Servers & Application Servers
-      </button>
-      </Link>
-      <Link to="/scan/configaudit/networkDevices">
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-        Networks Devices
-      </button>
-      </Link>
-      <Link to="/scan/configaudit/databases">
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-        Database
-      </button>
-      </Link>
-      <Link to="/scan/configaudit/cloud">
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-        Cloud
-      </button>
-      </Link>
-      <Link to="/scan/configaudit/containersAndOrchestration">
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-        Containers & Orchestration
-      </button>
-      </Link>
-      <h1 className="block w-full text-left px-4 py-2 font-semibold">
-        Compromise Assessment
-      </h1>
-      <Link to="/scan/ioc/windows">
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-        Windows
-      </button>
-      </Link>
-      <Link to="/scan/ioc/linux">
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-        Linux
-      </button>
-      </Link>
+      <SidebarSection
+        title="Configuration Audit"
+        links={[
+          {
+            to: "/scan/configaudit/windows",
+            label: "Windows",
+            icon: <PanelTop size={16} />,
+          },
+          {
+            to: "/scan/configaudit/linux",
+            label: "Linux",
+            icon: <TerminalSquare size={16} />,
+          },
+          {
+            to: "/scan/configaudit/firewall",
+            label: "Firewall",
+            icon: <Shield size={16} />,
+          },
+          {
+            to: "/scan/configaudit/WAservers",
+            label: "Web & App Servers",
+            icon: <Server size={16} />,
+          },
+          {
+            to: "/scan/configaudit/networkDevices",
+            label: "Network Devices",
+            icon: <SatelliteDish size={16} />,
+          },
+          {
+            to: "/scan/configaudit/databases",
+            label: "Database",
+            icon: <Database size={16} />,
+          },
+          {
+            to: "/scan/configaudit/cloud",
+            label: "Cloud",
+            icon: <Cloud size={16} />,
+          },
+          {
+            to: "/scan/configaudit/containersAndOrchestration",
+            label: "Containers & Orchestration",
+            icon: <Box size={16} />,
+          },
+        ]}
+      />
+
+      <SidebarSection
+        title="Compromise Assessment"
+        links={[
+          {
+            to: "/scan/ioc/windows",
+            label: "Windows",
+            icon: <PanelTop size={16} />,
+          },
+          {
+            to: "/scan/ioc/linux",
+            label: "Linux",
+            icon: <TerminalSquare size={16} />,
+          },
+        ]}
+      />
     </nav>
   );
 };
 
+//Settings sidebar
+
 const SettingSidebar = () => {
-  return (<>
+  return (
     <nav className="space-y-2">
       <Link to={"/settings/about"}>
         <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
           About
+        </button>
+      </Link>
+      <Link to={"/settings/myaccounts"}>
+        <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
+          My Accounts
         </button>
       </Link>
       <Link to={"/settings/advance"}>
@@ -102,19 +163,12 @@ const SettingSidebar = () => {
           LDAP
         </button>
       </Link>
-    </nav>
-    <nav className="mt-7">
-      <Link to={"/settings/myaccounts"}>
-        <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-          My accounts
-        </button>
-      </Link>
       <Link to={"/settings/users"}>
         <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
           Users
         </button>
       </Link>
-    </nav> </>
+    </nav>
   );
 };
 
@@ -126,8 +180,9 @@ const handleLogout = () => {
   window.location.href = "/login";
 };
 
-const HomeSettingSidebar = () => {
+//Home sidebar
 
+const HomeSettingSidebar = () => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -174,6 +229,8 @@ const HomeSettingSidebar = () => {
   );
 };
 
+//overall side bar setting decide which to display
+
 const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
   return (
     <div className="fixed top-0 left-0 h-screen w-64 flex flex-col p-6 justify-between  z-10 bg-white ">
@@ -210,10 +267,5 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
     </div>
   );
 };
-
-
-
-
-
 
 export default Sidebar;
