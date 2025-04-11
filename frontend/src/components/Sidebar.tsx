@@ -1,10 +1,9 @@
-import { Settings } from "lucide-react";
+import { Settings, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
-import "@/styles/sidebar.css"
+import "@/styles/sidebar.css";
 import { jwtDecode } from "jwt-decode";
-import { useEffect, useState } from 'react';
-
+import { useEffect, useState } from "react";
 
 type SidebarProps = {
   scanSettings: boolean;
@@ -18,43 +17,59 @@ const ScanSettingSidebar = () => {
       <h1 className="block w-full text-left px-4 py-2 font-semibold">
         Configuration Audit
       </h1>
-      <Link to="/scan/windows">
+      <Link to="/scan/configaudit/windows">
         <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
           Windows
         </button>
       </Link>
-      <Link to="/scan/linux">
+      <Link to="/scan/configaudit/linux">
         <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
           Linux
         </button>
       </Link>
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-        Firewall
-      </button>
+      <Link to="/scan/configaudit/firewall">
+        <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
+          Firewall
+        </button>
+      </Link>
+      <Link to="/scan/configaudit/WAservers">
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Web Servers & Application Servers
       </button>
+      </Link>
+      <Link to="/scan/configaudit/networkDevices">
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Networks Devices
       </button>
+      </Link>
+      <Link to="/scan/configaudit/databases">
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Database
       </button>
+      </Link>
+      <Link to="/scan/configaudit/cloud">
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Cloud
       </button>
+      </Link>
+      <Link to="/scan/configaudit/containersAndOrchestration">
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Containers & Orchestration
       </button>
+      </Link>
       <h1 className="block w-full text-left px-4 py-2 font-semibold">
         Compromise Assessment
       </h1>
+      <Link to="/scan/ioc/windows">
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Windows
       </button>
+      </Link>
+      <Link to="/scan/ioc/linux">
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Linux
       </button>
+      </Link>
     </nav>
   );
 };
@@ -103,6 +118,14 @@ const SettingSidebar = () => {
   );
 };
 
+const handleLogout = () => {
+  localStorage.removeItem("access");
+  localStorage.removeItem("refresh");
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  window.location.href = "/login";
+};
+
 const HomeSettingSidebar = () => {
 
   const [isAdmin, setIsAdmin] = useState(false);
@@ -111,7 +134,7 @@ const HomeSettingSidebar = () => {
     const access = localStorage.getItem("access");
     if (access) {
       try {
-        const decoded = jwtDecode(access);
+        const decoded: any = jwtDecode(access);
         setIsAdmin(decoded?.is_admin);
       } catch (e) {
         console.error("Invalid token:", e);
@@ -151,9 +174,6 @@ const HomeSettingSidebar = () => {
   );
 };
 
-
-
-
 const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
   return (
     <div className="fixed top-0 left-0 h-screen w-64 flex flex-col p-6 justify-between  z-10 bg-white ">
@@ -178,6 +198,8 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
     </div>
   );
 };
+
+
 
 
 

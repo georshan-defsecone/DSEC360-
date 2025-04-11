@@ -1,173 +1,191 @@
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
-import { useState } from "react";
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { MdAccountCircle } from "react-icons/md";
+import { FiEdit } from "react-icons/fi";
+import { IoMdClose } from "react-icons/io";
+import api from "./api";
 
 const Myaccounts = () => {
-  const [page, setPage] = useState(1);
-  const [formData, setFormData] = useState({
-    // General Info
-    fullname: "",
-    email: "",
-   
+  const [username, setUserName] = useState("");
+  const [useremail, setUserEmail] = useState("");
+  const [role, setRole] = useState("User");
+  const [showPasswordCard, setShowPasswordCard] = useState(false);
 
-    // Target Details
-    agent: "",
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-    /* Agent, Remote access, or upload config -
-     * Agent: display only download button
-     * Remote access: User input and upload button sidebyside
-     *                Get credentials - password, kerberos, LM Hash, NTLM Hash (if windows)
-     *                                - password, kerberos public key, certificate (if linux)
-     * Upload: User input and upload button sidebyside
-     */
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await api.get("users/userinfo");
+        setUserName(response.data.username);
+        setUserEmail(response.data.email);
+        setRole(response.data.is_admin ? "Administrator" : "User");
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
 
-    target: "",
-    password: "",
-    kerberos: "",
-    LMHash: "",
-    NTLMHash: "",
+    fetchData();
+  }, []);
 
-    //Get compliance info
-    // __________________
-
-    //Scan settings
-    schedule: "",
-    notification: "",
-  });
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const nextPage = () => {
-    if (page < 4) setPage((prev) => prev + 1);
-  };
-
-  const prevPage = () => {
-    if (page > 1) setPage((prev) => prev - 1);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Add your submission logic here
-  };
-
-  const renderPage = () => {
-    switch (page) {
-      case 1:
-        return (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">User Info</h2>
-            <input
-              type="text"
-              name="fullname"
-              placeholder="fullname"
-              value={formData.fullname}
-              onChange={handleInputChange}
-              className="w-full p-2 border rounded"
-            />
-             <input
-              type="text"
-              name="email"
-              placeholder="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              className="w-full p-2 border rounded"
-            />
-             <h2 className="text-xl font-semibold">User Info</h2>
-            <input
-              type="text"
-              name="fullname"
-              placeholder="fullname"
-              value={formData.fullname}
-              onChange={handleInputChange}
-              className="w-full p-2 border rounded"
-            />
-             <input
-              type="text"
-              name="email"
-              placeholder="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              className="w-full p-2 border rounded"
-            />
-            {/* Add other general info inputs */}
-          </div>
-        );
-      case 2:
-        return (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Api Keys</h2>
-            <input
-              type="text"
-              name="username"
-              placeholder="Username"
-              value={formData.scanName}
-              onChange={handleInputChange}
-              className="w-full p-2 border rounded"
-            />  
-            {/* Add other user info inputs */}
-          </div>
-        );
-      default:
-        return null;
+  const handleSavePassword = () => {
+    if (newPassword !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
     }
+    // Add your password update API call here
+    console.log("Password updated:", {
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    });
+
+    // Clear fields and close
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setShowPasswordCard(false);
   };
 
-  return (<>
-    <div className="flex h-screen text-black">
-    <Sidebar settings={true} scanSettings={false} homeSettings={false} />
-    <div className="flex-1 flex flex-col ml-64 p-8 ">
-      <Header title="My Account" />
-      <Card className="min-h-130">
-        <CardContent className="p-2 pl-12">
-          <div className="flex flex-col items-start  space-y-10"> {/* Add space between rows */}
-            <h2 className="text-xl font-bold">User Info</h2>
-            {/* Row 1 */}
-            <div className="flex items-center">
-              <p className="text-lg font-semibold w-40">Full Name:</p> {/* Adjust width of label */}
-              <Input type="text" className="w-60" placeholder="" />
+  return (
+    <div className="flex h-screen text-black relative">
+      <Sidebar settings={true} scanSettings={false} homeSettings={false} />
+
+      <div className="flex-1 flex flex-col ml-64 p-8">
+        <Header title="My Account" />
+
+        <Card className="min-h-130">
+          <CardContent className="p-8">
+            <div className="flex items-start gap-8">
+              {/* Profile Icon */}
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center shadow-md">
+                <MdAccountCircle className="text-gray-600 text-6xl" />
+              </div>
+
+              {/* User Info and Button */}
+              <div className="w-full max-w-md space-y-4">
+                {/* Username Row */}
+                <div className="flex items-center border-b pb-2">
+                  <div className="w-32 text-gray-500">Username</div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-800">
+                      {username}
+                    </span>
+                    <button className="text-gray-500 hover:text-black transition">
+                      <FiEdit className="text-lg" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Email Row */}
+                <div className="flex items-center border-b pb-2">
+                  <div className="w-32 text-gray-500">Email</div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-800">
+                      {useremail}
+                    </span>
+                    <button className="text-gray-500 hover:text-black transition">
+                      <FiEdit className="text-lg" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Role Row */}
+                <div className="flex items-center">
+                  <div className="w-32 text-gray-500">Role</div>
+                  <span className="font-medium text-gray-800">{role}</span>
+                </div>
+
+                {/* Change Password Button */}
+                <div className="pt-6">
+                  <button
+                    className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition"
+                    onClick={() => setShowPasswordCard(true)}
+                  >
+                    Change Password
+                  </button>
+                </div>
+              </div>
             </div>
+          </CardContent>
+        </Card>
+      </div>
 
-            {/* Row 2 */}
-            <div className="flex items-center">
-              <p className="text-lg font-semibold w-40">Email:</p>
-              <Input type="text" className="w-60" placeholder="" />
-            </div>
+      {/* Change Password Popup Card */}
+      {showPasswordCard && (
+        <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <div className="pointer-events-auto w-xl">
+            {/* 👇 Changed max-w-md to max-w-lg */}
+            <Card className="w-full max-w-xl shadow-xl relative">
+              <CardContent className="p-8 space-y-6">
+                {/* Close button */}
+                <button
+                  className="absolute top-3 right-3 text-gray-500 hover:text-black"
+                  onClick={() => setShowPasswordCard(false)}
+                >
+                  <IoMdClose className="text-2xl" />
+                </button>
 
-            <h2 className="text-xl font-bold">Change Password</h2>
+                <h2 className="text-xl font-semibold text-center">
+                  Change Password
+                </h2>
 
+                {/* Inputs */}
+                <div className="space-y-1">
+                  <label className="text-sm text-gray-600">
+                    Current Password
+                  </label>
+                  <Input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter your current password"
+                  />
+                </div>
 
-            {/* Row 3 */}
-            <div className="flex items-center">
-              <p className="text-lg font-semibold w-40">Current Password:</p>
-              <Input type="text" className="w-60" placeholder="" />
-            </div>
+                <div className="space-y-1">
+                  <label className="text-sm text-gray-600">New Password</label>
+                  <Input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password"
+                  />
+                </div>
 
-            {/* Row 4 */}
-            <div className="flex items-center">
-              <p className="text-lg font-semibold w-40">New Password:</p>
-              <Input type="text" className="w-60" placeholder="" />
-            </div>
+                <div className="space-y-1">
+                  <label className="text-sm text-gray-600">
+                    Confirm Password
+                  </label>
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Retype new password"
+                  />
+                </div>
 
-            {/* Row 5 */}
-                  {/* Row 6 */}
-           
+                {/* Save button */}
+                <div className="pt-4">
+                  <Button
+                    onClick={handleSavePassword}
+                    className="bg-black text-white hover:bg-gray-800 w-full"
+                  >
+                    Save
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
-      <Button variant="outline" className="w-20 mt-6 ml-auto mr-6">Save</Button>
-
+        </div>
+      )}
     </div>
-  </div></>
   );
 };
 

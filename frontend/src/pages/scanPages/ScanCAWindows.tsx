@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import api from "./api";
+import api from "../api";
 
 const ScanCAWindows = () => {
   const [complianceData, setComplianceData] = useState([]);
@@ -441,7 +441,7 @@ const ScanCAWindows = () => {
         return (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Compliance Information</h2>
-
+            {errors !== "" ? <><p className="mb-2 text-red-700 font-semibold">{errors}</p></> :<></> }
             {/* Operating System Selection */}
             <div className="flex items-center">
               <p className="block w-70">Operating System:</p>
@@ -626,7 +626,6 @@ const ScanCAWindows = () => {
 
         <Card className="w-full mt-4">
           <CardContent className="w-full p-4 pl-12">
-            {errors !== "" ? <><p className="mb-2 text-red-700 font-semibold">{errors}</p></> :<></> }
             <div className="w-[80%] space-y-6">
               {/* Progress indicator
             <div className="flex justify-start gap-8 mb-8">
