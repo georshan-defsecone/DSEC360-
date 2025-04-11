@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "./api";
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState("");
@@ -14,37 +15,30 @@ const Login: React.FC = () => {
     setMessage(""); // Reset message on submit
 
     try {
-      const response = await fetch("http://localhost:8000/api/token/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          password,
-        }),
+      const response = await api.post("token/", {
+        username,
+        password,
       });
 
-      const data = await response.json();
+      const { access, refresh } = response.data;
 
-      if (response.ok) {
-        localStorage.setItem("access", data.access);
-        localStorage.setItem("refresh", data.refresh);
-        setMessage("Login successful! Redirecting...");
-        setMessageType("success");
+      localStorage.setItem("access", access);
+      localStorage.setItem("refresh", refresh);
+      setMessage("Login successful! Redirecting...");
+      setMessageType("success");
 
-        // Delay before navigation to show success message
-        setTimeout(() => {
-          navigate("/");
-        }, 1500);
-      } else {
-        setMessage("Invalid username or password.");
-        setMessageType("error");
-      }
+      // Delay before navigation to show success message
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
     } catch (error) {
-      setMessage("An error occurred. Please try again.");
+      if (error.response?.status === 401) {
+        setMessage("Invalid username or password.");
+      } else {
+        setMessage("An error occurred. Please try again.");
+        console.error("Login Error:", error);
+      }
       setMessageType("error");
-      console.error("Error:", error);
     }
   };
 
