@@ -15,83 +15,77 @@ import Myaccounts from "./pages/Myaccounts";
 import CreateUser from "./pages/CreateUser";
 import Advanced from "./pages/Advanced";
 import LDAP from "./pages/LDAP";
-import ChangePassword from "./pages/ChangePassword";
 
 const Router = [
-    {
-        path: "/",
-        element: <Dashboard/>
-    },
-    {
-        path: "/dashboard/allprojects",
-        element: <AllProjects/>
-    },
-    {
-        path: "/dashboard/results",
-        element: <Result/>
-    },
-    {
-        path: "/dashboard/trash",
-        element: <Trash/>
-    },
-    {
-        path: "/login",
-        element: <Login/>
-    },
-    {
-        path: "/settings/about",
-        element: <About/>
-    },
-    {
-        path: "/scan",
-        element: <ScanHome/>
-    },
-    {
-        path: "/scan/windows",
-        element: <ScanCAWindows/>
-    },
-    {
-        path: "/scan/linux",
-        element: <ScanCALinux/>
-    },
-    {
-        path: "/settings/SMTP",
-        element: <SMTP/>
-    }
-    ,
-    {
-        path: "/settings/proxyserver",
-        element: <ProxyServer/>
-    }
-    ,
-    {
-        path: "/settings/users",
-        element: <Users/>
-    }
-    ,
-    {
-        path: "/settings/myaccounts",
-        element: <Myaccounts/>
-    },
-    {
-        path: "/settings/users/createuser",
-        element: <CreateUser/>
-    }
-    ,
-    {
-        path: "/settings/advanced",
-        element: <Advanced/>
-    }
-    ,
-    {
-        path: "/settings/LDAP",
-        element: <LDAP/>
-    }
-    ,
-    {
-        path: "/settings/myaccounts/changepassword",
-        element: <ChangePassword/>
-    }
-]
+  {
+    path: "/",
+    element: <Dashboard />,
+  },
+  {
+    path: "/dashboard/allprojects",
+    element: <AllProjects />,
+  },
+  {
+    path: "/dashboard/results",
+    element: <Result />,
+  },
+  {
+    path: "/dashboard/trash",
+    element: <Trash />,
+  },
+  {
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "/settings/about",
+    element: <About />,
+  },
+  {
+    path: "/scan",
+    element: <ScanHome />,
+  },
+  {
+    path: "/scan/windows",
+    element: <ScanCAWindows />,
+  },
+  {
+    path: "/scan/linux",
+    element: <ScanCALinux />,
+  },
+  {
+    path: "/settings/SMTP",
+    element: <SMTP />,
+  },
+  {
+    path: "/settings/proxyserver",
+    element: <ProxyServer />,
+  },
+  {
+    path: "/settings/advanced",
+    element: <Advanced />,
+  },
+  {
+    path: "/settings/users",
+    element: <Users />,
+  },
+  {
+    path: "/settings/users/createuser",
+    element: <CreateUser />,
+  },
 
-export default Router
+  {
+    path: "/settings/myaccounts",
+    element: <Myaccounts />,
+  },
+  {
+    path: "/settings/LDAP",
+    element: <LDAP />,
+  },
+  {
+    path: "/settings",
+    element: <About />,
+  },
+];
+
+export default Router;
