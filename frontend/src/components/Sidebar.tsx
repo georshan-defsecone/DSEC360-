@@ -18,43 +18,59 @@ const ScanSettingSidebar = () => {
       <h1 className="block w-full text-left px-4 py-2 font-semibold">
         Configuration Audit
       </h1>
-      <Link to="/scan/windows">
+      <Link to="/scan/configaudit/windows">
         <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
           Windows
         </button>
       </Link>
-      <Link to="/scan/linux">
+      <Link to="/scan/configaudit/linux">
         <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
           Linux
         </button>
       </Link>
-      <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-        Firewall
-      </button>
+      <Link to="/scan/configaudit/firewall">
+        <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
+          Firewall
+        </button>
+      </Link>
+      <Link to="/scan/configaudit/WAservers">
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Web Servers & Application Servers
       </button>
+      </Link>
+      <Link to="/scan/configaudit/networkDevices">
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Networks Devices
       </button>
+      </Link>
+      <Link to="/scan/configaudit/databases">
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Database
       </button>
+      </Link>
+      <Link to="/scan/configaudit/cloud">
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Cloud
       </button>
+      </Link>
+      <Link to="/scan/configaudit/containersAndOrchestration">
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Containers & Orchestration
       </button>
+      </Link>
       <h1 className="block w-full text-left px-4 py-2 font-semibold">
         Compromise Assessment
       </h1>
+      <Link to="/scan/ioc/windows">
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Windows
       </button>
+      </Link>
+      <Link to="/scan/ioc/linux">
       <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
         Linux
       </button>
+      </Link>
     </nav>
   );
 };
