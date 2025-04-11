@@ -62,7 +62,7 @@ const ScanCAWindows = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get("/compliance/windows/"); // Adjust the endpoint as needed
+        const response = await api.get("/compliance/configaudit/windows/"); // Adjust the endpoint as needed
         console.log("Fetched data:", response.data);
         setComplianceData(response.data);
       } catch (error) {
