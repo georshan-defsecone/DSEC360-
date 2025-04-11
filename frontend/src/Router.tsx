@@ -33,7 +33,7 @@ const Router = [
         element: <Trash/>
     },
     {
-        path: "/project/:projectName",
+        path: "/project/:project_id",
         element: <ProjectScans/>
     },
     {

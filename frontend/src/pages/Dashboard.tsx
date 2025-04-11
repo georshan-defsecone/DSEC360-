@@ -15,6 +15,9 @@ function DashboardContent() {
     try {
       const response = await api.get('projects/');
       setProjectData(response.data);
+      console.log(response.data);
+      
+      
     } catch (error) {
       console.error('Error fetching project data:', error);
     } 
@@ -58,9 +61,11 @@ function DashboardContent() {
                 <TableBody>
                   {projectData.map((pro, project_id) => (
                     <TableRow key={project_id}>
+
+                      
                       <TableCell></TableCell>
                       <TableCell>
-                        <Link to={`/project/${pro.project_name}`}>
+                        <Link to={`/project/${pro.project_id}`}>
                           {pro.project_name}
                         </Link>
                       </TableCell>
