@@ -6,7 +6,6 @@ import {
   Database,
   Cloud,
   Box,
-  Globe,
   SatelliteDish,
   PanelTop,
   TerminalSquare,

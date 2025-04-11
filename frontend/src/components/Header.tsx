@@ -5,7 +5,6 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
@@ -40,9 +39,11 @@ export default function Header({ title }: { title: string }) {
   };
 
   return (
-    <header className="w-full px-6 py-6 flex justify-between items-center ">
+    <header className="fixed top-0 left-64 w-[calc(100%-16rem)] h-16 bg-white   flex items-center justify-between px-6 z-50">
+      {/* Page Title */}
       <div className="text-xl font-semibold text-gray-800">{title}</div>
 
+      {/* User Menu */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="outline-none">
@@ -50,40 +51,43 @@ export default function Header({ title }: { title: string }) {
           </button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent className="w-64 mt-2 mr-4 p-2 rounded-xl shadow-xl bg-white border border-gray-200">
-          {/* Mini Profile Summary */}
-          <div className="px-3 py-2">
-            <div className="flex items-center space-x-3">
-              <div className="bg-gray-100 p-2 rounded-full">
-                <CircleUserRound className="w-6 h-6 text-gray-700" />
-              </div>
-              <div className="text-sm">
-                <div className="font-semibold text-gray-800">{username}</div>
-                <div className="text-gray-500 text-xs">{email}</div>
-              </div>
+        <DropdownMenuContent
+          className="w-64 mt-2 p-3 rounded-xl shadow-lg bg-white border border-gray-200 right-0"
+          align="end" // ensures dropdown doesn't go to corner
+        >
+          {/* Mini Profile */}
+          <div className="flex items-center gap-3 px-2 py-2">
+            <div className="bg-gray-100 p-2 rounded-full">
+              <CircleUserRound className="w-6 h-6 text-gray-700" />
+            </div>
+            <div className="text-sm">
+              <div className="font-semibold text-gray-800">{username}</div>
+              <div className="text-gray-500 text-xs">{email}</div>
             </div>
           </div>
 
           <DropdownMenuSeparator className="my-2" />
 
-          {/* Menu Options */}
-          <DropdownMenuItem
-            onClick={() => (window.location.href = "/settings/myaccounts")}
-            className="cursor-pointer text-sm text-gray-800 hover:bg-gray-100"
-          >
-            <User className="mr-2 h-4 w-4" />
-            My Profile
-          </DropdownMenuItem>
+          {/* Horizontal Menu Options in Dropdown Format */}
+          <div className="flex items-center justify-between gap-4 px-2 py-1 text-sm">
+            <button className="flex items-center gap-2 px-3 py-2 bg-white text-black hover:bg-black hover:text-white rounded-md transition-all duration-200 ease-in-out">
+              <User className="w-4 h-4 transition-transform duration-200" />
+              My Profile
+            </button>
 
-          <DropdownMenuItem
-            onClick={handleLogout}
-            className="cursor-pointer text-sm text-red-600 hover:bg-red-50"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </DropdownMenuItem>
+            <span className="text-gray-300">|</span>
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1 text-red-600 hover:text-red-800 transition"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </button>
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>
   );
+
 }
