@@ -118,6 +118,14 @@ const SettingSidebar = () => {
   );
 };
 
+const handleLogout = () => {
+  localStorage.removeItem("access");
+  localStorage.removeItem("refresh");
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  window.location.href = "/login";
+};
+
 const HomeSettingSidebar = () => {
 
   const [isAdmin, setIsAdmin] = useState(false);
@@ -134,44 +142,35 @@ const HomeSettingSidebar = () => {
     }
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    window.location.href = "/login";
-  };
-
   return (
-    <div className="fixed top-0 left-0 h-screen w-64 flex flex-col p-6 justify-between z-10 bg-white">
-      {/* Logo */}
-      <div>
-        <Link to="/" className="flex items-center mb-6 no-underline">
-          <img src={logo} alt="Logo" className="w-10" />
-          <h2 className="text-2xl font-bold ml-3 text-black">DSEC360+</h2>
+    <>
+      <nav className="space-y-2">
+        <Link to={"/"}>
+          <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
+            My Projects
+          </button>
         </Link>
-      </div>
+        {isAdmin && (
+          <Link to={"/dashboard/allprojects"}>
+            <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
+              All Projects
+            </button>
+          </Link>
+        )}
 
-      {/* Conditional Navigation */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide">
-        {scanSettings && <ScanSettingSidebar />}
-        {homeSettings && <HomeSettingSidebar isAdmin={isAdmin} />}
-        {settings && <SettingSidebar isAdmin={isAdmin} />}
-      </div>
-
-      <div className="mt-auto pt-6 border-t flex justify-between items-center px-4">
-        {/* Settings Button */}
-        <Link
-          to="/settings/about" // or your default settings route
-          className="flex items-center text-gray-700 hover:text-black"
-        >
-          <Settings className="w-5 h-5 mr-2" />
+        <Link to={"/dashboard/results"}>
+          <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
+            Results
+          </button>
         </Link>
-        <button onClick={handleLogout} className="flex items-center text-red-600 hover:text-red-800">
-          <LogOut className="w-5 h-5 mr-2" />
-        </button>
-      </div>
-    </div>
+
+        <Link to={"/dashboard/trash"}>
+          <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
+            Trash
+          </button>
+        </Link>
+      </nav>
+    </>
   );
 };
 
