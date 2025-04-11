@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -12,9 +12,62 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import api from "./api";
 
 const ProxyServer = () => {
   const [isProxyEnabled, setIsProxyEnabled] = useState(false);
+  const [host, setHost] = useState("");
+  const [port, setPort] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [authMethod, setAuthMethod] = useState("None");
+  const [userAgent, setUserAgent] = useState("");
+
+  useEffect(() => {
+    const fetchProxySettings = async () => {
+      try {
+        const res = await api.get("get-proxy-settings/");
+        const data = res.data;
+
+        setIsProxyEnabled(data.enabled || false);
+        setHost(data.host || "");
+        setPort(data.port || "");
+        setUsername(data.username || "");
+        setPassword(data.password || "");
+        setAuthMethod(data.authMethod || "");
+        setUserAgent(data.userAgent || "");
+      } catch (error) {
+        console.error("Failed to fetch proxy settings:", error);
+      }
+    };
+
+    fetchProxySettings();
+  }, []);
+
+  const handleSave = async () => {
+
+    if (!host || !port || !username || !password || !authMethod) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+  
+    const data = {
+      enabled: isProxyEnabled,
+      host,
+      port,
+      username,
+      password,
+      authMethod,
+      userAgent,
+    };
+    try {
+      await api.post("save-proxy-settings/", data);
+      alert("Proxy settings saved successfully ");
+    } catch (error) {
+      console.error("Failed to save proxy settings", error);
+      alert("Something went wrong ");
+    }
+  };
 
   const handleSwitchChange = () => {
     setIsProxyEnabled((prev) => !prev);
@@ -49,38 +102,39 @@ const ProxyServer = () => {
                   <>
                     {/* Row 1: Host */}
                     <div className="flex items-center">
-                      <p className="  w-60">Host:</p>
-                      <Input type="text" className="w-60" placeholder="" />
+                      <p className="  w-60">Host:<span className="text-red-500">*</span></p>
+                      <Input
+                        value={host}
+                        onChange={(e) => setHost(e.target.value)}
+                        className="w-60"
+                      />
                     </div>
 
                     {/* Row 2: Port */}
                     <div className="flex items-center">
-                      <p className="  w-60">Port:</p>
-                      <Input type="text" className="w-60" placeholder="" />
+                      <p className="  w-60">Port:<span className="text-red-500">*</span></p>
+                      <Input
+                        value={port}
+                        onChange={(e) => setPort(e.target.value)}
+                        className="w-60"
+                      />
                     </div>
 
                     {/* Row 3: Username */}
-                    <div className="flex items-center">
-                      <p className="  w-60">UserName:</p>
-                      <Input type="text" className="w-60" placeholder="" />
-                    </div>
-
-                    {/* Row 4: Password */}
-                    <div className="flex items-center">
-                      <p className="  w-60">Password:</p>
-                      <Input type="text" className="w-60" placeholder="" />
-                    </div>
 
                     {/* Row 5: Auth Method */}
                     <div className="flex items-center">
                       <p className="  w-60">AuthMethod:</p>
-                      <Select>
+                      <Select
+                        value={authMethod}
+                        onValueChange={(value) => setAuthMethod(value)}
+                      >
                         <SelectTrigger className="w-[180px]">
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="autodetect">AutoDetect</SelectItem>
-                          <SelectItem value="none">None</SelectItem>
+                          <SelectItem value="autodetect">None</SelectItem>
+                          <SelectItem value="none">AutoDetect</SelectItem>
                           <SelectItem value="basic">Basic</SelectItem>
                           <SelectItem value="digest">Digest</SelectItem>
                           <SelectItem value="ntlm">NTLM</SelectItem>
@@ -88,10 +142,33 @@ const ProxyServer = () => {
                       </Select>
                     </div>
 
+                    <div className="flex items-center">
+                      <p className="  w-60">UserName:<span className="text-red-500">*</span></p>
+                      <Input
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        className="w-60"
+                      />
+                    </div>
+
+                    {/* Row 4: Password */}
+                    <div className="flex items-center">
+                      <p className="  w-60">Password:<span className="text-red-500">*</span></p>
+                      <Input
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-60"
+                      />
+                    </div>
+
                     {/* Row 6: User Agent */}
                     <div className="flex items-center">
                       <p className="  w-60">User Agent:</p>
-                      <Input type="text" className="w-60" placeholder="" />
+                      <Input
+                        value={userAgent}
+                        onChange={(e) => setUserAgent(e.target.value)}
+                        className="w-60"
+                      />
                     </div>
                   </>
                 )}
@@ -99,6 +176,7 @@ const ProxyServer = () => {
                   <Button
                     variant="outline"
                     className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition ml-auto mr-6"
+                    onClick={handleSave}
                   >
                     Save
                   </Button>

@@ -15,6 +15,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 
 import api from "../api";
 const ScanIOCWindows = () => {
@@ -452,27 +461,29 @@ const ScanIOCWindows = () => {
               )}
               <div className="flex flex-col space-y-4">
                 {IOCdata.map((ioc: any) => {
-                    const iocName = ioc["IOC Names "].trim();
-                    return(
-                  <div
-                    key={ioc["ID Number "]}
-                    className="flex items-center space-x-3"
-                  >
-                    <Checkbox
-                      id={`ioc-${ioc["ID Number "]}`}
-                      checked={formData.IOCcontrols[ioc["IOC Names "]] || false}
-                      onCheckedChange={() =>
-                        handleCheckboxChange(ioc["IOC Names "])
-                      }
-                    />
-                    <label
-                      htmlFor={`ioc-${ioc["ID Number "]}`}
-                      className="text-sm font-medium leading-none"
+                  const iocName = ioc["IOC Names "].trim();
+                  return (
+                    <div
+                      key={ioc["ID Number "]}
+                      className="flex items-center space-x-3"
                     >
-                      {ioc["IOC Names "]}
-                    </label>
-                  </div>
-                  )
+                      <Checkbox
+                        id={`ioc-${ioc["ID Number "]}`}
+                        checked={
+                          formData.IOCcontrols[ioc["IOC Names "]] || false
+                        }
+                        onCheckedChange={() =>
+                          handleCheckboxChange(ioc["IOC Names "])
+                        }
+                      />
+                      <label
+                        htmlFor={`ioc-${ioc["ID Number "]}`}
+                        className="text-sm font-medium leading-none"
+                      >
+                        {ioc["IOC Names "]}
+                      </label>
+                    </div>
+                  );
                 })}
               </div>
             </div>
@@ -656,12 +667,31 @@ const ScanIOCWindows = () => {
                     </button>
                     <Breadcrumbs currentPage={page} pages={formPages} />
                     {page === 4 ? (
-                      <button
-                        type="submit"
-                        className="px-4 py-2 bg-green-500 text-white rounded"
-                      >
-                        Submit
-                      </button>
+                      <div className="flex">
+                        <button
+                          type="submit"
+                          className="px-4 py-2 bg-black text-white rounded-l"
+                        >
+                          Save
+                        </button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="px-3 py-2 bg-black text-white rounded-r flex items-center justify-center">
+                              <ChevronDown size={20} />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            side="bottom"
+                            align="end"
+                            alignOffset={1}
+                            className="w-28" // Adjust as needed
+                          >
+                            <DropdownMenuItem className="w-2">
+                              Launch
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     ) : (
                       <button
                         type="button"

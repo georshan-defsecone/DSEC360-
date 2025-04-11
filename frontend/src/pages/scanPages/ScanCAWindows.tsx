@@ -16,12 +16,26 @@ import {
 } from "@/components/ui/select";
 
 import api from "../api";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 
 const ScanCAWindows = () => {
   const [complianceData, setComplianceData] = useState([]);
   const [errors, setErrors] = useState("");
 
-  const formPages = ["General Info", "Target Details", "Compliance Info", "Scan Settings"];
+  const formPages = [
+    "General Info",
+    "Target Details",
+    "Compliance Info",
+    "Scan Settings",
+  ];
 
   const [page, setPage] = useState(1);
   const [formData, setFormData] = useState({
@@ -441,7 +455,13 @@ const ScanCAWindows = () => {
         return (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Compliance Information</h2>
-            {errors !== "" ? <><p className="mb-2 text-red-700 font-semibold">{errors}</p></> :<></> }
+            {errors !== "" ? (
+              <>
+                <p className="mb-2 text-red-700 font-semibold">{errors}</p>
+              </>
+            ) : (
+              <></>
+            )}
             {/* Operating System Selection */}
             <div className="flex items-center">
               <p className="block w-70">Operating System:</p>
@@ -662,12 +682,33 @@ const ScanCAWindows = () => {
                   </button>
                   <Breadcrumbs currentPage={page} pages={formPages} />
                   {page === 4 ? (
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-green-500 text-white rounded"
-                    >
-                      Submit
-                    </button>
+                    <>
+                      <div className="flex">
+                        <button
+                          type="submit"
+                          className="px-4 py-2 bg-black text-white rounded-l"
+                        >
+                          Save
+                        </button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="px-3 py-2 bg-black text-white rounded-r flex items-center justify-center">
+                              <ChevronDown size={20} />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            side="bottom"
+                            align="end"
+                            alignOffset={1}
+                            className="w-28" // Adjust as needed
+                          >
+                            <DropdownMenuItem className="w-2">
+                              Launch
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </>
                   ) : (
                     <button
                       type="button"

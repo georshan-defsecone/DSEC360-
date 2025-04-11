@@ -16,12 +16,25 @@ import {
 } from "@/components/ui/select";
 
 import api from "../api";
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 const ScanCALinux = () => {
   const [complianceData, setComplianceData] = useState([]);
   const [errors, setErrors] = useState("");
 
-  const formPages = ["General Info", "Target Details", "Compliance Info", "Scan Settings"];
+  const formPages = [
+    "General Info",
+    "Target Details",
+    "Compliance Info",
+    "Scan Settings",
+  ];
 
   const [page, setPage] = useState(1);
   const [formData, setFormData] = useState({
@@ -457,7 +470,7 @@ const ScanCALinux = () => {
                 <SelectContent>
                   {categories.map((category) => (
                     <SelectItem key={category} value={category}>
-                       {category}
+                      {category}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -626,7 +639,13 @@ const ScanCALinux = () => {
 
         <Card className="w-full mt-4">
           <CardContent className="w-full p-4 pl-12">
-            {errors !== "" ? <><p className="mb-2 text-red-700 font-semibold">{errors}</p></> :<></> }
+            {errors !== "" ? (
+              <>
+                <p className="mb-2 text-red-700 font-semibold">{errors}</p>
+              </>
+            ) : (
+              <></>
+            )}
             <div className="w-[80%] space-y-6">
               {/* Progress indicator
             <div className="flex justify-start gap-8 mb-8">
@@ -663,12 +682,31 @@ const ScanCALinux = () => {
                   </button>
                   <Breadcrumbs currentPage={page} pages={formPages} />
                   {page === 4 ? (
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-green-500 text-white rounded"
-                    >
-                      Submit
-                    </button>
+                    <div className="flex">
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-black text-white rounded-l"
+                      >
+                        Save
+                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="px-3 py-2 bg-black text-white rounded-r flex items-center justify-center">
+                            <ChevronDown size={20} />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          side="bottom"
+                          align="end"
+                          alignOffset={1}
+                          className="w-28" // Adjust as needed
+                        >
+                          <DropdownMenuItem className="w-2">
+                            Launch
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   ) : (
                     <button
                       type="button"
