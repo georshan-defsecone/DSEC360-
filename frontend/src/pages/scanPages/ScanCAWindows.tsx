@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -21,7 +22,12 @@ const ScanCAWindows = () => {
   const [complianceData, setComplianceData] = useState([]);
   const [errors, setErrors] = useState("");
 
-  const formPages = ["General Info", "Target Details", "Compliance Info", "Scan Settings"];
+  const formPages = [
+    "General Info",
+    "Target Details",
+    "Compliance Info",
+    "Scan Settings",
+  ];
 
   const [page, setPage] = useState(1);
   const [formData, setFormData] = useState({
@@ -44,6 +50,15 @@ const ScanCAWindows = () => {
     kdcTransport: "",
     certificate: "",
     publicKey: "",
+
+    //global credentials settings
+    globalCredentials: {
+      neverSendCredentials: "false",
+      dontUseNTLMv1: "false",
+      startRemoteRegistryService: "false",
+      enableAdministrativeShares: "false",
+      startServerService: "false",
+    },
 
     //Get compliance info
     complianceCategory: "",
@@ -90,6 +105,24 @@ const ScanCAWindows = () => {
         [name]: value,
       }));
     }
+  };
+
+  const handleNestedInputChange = (
+    field: string,
+    nestedField: string,
+    value: string
+  ) => {
+    setFormData((prev) => {
+      const updatedField = {
+        ...((prev[field as keyof typeof prev] || {}) as Record<string, string>),
+        [nestedField]: value,
+      };
+
+      return {
+        ...prev,
+        [field]: updatedField,
+      };
+    });
   };
 
   const nextPage = () => {
@@ -212,7 +245,7 @@ const ScanCAWindows = () => {
                   </Button>
                 </div>
 
-                <div className="flex justify-start items-center">
+                <div className="flex justify-start items-center mb-8">
                   <p className="block w-70 ">Authentication Method:</p>
                   <Select
                     value={formData.authMethod}
@@ -407,6 +440,94 @@ const ScanCAWindows = () => {
                     </div>
                   </div>
                 )}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">
+                    Global Credentials Settings
+                  </h3>
+                  <div className="flex items-center">
+                    <Checkbox
+                      className="mr-4"
+                      checked={
+                        formData.globalCredentials.neverSendCredentials ===
+                        "true"
+                      }
+                      onCheckedChange={(checked) => {
+                        handleNestedInputChange(
+                          "globalCredentials",
+                          "neverSendCredentials",
+                          checked ? "true" : "false"
+                        );
+                      }}
+                    />
+                    <p>Never send credentials in the clear</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Checkbox
+                      className="mr-4"
+                      checked={
+                        formData.globalCredentials.dontUseNTLMv1 === "true"
+                      }
+                      onCheckedChange={(checked) => {
+                        handleNestedInputChange(
+                          "globalCredentials",
+                          "dontUseNTLMv1",
+                          checked ? "true" : "false"
+                        );
+                      }}
+                    />
+                    <p>Do not use NTLMv1 authentication</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Checkbox
+                      className="mr-4"
+                      checked={
+                        formData.globalCredentials
+                          .startRemoteRegistryService === "true"
+                      }
+                      onCheckedChange={(checked) => {
+                        handleNestedInputChange(
+                          "globalCredentials",
+                          "startRemoteRegistryService",
+                          checked ? "true" : "false"
+                        );
+                      }}
+                    />
+                    <p>start the remote registry service during the scan</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Checkbox
+                      className="mr-4"
+                      checked={
+                        formData.globalCredentials
+                          .enableAdministrativeShares === "true"
+                      }
+                      onCheckedChange={(checked) => {
+                        handleNestedInputChange(
+                          "globalCredentials",
+                          "enableAdministrativeShares",
+                          checked ? "true" : "false"
+                        );
+                      }}
+                    />
+                    <p>Enable administrative shares during the scan</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Checkbox
+                      className="mr-4"
+                      checked={
+                        formData.globalCredentials.startServerService === "true"
+                      }
+                      onCheckedChange={(checked) => {
+                        handleNestedInputChange(
+                          "globalCredentials",
+                          "startServerService",
+                          checked ? "true" : "false"
+                        );
+                      }}
+                    />
+                    <p>Start the Server Service during the scan</p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -441,7 +562,13 @@ const ScanCAWindows = () => {
         return (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Compliance Information</h2>
-            {errors !== "" ? <><p className="mb-2 text-red-700 font-semibold">{errors}</p></> :<></> }
+            {errors !== "" ? (
+              <>
+                <p className="mb-2 text-red-700 font-semibold">{errors}</p>
+              </>
+            ) : (
+              <></>
+            )}
             {/* Operating System Selection */}
             <div className="flex items-center">
               <p className="block w-70">Operating System:</p>

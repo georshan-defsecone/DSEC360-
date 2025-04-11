@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 
 import api from "../api";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const ScanCALinux = () => {
   const [complianceData, setComplianceData] = useState([]);
@@ -37,13 +38,14 @@ const ScanCALinux = () => {
     username: "",
     password: "",
     domain: "",
-    ntlmHash: "",
-    lmHash: "",
     kdc: "",
     kdcPort: "",
     kdcTransport: "",
     certificate: "",
     publicKey: "",
+    port: "",
+    clientVersion: "",
+    attemptLeastPrivelege: "",
 
     //Get compliance info
     complianceCategory: "",
@@ -212,7 +214,7 @@ const ScanCALinux = () => {
                   </Button>
                 </div>
 
-                <div className="flex justify-start items-center">
+                <div className="flex justify-start items-center mb-8">
                   <p className="block w-70 ">Authentication Method (SSH)</p>
                   <Select
                     value={formData.authMethod}
@@ -225,8 +227,8 @@ const ScanCALinux = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="password">Password</SelectItem>
-                      <SelectItem value="ntlm">NTLM Hash</SelectItem>
-                      <SelectItem value="lm">LM Hash</SelectItem>
+                      <SelectItem value="publicKey">Public Key</SelectItem>
+                      <SelectItem value="certificate">Certificate</SelectItem>
                       <SelectItem value="kerberos">Kerberos</SelectItem>
                     </SelectContent>
                   </Select>
@@ -261,44 +263,9 @@ const ScanCALinux = () => {
                   </div>
                 )}
 
-                {formData.authMethod === "ntlm" && (
+                {formData.authMethod === "publicKey" && (
                   <div className="space-y-4">
-                    <div className="flex items-center">
-                      <p className="block w-70">Username:</p>
-                      <Input
-                        type="text"
-                        name="username"
-                        placeholder="Username"
-                        value={formData.username}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">NTLM Hash:</p>
-                      <Input
-                        type="text"
-                        name="ntlmHash"
-                        placeholder="NTLM Hash"
-                        value={formData.ntlmHash}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">Domain:</p>
-                      <Input
-                        type="text"
-                        name="domain"
-                        placeholder="Domain"
-                        value={formData.domain}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
+                    
                   </div>
                 )}
                 {formData.authMethod === "kerberos" && (
@@ -367,46 +334,59 @@ const ScanCALinux = () => {
                     </div>
                   </div>
                 )}
-                {formData.authMethod === "lm" && (
+                {formData.authMethod === "certificate" && (
                   <div className="space-y-4 border-l-2 border-gray-200">
-                    <div className="flex items-center">
-                      <p className="block w-70">Username:</p>
-                      <Input
-                        type="text"
-                        name="username"
-                        placeholder="Username"
-                        value={formData.username}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">LM Hash:</p>
-                      <Input
-                        type="text"
-                        name="lmHash"
-                        placeholder="LM Hash"
-                        value={formData.lmHash}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">Domain:</p>
-                      <Input
-                        type="text"
-                        name="domain"
-                        placeholder="Domain"
-                        value={formData.domain}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
                   </div>
                 )}
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">Global Credential Settings</h2>
+                  <div className="flex items-center">
+                    <p className="block w-70">
+                      known_hosts file
+                    </p>
+                    <Button>Add file</Button>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">
+                      Preferred port
+                    </p>
+                    <Input
+                        type="number"
+                        name="preferredPort"
+                        placeholder="port"
+                        value={formData.port}
+                        onChange={handleInputChange}
+                        className="w-80"
+                        required
+                      />
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">
+                      Client Version
+                    </p>
+                    <Input
+                        type="text"
+                        name="clientVersion"
+                        placeholder="Client Version"
+                        value={formData.clientVersion}
+                        onChange={handleInputChange}
+                        className="w-80"
+                        required
+                      />
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">
+                      Attempt Least Privilege
+                    </p>
+                    <Checkbox
+                      checked={formData.attemptLeastPrivelege==="true"}
+                      onCheckedChange={(checked) =>{
+                        handleInputChange(checked ? "true" : "false", "attemptLeastPrivelege")
+                      }}
+                    />
+                  </div>
+                </div>
+
               </div>
             )}
 
