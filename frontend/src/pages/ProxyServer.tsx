@@ -96,7 +96,10 @@ const ProxyServer = () => {
                   </>
                 )}
                 {isProxyEnabled && (
-                  <Button variant="outline" className="w-20 mt-6 ml-auto mr-6">
+                  <Button
+                    variant="outline"
+                    className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition ml-auto mr-6"
+                  >
                     Save
                   </Button>
                 )}
