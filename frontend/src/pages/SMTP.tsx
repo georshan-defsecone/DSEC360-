@@ -12,20 +12,67 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import api from "./api";
 
 const SMTP = () => {
   const [isSMTPEnabled, setIsSMTPEnabled] = useState(false);
-  // State to hold selected Auth method
+  const [host, setHost] = useState("");
+  const [port, setPort] = useState("");
+  const [from, setFrom] = useState("");
+  const [username, setUserName] = useState("");
+  const [password, setPassword] = useState("");
   const [authMethod, setAuthMethod] = useState("none");
+  const [encryption, setEncryption] = useState("no encryption");
+  const [hostname, setHostname] = useState("");
 
-  const handleSwitchChange = () => {
-    setIsSMTPEnabled((prev) => !prev);
+  const handleSwitchChange = async () => {
+    const newState = !isSMTPEnabled;
+    setIsSMTPEnabled(newState);
+
+    if (!newState) {
+      try {
+        await api.post("save-smtp-settings/", { enabled: false });
+        alert("SMTP disabled successfully");
+      } catch (error) {
+        console.error("Failed to disable SMTP:", error);
+        alert("Something went wrong while disabling SMTP");
+      }
+    }
   };
 
-  // Handle change in Auth method selection
-  const handleAuthMethodChange = (value: string) => {
-    setAuthMethod(value);
+  const handleSave = async () => {
+    // Validate all fields
+    if (!host || !port || !from || !encryption || !hostname || !authMethod) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+  
+    if (authMethod !== "none" && (!username || !password)) {
+      alert("Please enter both username and password.");
+      return;
+    }
+  
+    const data = {
+      enabled: true,
+      host,
+      port,
+      from,
+      encryption,
+      hostname,
+      authMethod,
+      username: authMethod !== "none" ? username : "",
+      password: authMethod !== "none" ? password : "",
+    };
+  
+    try {
+      await api.post("save-smtp-settings/", data);
+      alert("SMTP settings saved successfully");
+    } catch (error) {
+      console.error("Failed to save SMTP settings", error);
+      alert("Something went wrong while saving");
+    }
   };
+
   return (
     <>
       <div className="flex h-screen text-black">
@@ -50,28 +97,42 @@ const SMTP = () => {
                 {/* SMTP Settings - Conditional */}
                 {isSMTPEnabled && (
                   <>
-                    {/* Host */}
                     <div className="flex items-center">
-                      <p className="  w-60">Host:</p>
-                      <Input type="text" className="w-60" placeholder="" />
+                      <p className="w-60">Host:</p>
+                      <Input
+                        type="text"
+                        className="w-60"
+                        value={host}
+                        onChange={(e) => setHost(e.target.value)}
+                      />
                     </div>
 
-                    {/* Port */}
                     <div className="flex items-center">
-                      <p className="  w-60">Port:</p>
-                      <Input type="text" className="w-60" placeholder="" />
+                      <p className="w-60">Port:</p>
+                      <Input
+                        type="text"
+                        className="w-60"
+                        value={port}
+                        onChange={(e) => setPort(e.target.value)}
+                      />
                     </div>
 
-                    {/* From */}
                     <div className="flex items-center">
-                      <p className="  w-60">From:</p>
-                      <Input type="text" className="w-60" placeholder="" />
+                      <p className="w-60">From:</p>
+                      <Input
+                        type="text"
+                        className="w-60"
+                        value={from}
+                        onChange={(e) => setFrom(e.target.value)}
+                      />
                     </div>
 
-                    {/* Encryption */}
                     <div className="flex items-center">
-                      <p className="  w-60">Encryption:</p>
-                      <Select>
+                      <p className="w-60">Encryption:</p>
+                      <Select
+                        onValueChange={(value) => setEncryption(value)}
+                        value={encryption}
+                      >
                         <SelectTrigger className="w-[180px]">
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
@@ -88,30 +149,35 @@ const SMTP = () => {
                       </Select>
                     </div>
 
-                    {/* Hostname */}
                     <div className="flex items-center">
-                      <p className="  w-60">Hostname:</p>
-                      <Input type="text" className="w-60" placeholder="" />
+                      <p className="w-60">Hostname:</p>
+                      <Input
+                        type="text"
+                        className="w-60"
+                        value={hostname}
+                        onChange={(e) => setHostname(e.target.value)}
+                      />
                     </div>
 
-                    {/* Auth Method */}
                     <div className="flex items-center">
                       <p className="w-60">Auth method:</p>
-                      <Select onValueChange={handleAuthMethodChange}>
+                      <Select
+                        onValueChange={(value) => setAuthMethod(value)}
+                        value={authMethod}
+                      >
                         <SelectTrigger className="w-[180px]">
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">None</SelectItem>
                           <SelectItem value="plain">Plain</SelectItem>
-                          <SelectItem value="Login">Login</SelectItem>
+                          <SelectItem value="login">Login</SelectItem>
                           <SelectItem value="ntlm">NTLM</SelectItem>
                           <SelectItem value="cram md5">CRAM MD5</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
-                    {/* Username & Password */}
                     {authMethod !== "none" && (
                       <>
                         <div className="flex items-center">
@@ -119,27 +185,30 @@ const SMTP = () => {
                           <Input
                             type="text"
                             className="w-60"
-                            placeholder="Enter username"
+                            value={username}
+                            onChange={(e) => setUserName(e.target.value)}
                           />
                         </div>
 
                         <div className="flex items-center">
-                          <p className="  w-60">Password:</p>
+                          <p className="w-60">Password:</p>
                           <Input
                             type="password"
                             className="w-60"
-                            placeholder="Enter password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                           />
                         </div>
                       </>
                     )}
                   </>
                 )}
-                {/* Save Button - Also Conditional if needed */}
+
                 {isSMTPEnabled && (
                   <Button
                     variant="outline"
                     className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition ml-auto mr-6"
+                    onClick={handleSave}
                   >
                     Save
                   </Button>

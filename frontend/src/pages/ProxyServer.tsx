@@ -69,8 +69,20 @@ const ProxyServer = () => {
     }
   };
 
-  const handleSwitchChange = () => {
-    setIsProxyEnabled((prev) => !prev);
+  const handleSwitchChange = async () => {
+    const newState = !isProxyEnabled;
+    setIsProxyEnabled(newState);
+  
+    if (!newState) {
+      // If toggling OFF, inform backend immediately
+      try {
+        await api.post("save-proxy-settings/", { enabled: false });
+        alert("Proxy disabled successfully");
+      } catch (error) {
+        console.error("Failed to disable proxy:", error);
+        alert("Something went wrong while disabling proxy");
+      }
+    }
   };
 
   return (
