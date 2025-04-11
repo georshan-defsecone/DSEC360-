@@ -5,7 +5,9 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import api from "./api";
-
+import { CircleUserRound } from "lucide-react";
+import { Pencil } from "lucide-react";
+import { X } from "lucide-react";
 const Myaccounts = () => {
   const [username, setUserName] = useState("");
   const [useremail, setUserEmail] = useState("");
@@ -61,7 +63,8 @@ const Myaccounts = () => {
           <CardContent className="p-8">
             <div className="flex items-start gap-8">
               {/* Profile Icon */}
-
+              {/* Profile Icon */}
+              <CircleUserRound className="w-32 h-32 text-gray-600 mt-1" />
               {/* User Info and Button */}
               <div className="w-full max-w-md space-y-4">
                 {/* Username Row */}
@@ -72,6 +75,7 @@ const Myaccounts = () => {
                       {username}
                     </span>
                     <button className="text-gray-500 hover:text-black transition">
+                      <Pencil />
                     </button>
                   </div>
                 </div>
@@ -84,7 +88,7 @@ const Myaccounts = () => {
                       {useremail}
                     </span>
                     <button className="text-gray-500 hover:text-black transition">
-
+                      <Pencil/>
                     </button>
                   </div>
                 </div>
@@ -121,8 +125,7 @@ const Myaccounts = () => {
                 <button
                   className="absolute top-3 right-3 text-gray-500 hover:text-black"
                   onClick={() => setShowPasswordCard(false)}
-                >
-                </button>
+                ><X/></button>
 
                 <h2 className="text-xl font-semibold text-center">
                   Change Password
