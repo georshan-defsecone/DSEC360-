@@ -11,6 +11,7 @@ function ProjectScans() {
     const { project_id } = useParams();
 
     const [scans, setScans] = useState([]);
+    const [projectName, setProjectName] = useState('');
     
     useEffect(() => {
         const fetchScans = async () => {
@@ -23,6 +24,16 @@ function ProjectScans() {
             console.error('Failed to fetch scans', err);
           }
         };
+        const fetchProjectName = async () => {
+            try {
+                const response = await api.get(`project/${project_id}/`);
+                setProjectName(response.data.project_name);
+            } catch (err) {
+              console.error('Failed to fetch project name', err);
+            }
+          };
+        
+        fetchProjectName();
         fetchScans();
       }, [project_id]);
     
@@ -30,7 +41,7 @@ function ProjectScans() {
         <div className="flex h-screen text-black">
             <Sidebar settings={false} scanSettings={false} homeSettings={true} />
             <div className="flex-1 flex flex-col ml-64">
-                    <Header title="Scans" />
+                    <Header title={`${projectName}`} />
                 <div className="p-4 overflow-auto max-h-[calc(100vh-100px)]">
                     <div className="grid lg:grid-cols-1 gap-4">
                         <div className="col-span-2">
