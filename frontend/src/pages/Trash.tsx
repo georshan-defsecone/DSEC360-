@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import api from "./api"    
 
 export default function Trash() {
-
+  
   const [trashedProject, setTrashedProject] = useState([]);
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function Trash() {
                   <TableRow>
                     <TableHead className="w-[40px]"></TableHead>
                     <TableHead>Project Name</TableHead>
-                    <TableHead>Scan Author</TableHead>
+                    <TableHead>Project Author</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -51,7 +51,7 @@ export default function Trash() {
                     <TableRow key={project_id}>
                       <TableCell></TableCell>
                       <TableCell className="font-medium">{pro.project_name}</TableCell>
-                      <TableCell>{pro.scan_author}</TableCell>
+                      <TableCell>{pro.project_author}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

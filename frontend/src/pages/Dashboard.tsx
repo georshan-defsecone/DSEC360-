@@ -65,7 +65,7 @@ function DashboardContent() {
 
                       
                       <TableCell></TableCell>
-                      <TableCell>
+                      <TableCell className="font-medium">
                         <Link to={`/project/${pro.project_id}`}>
                           {pro.project_name}
                         </Link>
