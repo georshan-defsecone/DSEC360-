@@ -9,31 +9,28 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 function ProjectScans() {
     const { project_id } = useParams();
-    const [projectData, setProjectData] = useState([]);
+
+    const [scans, setScans] = useState([]);
     
     useEffect(() => {
-        
-        const fetchProjectScans = async () => {
-            try {
-                const response = await api.get(`project/${project_id}/`);
-                console.log(response.data.project_name);
-
-                setProjectData(response.data);
-               
-                
-            } catch (error) {
-                console.error('Error fetching project scans:', error);
-            }
-        }
-        fetchProjectScans();
-    }, [project_id])
+        const fetchScans = async () => {
+          try {
+            const response = await api.get(`scans/project/${project_id}/`);
+            setScans(response.data);
+            console.log(response.data);
+            
+          } catch (err) {
+            console.error('Failed to fetch scans', err);
+          }
+        };
+        fetchScans();
+      }, [project_id]);
+    
     return (
         <div className="flex h-screen text-black">
             <Sidebar settings={false} scanSettings={false} homeSettings={true} />
             <div className="flex-1 flex flex-col ml-64">
-                {projectData.project_name && (
-                    <Header title={projectData.project_name} />
-                )}
+                    <Header title="Scans" />
                 <div className="p-4 overflow-auto max-h-[calc(100vh-100px)]">
                     <div className="grid lg:grid-cols-1 gap-4">
                         <div className="col-span-2">
@@ -50,12 +47,12 @@ function ProjectScans() {
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {projectData.map((pro, project_id) => (
-                                                    <TableRow key={project_id}>
+                                                {scans.map((scan, i) => (
+                                                    <TableRow key={i}>
                                                         <TableCell></TableCell>
-                                                        <TableCell className="font-medium">{pro.scan_name}</TableCell>
-                                                        <TableCell>{pro.scan_author}</TableCell>
-                                                        <TableCell>{pro.scan_status}</TableCell>
+                                                        <TableCell className="font-medium">{scan.scan_name}</TableCell>
+                                                        <TableCell>{scan.scan_author}</TableCell>
+                                                        <TableCell>{scan.scan_status}</TableCell>
                                                     </TableRow>
                                                 ))}
                                                 

@@ -27,14 +27,15 @@ function DashboardContent() {
     fetchData();
   }, []);
 
-  const handleMoveToTrash = async (projectId: string) => {
+  const moveToTrash = async (projectId: string) => {
     try {
-      await api.put(`project/${projectId}/trash/`);
-      fetchData();
-    } catch (error) {
-      console.error('Error moving to trash:', error);
+      await api.put(`project/trash/${projectId}/`, { trash: true });
+      console.log(`Project ${projectId} moved to trash.`);
+    } catch (err) {
+      console.error("Failed to move project to trash", err);
     }
   };
+  
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -54,7 +55,7 @@ function DashboardContent() {
                   <TableRow>
                     <TableHead className="w-[40px]"></TableHead>
                     <TableHead>Project Name</TableHead>
-                    <TableHead>Scan Author</TableHead>
+                    <TableHead>Project Author</TableHead>
                     <TableHead>Trash</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -69,9 +70,9 @@ function DashboardContent() {
                           {pro.project_name}
                         </Link>
                       </TableCell>
-                      <TableCell>{pro.scan_author}</TableCell>
+                      <TableCell>{pro.project_author}</TableCell>
                       <TableCell>
-                        <button onClick={() => handleMoveToTrash(pro.project_id)}>❌</button>
+                        <button onClick={() => moveToTrash(pro.project_id)}>❌</button>
                       </TableCell>
                     </TableRow>
                   ))}

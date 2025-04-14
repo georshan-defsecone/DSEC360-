@@ -13,13 +13,13 @@ export default function Trash() {
   useEffect(() => {
     const fetchTrashedScans = async () => {
       try {
-        const response = await api.get('project/trash/');
+        const response = await api.get('projects/trash/');
         setTrashedProject(response.data);
       } catch (error) {
         console.error('Error fetching trashed project:', error);
       }
     };
-
+  
     fetchTrashedScans();
   }, []);
 
