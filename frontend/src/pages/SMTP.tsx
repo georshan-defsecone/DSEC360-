@@ -343,7 +343,8 @@ const SMTP = () => {
         </Card>
       </div>
     </div>
+    </>
   );
-};
+}
 
 export default SMTP;

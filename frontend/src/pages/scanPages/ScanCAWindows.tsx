@@ -157,8 +157,6 @@ const ScanCAWindows = () => {
 
             <div className="flex items-center">
               <p className="block w-70 ">Project Name:</p>
-            <div className="flex items-center">
-              <p className="block w-70 ">Project Name:</p>
 
               <Input
                 type="text"
@@ -166,7 +164,6 @@ const ScanCAWindows = () => {
                 placeholder="Project Name"
                 value={formData.projectName}
                 onChange={handleInputChange}
-                className="w-80"
                 className="w-80"
                 required
               />
@@ -183,7 +180,6 @@ const ScanCAWindows = () => {
                 onChange={handleInputChange}
                 className="w-80"
                 required
-                className="w-80"
               />
             </div>
 
@@ -195,7 +191,6 @@ const ScanCAWindows = () => {
                 placeholder="Project Description"
                 value={formData.description}
                 onChange={handleInputChange}
-                className="resize-none w-80"
                 className="resize-none w-80"
                 //className="w-full p-2 border rounded"
               />

@@ -275,6 +275,7 @@ const ProxyServer = () => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 

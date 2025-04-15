@@ -26,9 +26,7 @@ import ScanCAWAServers from "./pages/scanPages/ScanCAWAServers";
 import Users from "./pages/Users";
 import Myaccounts from "./pages/Myaccounts";
 import CreateUser from "./pages/CreateUser";
-import path from "path";
-import Advanced from "./pages/Advanced";
-import LDAP from "./pages/LDAP";
+
 const Router = [
     {
         path: "/",

@@ -425,8 +425,7 @@ const ScanCALinux = () => {
                 placeholder="Project Description"
                 value={formData.description}
                 onChange={handleInputChange}
-                className="resize-none"
-                className="w-80"
+                className="resize-none w-80"
                 //className="w-full p-2 border rounded"
               />
             </div>
