@@ -7,6 +7,8 @@ import {
   DropdownMenuContent,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
+
 
 type DecodedToken = {
   username: string;
@@ -15,7 +17,10 @@ type DecodedToken = {
   exp: number;
 };
 
+
+
 export default function Header({ title }: { title: string }) {
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
 
@@ -70,7 +75,10 @@ export default function Header({ title }: { title: string }) {
 
           {/* Horizontal Menu Options in Dropdown Format */}
           <div className="flex items-center justify-between gap-4 px-2 py-1 text-sm">
-            <button className="flex items-center gap-2 px-3 py-2 bg-white text-black hover:bg-black hover:text-white rounded-md transition-all duration-200 ease-in-out">
+            <button
+              className="flex items-center gap-2 px-3 py-2 bg-white text-black hover:bg-black hover:text-white rounded-md transition-all duration-200 ease-in-out"
+              onClick={() => navigate("/settings/myaccounts")}
+            >
               <User className="w-4 h-4 transition-transform duration-200" />
               My Profile
             </button>

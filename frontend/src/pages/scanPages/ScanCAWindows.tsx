@@ -113,8 +113,8 @@ const ScanCAWindows = () => {
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">General Information</h2>
 
-            <div className="flex justify-between items-center">
-              <p className="block w-40 ">Project Name:</p>
+            <div className="flex items-center">
+              <p className="block w-70 ">Project Name:</p>
 
               <Input
                 type="text"
@@ -122,12 +122,13 @@ const ScanCAWindows = () => {
                 placeholder="Project Name"
                 value={formData.projectName}
                 onChange={handleInputChange}
+                className="w-80"
                 required
               />
             </div>
 
-            <div className="flex justify-between items-center">
-              <p className="block w-40 ">Scan Name:</p>
+            <div className="flex items-center">
+              <p className="block w-70 ">Scan Name:</p>
 
               <Input
                 type="text"
@@ -135,19 +136,20 @@ const ScanCAWindows = () => {
                 placeholder="Scan Name"
                 value={formData.scanName}
                 onChange={handleInputChange}
+                className="w-80"
                 required
               />
             </div>
 
-            <div className="flex justify-between items-center">
-              <p className="block w-40 ">Project Description:</p>
+            <div className="flex items-center">
+              <p className="block w-70 ">Project Description:</p>
 
               <Textarea
                 name="description"
                 placeholder="Project Description"
                 value={formData.description}
                 onChange={handleInputChange}
-                className="resize-none"
+                className="resize-none w-80"
                 //className="w-full p-2 border rounded"
               />
             </div>
@@ -624,7 +626,7 @@ const ScanCAWindows = () => {
       <div className="flex-1 flex flex-col pr-8 pl-8 ml-64 pt-20">
         <Header title="Windows Configuration Audit Scan" />
 
-        <Card className="w-full mt-4">
+        <Card className="w-[85%] mt-4 ml-4">
           <CardContent className="w-full p-4 pl-12">
             <div className="w-[80%] space-y-6">
               {/* Progress indicator
