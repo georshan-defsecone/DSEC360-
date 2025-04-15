@@ -4,9 +4,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { MdAccountCircle } from "react-icons/md";
-import { FiEdit } from "react-icons/fi";
-import { IoMdClose } from "react-icons/io";
 import api from "./api";
 
 const Myaccounts = () => {
@@ -64,9 +61,6 @@ const Myaccounts = () => {
           <CardContent className="p-8">
             <div className="flex items-start gap-8">
               {/* Profile Icon */}
-              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center shadow-md">
-                <MdAccountCircle className="text-gray-600 text-6xl" />
-              </div>
 
               {/* User Info and Button */}
               <div className="w-full max-w-md space-y-4">
@@ -78,7 +72,6 @@ const Myaccounts = () => {
                       {username}
                     </span>
                     <button className="text-gray-500 hover:text-black transition">
-                      <FiEdit className="text-lg" />
                     </button>
                   </div>
                 </div>
@@ -91,7 +84,7 @@ const Myaccounts = () => {
                       {useremail}
                     </span>
                     <button className="text-gray-500 hover:text-black transition">
-                      <FiEdit className="text-lg" />
+
                     </button>
                   </div>
                 </div>
@@ -129,7 +122,6 @@ const Myaccounts = () => {
                   className="absolute top-3 right-3 text-gray-500 hover:text-black"
                   onClick={() => setShowPasswordCard(false)}
                 >
-                  <IoMdClose className="text-2xl" />
                 </button>
 
                 <h2 className="text-xl font-semibold text-center">
