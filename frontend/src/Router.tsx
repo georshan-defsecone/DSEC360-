@@ -1,11 +1,15 @@
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import About from "./pages/About";
+
+
 import SMTP from "./pages/SMTP";
 import ProxyServer from "./pages/ProxyServer";
 import AllProjects from "./pages/AllProjects";
 import Trash from "./pages/Trash";
 import Result from "./pages/Result";
+import Advanced from "./pages/Advanced";
+import LDAP from "./pages/LDAP";
 
 import ScanHome from "./pages/scanPages/ScanHome";
 import ScanCAWindows from "./pages/scanPages/ScanCAWindows";

@@ -32,12 +32,6 @@ function DashboardContent() {
     }
   };
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchData();
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <div className="grid lg:grid-cols-1 gap-4 pt-18">

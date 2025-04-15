@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -16,12 +17,26 @@ import {
 } from "@/components/ui/select";
 
 import api from "../api";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 
 const ScanCAWindows = () => {
   const [complianceData, setComplianceData] = useState([]);
   const [errors, setErrors] = useState("");
 
-  const formPages = ["General Info", "Target Details", "Compliance Info", "Scan Settings"];
+  const formPages = [
+    "General Info",
+    "Target Details",
+    "Compliance Info",
+    "Scan Settings",
+  ];
 
   const [page, setPage] = useState(1);
   const [formData, setFormData] = useState({
@@ -44,6 +59,15 @@ const ScanCAWindows = () => {
     kdcTransport: "",
     certificate: "",
     publicKey: "",
+
+    //global credentials settings
+    globalCredentials: {
+      neverSendCredentials: "false",
+      dontUseNTLMv1: "false",
+      startRemoteRegistryService: "false",
+      enableAdministrativeShares: "false",
+      startServerService: "false",
+    },
 
     //Get compliance info
     complianceCategory: "",
@@ -92,6 +116,24 @@ const ScanCAWindows = () => {
     }
   };
 
+  const handleNestedInputChange = (
+    field: string,
+    nestedField: string,
+    value: string
+  ) => {
+    setFormData((prev) => {
+      const updatedField = {
+        ...((prev[field as keyof typeof prev] || {}) as Record<string, string>),
+        [nestedField]: value,
+      };
+
+      return {
+        ...prev,
+        [field]: updatedField,
+      };
+    });
+  };
+
   const nextPage = () => {
     if (page < 4) setPage((prev) => prev + 1);
   };
@@ -115,6 +157,8 @@ const ScanCAWindows = () => {
 
             <div className="flex items-center">
               <p className="block w-70 ">Project Name:</p>
+            <div className="flex items-center">
+              <p className="block w-70 ">Project Name:</p>
 
               <Input
                 type="text"
@@ -122,6 +166,7 @@ const ScanCAWindows = () => {
                 placeholder="Project Name"
                 value={formData.projectName}
                 onChange={handleInputChange}
+                className="w-80"
                 className="w-80"
                 required
               />
@@ -138,6 +183,7 @@ const ScanCAWindows = () => {
                 onChange={handleInputChange}
                 className="w-80"
                 required
+                className="w-80"
               />
             </div>
 
@@ -149,6 +195,7 @@ const ScanCAWindows = () => {
                 placeholder="Project Description"
                 value={formData.description}
                 onChange={handleInputChange}
+                className="resize-none w-80"
                 className="resize-none w-80"
                 //className="w-full p-2 border rounded"
               />
@@ -214,7 +261,7 @@ const ScanCAWindows = () => {
                   </Button>
                 </div>
 
-                <div className="flex justify-start items-center">
+                <div className="flex justify-start items-center mb-8">
                   <p className="block w-70 ">Authentication Method:</p>
                   <Select
                     value={formData.authMethod}
@@ -409,6 +456,94 @@ const ScanCAWindows = () => {
                     </div>
                   </div>
                 )}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">
+                    Global Credentials Settings
+                  </h3>
+                  <div className="flex items-center">
+                    <Checkbox
+                      className="mr-4"
+                      checked={
+                        formData.globalCredentials.neverSendCredentials ===
+                        "true"
+                      }
+                      onCheckedChange={(checked) => {
+                        handleNestedInputChange(
+                          "globalCredentials",
+                          "neverSendCredentials",
+                          checked ? "true" : "false"
+                        );
+                      }}
+                    />
+                    <p>Never send credentials in the clear</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Checkbox
+                      className="mr-4"
+                      checked={
+                        formData.globalCredentials.dontUseNTLMv1 === "true"
+                      }
+                      onCheckedChange={(checked) => {
+                        handleNestedInputChange(
+                          "globalCredentials",
+                          "dontUseNTLMv1",
+                          checked ? "true" : "false"
+                        );
+                      }}
+                    />
+                    <p>Do not use NTLMv1 authentication</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Checkbox
+                      className="mr-4"
+                      checked={
+                        formData.globalCredentials
+                          .startRemoteRegistryService === "true"
+                      }
+                      onCheckedChange={(checked) => {
+                        handleNestedInputChange(
+                          "globalCredentials",
+                          "startRemoteRegistryService",
+                          checked ? "true" : "false"
+                        );
+                      }}
+                    />
+                    <p>start the remote registry service during the scan</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Checkbox
+                      className="mr-4"
+                      checked={
+                        formData.globalCredentials
+                          .enableAdministrativeShares === "true"
+                      }
+                      onCheckedChange={(checked) => {
+                        handleNestedInputChange(
+                          "globalCredentials",
+                          "enableAdministrativeShares",
+                          checked ? "true" : "false"
+                        );
+                      }}
+                    />
+                    <p>Enable administrative shares during the scan</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Checkbox
+                      className="mr-4"
+                      checked={
+                        formData.globalCredentials.startServerService === "true"
+                      }
+                      onCheckedChange={(checked) => {
+                        handleNestedInputChange(
+                          "globalCredentials",
+                          "startServerService",
+                          checked ? "true" : "false"
+                        );
+                      }}
+                    />
+                    <p>Start the Server Service during the scan</p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -443,7 +578,13 @@ const ScanCAWindows = () => {
         return (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Compliance Information</h2>
-            {errors !== "" ? <><p className="mb-2 text-red-700 font-semibold">{errors}</p></> :<></> }
+            {errors !== "" ? (
+              <>
+                <p className="mb-2 text-red-700 font-semibold">{errors}</p>
+              </>
+            ) : (
+              <></>
+            )}
             {/* Operating System Selection */}
             <div className="flex items-center">
               <p className="block w-70">Operating System:</p>
@@ -664,12 +805,33 @@ const ScanCAWindows = () => {
                   </button>
                   <Breadcrumbs currentPage={page} pages={formPages} />
                   {page === 4 ? (
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-green-500 text-white rounded"
-                    >
-                      Submit
-                    </button>
+                    <>
+                      <div className="flex">
+                        <button
+                          type="submit"
+                          className="px-4 py-2 bg-black text-white rounded-l"
+                        >
+                          Save
+                        </button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="px-3 py-2 bg-black text-white rounded-r flex items-center justify-center">
+                              <ChevronDown size={20} />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            side="bottom"
+                            align="end"
+                            alignOffset={1}
+                            className="w-28" // Adjust as needed
+                          >
+                            <DropdownMenuItem className="w-2">
+                              Launch
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </>
                   ) : (
                     <button
                       type="button"
