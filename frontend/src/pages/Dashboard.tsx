@@ -10,22 +10,30 @@ import { Link } from "react-router-dom"
 
 function DashboardContent() {
   const [projectData, setProjectData] = useState([]);
+  const token = localStorage.getItem("access"); 
+  
 
   const fetchData = async () => {
+    if (!token) {
+      console.error('JWT Token not found');
+      return;  // Token is not found, no API call will be made.
+    }
     try {
-      const response = await api.get('projects/');
+      const response = await api.get('projects/', {
+        headers: {
+          'Authorization': `Bearer ${token}`,  // Include JWT token
+        },
+      });
+      console.log("JWT Token: ", token);  // Debug the token
       setProjectData(response.data);
-      console.log(response.data);
-      
-      
+      console.log(response.data);  // Debug the response data
     } catch (error) {
       console.error('Error fetching project data:', error);
-    } 
+    }
   };
-
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [token]);
 
   const moveToTrash = async (projectId: string) => {
     try {
