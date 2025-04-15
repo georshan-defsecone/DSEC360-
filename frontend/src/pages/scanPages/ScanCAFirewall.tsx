@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -21,7 +22,12 @@ const ScanCAFirewall = () => {
   const [complianceData, setComplianceData] = useState([]);
   const [errors, setErrors] = useState("");
 
-  const formPages = ["General Info", "Target Details", "Compliance Info", "Scan Settings"];
+  const formPages = [
+    "General Info",
+    "Target Details",
+    "Compliance Info",
+    "Scan Settings",
+  ];
 
   const [page, setPage] = useState(1);
   const [formData, setFormData] = useState({
@@ -32,7 +38,9 @@ const ScanCAFirewall = () => {
 
     // Target Details
     auditMethod: "",
+    OS: "",
     target: "",
+    elevatePrivilege: "",
     authMethod: "",
     username: "",
     password: "",
@@ -44,6 +52,31 @@ const ScanCAFirewall = () => {
     kdcTransport: "",
     certificate: "",
     publicKey: "",
+    privateKeyPassphrase: "",
+    port: "",
+    clientVersion: "",
+    attemptLeastPrivilege: "",
+
+    EP_escalationAccount: "", // .k5login, dzdo
+    EP_escalationPassword: "", // .k5login, dzdo, su, su+sudo
+    EP_dzdoDirectory: "", // dzdo
+    EP_suDirectory: "", // su
+    EP_pbrunDirectory: "", // pbrun
+    EP_su_sudoDirectory: "", // su+sudo
+    EP_su_login: "", //su
+    EP_su_user: "", // su+sudo
+    EP_sudoUser: "", // su+sudo
+    EPsshUserPassword: "", // pbrun
+    EPenablePassword: "", // Cisco enable
+
+    //global credentials settings
+    globalCredentials: {
+      neverSendCredentials: "false",
+      dontUseNTLMv1: "false",
+      startRemoteRegistryService: "false",
+      enableAdministrativeShares: "false",
+      startServerService: "false",
+    },
 
     //Get compliance info
     complianceCategory: "",
@@ -92,12 +125,281 @@ const ScanCAFirewall = () => {
     }
   };
 
+  const handleNestedInputChange = (
+    field: string,
+    nestedField: string,
+    value: string
+  ) => {
+    setFormData((prev) => {
+      const updatedField = {
+        ...((prev[field as keyof typeof prev] || {}) as Record<string, string>),
+        [nestedField]: value,
+      };
+
+      return {
+        ...prev,
+        [field]: updatedField,
+      };
+    });
+  };
+
   const nextPage = () => {
     if (page < 4) setPage((prev) => prev + 1);
   };
 
   const prevPage = () => {
     if (page > 1) setPage((prev) => prev - 1);
+  };
+
+  interface ElevatePrivilegeFormProps {
+    formData: {
+      elevatePrivilege: string;
+      EP_escalationAccount: string;
+      EP_escalationPassword: string;
+      EP_dzdoDirectory: string;
+      EP_suDirectory: string;
+      EP_pbrunDirectory: string;
+      EP_su_sudoDirectory: string;
+      EP_su_login: string;
+      EP_su_user: string;
+      EP_sudoUser: string;
+      EPsshUserPassword: string;
+      EPenablePassword: string;
+    };
+    handleInputChange: (
+      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string,
+      field?: string
+    ) => void;
+  }
+
+  const ElevatePrivilegeForm = ({
+    formData,
+    handleInputChange,
+  }: ElevatePrivilegeFormProps) => {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-start items-center mb-8">
+          <p className="block w-70">Elevate privileges with</p>
+          <Select
+            value={formData.elevatePrivilege}
+            onValueChange={(value) =>
+              handleInputChange(value, "elevatePrivilege")
+            }
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Elevate privilege" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="nothing">Nothing</SelectItem>
+              <SelectItem value=".k5login">.k5login</SelectItem>
+              <SelectItem value="ciscoEnable">Cisco 'enable'</SelectItem>
+              <SelectItem value="dzdo">dzdo</SelectItem>
+              <SelectItem value="su">su</SelectItem>
+              <SelectItem value="pbrun">pbrun</SelectItem>
+              <SelectItem value="su+sudo">su+sudo</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {formData.elevatePrivilege === ".k5login" && (
+          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+            <div className="flex items-center">
+              <p className="block w-70">Escalation Account:</p>
+              <Input
+                type="text"
+                name="EP_escalationAccount"
+                placeholder="Enter escalation account"
+                value={formData.EP_escalationAccount}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        {formData.elevatePrivilege === "ciscoEnable" && (
+          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+            <div className="flex items-center">
+              <p className="block w-70">Enable Password:</p>
+              <Input
+                type="password"
+                name="EPenablePassword"
+                placeholder="Enter enable password"
+                value={formData.EPenablePassword}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        {formData.elevatePrivilege === "dzdo" && (
+          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+            <div className="flex items-center">
+              <p className="block w-70">Escalation Account:</p>
+              <Input
+                type="text"
+                name="EP_escalationAccount"
+                placeholder="Enter escalation account"
+                value={formData.EP_escalationAccount}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+            <div className="flex items-center">
+              <p className="block w-70">Escalation Password:</p>
+              <Input
+                type="password"
+                name="EP_escalationPassword"
+                placeholder="Enter escalation password"
+                value={formData.EP_escalationPassword}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+            <div className="flex items-center">
+              <p className="block w-70">dzdo Directory:</p>
+              <Input
+                type="text"
+                name="EP_dzdoDirectory"
+                placeholder="Enter dzdo directory"
+                value={formData.EP_dzdoDirectory}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        {formData.elevatePrivilege === "su" && (
+          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+            <div className="flex items-center">
+              <p className="block w-70">su Directory:</p>
+              <Input
+                type="text"
+                name="EP_suDirectory"
+                placeholder="Enter su directory"
+                value={formData.EP_suDirectory}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+            <div className="flex items-center">
+              <p className="block w-70">su Login:</p>
+              <Input
+                type="text"
+                name="EP_su_login"
+                placeholder="Enter su login"
+                value={formData.EP_su_login}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+            <div className="flex items-center">
+              <p className="block w-70">Escalation Password:</p>
+              <Input
+                type="password"
+                name="EP_escalationPassword"
+                placeholder="Enter escalation password"
+                value={formData.EP_escalationPassword}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        {formData.elevatePrivilege === "pbrun" && (
+          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+            <div className="flex items-center">
+              <p className="block w-70">pbrun Directory:</p>
+              <Input
+                type="text"
+                name="EP_pbrunDirectory"
+                placeholder="Enter pbrun directory"
+                value={formData.EP_pbrunDirectory}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+            <div className="flex items-center">
+              <p className="block w-70">SSH User Password:</p>
+              <Input
+                type="password"
+                name="EPsshUserPassword"
+                placeholder="Enter SSH user password"
+                value={formData.EPsshUserPassword}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        {formData.elevatePrivilege === "su+sudo" && (
+          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+            <div className="flex items-center">
+              <p className="block w-70">su+sudo Directory:</p>
+              <Input
+                type="text"
+                name="EP_su_sudoDirectory"
+                placeholder="Enter su+sudo directory"
+                value={formData.EP_su_sudoDirectory}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+            <div className="flex items-center">
+              <p className="block w-70">su User:</p>
+              <Input
+                type="text"
+                name="EP_su_user"
+                placeholder="Enter su user"
+                value={formData.EP_su_user}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+            <div className="flex items-center">
+              <p className="block w-70">sudo User:</p>
+              <Input
+                type="text"
+                name="EP_sudoUser"
+                placeholder="Enter sudo user"
+                value={formData.EP_sudoUser}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+            <div className="flex items-center">
+              <p className="block w-70">Escalation Password:</p>
+              <Input
+                type="password"
+                name="EP_escalationPassword"
+                placeholder="Enter escalation password"
+                value={formData.EP_escalationPassword}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -157,8 +459,21 @@ const ScanCAFirewall = () => {
         return (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Target Details</h2>
-            <div className="flex justify-start items-center">
+            <div className="flex justify-start items-center gap-2">
               <p className="block w-70 ">Audit Method:</p>
+
+              <Select
+                value={formData.OS}
+                onValueChange={(value) => handleInputChange(value, "OS")}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select OS" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="windows">Windows</SelectItem>
+                  <SelectItem value="linux">Linux</SelectItem>
+                </SelectContent>
+              </Select>
 
               <Select
                 value={formData.auditMethod}
@@ -223,12 +538,22 @@ const ScanCAFirewall = () => {
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Select Auth Method" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="password">Password</SelectItem>
-                      <SelectItem value="ntlm">NTLM Hash</SelectItem>
-                      <SelectItem value="lm">LM Hash</SelectItem>
-                      <SelectItem value="kerberos">Kerberos</SelectItem>
-                    </SelectContent>
+                    {formData.OS === "windows" && (
+                      <SelectContent>
+                        <SelectItem value="password">Password</SelectItem>
+                        <SelectItem value="ntlm">NTLM Hash</SelectItem>
+                        <SelectItem value="lm">LM Hash</SelectItem>
+                        <SelectItem value="kerberos">Kerberos</SelectItem>
+                      </SelectContent>
+                    )}
+                    {formData.OS === "linux" && (
+                      <SelectContent>
+                        <SelectItem value="password">Password</SelectItem>
+                        <SelectItem value="publicKey">Public Key</SelectItem>
+                        <SelectItem value="certificate">Certificate</SelectItem>
+                        <SelectItem value="kerberos">Kerberos</SelectItem>
+                      </SelectContent>
+                    )}
                   </Select>
                 </div>
 
@@ -258,49 +583,56 @@ const ScanCAFirewall = () => {
                         required
                       />
                     </div>
+                    {formData.OS === "linux" && (
+                      <ElevatePrivilegeForm
+                        formData={formData}
+                        handleInputChange={handleInputChange}
+                      />
+                    )}
                   </div>
                 )}
 
-                {formData.authMethod === "ntlm" && (
-                  <div className="space-y-4">
-                    <div className="flex items-center">
-                      <p className="block w-70">Username:</p>
-                      <Input
-                        type="text"
-                        name="username"
-                        placeholder="Username"
-                        value={formData.username}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
+                {formData.authMethod === "ntlm" &&
+                  formData.OS === "windows" && (
+                    <div className="space-y-4">
+                      <div className="flex items-center">
+                        <p className="block w-70">Username:</p>
+                        <Input
+                          type="text"
+                          name="username"
+                          placeholder="Username"
+                          value={formData.username}
+                          onChange={handleInputChange}
+                          className="w-80"
+                          required
+                        />
+                      </div>
+                      <div className="flex items-center">
+                        <p className="block w-70">NTLM Hash:</p>
+                        <Input
+                          type="text"
+                          name="ntlmHash"
+                          placeholder="NTLM Hash"
+                          value={formData.ntlmHash}
+                          onChange={handleInputChange}
+                          className="w-80"
+                          required
+                        />
+                      </div>
+                      <div className="flex items-center">
+                        <p className="block w-70">Domain:</p>
+                        <Input
+                          type="text"
+                          name="domain"
+                          placeholder="Domain"
+                          value={formData.domain}
+                          onChange={handleInputChange}
+                          className="w-80"
+                          required
+                        />
+                      </div>
                     </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">NTLM Hash:</p>
-                      <Input
-                        type="text"
-                        name="ntlmHash"
-                        placeholder="NTLM Hash"
-                        value={formData.ntlmHash}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">Domain:</p>
-                      <Input
-                        type="text"
-                        name="domain"
-                        placeholder="Domain"
-                        value={formData.domain}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                  </div>
-                )}
+                  )}
                 {formData.authMethod === "kerberos" && (
                   <div className="space-y-4">
                     <div className="flex items-center">
@@ -365,9 +697,96 @@ const ScanCAFirewall = () => {
                         required
                       />
                     </div>
+                    {formData.OS === "linux" && (
+                      <ElevatePrivilegeForm
+                        formData={formData}
+                        handleInputChange={handleInputChange}
+                      />
+                    )}
                   </div>
                 )}
-                {formData.authMethod === "lm" && (
+
+                {formData.authMethod === "publicKey" &&
+                  formData.OS === "linux" && (
+                    <div className="space-y-4">
+                      <div className="flex items-center">
+                        <p className="block w-70">Username:</p>
+                        <Input
+                          type="text"
+                          name="username"
+                          placeholder="Username"
+                          value={formData.username}
+                          onChange={handleInputChange}
+                          className="w-80"
+                          required
+                        />
+                      </div>
+                      <div className="flex items-center">
+                        <p className="block w-70">Private Key</p>
+                        <Button>Add file</Button>
+                      </div>
+                      <div className="flex items-center">
+                        <p className="block w-70">Private Key Passphrase</p>
+                        <Input
+                          type="text"
+                          name="passphrase"
+                          placeholder="Passphrase"
+                          value={formData.privateKeyPassphrase}
+                          onChange={handleInputChange}
+                          className="w-80"
+                          required
+                        />
+                      </div>
+                      <ElevatePrivilegeForm
+                        formData={formData}
+                        handleInputChange={handleInputChange}
+                      />
+                    </div>
+                  )}
+
+                {formData.authMethod === "certificate" &&
+                  formData.OS === "linux" && (
+                    <div className="space-y-4">
+                      <div className="flex items-center">
+                        <p className="block w-70">Username:</p>
+                        <Input
+                          type="text"
+                          name="username"
+                          placeholder="Username"
+                          value={formData.username}
+                          onChange={handleInputChange}
+                          className="w-80"
+                          required
+                        />
+                      </div>
+                      <div className="flex items-center">
+                        <p className="block w-70">User Certificate</p>
+                        <Button>Add file</Button>
+                      </div>
+                      <div className="flex items-center">
+                        <p className="block w-70">Private Key</p>
+                        <Button>Add file</Button>
+                      </div>
+                      <div className="flex items-center">
+                        <p className="block w-70">Private Key Passphrase</p>
+                        <Input
+                          type="text"
+                          name="privateKeyPassphrase"
+                          placeholder="Private Key Passphrase"
+                          value={formData.privateKeyPassphrase}
+                          onChange={handleInputChange}
+                          className="w-80"
+                          required
+                        />
+                      </div>
+                      <ElevatePrivilegeForm
+                        formData={formData}
+                        handleInputChange={handleInputChange}
+                      />
+                    </div>
+                  )}
+
+                {formData.authMethod === "lm" && formData.OS === "windows" && (
                   <div className="space-y-4 border-l-2 border-gray-200">
                     <div className="flex items-center">
                       <p className="block w-70">Username:</p>
@@ -407,6 +826,143 @@ const ScanCAFirewall = () => {
                     </div>
                   </div>
                 )}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">
+                    Global Credentials Settings
+                  </h3>
+                  {formData.OS === "windows" && (
+                    <>
+                      <div className="flex items-center">
+                        <Checkbox
+                          className="mr-4"
+                          checked={
+                            formData.globalCredentials.neverSendCredentials ===
+                            "true"
+                          }
+                          onCheckedChange={(checked) => {
+                            handleNestedInputChange(
+                              "globalCredentials",
+                              "neverSendCredentials",
+                              checked ? "true" : "false"
+                            );
+                          }}
+                        />
+                        <p>Never send credentials in the clear</p>
+                      </div>
+                      <div className="flex items-center">
+                        <Checkbox
+                          className="mr-4"
+                          checked={
+                            formData.globalCredentials.dontUseNTLMv1 === "true"
+                          }
+                          onCheckedChange={(checked) => {
+                            handleNestedInputChange(
+                              "globalCredentials",
+                              "dontUseNTLMv1",
+                              checked ? "true" : "false"
+                            );
+                          }}
+                        />
+                        <p>Do not use NTLMv1 authentication</p>
+                      </div>
+                      <div className="flex items-center">
+                        <Checkbox
+                          className="mr-4"
+                          checked={
+                            formData.globalCredentials
+                              .startRemoteRegistryService === "true"
+                          }
+                          onCheckedChange={(checked) => {
+                            handleNestedInputChange(
+                              "globalCredentials",
+                              "startRemoteRegistryService",
+                              checked ? "true" : "false"
+                            );
+                          }}
+                        />
+                        <p>start the remote registry service during the scan</p>
+                      </div>
+                      <div className="flex items-center">
+                        <Checkbox
+                          className="mr-4"
+                          checked={
+                            formData.globalCredentials
+                              .enableAdministrativeShares === "true"
+                          }
+                          onCheckedChange={(checked) => {
+                            handleNestedInputChange(
+                              "globalCredentials",
+                              "enableAdministrativeShares",
+                              checked ? "true" : "false"
+                            );
+                          }}
+                        />
+                        <p>Enable administrative shares during the scan</p>
+                      </div>
+                      <div className="flex items-center">
+                        <Checkbox
+                          className="mr-4"
+                          checked={
+                            formData.globalCredentials.startServerService ===
+                            "true"
+                          }
+                          onCheckedChange={(checked) => {
+                            handleNestedInputChange(
+                              "globalCredentials",
+                              "startServerService",
+                              checked ? "true" : "false"
+                            );
+                          }}
+                        />
+                        <p>Start the Server Service during the scan</p>
+                      </div>
+                    </>
+                  )}
+                  {formData.OS === "linux" && (
+                    <>
+                      <div className="flex items-center">
+                        <p className="block w-70">known_hosts file</p>
+                        <Button>Add file</Button>
+                      </div>
+                      <div className="flex items-center">
+                        <p className="block w-70">Preferred port</p>
+                        <Input
+                          type="number"
+                          name="preferredPort"
+                          placeholder="port"
+                          value={formData.port}
+                          onChange={handleInputChange}
+                          className="w-80"
+                          required
+                        />
+                      </div>
+                      <div className="flex items-center">
+                        <p className="block w-70">Client Version</p>
+                        <Input
+                          type="text"
+                          name="clientVersion"
+                          placeholder="Client Version"
+                          value={formData.clientVersion}
+                          onChange={handleInputChange}
+                          className="w-80"
+                          required
+                        />
+                      </div>
+                      <div className="flex items-center">
+                        <p className="block w-70">Attempt Least Privilege</p>
+                        <Checkbox
+                          checked={formData.attemptLeastPrivelege === "true"}
+                          onCheckedChange={(checked) => {
+                            handleInputChange(
+                              checked ? "true" : "false",
+                              "attemptLeastPrivelege"
+                            );
+                          }}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             )}
 
@@ -457,7 +1013,7 @@ const ScanCAFirewall = () => {
                 <SelectContent>
                   {categories.map((category) => (
                     <SelectItem key={category} value={category}>
-                       {category}
+                      {category}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -626,27 +1182,14 @@ const ScanCAFirewall = () => {
 
         <Card className="w-full mt-4">
           <CardContent className="w-full p-4 pl-12">
-            {errors !== "" ? <><p className="mb-2 text-red-700 font-semibold">{errors}</p></> :<></> }
+            {errors !== "" ? (
+              <>
+                <p className="mb-2 text-red-700 font-semibold">{errors}</p>
+              </>
+            ) : (
+              <></>
+            )}
             <div className="w-[80%] space-y-6">
-              {/* Progress indicator
-            <div className="flex justify-start gap-8 mb-8">
-              {[1, 2, 3, 4].map((step) => (
-                <div
-                  key={step}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center
-                                ${
-                                  page >= step
-                                    ? "bg-black text-white"
-                                    : "bg-gray-200"
-                                }`}
-                >
-                  {step}
-                </div>
-              ))}
-            </div>
-
-            {*/}
-
               <form onSubmit={handleSubmit}>
                 {renderPage()}
 
