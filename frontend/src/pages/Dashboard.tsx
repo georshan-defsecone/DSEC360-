@@ -6,11 +6,24 @@ import Header from "@/components/Header"
 import { useEffect, useState } from 'react';
 import api from "./api"
 import { Link } from "react-router-dom"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 
 
 function DashboardContent() {
   const [projectData, setProjectData] = useState([]);
   const token = localStorage.getItem("access"); 
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
   
 
   const fetchData = async () => {
@@ -39,6 +52,7 @@ function DashboardContent() {
     try {
       await api.put(`project/trash/${projectId}/`, { trash: true });
       console.log(`Project ${projectId} moved to trash.`);
+      fetchData();  // Refresh the list after moving the project to trash
     } catch (err) {
       console.error("Failed to move project to trash", err);
     }
@@ -80,7 +94,31 @@ function DashboardContent() {
                       </TableCell>
                       <TableCell>{pro.project_author}</TableCell>
                       <TableCell>
-                        <button onClick={() => moveToTrash(pro.project_id)}>❌</button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button onClick={() => setSelectedProjectId(pro.project_id)}>❌</button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will move the project to trash. You can restore it later if needed.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => {
+                                  if (selectedProjectId) {
+                                    moveToTrash(selectedProjectId);
+                                  }
+                                }}
+                              >
+                                Move to Trash
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </TableCell>
                     </TableRow>
                   ))}
