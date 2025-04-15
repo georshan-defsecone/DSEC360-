@@ -131,7 +131,7 @@ const LDAP = () => {
       <Sidebar settings={true} scanSettings={false} homeSettings={false} />
       <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
         <Header title="LDAP" />
-        <Card className="w-[85%]">
+        <Card >
           <CardContent className="p-3 pl-12">
             <div className="flex flex-col items-start space-y-6">
               {/* LDAP URL */}
