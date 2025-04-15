@@ -14,9 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+ 
 
 import api from "../api";
 import { Checkbox } from "@/components/ui/checkbox";
+
+import { DropdownMenu, DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 
 const ScanCALinux = () => {
   const [complianceData, setComplianceData] = useState([]);
