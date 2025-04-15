@@ -615,7 +615,7 @@ const ScanIOCWindows = () => {
     <>
       <div className="flex h-screen text-black">
         <Sidebar settings={false} scanSettings={true} homeSettings={false} />
-        <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
+        <div className="flex-1 flex flex-col pr-8 pl-8 ml-64 pt-20">
           <Header title="Windows Compromise Assessment Scan" />
 
           <Card className="w-full mt-4">

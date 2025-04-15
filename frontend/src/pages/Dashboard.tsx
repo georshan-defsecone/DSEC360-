@@ -40,7 +40,7 @@ function DashboardContent() {
   }, []);
 
   return (
-    <div className="grid lg:grid-cols-1 gap-4">
+    <div className="grid lg:grid-cols-1 gap-4 pt-18">
       <div className="col-span-2">
         <Card className="mt-3 w-full">
           <CardContent className="p-4">
