@@ -11,16 +11,18 @@ export default function Trash() {
   const [trashedProject, setTrashedProject] = useState([]);
 
   useEffect(() => {
-    const fetchTrashedScans = async () => {
+    const fetchTrashedProject = async () => {
       try {
         const response = await api.get('projects/trash/');
         setTrashedProject(response.data);
+        console.log(response.data);  // Debug the response data
+        
       } catch (error) {
         console.error('Error fetching trashed project:', error);
       }
     };
   
-    fetchTrashedScans();
+    fetchTrashedProject();
   }, []);
 
 
@@ -48,7 +50,7 @@ export default function Trash() {
                 </TableHeader>
                 <TableBody>
                   {trashedProject.map((pro, project_id) => (
-                    <TableRow key={project_id}>
+                    <TableRow key={pro.project_id}>
                       <TableCell></TableCell>
                       <TableCell className="font-medium">{pro.project_name}</TableCell>
                       <TableCell>{pro.project_author}</TableCell>

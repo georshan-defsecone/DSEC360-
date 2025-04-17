@@ -45,17 +45,18 @@ const AllProjectsPage = () => {
     fetchProjects();
   }, []);
 
-  const moveToTrash = async (projectId) => {
+  const moveToTrash = async (projectId: string) => {
     try {
       await api.put(
-        `project/trash/${projectId}/`,
-        {},
+        `project/trash/${projectId}/`,{trash: true},
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access")}`,
           },
         }
+        
       );
+      console.log(`Project ${projectId} moved to trash.`);
       // Refresh project list
       fetchProjects();
     } catch (error) {
@@ -101,12 +102,9 @@ const AllProjectsPage = () => {
                               <TableCell>
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
-                                    <button
-                                      onClick={() => setSelectedProjectId(project.project_id)}
-                                    >
-                                      ❌
-                                    </button>
+                                    <button onClick={() => setSelectedProjectId(project.project_id)}>❌</button>
                                   </AlertDialogTrigger>
+
                                   <AlertDialogContent>
                                     <AlertDialogHeader>
                                       <AlertDialogTitle>Are you sure?</AlertDialogTitle>
