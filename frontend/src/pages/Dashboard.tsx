@@ -20,6 +20,7 @@ import {
 
 
 
+
 function DashboardContent() {
   const [projectData, setProjectData] = useState([]);
   const token = localStorage.getItem("access"); 
@@ -139,7 +140,7 @@ function Dashboard() {
     <div className="flex h-screen text-black">
       <Sidebar settings={false} scanSettings={false} homeSettings={true} />
       <div className="flex-1 flex flex-col ml-64">
-        <Header title="My Projects" />
+        <Header title="My Projects"><Link className="flex items-center ml-200" >New Project</Link> </Header>
         <div className="p-4 overflow-auto max-h-[calc(100vh-100px)]">
           <DashboardContent />
         </div>
