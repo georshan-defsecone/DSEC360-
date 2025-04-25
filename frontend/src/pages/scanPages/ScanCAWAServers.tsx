@@ -456,6 +456,19 @@ const ScanCAFirewall = () => {
                         required
                       />
                     </div>
+                    <div className="flex items-center">
+                      <p className="block w-70 ">Domain:</p>
+
+                      <Input
+                        type="text"
+                        name="domain"
+                        placeholder="Domain"
+                        value={formData.domain}
+                        onChange={handleInputChange}
+                        className="w-80"
+                        required
+                      />
+                    </div>
                     {formData.OS === "linux" && (
                       <ElevatePrivilegeForm
                         elevatePrivilege={formData.elevatePrivilege}

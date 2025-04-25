@@ -1,6 +1,7 @@
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
+import { ElevatePrivilegeForm } from "@/components/ElevatePrivilegeForm";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
@@ -49,6 +50,23 @@ const ScanIOCLinux = () => {
     kdcTransport: "",
     certificate: "",
     publicKey: "",
+    privateKeyPassphrase: "",
+    elevatePrivilege: "",
+    port: "",
+    clientVersion: "",
+    attemptLeastPrivilege: "false",
+
+    EP_escalationAccount: "", // .k5login, dzdo
+    EP_escalationPassword: "", // .k5login, dzdo, su, su+sudo
+    EP_dzdoDirectory: "", // dzdo
+    EP_suDirectory: "", // su
+    EP_pbrunDirectory: "", // pbrun
+    EP_su_sudoDirectory: "", // su+sudo
+    EP_su_login: "", //su
+    EP_su_user: "", // su+sudo
+    EP_sudoUser: "", // su+sudo
+    EPsshUserPassword: "", // pbrun
+    EPenablePassword: "", // Cisco enable
 
     //Get control info
     IOCcontrols: {} as Record<string, boolean>,
@@ -63,10 +81,109 @@ const ScanIOCLinux = () => {
     notificationEmail: "",
   });
 
+  const validatePage1 = () => {
+    return (
+      formData.scanName.trim() !== "" &&
+      formData.projectName.trim() !== "" &&
+      formData.description.trim() !== ""
+    );
+  };
+  
+  const validatePage2 = () => {
+    if (!formData.auditMethod) return false;
+  
+    if (formData.auditMethod === "remoteAccess") {
+      if (!formData.target) return false;
+      if (!formData.authMethod) return false;
+  
+      // Validate based on authentication method
+      switch (formData.authMethod) {
+        case "password":
+          if (!formData.username || !formData.password) return false;
+          break;
+        case "publicKey":
+          if (!formData.username || !formData.privateKeyPassphrase) return false;
+          break;
+        case "certificate":
+          if (!formData.username || !formData.privateKeyPassphrase) return false;
+          break;
+        case "kerberos":
+          if (!formData.username || !formData.password || !formData.kdc || 
+              !formData.kdcPort || !formData.domain) return false;
+          break;
+        default:
+          return false;
+      }
+  
+      // Validate elevation privilege fields if selected
+      if (formData.elevatePrivilege) {
+        switch (formData.elevatePrivilege) {
+          case ".k5login":
+            if (!formData.EP_escalationAccount) return false;
+            break;
+          case "ciscoEnable":
+            if (!formData.EPenablePassword) return false;
+            break;
+          case "dzdo":
+            if (!formData.EP_escalationAccount || !formData.EP_escalationPassword ||
+                !formData.EP_dzdoDirectory) return false;
+            break;
+          case "su":
+            if (!formData.EP_suDirectory || !formData.EP_su_login ||
+                !formData.EP_escalationPassword) return false;
+            break;
+          case "pbrun":
+            if (!formData.EP_pbrunDirectory || !formData.EPsshUserPassword) return false;
+            break;
+          case "su+sudo":
+            if (!formData.EP_su_sudoDirectory || !formData.EP_su_user ||
+                !formData.EP_sudoUser || !formData.EP_escalationPassword) return false;
+            break;
+        }
+      }
+    }
+  
+    return true;
+  };
+
+  const validatePage4 = () => {
+    // If neither schedule nor notification is enabled, require at least one
+  if (formData.schedule !== "true" && formData.notification !== "true") {
+    setErrors("Please enable either scheduling or notifications");
+    return false;
+  }
+
+  // Validate schedule settings
+  if (formData.schedule === "true") {
+    if (!formData.scheduleFrequency || !formData.scheduleStartDate || !formData.scheduleStartTime || !formData.scheduleTimezone) {
+      setErrors("Please fill in all schedule fields");
+      return false;
+    }
+  }
+
+  // Validate notification settings
+  if (formData.notification === "true") {
+    if (!formData.notificationEmail) {
+      setErrors("Please enter an email address");
+      return false;
+    }
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.notificationEmail)) {
+      setErrors("Please enter a valid email address");
+      return false;
+    }
+  }
+
+  // If all validations pass
+  return true;
+  };
+
+
   useEffect(() => {
     const fetchIOCdata = async () => {
       try {
-        const response = await api.get("/compliance/ioc/linux/");
+        const response = await api.get("/scans/compliance/ioc/linux/");
         console.log(response.data);
         setIOCdata(response.data);
 
@@ -121,7 +238,32 @@ const ScanIOCLinux = () => {
   };
 
   const nextPage = () => {
-    if (page < 4) setPage((prev) => prev + 1);
+    let isValid = false;
+
+  switch (page) {
+    case 1:
+      isValid = validatePage1();
+      break;
+    case 2:
+      isValid = validatePage2();
+      break;
+    case 3:
+      isValid = true
+      break;
+    case 4:
+      isValid = validatePage4();
+      break;
+    default:
+      isValid = false;
+  }
+
+  if (!isValid) {
+    setErrors("Please fill in all required fields before proceeding.");
+    return;
+  }
+
+  setErrors(""); // Clear any existing errors
+  if (page < 4) setPage((prev) => prev + 1);
   };
 
   const prevPage = () => {
@@ -130,8 +272,21 @@ const ScanIOCLinux = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if(!validatePage4()) return
+    setErrors("")
     console.log("Form submitted:", formData);
     // Add your submission logic here
+  };
+
+  const renderError = () => {
+    if (errors) {
+      return (
+        <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
+          {errors}
+        </div>
+      );
+    }
+    return null;
   };
 
   const renderPage = () => {
@@ -139,6 +294,7 @@ const ScanIOCLinux = () => {
       case 1:
         return (
           <div className="space-y-4">
+            {renderError()}
             <h2 className="text-xl font-semibold">General Information</h2>
 
             <div className="flex justify-between items-center">
@@ -184,6 +340,7 @@ const ScanIOCLinux = () => {
       case 2:
         return (
           <div className="space-y-4">
+            {renderError()}
             <h2 className="text-xl font-semibold">Target Details</h2>
             <div className="flex justify-start items-center">
               <p className="block w-70 ">Audit Method:</p>
@@ -200,6 +357,7 @@ const ScanIOCLinux = () => {
                 <SelectContent>
                   <SelectItem value="agent">Agent</SelectItem>
                   <SelectItem value="remoteAccess">Remote Access</SelectItem>
+                  <SelectItem value="uploadConfig">Upload Config</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -239,8 +397,8 @@ const ScanIOCLinux = () => {
                   </Button>
                 </div>
 
-                <div className="flex justify-start items-center">
-                  <p className="block w-70 ">Authentication Method:</p>
+                <div className="flex justify-start items-center mb-8">
+                  <p className="block w-70 ">Authentication Method (SSH)</p>
                   <Select
                     value={formData.authMethod}
                     onValueChange={(value) =>
@@ -252,8 +410,8 @@ const ScanIOCLinux = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="password">Password</SelectItem>
-                      <SelectItem value="ntlm">NTLM Hash</SelectItem>
-                      <SelectItem value="lm">LM Hash</SelectItem>
+                      <SelectItem value="publicKey">Public Key</SelectItem>
+                      <SelectItem value="certificate">Certificate</SelectItem>
                       <SelectItem value="kerberos">Kerberos</SelectItem>
                     </SelectContent>
                   </Select>
@@ -285,10 +443,28 @@ const ScanIOCLinux = () => {
                         required
                       />
                     </div>
+                    <div className="flex items-center">
+                      <p className="block w-70 ">Domain:</p>
+
+                      <Input
+                        type="text"
+                        name="domain"
+                        placeholder="Domain"
+                        value={formData.domain}
+                        onChange={handleInputChange}
+                        className="w-80"
+                        required
+                      />
+                    </div>
+                    <ElevatePrivilegeForm
+                      elevatePrivilege={formData.elevatePrivilege}
+                      formData={formData}
+                      handleInputChange={handleInputChange}
+                    />
                   </div>
                 )}
 
-                {formData.authMethod === "ntlm" && (
+                {formData.authMethod === "publicKey" && (
                   <div className="space-y-4">
                     <div className="flex items-center">
                       <p className="block w-70">Username:</p>
@@ -303,29 +479,26 @@ const ScanIOCLinux = () => {
                       />
                     </div>
                     <div className="flex items-center">
-                      <p className="block w-70">NTLM Hash:</p>
-                      <Input
-                        type="text"
-                        name="ntlmHash"
-                        placeholder="NTLM Hash"
-                        value={formData.ntlmHash}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
+                      <p className="block w-70">Private Key</p>
+                      <Button>Add file</Button>
                     </div>
                     <div className="flex items-center">
-                      <p className="block w-70">Domain:</p>
+                      <p className="block w-70">Private Key Passphrase</p>
                       <Input
                         type="text"
-                        name="domain"
-                        placeholder="Domain"
-                        value={formData.domain}
+                        name="privateKeyPassphrase"
+                        placeholder="Passphrase"
+                        value={formData.privateKeyPassphrase}
                         onChange={handleInputChange}
                         className="w-80"
                         required
                       />
                     </div>
+                    <ElevatePrivilegeForm
+                      elevatePrivilege={formData.elevatePrivilege}
+                      formData={formData}
+                      handleInputChange={handleInputChange}
+                    />
                   </div>
                 )}
                 {formData.authMethod === "kerberos" && (
@@ -392,10 +565,15 @@ const ScanIOCLinux = () => {
                         required
                       />
                     </div>
+                    <ElevatePrivilegeForm
+                      elevatePrivilege={formData.elevatePrivilege}
+                      formData={formData}
+                      handleInputChange={handleInputChange}
+                    />
                   </div>
                 )}
-                {formData.authMethod === "lm" && (
-                  <div className="space-y-4 border-l-2 border-gray-200">
+                {formData.authMethod === "certificate" && (
+                  <div className="space-y-4">
                     <div className="flex items-center">
                       <p className="block w-70">Username:</p>
                       <Input
@@ -409,32 +587,94 @@ const ScanIOCLinux = () => {
                       />
                     </div>
                     <div className="flex items-center">
-                      <p className="block w-70">LM Hash:</p>
-                      <Input
-                        type="text"
-                        name="lmHash"
-                        placeholder="LM Hash"
-                        value={formData.lmHash}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
+                      <p className="block w-70">User Certificate</p>
+                      <Button>Add file</Button>
                     </div>
                     <div className="flex items-center">
-                      <p className="block w-70">Domain:</p>
+                      <p className="block w-70">Private Key</p>
+                      <Button>Add file</Button>
+                    </div>
+                    <div className="flex items-center">
+                      <p className="block w-70">Private Key Passphrase</p>
                       <Input
                         type="text"
-                        name="domain"
-                        placeholder="Domain"
-                        value={formData.domain}
+                        name="privateKeyPassphrase"
+                        placeholder="Private Key Passphrase"
+                        value={formData.privateKeyPassphrase}
                         onChange={handleInputChange}
                         className="w-80"
                         required
                       />
                     </div>
+                    <ElevatePrivilegeForm
+                      elevatePrivilege={formData.elevatePrivilege}
+                      formData={formData}
+                      handleInputChange={handleInputChange}
+                    />
                   </div>
                 )}
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">
+                    Global Credential Settings
+                  </h2>
+                  <div className="flex items-center">
+                    <p className="block w-70">known_hosts file</p>
+                    <Button>Add file</Button>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">Preferred port</p>
+                    <Input
+                      type="number"
+                      name="preferredPort"
+                      placeholder="port"
+                      value={formData.port}
+                      onChange={handleInputChange}
+                      className="w-80"
+                      required
+                    />
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">Client Version</p>
+                    <Input
+                      type="text"
+                      name="clientVersion"
+                      placeholder="Client Version"
+                      value={formData.clientVersion}
+                      onChange={handleInputChange}
+                      className="w-80"
+                      required
+                    />
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">Attempt Least Privilege</p>
+                    <Checkbox
+                      checked={formData.attemptLeastPrivilege === "true"}
+                      onCheckedChange={(checked) => {
+                        handleInputChange(
+                          checked ? "true" : "false",
+                          "attemptLeastPrivelege"
+                        );
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
+            )}
+
+            {formData.auditMethod === "uploadConfig" && (
+              <>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <Button
+                      type="button"
+                      className="px-4 py-2 bg-black text-white rounded"
+                      onClick={() => console.log("Uploading config")}
+                    >
+                      Upload config
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         );
@@ -442,6 +682,7 @@ const ScanIOCLinux = () => {
         return (
           <>
             <div className="space-y-6">
+              {renderError()}
               <h2 className="text-xl font-semibold">IOC Controls</h2>
               {errors !== "" ? (
                 <>
@@ -452,27 +693,29 @@ const ScanIOCLinux = () => {
               )}
               <div className="flex flex-col space-y-4">
                 {IOCdata.map((ioc: any) => {
-                    const iocName = ioc["IOC Names "].trim();
-                    return(
-                  <div
-                    key={ioc["ID Number "]}
-                    className="flex items-center space-x-3"
-                  >
-                    <Checkbox
-                      id={`ioc-${ioc["ID Number "]}`}
-                      checked={formData.IOCcontrols[ioc["IOC Names "]] || false}
-                      onCheckedChange={() =>
-                        handleCheckboxChange(ioc["IOC Names "])
-                      }
-                    />
-                    <label
-                      htmlFor={`ioc-${ioc["ID Number "]}`}
-                      className="text-sm font-medium leading-none"
+                  const iocName = ioc["IOC Names "].trim();
+                  return (
+                    <div
+                      key={ioc["ID Number "]}
+                      className="flex items-center space-x-3"
                     >
-                      {ioc["IOC Names "]}
-                    </label>
-                  </div>
-                  )
+                      <Checkbox
+                        id={`ioc-${ioc["ID Number "]}`}
+                        checked={
+                          formData.IOCcontrols[ioc["IOC Names "]] || false
+                        }
+                        onCheckedChange={() =>
+                          handleCheckboxChange(ioc["IOC Names "])
+                        }
+                      />
+                      <label
+                        htmlFor={`ioc-${ioc["ID Number "]}`}
+                        className="text-sm font-medium leading-none"
+                      >
+                        {ioc["IOC Names "]}
+                      </label>
+                    </div>
+                  );
                 })}
               </div>
             </div>
@@ -482,6 +725,7 @@ const ScanIOCLinux = () => {
       case 4:
         return (
           <div className="space-y-6">
+            {renderError()}
             <h2 className="text-xl font-semibold">Scan Settings</h2>
 
             {/* Schedule Section */}
@@ -621,25 +865,6 @@ const ScanIOCLinux = () => {
           <Card className="w-[85%] mt-4">
             <CardContent className="w-full p-4 pl-12">
               <div className="w-[90%] space-y-6">
-                {/* Progress indicator
-            <div className="flex justify-start gap-8 mb-8">
-              {[1, 2, 3, 4].map((step) => (
-                <div
-                  key={step}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center
-                                ${
-                                  page >= step
-                                    ? "bg-black text-white"
-                                    : "bg-gray-200"
-                                }`}
-                >
-                  {step}
-                </div>
-              ))}
-            </div>
-
-            {*/}
-
                 <form onSubmit={handleSubmit}>
                   {renderPage()}
 
@@ -657,7 +882,8 @@ const ScanIOCLinux = () => {
                     <Breadcrumbs currentPage={page} pages={formPages} />
                     {page === 4 ? (
                       <button
-                        type="submit"
+                        type="button"
+                        onClick={handleSubmit}
                         className="px-4 py-2 bg-green-500 text-white rounded"
                       >
                         Submit

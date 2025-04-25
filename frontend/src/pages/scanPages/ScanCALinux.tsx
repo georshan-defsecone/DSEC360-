@@ -189,7 +189,7 @@ const ScanCALinux = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get("/compliance/configaudit/linux/"); // Adjust the endpoint as needed
+        const response = await api.get("/scans/compliance/configaudit/linux/"); // Adjust the endpoint as needed
         console.log("Fetched data:", response.data);
         setComplianceData(response.data);
       } catch (error) {
@@ -425,6 +425,19 @@ const ScanCALinux = () => {
                         name="password"
                         placeholder="Password"
                         value={formData.password}
+                        onChange={handleInputChange}
+                        className="w-80"
+                        required
+                      />
+                    </div>
+                    <div className="flex items-center">
+                      <p className="block w-70 ">Domain:</p>
+
+                      <Input
+                        type="text"
+                        name="domain"
+                        placeholder="Domain"
+                        value={formData.domain}
                         onChange={handleInputChange}
                         className="w-80"
                         required
