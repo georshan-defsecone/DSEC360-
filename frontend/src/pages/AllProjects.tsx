@@ -49,13 +49,13 @@ const AllProjectsPage = () => {
   const moveToTrash = async (projectId: string) => {
     try {
       await api.put(
-        `project/trash/${projectId}/`,{trash: true},
+        `project/trash/${projectId}/`, { trash: true },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access")}`,
           },
         }
-        
+
       );
       console.log(`Project ${projectId} moved to trash.`);
       // Refresh project list
@@ -93,17 +93,19 @@ const AllProjectsPage = () => {
                             </TableCell>
                           </TableRow>
                         ) : (
-                          projects.map((project) => (
-                            <TableRow key={project.project_id}>
+                          projects.map((pro) => (
+                            <TableRow key={pro.project_id}>
                               <TableCell></TableCell>
                               <TableCell className="font-medium">
-                                {project.project_name}
+                                <Link to={`/project/${pro.project_id}`}>
+                                  {pro.project_name}
+                                </Link>
                               </TableCell>
-                              <TableCell>{project.project_author}</TableCell>
+                              <TableCell>{pro.project_author}</TableCell>
                               <TableCell>
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
-                                    <button onClick={() => setSelectedProjectId(project.project_id)}>❌</button>
+                                    <button onClick={() => setSelectedProjectId(pro.project_id)}>❌</button>
                                   </AlertDialogTrigger>
 
                                   <AlertDialogContent>

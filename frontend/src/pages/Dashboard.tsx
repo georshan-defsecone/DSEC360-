@@ -134,7 +134,7 @@ function Dashboard() {
     <div className="flex h-screen text-black">
       <Sidebar settings={false} scanSettings={false} homeSettings={true} />
       <div className="flex-1 flex flex-col ml-64">
-        <Header title="My Projects"><Link to={'/scan'} className="flex items-center ml-200" >New scans</Link> </Header>
+        <Header title="My Projects"></Header>
         <div className="p-4 overflow-auto max-h-[calc(100vh-100px)]">
           <DashboardContent />
         </div>

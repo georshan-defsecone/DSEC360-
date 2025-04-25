@@ -2,7 +2,7 @@ import Header from "@/components/Header"
 import Sidebar from "@/components/Sidebar"
 import { useEffect, useState } from 'react';
 import api from "./api"
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -41,7 +41,7 @@ function ProjectScans() {
         <div className="flex h-screen text-black">
             <Sidebar settings={false} scanSettings={false} homeSettings={true} />
             <div className="flex-1 flex flex-col ml-64">
-                    <Header title={`${projectName}`} />
+                    <Header title={`${projectName}`} ><Link to={'/scan'} className="flex items-center ml-200" >New scans</Link></Header>
                 <div className="p-4 overflow-auto max-h-[calc(100vh-100px)]">
                     <div className="grid lg:grid-cols-1 gap-4">
                         <div className="col-span-2">
