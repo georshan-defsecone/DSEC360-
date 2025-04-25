@@ -17,6 +17,15 @@ import {
 } from "@/components/ui/select";
 
 import api from "../api";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 
 const ScanCAWindows = () => {
   const [complianceData, setComplianceData] = useState([]);

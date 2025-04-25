@@ -1,11 +1,15 @@
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import About from "./pages/About";
+
+
 import SMTP from "./pages/SMTP";
 import ProxyServer from "./pages/ProxyServer";
 import AllProjects from "./pages/AllProjects";
 import Trash from "./pages/Trash";
 import Result from "./pages/Result";
+import Advanced from "./pages/Advanced";
+import LDAP from "./pages/LDAP";
 
 import ScanHome from "./pages/scanPages/ScanHome";
 import ScanCAWindows from "./pages/scanPages/ScanCAWindows";
@@ -22,7 +26,9 @@ import ScanCAWAServers from "./pages/scanPages/ScanCAWAServers";
 import Users from "./pages/Users";
 import Myaccounts from "./pages/Myaccounts";
 import CreateUser from "./pages/CreateUser";
-import path from "path";
+
+import ProjectScans from "./pages/ProjectScans";
+
 
 const Router = [
     {
@@ -40,6 +46,10 @@ const Router = [
     {
         path: "/dashboard/trash",
         element: <Trash/>
+    },
+    {
+        path: "/project/:project_id",
+        element: <ProjectScans/>
     },
     {
         path: "/login",
@@ -114,6 +124,14 @@ const Router = [
     {
         path: "/settings/users/createuser",
         element: <CreateUser/>
+    },
+    {
+        path: "/settings/advance",
+        element: <Advanced/>
+    },
+    {
+        path: "/settings/ldap",
+        element: <LDAP/>
     }
 ]
 

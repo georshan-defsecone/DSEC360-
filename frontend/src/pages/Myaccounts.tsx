@@ -115,7 +115,7 @@ const Myaccounts = () => {
         <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
           <div className="pointer-events-auto w-xl">
             {/* 👇 Changed max-w-md to max-w-lg */}
-            <Card className="w-full max-w-xl shadow-xl relative">
+            <Card className="w-full max-w-lg shadow-xl ml-15 relative">
               <CardContent className="p-8 space-y-6">
                 {/* Close button */}
                 <button

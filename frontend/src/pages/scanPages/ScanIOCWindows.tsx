@@ -15,6 +15,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 
 import api from "../api";
 const ScanIOCWindows = () => {
@@ -705,6 +714,29 @@ const ScanIOCWindows = () => {
               <h2 className="text-xl font-semibold">IOC Controls</h2>
               <div className="flex flex-col space-y-4">
                 {IOCdata.map((ioc: any) => {
+                  const iocName = ioc["IOC Names "].trim();
+                  return (
+                    <div
+                      key={ioc["ID Number "]}
+                      className="flex items-center space-x-3"
+                    >
+                      <Checkbox
+                        id={`ioc-${ioc["ID Number "]}`}
+                        checked={
+                          formData.IOCcontrols[ioc["IOC Names "]] || false
+                        }
+                        onCheckedChange={() =>
+                          handleCheckboxChange(ioc["IOC Names "])
+                        }
+                      />
+                      <label
+                        htmlFor={`ioc-${ioc["ID Number "]}`}
+                        className="text-sm font-medium leading-none"
+                      >
+                        {ioc["IOC Names "]}
+                      </label>
+                    </div>
+                  );
                   const iocName = ioc["IOC Names "].trim();
                   return (
                     <div
