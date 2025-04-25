@@ -1,7 +1,8 @@
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
+import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { Card, CardContent } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -13,8 +14,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+ 
 
-const ScanCAWindows = () => {
+import api from "../api";
+import { Checkbox } from "@/components/ui/checkbox";
+
+import { DropdownMenu, DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
+
+const ScanCALinux = () => {
+  const [complianceData, setComplianceData] = useState([]);
+  const [errors, setErrors] = useState("");
+
+  const formPages = [
+    "General Info",
+    "Target Details",
+    "Compliance Info",
+    "Scan Settings",
+  ];
+
   const [page, setPage] = useState(1);
   const [formData, setFormData] = useState({
     // General Info
@@ -26,20 +44,35 @@ const ScanCAWindows = () => {
     auditMethod: "",
     target: "",
     authMethod: "",
+    elevatePrivilege: "", //can be .k5login, Cisco enable, dzdo, su, pbrun, su+sudo, nothing
     username: "",
     password: "",
     domain: "",
-    ntlmHash: "",
-    lmHash: "",
     kdc: "",
     kdcPort: "",
     kdcTransport: "",
     certificate: "",
     publicKey: "",
+    port: "",
+    clientVersion: "",
+    attemptLeastPrivelege: "",
+    privateKeyPassphrase: "",
+
+    EP_escalationAccount: "", // .k5login, dzdo
+    EP_escalationPassword: "", // .k5login, dzdo, su, su+sudo
+    EP_dzdoDirectory: "", // dzdo
+    EP_suDirectory: "", // su
+    EP_pbrunDirectory: "", // pbrun
+    EP_su_sudoDirectory: "", // su+sudo
+    EP_su_login: "", //su
+    EP_su_user: "", // su+sudo
+    EP_sudoUser: "", // su+sudo
+    EPsshUserPassword: "", // pbrun
+    EPenablePassword: "", // Cisco enable
 
     //Get compliance info
-    hostName: "",
-    // __________________
+    complianceCategory: "",
+    complianceSecurityStandard: "",
 
     //Scan settings
     schedule: "",
@@ -50,6 +83,272 @@ const ScanCAWindows = () => {
     notification: "",
     notificationEmail: "",
   });
+
+  interface ElevatePrivilegeFormProps {
+    formData: {
+      elevatePrivilege: string;
+      EP_escalationAccount: string;
+      EP_escalationPassword: string;
+      EP_dzdoDirectory: string;
+      EP_suDirectory: string;
+      EP_pbrunDirectory: string;
+      EP_su_sudoDirectory: string;
+      EP_su_login: string;
+      EP_su_user: string;
+      EP_sudoUser: string;
+      EPsshUserPassword: string;
+      EPenablePassword: string;
+    };
+    handleInputChange: (
+      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string,
+      field?: string
+    ) => void;
+  }
+
+  const ElevatePrivilegeForm = ({
+    formData,
+    handleInputChange,
+  }: ElevatePrivilegeFormProps) => {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-start items-center mb-8">
+          <p className="block w-70">Elevate privileges with</p>
+          <Select
+            value={formData.elevatePrivilege}
+            onValueChange={(value) =>
+              handleInputChange(value, "elevatePrivilege")
+            }
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Elevate privilege" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="nothing">Nothing</SelectItem>
+              <SelectItem value=".k5login">.k5login</SelectItem>
+              <SelectItem value="ciscoEnable">Cisco 'enable'</SelectItem>
+              <SelectItem value="dzdo">dzdo</SelectItem>
+              <SelectItem value="su">su</SelectItem>
+              <SelectItem value="pbrun">pbrun</SelectItem>
+              <SelectItem value="su+sudo">su+sudo</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {formData.elevatePrivilege === ".k5login" && (
+          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+            <div className="flex items-center">
+              <p className="block w-70">Escalation Account:</p>
+              <Input
+                type="text"
+                name="EP_escalationAccount"
+                placeholder="Enter escalation account"
+                value={formData.EP_escalationAccount}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        {formData.elevatePrivilege === "ciscoEnable" && (
+          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+            <div className="flex items-center">
+              <p className="block w-70">Enable Password:</p>
+              <Input
+                type="password"
+                name="EPenablePassword"
+                placeholder="Enter enable password"
+                value={formData.EPenablePassword}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        {formData.elevatePrivilege === "dzdo" && (
+          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+            <div className="flex items-center">
+              <p className="block w-70">Escalation Account:</p>
+              <Input
+                type="text"
+                name="EP_escalationAccount"
+                placeholder="Enter escalation account"
+                value={formData.EP_escalationAccount}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+            <div className="flex items-center">
+              <p className="block w-70">Escalation Password:</p>
+              <Input
+                type="password"
+                name="EP_escalationPassword"
+                placeholder="Enter escalation password"
+                value={formData.EP_escalationPassword}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+            <div className="flex items-center">
+              <p className="block w-70">dzdo Directory:</p>
+              <Input
+                type="text"
+                name="EP_dzdoDirectory"
+                placeholder="Enter dzdo directory"
+                value={formData.EP_dzdoDirectory}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        {formData.elevatePrivilege === "su" && (
+          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+            <div className="flex items-center">
+              <p className="block w-70">su Directory:</p>
+              <Input
+                type="text"
+                name="EP_suDirectory"
+                placeholder="Enter su directory"
+                value={formData.EP_suDirectory}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+            <div className="flex items-center">
+              <p className="block w-70">su Login:</p>
+              <Input
+                type="text"
+                name="EP_su_login"
+                placeholder="Enter su login"
+                value={formData.EP_su_login}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+            <div className="flex items-center">
+              <p className="block w-70">Escalation Password:</p>
+              <Input
+                type="password"
+                name="EP_escalationPassword"
+                placeholder="Enter escalation password"
+                value={formData.EP_escalationPassword}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        {formData.elevatePrivilege === "pbrun" && (
+          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+            <div className="flex items-center">
+              <p className="block w-70">pbrun Directory:</p>
+              <Input
+                type="text"
+                name="EP_pbrunDirectory"
+                placeholder="Enter pbrun directory"
+                value={formData.EP_pbrunDirectory}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+            <div className="flex items-center">
+              <p className="block w-70">SSH User Password:</p>
+              <Input
+                type="password"
+                name="EPsshUserPassword"
+                placeholder="Enter SSH user password"
+                value={formData.EPsshUserPassword}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        {formData.elevatePrivilege === "su+sudo" && (
+          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+            <div className="flex items-center">
+              <p className="block w-70">su+sudo Directory:</p>
+              <Input
+                type="text"
+                name="EP_su_sudoDirectory"
+                placeholder="Enter su+sudo directory"
+                value={formData.EP_su_sudoDirectory}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+            <div className="flex items-center">
+              <p className="block w-70">su User:</p>
+              <Input
+                type="text"
+                name="EP_su_user"
+                placeholder="Enter su user"
+                value={formData.EP_su_user}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+            <div className="flex items-center">
+              <p className="block w-70">sudo User:</p>
+              <Input
+                type="text"
+                name="EP_sudoUser"
+                placeholder="Enter sudo user"
+                value={formData.EP_sudoUser}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+            <div className="flex items-center">
+              <p className="block w-70">Escalation Password:</p>
+              <Input
+                type="password"
+                name="EP_escalationPassword"
+                placeholder="Enter escalation password"
+                value={formData.EP_escalationPassword}
+                onChange={handleInputChange}
+                className="w-80"
+                required
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await api.get("/compliance/linux/"); // Adjust the endpoint as needed
+        console.log("Fetched data:", response.data);
+        setComplianceData(response.data);
+      } catch (error) {
+        console.error("Error fetching compliance data:", error);
+        setErrors("Error fetching compliance data. Please try again later.");
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string,
@@ -89,18 +388,6 @@ const ScanCAWindows = () => {
         return (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">General Information</h2>
-            <div className="flex justify-between items-center">
-              <p className="block w-40 ">Scan Name:</p>
-
-              <Input
-                type="text"
-                name="scanName"
-                placeholder="Scan Name"
-                value={formData.scanName}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
 
             <div className="flex justify-between items-center">
               <p className="block w-40 ">Project Name:</p>
@@ -110,6 +397,19 @@ const ScanCAWindows = () => {
                 name="projectName"
                 placeholder="Project Name"
                 value={formData.projectName}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div className="flex justify-between items-center">
+              <p className="block w-40 ">Scan Name:</p>
+
+              <Input
+                type="text"
+                name="scanName"
+                placeholder="Scan Name"
+                value={formData.scanName}
                 onChange={handleInputChange}
                 required
               />
@@ -188,8 +488,8 @@ const ScanCAWindows = () => {
                   </Button>
                 </div>
 
-                <div className="flex justify-start items-center">
-                  <p className="block w-70 ">Authentication Method:</p>
+                <div className="flex justify-start items-center mb-8">
+                  <p className="block w-70 ">Authentication Method (SSH)</p>
                   <Select
                     value={formData.authMethod}
                     onValueChange={(value) =>
@@ -201,8 +501,8 @@ const ScanCAWindows = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="password">Password</SelectItem>
-                      <SelectItem value="ntlm">NTLM Hash</SelectItem>
-                      <SelectItem value="lm">LM Hash</SelectItem>
+                      <SelectItem value="publicKey">Public Key</SelectItem>
+                      <SelectItem value="certificate">Certificate</SelectItem>
                       <SelectItem value="kerberos">Kerberos</SelectItem>
                     </SelectContent>
                   </Select>
@@ -234,10 +534,14 @@ const ScanCAWindows = () => {
                         required
                       />
                     </div>
+                    <ElevatePrivilegeForm
+                      formData={formData}
+                      handleInputChange={handleInputChange}
+                    />
                   </div>
                 )}
 
-                {formData.authMethod === "ntlm" && (
+                {formData.authMethod === "publicKey" && (
                   <div className="space-y-4">
                     <div className="flex items-center">
                       <p className="block w-70">Username:</p>
@@ -252,29 +556,25 @@ const ScanCAWindows = () => {
                       />
                     </div>
                     <div className="flex items-center">
-                      <p className="block w-70">NTLM Hash:</p>
-                      <Input
-                        type="text"
-                        name="ntlmHash"
-                        placeholder="NTLM Hash"
-                        value={formData.ntlmHash}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
+                      <p className="block w-70">Private Key</p>
+                      <Button>Add file</Button>
                     </div>
                     <div className="flex items-center">
-                      <p className="block w-70">Domain:</p>
+                      <p className="block w-70">Private Key Passphrase</p>
                       <Input
                         type="text"
-                        name="domain"
-                        placeholder="Domain"
-                        value={formData.domain}
+                        name="passphrase"
+                        placeholder="Passphrase"
+                        value={formData.privateKeyPassphrase}
                         onChange={handleInputChange}
                         className="w-80"
                         required
                       />
                     </div>
+                    <ElevatePrivilegeForm
+                      formData={formData}
+                      handleInputChange={handleInputChange}
+                    />
                   </div>
                 )}
                 {formData.authMethod === "kerberos" && (
@@ -341,10 +641,14 @@ const ScanCAWindows = () => {
                         required
                       />
                     </div>
+                    <ElevatePrivilegeForm
+                      formData={formData}
+                      handleInputChange={handleInputChange}
+                    />
                   </div>
                 )}
-                {formData.authMethod === "lm" && (
-                  <div className="space-y-4 border-l-2 border-gray-200">
+                {formData.authMethod === "certificate" && (
+                  <div className="space-y-4">
                     <div className="flex items-center">
                       <p className="block w-70">Username:</p>
                       <Input
@@ -358,31 +662,76 @@ const ScanCAWindows = () => {
                       />
                     </div>
                     <div className="flex items-center">
-                      <p className="block w-70">LM Hash:</p>
-                      <Input
-                        type="text"
-                        name="lmHash"
-                        placeholder="LM Hash"
-                        value={formData.lmHash}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
+                      <p className="block w-70">User Certificate</p>
+                      <Button>Add file</Button>
                     </div>
                     <div className="flex items-center">
-                      <p className="block w-70">Domain:</p>
+                      <p className="block w-70">Private Key</p>
+                      <Button>Add file</Button>
+                    </div>
+                    <div className="flex items-center">
+                      <p className="block w-70">Private Key Passphrase</p>
                       <Input
                         type="text"
-                        name="domain"
-                        placeholder="Domain"
-                        value={formData.domain}
+                        name="privateKeyPassphrase"
+                        placeholder="Private Key Passphrase"
+                        value={formData.privateKeyPassphrase}
                         onChange={handleInputChange}
                         className="w-80"
                         required
                       />
                     </div>
+                    <ElevatePrivilegeForm
+                      formData={formData}
+                      handleInputChange={handleInputChange}
+                    />
                   </div>
                 )}
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">
+                    Global Credential Settings
+                  </h2>
+                  <div className="flex items-center">
+                    <p className="block w-70">known_hosts file</p>
+                    <Button>Add file</Button>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">Preferred port</p>
+                    <Input
+                      type="number"
+                      name="preferredPort"
+                      placeholder="port"
+                      value={formData.port}
+                      onChange={handleInputChange}
+                      className="w-80"
+                      required
+                    />
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">Client Version</p>
+                    <Input
+                      type="text"
+                      name="clientVersion"
+                      placeholder="Client Version"
+                      value={formData.clientVersion}
+                      onChange={handleInputChange}
+                      className="w-80"
+                      required
+                    />
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">Attempt Least Privilege</p>
+                    <Checkbox
+                      checked={formData.attemptLeastPrivelege === "true"}
+                      onCheckedChange={(checked) => {
+                        handleInputChange(
+                          checked ? "true" : "false",
+                          "attemptLeastPrivelege"
+                        );
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
             )}
 
@@ -404,18 +753,62 @@ const ScanCAWindows = () => {
           </div>
         );
       case 3:
+        //get all categories from complianceData
+        const categories = [
+          ...new Set(complianceData.map((item) => item.Categories)),
+        ];
+
+        //get all standards filtered by category
+        const standards = complianceData
+          .filter((item) => item.Categories === formData.complianceCategory)
+          .map((item) => item["Security Standards"]);
+
         return (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Compliance Information</h2>
-            <input
-              type="text"
-              name="hostname"
-              placeholder="Hostname"
-              value={formData.hostName}
-              onChange={handleInputChange}
-              className="w-full p-2 border rounded"
-            />
-            {/* Add other system info inputs */}
+
+            {/* Operating System Selection */}
+            <div className="flex items-center">
+              <p className="block w-70">Operating System:</p>
+              <Select
+                value={formData.complianceCategory}
+                onValueChange={(value) =>
+                  handleInputChange(value, "complianceCategory")
+                }
+              >
+                <SelectTrigger className="w-80">
+                  <SelectValue placeholder="Select Linux Distro" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Security Standard Selection */}
+            <div className="flex items-center">
+              <p className="block w-70">Security Standard:</p>
+              <Select
+                value={formData.complianceSecurityStandard}
+                onValueChange={(value) =>
+                  handleInputChange(value, "complianceSecurityStandard")
+                }
+              >
+                <SelectTrigger className="w-80">
+                  <SelectValue placeholder="Select Security Standard" />
+                </SelectTrigger>
+                <SelectContent>
+                  {standards.map((standard) => (
+                    <SelectItem key={standard} value={standard}>
+                      {standard}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         );
       case 4:
@@ -458,7 +851,7 @@ const ScanCAWindows = () => {
                         <SelectItem value="weekly">Weekly</SelectItem>
                         <SelectItem value="monthly">Monthly</SelectItem>
                         <SelectItem value="yearly">Yearly</SelectItem>
-                        </SelectContent>
+                      </SelectContent>
                     </Select>
                   </div>
 
@@ -554,34 +947,18 @@ const ScanCAWindows = () => {
     <div className="flex h-screen text-black">
       <Sidebar settings={false} scanSettings={true} homeSettings={false} />
       <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
-        <Header title="Windows Scan" />
+        <Header title="Linux Configuration Audit Scan" />
 
         <Card className="w-full mt-4">
-          <CardContent className="w-full p-6 pl-12">
+          <CardContent className="w-full p-4 pl-12">
+            {errors !== "" ? (
+              <>
+                <p className="mb-2 text-red-700 font-semibold">{errors}</p>
+              </>
+            ) : (
+              <></>
+            )}
             <div className="w-[80%] space-y-6">
-              <h1 className="text-2xl font-bold mb-6">
-                Windows Configuration Audit Scan
-              </h1>
-
-              {/* Progress indicator
-            <div className="flex justify-start gap-8 mb-8">
-              {[1, 2, 3, 4].map((step) => (
-                <div
-                  key={step}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center
-                                ${
-                                  page >= step
-                                    ? "bg-black text-white"
-                                    : "bg-gray-200"
-                                }`}
-                >
-                  {step}
-                </div>
-              ))}
-            </div>
-
-            {*/}
-
               <form onSubmit={handleSubmit}>
                 {renderPage()}
 
@@ -596,14 +973,33 @@ const ScanCAWindows = () => {
                   >
                     Previous
                   </button>
-
+                  <Breadcrumbs currentPage={page} pages={formPages} />
                   {page === 4 ? (
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-green-500 text-white rounded"
-                    >
-                      Submit
-                    </button>
+                    <div className="flex">
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-black text-white rounded-l"
+                      >
+                        Save
+                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="px-3 py-2 bg-black text-white rounded-r flex items-center justify-center">
+                            <ChevronDown size={20} />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          side="bottom"
+                          align="end"
+                          alignOffset={1}
+                          className="w-28" // Adjust as needed
+                        >
+                          <DropdownMenuItem className="w-2">
+                            Launch
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   ) : (
                     <button
                       type="button"
@@ -623,4 +1019,4 @@ const ScanCAWindows = () => {
   );
 };
 
-export default ScanCAWindows;
+export default ScanCALinux;

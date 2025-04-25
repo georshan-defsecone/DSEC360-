@@ -1,41 +1,44 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "./api";
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "">("");
 
-const navigate=useNavigate()
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage(""); // Reset message on submit
 
     try {
-      const response = await fetch("http://localhost:8000/api/token/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: username,
-          password: password,
-        }),
+      const response = await api.post("token/", {
+        username,
+        password,
       });
 
-      const data = await response.json();
+      const { access, refresh } = response.data;
 
-      if (response.ok) {
-        // Save tokens (you can use localStorage/sessionStorage)
-        localStorage.setItem("access", data.access);
-        localStorage.setItem("refresh", data.refresh);
-        alert("Login Successful!");
-        navigate("/")
-      } else {
-        alert("Invalid credentials");
-        console.error(data);
-      }
+      localStorage.setItem("access", access);
+      localStorage.setItem("refresh", refresh);
+      setMessage("Login successful! Redirecting...");
+      setMessageType("success");
+
+      // Delay before navigation to show success message
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
     } catch (error) {
-      console.error("Error:", error);
+      if (error.response?.status === 401) {
+        setMessage("Invalid username or password.");
+      } else {
+        setMessage("An error occurred. Please try again.");
+        console.error("Login Error:", error);
+      }
+      setMessageType("error");
     }
   };
 
@@ -49,7 +52,7 @@ const navigate=useNavigate()
             alt="Company Logo"
             className="w-24 h-24 mb-3 shadow-lg rounded-full"
           />
-          <h1 className="text-lg font-semibold text-white">Defsecone 360+</h1>
+          <h1 className="text-lg font-semibold text-white">DSEC360+</h1>
         </div>
 
         {/* Right Panel */}
@@ -63,7 +66,7 @@ const navigate=useNavigate()
                 <input
                   type="text"
                   name="username"
-                  placeholder="username"
+                  placeholder="Username"
                   autoComplete="off"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -90,9 +93,6 @@ const navigate=useNavigate()
                   <input type="checkbox" className="mr-2" />
                   Remember Me
                 </label>
-                <a href="#" className="text-neutral-800 hover:underline">
-                  Forgot Password?
-                </a>
               </div>
 
               <button
@@ -101,6 +101,19 @@ const navigate=useNavigate()
               >
                 Login
               </button>
+
+              {/* Message Box */}
+              {message && (
+                <div
+                  className={`mt-4 text-center text-sm px-4 py-2 rounded-md transition-all duration-300 ${
+                    messageType === "success"
+                      ? "bg-green-100 text-green-800 border border-green-300"
+                      : "bg-red-100 text-red-800 border border-red-300"
+                  }`}
+                >
+                  {message}
+                </div>
+              )}
             </form>
           </div>
         </div>

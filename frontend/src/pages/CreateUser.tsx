@@ -11,11 +11,36 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
+import api from "./api";
+
 const CreateUser = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("user");
+
+  const handleCreateUser = async () => {
+    try {
+      const response = await api.post("/users/createuser", {
+        username,
+        email,
+        password,
+        is_admin: role === "admin",
+      });
+      console.log("User created:", response.data);
+      alert("User created successfully!");
+      // Clear form
+      setUsername("");
+      setEmail("");
+      setPassword("");
+      setRole("user");
+    } catch (error) {
+      console.error("Error creating user:", error);
+      alert("Failed to create user.");
+    }
+  };
   return (
     <>
       <div className="flex h-screen text-black">
@@ -31,19 +56,25 @@ const CreateUser = () => {
                 {/* Row 1: Host */}
                 <div className="flex items-center">
                   <p className="text-lg font-semibold w-40">Username:</p>
-                  <Input type="text" className="w-60" placeholder="" />
+                  <Input
+                    type="text"
+                    className="w-60"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
                 </div>
 
                 {/* Row 2: Port */}
-                <div className="flex items-center">
-                  <p className="text-lg font-semibold w-40">Fullname:</p>
-                  <Input type="text" className="w-60" placeholder="" />
-                </div>
 
                 {/* Row 3: Username */}
                 <div className="flex items-center">
                   <p className="text-lg font-semibold w-40">Email:</p>
-                  <Input type="text" className="w-60" placeholder="" />
+                  <Input
+                    type="text"
+                    className="w-60"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
 
                 {/* Row 4: Password */}
@@ -53,7 +84,8 @@ const CreateUser = () => {
                     <Input
                       type={showPassword ? "text" : "password"}
                       className="w-full pr-10"
-                      placeholder=""
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                     />
                     <div
                       className="absolute inset-y-0 right-2 flex items-center cursor-pointer"
@@ -67,7 +99,7 @@ const CreateUser = () => {
                 {/* Row 5: Auth Method */}
                 <div className="flex items-center">
                   <p className="text-lg font-semibold w-40">Role:</p>
-                  <Select>
+                  <Select onValueChange={(value) => setRole(value)}>
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
@@ -77,21 +109,18 @@ const CreateUser = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
-                {/* Row 6: User Agent */}
-                <div className="flex items-center">
-                  <p className="text-lg font-semibold w-40">User Agent:</p>
-                  <Input type="text" className="w-60" placeholder="" />
-                </div>
+                <Button
+                  variant="outline"
+                  className="w-20 mt-6 ml-auto mr-6"
+                  onClick={handleCreateUser}
+                >
+                  Create
+                </Button>
               </div>
             </CardContent>
           </Card>
 
           {/* Save Button - Show only if proxy is enabled */}
-
-          <Button variant="outline" className="w-20 mt-6 ml-auto mr-6">
-            Create
-          </Button>
         </div>
       </div>
     </>

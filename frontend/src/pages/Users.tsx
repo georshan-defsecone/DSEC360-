@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
 import api from "@/pages/api"
+import {  Pencil, X } from "lucide-react";
 
 
 const Users = () => {
@@ -42,7 +43,7 @@ const Users = () => {
           <div className="flex justify-end mt-4 mb-2">
             <Link to="/settings/users/createuser">
               <Button className="flex items-center gap-2">
-                Add User <Plus size={16} />
+                Add User
               </Button>
             </Link>
           </div>
@@ -53,6 +54,7 @@ const Users = () => {
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead className="">Role</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -61,6 +63,10 @@ const Users = () => {
                   <TableCell className="font-medium">{user.username}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.is_admin ? "Admin" : "User"}</TableCell>
+                  <TableCell className="flex justify-end gap-2">
+                  <Pencil size={16} className="cursor-pointer text-blue-600" />
+                  <X size={16} className="cursor-pointer text-red-500" />
+                </TableCell>
                 </TableRow>
               ))}
             </TableBody>
