@@ -23,6 +23,7 @@ export default function Trash() {
 
   const [trashedProject, setTrashedProject] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
 
   const fetchTrashedProject = async () => {
     try {
@@ -59,13 +60,49 @@ export default function Trash() {
     }
   };
 
+  const deleteAllProjects = async () => {
+    try {
+      await api.delete('projects/delete/all'); // Assuming you have an endpoint for deleting all projects
+      setTrashedProject([]); // Clear the local state after deletion
+      setIsDeleteAllDialogOpen(false); // Close the dialog
+      console.log('All projects and related scans have been deleted.');
+    } catch (error) {
+      console.error('Error deleting all projects:', error);
+    }
+  };
+
 
   return (
     <>
       <div className="flex h-screen text-black">
         <Sidebar settings={false} scanSettings={false} homeSettings={true} />
         <div className="flex-1 flex flex-col ml-64">
-          <Header title="Trash" />
+          <Header title="Trash"><AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button className="flex items-center ml-200">
+                  Delete All 
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete all projects and their related scans. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => setIsDeleteAllDialogOpen(false)}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-red-600 hover:bg-red-700"
+                    onClick={deleteAllProjects}
+                  >
+                    Delete All
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog></Header>
           <div className="p-4 overflow-auto max-h-[calc(100vh-100px)]">
             <div className="grid lg:grid-cols-1 gap-4">
               <div className="col-span-2">
@@ -170,3 +207,7 @@ export default function Trash() {
     </>
   )
 }
+function setIsDeleteAllDialogOpen(arg0: boolean) {
+  throw new Error("Function not implemented.")
+}
+
