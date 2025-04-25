@@ -89,6 +89,89 @@ const ScanCAWindows = () => {
     fetchData();
   }, []);
 
+  const validatePage1 = () => {
+    return (
+      formData.scanName.trim() !== "" &&
+      formData.projectName.trim() !== "" &&
+      formData.description.trim() !== ""
+    );
+  };
+
+  const validatePage2 = () => {
+    if (!formData.auditMethod) return false;
+
+    if (formData.auditMethod === "remoteAccess") {
+      if (!formData.target) return false;
+      if (!formData.authMethod) return false;
+
+      // Validate based on authentication method
+      switch (formData.authMethod) {
+        case "password":
+          return formData.username && formData.password;
+        case "ntlm":
+          return formData.username && formData.ntlmHash && formData.domain;
+        case "kerberos":
+          return (
+            formData.username &&
+            formData.password &&
+            formData.kdc &&
+            formData.kdcPort &&
+            formData.domain
+          );
+        case "lm":
+          return formData.username && formData.lmHash && formData.domain;
+        default:
+          return false;
+      }
+    }
+
+    return true; // For agent and uploadConfig methods
+  };
+
+  const validatePage3 = () => {
+    return (
+      formData.complianceCategory !== "" &&
+      formData.complianceSecurityStandard !== ""
+    );
+  };
+
+  const validatePage4 = () => {
+    if (formData.schedule !== "true" && formData.notification !== "true") {
+      setErrors("Please enable either scheduling or notifications");
+      return false;
+    }
+
+    // Validate schedule settings
+    if (formData.schedule === "true") {
+      if (
+        !formData.scheduleFrequency ||
+        !formData.scheduleStartDate ||
+        !formData.scheduleStartTime ||
+        !formData.scheduleTimezone
+      ) {
+        setErrors("Please fill in all schedule fields");
+        return false;
+      }
+    }
+
+    // Validate notification settings
+    if (formData.notification === "true") {
+      if (!formData.notificationEmail) {
+        setErrors("Please enter an email address");
+        return false;
+      }
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.notificationEmail)) {
+        setErrors("Please enter a valid email address");
+        return false;
+      }
+    }
+
+    // If all validations pass
+    return true;
+  };
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string,
     field?: string
@@ -126,6 +209,31 @@ const ScanCAWindows = () => {
   };
 
   const nextPage = () => {
+    let isValid = false;
+
+    switch (page) {
+      case 1:
+        isValid = validatePage1();
+        break;
+      case 2:
+        isValid = validatePage2();
+        break;
+      case 3:
+        isValid = validatePage3();
+        break;
+      case 4:
+        isValid = validatePage4();
+        break;
+      default:
+        isValid = false;
+    }
+
+    if (!isValid) {
+      setErrors("Please fill in all required fields before proceeding.");
+      return;
+    }
+
+    setErrors(""); // Clear any existing errors
     if (page < 4) setPage((prev) => prev + 1);
   };
 
@@ -135,8 +243,24 @@ const ScanCAWindows = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validatePage4()) {
+      return;
+    }
+
+    setErrors(""); // Clear any existing errors
     console.log("Form submitted:", formData);
     // Add your submission logic here
+  };
+
+  const renderError = () => {
+    if (errors) {
+      return (
+        <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
+          {errors}
+        </div>
+      );
+    }
+    return null;
   };
 
   const renderPage = () => {
@@ -144,6 +268,7 @@ const ScanCAWindows = () => {
       case 1:
         return (
           <div className="space-y-4">
+            {renderError()}
             <h2 className="text-xl font-semibold">General Information</h2>
 
             <div className="flex items-center">
@@ -191,6 +316,7 @@ const ScanCAWindows = () => {
       case 2:
         return (
           <div className="space-y-4">
+            {renderError()}
             <h2 className="text-xl font-semibold">Target Details</h2>
             <div className="flex justify-start items-center">
               <p className="block w-70 ">Audit Method:</p>
@@ -563,14 +689,8 @@ const ScanCAWindows = () => {
 
         return (
           <div className="space-y-4">
+            {renderError()}
             <h2 className="text-xl font-semibold">Compliance Information</h2>
-            {errors !== "" ? (
-              <>
-                <p className="mb-2 text-red-700 font-semibold">{errors}</p>
-              </>
-            ) : (
-              <></>
-            )}
             {/* Operating System Selection */}
             <div className="flex items-center">
               <p className="block w-70">Operating System:</p>
@@ -622,6 +742,7 @@ const ScanCAWindows = () => {
 
             {/* Schedule Section */}
             <div className="space-y-4">
+              {renderError()}
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <p className="font-medium">Schedule Scan</p>
@@ -792,7 +913,8 @@ const ScanCAWindows = () => {
                   <Breadcrumbs currentPage={page} pages={formPages} />
                   {page === 4 ? (
                     <button
-                      type="submit"
+                      type="button"
+                      onClick={handleSubmit}
                       className="px-4 py-2 bg-green-500 text-white rounded"
                     >
                       Submit
