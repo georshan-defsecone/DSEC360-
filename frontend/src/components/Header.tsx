@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 
 type DecodedToken = {
   username: string;
@@ -16,7 +17,6 @@ type DecodedToken = {
   exp: number;
 };
 
-<<<<<<< HEAD
 export default function Header({title, children}: {title: string, children?: React.ReactNode}) {
     return (
       <header className="w-full px-6 py-10 flex justify-between items-center">
