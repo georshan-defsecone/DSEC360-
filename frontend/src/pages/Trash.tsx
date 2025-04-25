@@ -52,7 +52,7 @@ export default function Trash() {
 
   const deleteProject = async (projectId) => {
     try {
-      await api.delete(`project/delete/${projectId}/`);
+      await api.delete(`project/trash/delete/${projectId}/`);
       console.log(`Project ${projectId} deleted.`);
       fetchTrashedProject(); // refresh the table
     } catch (err) {
@@ -62,7 +62,7 @@ export default function Trash() {
 
   const deleteAllProjects = async () => {
     try {
-      await api.delete('projects/delete/all'); // Assuming you have an endpoint for deleting all projects
+      await api.delete('projects/trash/deleteAll'); // Assuming you have an endpoint for deleting all projects
       setTrashedProject([]); // Clear the local state after deletion
       setIsDeleteAllDialogOpen(false); // Close the dialog
       console.log('All projects and related scans have been deleted.');
