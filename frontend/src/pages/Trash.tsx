@@ -34,12 +34,12 @@ export default function Trash() {
       console.error('Error fetching trashed project:', error);
     }
   };
-  
+
   const restoreProject = async (projectId) => {
     try {
       await api.put(`project/trash/${projectId}/`, { trash: false });
       console.log(`Project ${projectId} restored.`);
-      fetchTrashedProject(); 
+      fetchTrashedProject();
     } catch (err) {
       console.error("Failed to restore project", err);
     }
@@ -49,6 +49,15 @@ export default function Trash() {
     fetchTrashedProject();
   }, []);
 
+  const deleteProject = async (projectId) => {
+    try {
+      await api.delete(`project/delete/${projectId}/`);
+      console.log(`Project ${projectId} deleted.`);
+      fetchTrashedProject(); // refresh the table
+    } catch (err) {
+      console.error("Failed to delete project", err);
+    }
+  };
 
 
   return (
@@ -87,7 +96,7 @@ export default function Trash() {
                                       onClick={() => setSelectedProjectId(pro.project_id)}
                                       className="text-black cursor-pointer "
                                     >
-                                      Restore
+                                      <ArchiveRestore />  {/*  archive button */}
                                     </button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
@@ -106,14 +115,45 @@ export default function Trash() {
                                           }
                                         }}
                                       >
-                                        <ArchiveRestore />
+                                        Restore
                                       </AlertDialogAction>
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
                                 </AlertDialog>
                               </TableCell>
-
-                              <TableCell>Delete</TableCell>
+                              <TableCell>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <button
+                                      onClick={() => setSelectedProjectId(pro.project_id)}
+                                      className="text-red-600 cursor-pointer"
+                                    >
+                                      🗑️
+                                    </button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This will permanently delete the project from the database. This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        className="bg-red-600 hover:bg-red-700"
+                                        onClick={() => {
+                                          if (selectedProjectId) {
+                                            deleteProject(selectedProjectId);
+                                          }
+                                        }}
+                                      >
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
