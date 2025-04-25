@@ -26,11 +26,9 @@ import ScanCAWAServers from "./pages/scanPages/ScanCAWAServers";
 import Users from "./pages/Users";
 import Myaccounts from "./pages/Myaccounts";
 import CreateUser from "./pages/CreateUser";
-<<<<<<< HEAD
+
 import ProjectScans from "./pages/ProjectScans";
-=======
-import path from "path";
->>>>>>> main
+
 
 const Router = [
     {
