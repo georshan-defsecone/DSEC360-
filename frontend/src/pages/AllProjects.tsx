@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Link } from "react-router-dom";
 
 const AllProjectsPage = () => {
   const [projects, setProjects] = useState([]);
@@ -68,7 +69,7 @@ const AllProjectsPage = () => {
     <div className="flex h-screen text-black">
       <Sidebar settings={false} scanSettings={false} homeSettings={true} />
       <div className="flex-1 flex flex-col ml-64">
-        <Header title="All Projects" />
+        <Header title="All Projects" ><Link to={'/scan'} className="flex items-center ml-200" >New scans</Link></Header>
         <div className="p-4 overflow-auto max-h-[calc(100vh-100px)]">
           <div className="grid lg:grid-cols-1 gap-4">
             <div className="col-span-2">

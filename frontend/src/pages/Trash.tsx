@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { ArchiveRestore } from 'lucide-react';
 
 
 export default function Trash() {
@@ -105,7 +106,7 @@ export default function Trash() {
                                           }
                                         }}
                                       >
-                                        Restore
+                                        <ArchiveRestore />
                                       </AlertDialogAction>
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
