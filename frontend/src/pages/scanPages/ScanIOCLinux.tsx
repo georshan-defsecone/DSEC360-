@@ -725,29 +725,6 @@ const ScanIOCLinux = () => {
                       </label>
                     </div>
                   );
-                  const iocName = ioc["IOC Names "].trim();
-                  return (
-                    <div
-                      key={ioc["ID Number "]}
-                      className="flex items-center space-x-3"
-                    >
-                      <Checkbox
-                        id={`ioc-${ioc["ID Number "]}`}
-                        checked={
-                          formData.IOCcontrols[ioc["IOC Names "]] || false
-                        }
-                        onCheckedChange={() =>
-                          handleCheckboxChange(ioc["IOC Names "])
-                        }
-                      />
-                      <label
-                        htmlFor={`ioc-${ioc["ID Number "]}`}
-                        className="text-sm font-medium leading-none"
-                      >
-                        {ioc["IOC Names "]}
-                      </label>
-                    </div>
-                  );
                 })}
               </div>
             </div>

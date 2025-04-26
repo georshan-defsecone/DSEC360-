@@ -174,7 +174,7 @@ const ScanCAFirewall = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get("/compliance/configaudit/firewall/");
+        const response = await api.get("/scans/compliance/configaudit/webservers/");
         console.log("Fetched data:", response.data);
         setComplianceData(response.data);
       } catch (error) {
