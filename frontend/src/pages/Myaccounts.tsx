@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { X } from 'lucide-react';
 import api from "./api";
 
 const Myaccounts = () => {
@@ -11,10 +12,14 @@ const Myaccounts = () => {
   const [useremail, setUserEmail] = useState("");
   const [role, setRole] = useState("User");
   const [showPasswordCard, setShowPasswordCard] = useState(false);
+  const [showEditCard, setShowEditCard] = useState(false); // State to show the edit modal
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [newUsername, setNewUsername] = useState(""); // New username for editing
+  const [newEmail, setNewEmail] = useState(""); // New email for editing
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,6 +55,35 @@ const Myaccounts = () => {
     setShowPasswordCard(false);
   };
 
+  const handleSaveEdit = async () => {
+    const updatedData = {};
+
+    // If username is provided, set it to updatedData
+    if (newUsername) updatedData.username = newUsername;
+    // If email is provided, set it to updatedData
+    if (newEmail) updatedData.email = newEmail;
+
+    try {
+      // Make an API call to update the username and/or email
+      const response = await api.put("updateuser/", updatedData);
+      setUserName(response.data.username);
+      setUserEmail(response.data.email);
+
+      // Close the edit modal
+      setShowEditCard(false);
+    } catch (error) {
+      console.error("Error updating user information:", error);
+      alert("Failed to update information.");
+    }
+  };
+
+  // Reset values when the Edit modal is shown (to ensure the input fields are empty and only show placeholders)
+  const handleEditCardOpen = () => {
+    setNewUsername("");  // Clear the current username value
+    setNewEmail("");     // Clear the current email value
+    setShowEditCard(true);
+  };
+
   return (
     <div className="flex h-screen text-black relative">
       <Sidebar settings={true} scanSettings={false} homeSettings={false} />
@@ -57,7 +91,7 @@ const Myaccounts = () => {
       <div className="flex-1 flex flex-col ml-64 p-8">
         <Header title="My Account" />
 
-        <Card className="min-h-130">
+        <Card className="min-h-130 relative">
           <CardContent className="p-8">
             <div className="flex items-start gap-8">
               {/* Profile Icon */}
@@ -71,8 +105,7 @@ const Myaccounts = () => {
                     <span className="font-medium text-gray-800">
                       {username}
                     </span>
-                    <button className="text-gray-500 hover:text-black transition">
-                    </button>
+                    <button className="text-gray-500 hover:text-black transition"></button>
                   </div>
                 </div>
 
@@ -83,9 +116,7 @@ const Myaccounts = () => {
                     <span className="font-medium text-gray-800">
                       {useremail}
                     </span>
-                    <button className="text-gray-500 hover:text-black transition">
-
-                    </button>
+                    <button className="text-gray-500 hover:text-black transition"></button>
                   </div>
                 </div>
 
@@ -107,6 +138,16 @@ const Myaccounts = () => {
               </div>
             </div>
           </CardContent>
+
+          {/* Edit Button at the bottom right of the card */}
+          <div className="absolute bottom-4 right-4">
+            <button
+              className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition"
+              onClick={handleEditCardOpen} // Show the Edit Card
+            >
+              Edit
+            </button>
+          </div>
         </Card>
       </div>
 
@@ -114,7 +155,6 @@ const Myaccounts = () => {
       {showPasswordCard && (
         <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
           <div className="pointer-events-auto w-xl">
-            {/* 👇 Changed max-w-md to max-w-lg */}
             <Card className="w-full max-w-lg shadow-xl ml-15 relative">
               <CardContent className="p-8 space-y-6">
                 {/* Close button */}
@@ -122,17 +162,14 @@ const Myaccounts = () => {
                   className="absolute top-3 right-3 text-gray-500 hover:text-black"
                   onClick={() => setShowPasswordCard(false)}
                 >
+                  <X />
                 </button>
 
-                <h2 className="text-xl font-semibold text-center">
-                  Change Password
-                </h2>
+                <h2 className="text-xl font-semibold text-center">Change Password</h2>
 
                 {/* Inputs */}
                 <div className="space-y-1">
-                  <label className="text-sm text-gray-600">
-                    Current Password
-                  </label>
+                  <label className="text-sm text-gray-600">Current Password</label>
                   <Input
                     type="password"
                     value={currentPassword}
@@ -152,9 +189,7 @@ const Myaccounts = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-sm text-gray-600">
-                    Confirm Password
-                  </label>
+                  <label className="text-sm text-gray-600">Confirm Password</label>
                   <Input
                     type="password"
                     value={confirmPassword}
@@ -177,8 +212,61 @@ const Myaccounts = () => {
           </div>
         </div>
       )}
+
+      {/* Edit User Info Popup Card */}
+      {showEditCard && (
+        <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <div className="pointer-events-auto w-xl">
+            <Card className="w-full max-w-lg shadow-xl ml-15 relative">
+              <CardContent className="p-8 space-y-6">
+                {/* Close button */}
+                <button
+                  className="absolute top-3 right-3 text-gray-500 hover:text-black"
+                  onClick={() => setShowEditCard(false)}
+                >
+                  <X />
+                </button>
+
+                <h2 className="text-xl font-semibold text-center">Edit User Info</h2>
+
+                {/* Inputs for username and email */}
+                <div className="space-y-1">
+                  <label className="text-sm text-gray-600">Username</label>
+                  <Input
+                    type="text"
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value)}
+                    placeholder="Enter new username (Leave blank to keep current)"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-sm text-gray-600">Email</label>
+                  <Input
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="Enter new email (Leave blank to keep current)"
+                  />
+                </div>
+
+                {/* Save button */}
+                <div className="pt-4">
+                  <Button
+                    onClick={handleSaveEdit}
+                    className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition"
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default Myaccounts;
+
