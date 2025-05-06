@@ -262,6 +262,7 @@ const ScanIOCWindows = () => {
                 value={formData.projectName}
                 onChange={handleInputChange}
                 className="w-80"
+                className="w-80"
                 required
               />
             </div>
@@ -843,10 +844,10 @@ const ScanIOCWindows = () => {
     <>
       <div className="flex h-screen text-black">
         <Sidebar settings={false} scanSettings={true} homeSettings={false} />
-        <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
+        <div className="flex-1 flex flex-col pr-8 pl-8 ml-64 pt-20">
           <Header title="Windows Compromise Assessment Scan" />
 
-          <Card className="w-full mt-4">
+          <Card className="w-[85%] mt-4 ml-4">
             <CardContent className="w-full p-4 pl-12">
               <div className="w-[80%] space-y-6">
                 <form onSubmit={handleSubmit}>

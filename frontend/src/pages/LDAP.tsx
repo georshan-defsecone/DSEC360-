@@ -12,10 +12,13 @@ import {
 import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import api from "./api";
 
 const LDAP = () => {
-  const [isEditMode, setIsEditMode] = useState(true);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isLdapEnabled, setIsLdapEnabled] = useState(false);
+
   const [ldapUrl, setLdapUrl] = useState("");
   const [baseDn, setBaseDn] = useState("");
   const [samAccount, setSamAccount] = useState("");
@@ -47,6 +50,7 @@ const LDAP = () => {
         const res = await api.get("get-ldap-settings/");
         const data = res.data;
 
+        setIsLdapEnabled(data.enabled || false);
         setLdapUrl(data.ldapUrl || "");
         setBaseDn(data.baseDn || "");
         setSamAccount(data.samAccount || "");
@@ -66,8 +70,48 @@ const LDAP = () => {
     fetchLdapSettings();
   }, []);
 
+  const handleSwitchChange = async () => {
+    const newState = !isLdapEnabled;
+    setIsLdapEnabled(newState);
+  
+    // If disabling, save immediately to server
+    if (!newState) {
+      const data = {
+        enabled: false,
+        ldapUrl,
+        baseDn,
+        samAccount,
+        bindMethod,
+        bindDn,
+        bindPassword,
+        groupBaseDn,
+        adminGroup,
+        normalGroup,
+        useSSL,
+        port,
+      };
+  
+      try {
+        await api.post("save-ldap-settings/", data);
+        alert("LDAP disabled successfully");
+        setIsEditMode(false);
+      } catch (error) {
+        console.error("Failed to disable LDAP:", error);
+        alert("Something went wrong while disabling LDAP");
+      }
+    } else {
+      // Just enable in UI; don't save yet
+      setIsEditMode(true);
+    }
+  };
+  
+
   const handleSave = async () => {
-    // Validation
+    if (!isLdapEnabled) {
+      alert("Please enable LDAP before saving.");
+      return;
+    }
+
     const newErrors = {
       ldapUrl: !ldapUrl,
       baseDn: !baseDn,
@@ -83,13 +127,10 @@ const LDAP = () => {
 
     setErrors(newErrors);
 
-    // If any field is missing, stop the form submission
-    if (Object.values(newErrors).includes(true)) {
-      return;
-    }
+    if (Object.values(newErrors).some(Boolean)) return;
 
-    // If validation passed, proceed with the save logic
     const data = {
+      enabled: isLdapEnabled,
       ldapUrl,
       baseDn,
       samAccount,
@@ -104,11 +145,8 @@ const LDAP = () => {
     };
 
     try {
-      // Attempt to save the settings
       await api.post("save-ldap-settings/", data);
       alert("LDAP settings saved successfully");
-
-      // Only switch to view mode (Edit button to Show) after saving successfully
       setIsEditMode(false);
     } catch (error) {
       console.error("Failed to save LDAP settings", error);
@@ -116,207 +154,136 @@ const LDAP = () => {
     }
   };
 
-  const toggleEditMode = () => {
-    // If in edit mode, handle the save action first
-    if (isEditMode) {
-      handleSave();
-    } else {
-      // If not in edit mode, simply toggle to edit mode
-      setIsEditMode((prev) => !prev);
-    }
-  };
-
   return (
-    <div className="flex h-screen text-black">
+    <div className="flex h-screen text-black pt-24">
       <Sidebar settings={true} scanSettings={false} homeSettings={false} />
       <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
         <Header title="LDAP" />
-        <Card >
+        <Card>
           <CardContent className="p-3 pl-12">
             <div className="flex flex-col items-start space-y-6">
-              {/* LDAP URL */}
-              <div className="flex items-center">
-                <p className="w-60">LDAP Server URL:</p>
-                {isEditMode ? (
-                  <Input
-                    value={ldapUrl}
-                    onChange={(e) => setLdapUrl(e.target.value)}
-                    className={`w-60 ${errors.ldapUrl ? 'border-red-500' : ''}`}
-                    placeholder={errors.ldapUrl ? "Please fill in" : ""}
-                  />
-                ) : (
-                  <p className="w-60">{ldapUrl || "-"}</p>
-                )}
+
+              {/* Enable LDAP Switch */}
+              <div className="flex items-center mb-4">
+                <Switch
+                  id="ldapserver"
+                  checked={isLdapEnabled}
+                  onCheckedChange={handleSwitchChange}
+                />
+                <label htmlFor="ldapserver" className="ml-4 text-lg font-semibold">
+                  Enable LDAP
+                </label>
               </div>
 
-              {/* Base DN */}
-              <div className="flex items-center">
-                <p className="w-60">Base DN:</p>
-                {isEditMode ? (
-                  <Input
-                    value={baseDn}
-                    onChange={(e) => setBaseDn(e.target.value)}
-                    className={`w-60 ${errors.baseDn ? 'border-red-500' : ''}`}
-                    placeholder={errors.baseDn ? "Please fill in" : ""}
-                  />
-                ) : (
-                  <p className="w-60">{baseDn || "-"}</p>
-                )}
-              </div>
-
-              {/* SAM Account Name */}
-              <div className="flex items-center">
-                <p className="w-60">SAM Account Name:</p>
-                {isEditMode ? (
-                  <Input
-                    value={samAccount}
-                    onChange={(e) => setSamAccount(e.target.value)}
-                    className={`w-60 ${errors.samAccount ? 'border-red-500' : ''}`}
-                    placeholder={errors.samAccount ? "Please fill in" : ""}
-                  />
-                ) : (
-                  <p className="w-60">{samAccount || "-"}</p>
-                )}
-              </div>
-
-              {/* Bind Method */}
-              <div className="flex items-center">
-                <p className="w-60">Bind Method:</p>
-                {isEditMode ? (
-                  <Select
-                    value={bindMethod}
-                    onValueChange={(value) => setBindMethod(value)}
-                    className={`${errors.bindMethod ? 'border-red-500' : ''}`}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="authenticating">
-                        Bind As Authenticating User
-                      </SelectItem>
-                      <SelectItem value="servicing">
-                        Bind With Servicing Account
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <p className="w-60 capitalize">{bindMethod || "-"}</p>
-                )}
-              </div>
-
-              {/* Bind DN (If authenticating) */}
-              {bindMethod === "authenticating" && (
+              {isLdapEnabled && (
                 <>
+                  {/* All input fields */}
+                  {[
+                    { label: "LDAP Server URL", value: ldapUrl, setter: setLdapUrl, error: errors.ldapUrl },
+                    { label: "Base DN", value: baseDn, setter: setBaseDn, error: errors.baseDn },
+                    { label: "SAM Account Name", value: samAccount, setter: setSamAccount, error: errors.samAccount },
+                    { label: "Group Base DN", value: groupBaseDn, setter: setGroupBaseDn, error: errors.groupBaseDn },
+                    { label: "Admin Group Name", value: adminGroup, setter: setAdminGroup, error: errors.adminGroup },
+                    { label: "Normal Group Name", value: normalGroup, setter: setNormalGroup, error: errors.normalGroup },
+                    { label: "Port", value: port, setter: setPort, error: errors.port, type: "number" },
+                  ].map(({ label, value, setter, error, type = "text" }) => (
+                    <div className="flex items-center" key={label}>
+                      <p className="w-60">{label}:</p>
+                      {isEditMode ? (
+                        <Input
+                          type={type}
+                          value={value}
+                          onChange={(e) => setter(e.target.value)}
+                          className={`w-60 ${error ? 'border-red-500' : ''}`}
+                          placeholder={error ? "Please fill in" : ""}
+                        />
+                      ) : (
+                        <p className="w-60">{value || "-"}</p>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Bind Method */}
                   <div className="flex items-center">
-                    <p className="w-60">Bind DN (if needed):</p>
+                    <p className="w-60">Bind Method:</p>
                     {isEditMode ? (
-                      <Input
-                        value={bindDn}
-                        onChange={(e) => setBindDn(e.target.value)}
-                        className={`w-60 ${errors.bindDn ? 'border-red-500' : ''}`}
-                        placeholder={errors.bindDn ? "Please fill in" : ""}
-                      />
+                      <Select value={bindMethod} onValueChange={setBindMethod}>
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="authenticating">Bind As Authenticating User</SelectItem>
+                          <SelectItem value="servicing">Bind With Servicing Account</SelectItem>
+                        </SelectContent>
+                      </Select>
                     ) : (
-                      <p className="w-60">{bindDn || "-"}</p>
+                      <p className="w-60 capitalize">{bindMethod || "-"}</p>
                     )}
                   </div>
+
+                  {/* Bind DN and Password if authenticating */}
+                  {bindMethod === "authenticating" && (
+                    <>
+                      <div className="flex items-center">
+                        <p className="w-60">Bind DN:</p>
+                        {isEditMode ? (
+                          <Input
+                            value={bindDn}
+                            onChange={(e) => setBindDn(e.target.value)}
+                            className={`w-60 ${errors.bindDn ? 'border-red-500' : ''}`}
+                            placeholder={errors.bindDn ? "Please fill in" : ""}
+                          />
+                        ) : (
+                          <p className="w-60">{bindDn || "-"}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center">
+                        <p className="w-60">Bind Password:</p>
+                        {isEditMode ? (
+                          <Input
+                            type="password"
+                            value={bindPassword}
+                            onChange={(e) => setBindPassword(e.target.value)}
+                            className={`w-60 ${errors.bindPassword ? 'border-red-500' : ''}`}
+                            placeholder={errors.bindPassword ? "Please fill in" : ""}
+                          />
+                        ) : (
+                          <p className="w-60">{bindPassword ? "••••••••" : "-"}</p>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {/* SSL Checkbox */}
                   <div className="flex items-center">
-                    <p className="w-60">Bind Password:</p>
+                    <p className="w-60">Use SSL:</p>
                     {isEditMode ? (
-                      <Input
-                        type="password"
-                        value={bindPassword}
-                        onChange={(e) => setBindPassword(e.target.value)}
-                        className={`w-60 ${errors.bindPassword ? 'border-red-500' : ''}`}
-                        placeholder={errors.bindPassword ? "Please fill in" : ""}
+                      <Checkbox
+                        checked={useSSL}
+                        onCheckedChange={(checked) => setUseSSL(!!checked)}
                       />
                     ) : (
-                      <p className="w-60">{bindPassword ? "●●●●●●●" : "-"}</p>
+                      <p className="w-60">{useSSL ? "Yes" : "No"}</p>
                     )}
                   </div>
+
+                  {/* Save/Edit Button */}
+                  <Button
+                    className="ml-auto"
+                    onClick={() => {
+                      if (isEditMode) {
+                        handleSave();
+                      } else {
+                        setErrors({});
+                        setIsEditMode(true);
+                      }
+                    }}
+                    disabled={!isLdapEnabled}
+                  >
+                    {isEditMode ? "Save" : "Edit"}
+                  </Button>
                 </>
               )}
-
-              {/* Group Base DN */}
-              <div className="flex items-center">
-                <p className="w-60">Group Base DN:</p>
-                {isEditMode ? (
-                  <Input
-                    value={groupBaseDn}
-                    onChange={(e) => setGroupBaseDn(e.target.value)}
-                    className={`w-60 ${errors.groupBaseDn ? 'border-red-500' : ''}`}
-                    placeholder={errors.groupBaseDn ? "Please fill in" : ""}
-                  />
-                ) : (
-                  <p className="w-60">{groupBaseDn || "-"}</p>
-                )}
-              </div>
-
-              {/* Admin Group Name */}
-              <div className="flex items-center">
-                <p className="w-60">Admin Group Name:</p>
-                {isEditMode ? (
-                  <Input
-                    value={adminGroup}
-                    onChange={(e) => setAdminGroup(e.target.value)}
-                    className={`w-60 ${errors.adminGroup ? 'border-red-500' : ''}`}
-                    placeholder={errors.adminGroup ? "Please fill in" : ""}
-                  />
-                ) : (
-                  <p className="w-60">{adminGroup || "-"}</p>
-                )}
-              </div>
-
-              {/* Normal Group Name */}
-              <div className="flex items-center">
-                <p className="w-60">Normal Group Name:</p>
-                {isEditMode ? (
-                  <Input
-                    value={normalGroup}
-                    onChange={(e) => setNormalGroup(e.target.value)}
-                    className={`w-60 ${errors.normalGroup ? 'border-red-500' : ''}`}
-                    placeholder={errors.normalGroup ? "Please fill in" : ""}
-                  />
-                ) : (
-                  <p className="w-60">{normalGroup || "-"}</p>
-                )}
-              </div>
-
-              {/* Use SSL */}
-              <div className="flex items-center">
-                <p className="w-60">Use SSL:</p>
-                {isEditMode ? (
-                  <Checkbox
-                    checked={useSSL}
-                    onCheckedChange={(checked) => setUseSSL(!!checked)}
-                    className="w-5 h-5 border-gray-400 data-[state=checked]:bg-[#001f3f] data-[state=checked]:text-white"
-                  />
-                ) : (
-                  <p className="w-60">{useSSL ? "Yes" : "No"}</p>
-                )}
-              </div>
-
-              {/* Port */}
-              <div className="flex items-center">
-                <p className="w-60">Port:</p>
-                {isEditMode ? (
-                  <Input
-                    type="number"
-                    value={port}
-                    onChange={(e) => setPort(e.target.value)}
-                    className={`w-60 ${errors.port ? 'border-red-500' : ''}`}
-                    placeholder={errors.port ? "Please fill in" : ""}
-                  />
-                ) : (
-                  <p className="w-60">{port || "-"}</p>
-                )}
-              </div>
-
-              {/* Save/Cancel Button */}
-              <Button className="ml-auto" onClick={toggleEditMode}>
-                {isEditMode ? "Save" : "Edit"}
-              </Button>
             </div>
           </CardContent>
         </Card>

@@ -126,11 +126,11 @@ const Router = [
         element: <CreateUser/>
     },
     {
-        path: "/settings/advance",
+        path:"/settings/advance",
         element: <Advanced/>
     },
     {
-        path: "/settings/ldap",
+        path:"/settings/ldap",
         element: <LDAP/>
     }
 ]

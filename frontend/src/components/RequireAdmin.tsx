@@ -2,7 +2,7 @@
 import { Navigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { JSX, useEffect, useState } from "react";
 
 interface Props {
   children: JSX.Element;
