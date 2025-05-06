@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X } from 'lucide-react';
 import api from "./api";
-
+import { CircleUserRound } from "lucide-react";
+import { Pencil } from "lucide-react";
+import { X } from "lucide-react";
 const Myaccounts = () => {
   const [username, setUserName] = useState("");
   const [useremail, setUserEmail] = useState("");
@@ -85,7 +87,7 @@ const Myaccounts = () => {
   };
 
   return (
-    <div className="flex h-screen text-black relative">
+    <div className="flex h-screen text-black relative pt-16">
       <Sidebar settings={true} scanSettings={false} homeSettings={false} />
 
       <div className="flex-1 flex flex-col ml-64 p-8">
@@ -95,7 +97,8 @@ const Myaccounts = () => {
           <CardContent className="p-8">
             <div className="flex items-start gap-8">
               {/* Profile Icon */}
-
+              {/* Profile Icon */}
+              <CircleUserRound className="w-32 h-32 text-gray-600 mt-1" />
               {/* User Info and Button */}
               <div className="w-full max-w-md space-y-4">
                 {/* Username Row */}
@@ -105,7 +108,9 @@ const Myaccounts = () => {
                     <span className="font-medium text-gray-800">
                       {username}
                     </span>
-                    <button className="text-gray-500 hover:text-black transition"></button>
+                    <button className="text-gray-500 hover:text-black transition">
+                      <Pencil />
+                    </button>
                   </div>
                 </div>
 
@@ -116,7 +121,9 @@ const Myaccounts = () => {
                     <span className="font-medium text-gray-800">
                       {useremail}
                     </span>
-                    <button className="text-gray-500 hover:text-black transition"></button>
+                    <button className="text-gray-500 hover:text-black transition">
+                      <Pencil/>
+                    </button>
                   </div>
                 </div>
 
@@ -161,9 +168,7 @@ const Myaccounts = () => {
                 <button
                   className="absolute top-3 right-3 text-gray-500 hover:text-black"
                   onClick={() => setShowPasswordCard(false)}
-                >
-                  <X />
-                </button>
+                ><X/></button>
 
                 <h2 className="text-xl font-semibold text-center">Change Password</h2>
 

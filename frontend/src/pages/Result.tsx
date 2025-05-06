@@ -28,7 +28,7 @@ function ProjectScans() {
     
     
     return (
-        <div className="flex h-screen text-black">
+        <div className="flex h-screen text-black pt-18">
             <Sidebar settings={false} scanSettings={false} homeSettings={true} />
             <div className="flex-1 flex flex-col ml-64">
                     <Header title={"Results"}></Header>
