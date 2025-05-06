@@ -262,7 +262,6 @@ const ScanIOCWindows = () => {
                 value={formData.projectName}
                 onChange={handleInputChange}
                 className="w-80"
-                className="w-80"
                 required
               />
             </div>
