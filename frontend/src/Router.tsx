@@ -29,11 +29,13 @@ import CreateUser from "./pages/CreateUser";
 
 import ProjectScans from "./pages/ProjectScans";
 
+import ProtectedRoute from "./components/ProtectedRoute";
+import RequireAdmin from "./components/RequireAdmin";
 
 const Router = [
     {
         path: "/",
-        element: <Dashboard/>
+        element: <ProtectedRoute><RequireAdmin><Dashboard/></RequireAdmin></ProtectedRoute>
     },
     {
         path: "/dashboard/allprojects",
