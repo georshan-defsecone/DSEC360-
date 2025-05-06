@@ -59,6 +59,14 @@ const ScanIOCWindows = () => {
     certificate: "",
     publicKey: "",
 
+    globalCredentials: {
+      neverSendCredentials: "false",
+      dontUseNTLMv1: "false",
+      startRemoteRegistryService: "false",
+      enableAdministrativeShares: "false",
+      startServerService: "false",
+    },
+
     //Get control info
     IOCcontrols: {} as Record<string, boolean>,
 
@@ -72,10 +80,86 @@ const ScanIOCWindows = () => {
     notificationEmail: "",
   });
 
+  const validatePage1 = () => {
+    return (
+      formData.scanName.trim() !== "" &&
+      formData.projectName.trim() !== "" &&
+      formData.description.trim() !== ""
+    );
+  };
+
+  const validatePage2 = () => {
+    if (!formData.auditMethod) return false;
+
+    if (formData.auditMethod === "remoteAccess") {
+      if (!formData.target) return false;
+      if (!formData.authMethod) return false;
+
+      // Validate based on authentication method
+      switch (formData.authMethod) {
+        case "password":
+          return formData.username && formData.password;
+        case "ntlm":
+          return formData.username && formData.ntlmHash && formData.domain;
+        case "kerberos":
+          return (
+            formData.username &&
+            formData.password &&
+            formData.kdc &&
+            formData.kdcPort &&
+            formData.domain
+          );
+        case "lm":
+          return formData.username && formData.lmHash && formData.domain;
+        default:
+          return false;
+      }
+    }
+
+    return true; // For agent and uploadConfig methods
+  };
+
+  const validatePage4 = () => {
+    if (formData.schedule !== "true" && formData.notification !== "true") {
+      setErrors("Please enable either scheduling or notifications");
+      return false;
+    }
+
+    // Validate schedule settings
+    if (formData.schedule === "true") {
+      if (
+        !formData.scheduleFrequency ||
+        !formData.scheduleStartDate ||
+        !formData.scheduleStartTime ||
+        !formData.scheduleTimezone
+      ) {
+        setErrors("Please fill in all schedule fields");
+        return false;
+      }
+    }
+
+    // Validate notification settings
+    if (formData.notification === "true") {
+      if (!formData.notificationEmail) {
+        setErrors("Please enter an email address");
+        return false;
+      }
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.notificationEmail)) {
+        setErrors("Please enter a valid email address");
+        return false;
+      }
+    }
+
+    // If all validations pass
+    return true;
+  };
+
   useEffect(() => {
     const fetchIOCdata = async () => {
       try {
-        const response = await api.get("/compliance/ioc/windows/");
+        const response = await api.get("/scans/compliance/ioc/windows/");
         console.log(response.data);
         setIOCdata(response.data);
 
@@ -119,6 +203,24 @@ const ScanIOCWindows = () => {
     }
   };
 
+  const handleNestedInputChange = (
+    field: string,
+    nestedField: string,
+    value: string
+  ) => {
+    setFormData((prev) => {
+      const updatedField = {
+        ...((prev[field as keyof typeof prev] || {}) as Record<string, string>),
+        [nestedField]: value,
+      };
+
+      return {
+        ...prev,
+        [field]: updatedField,
+      };
+    });
+  };
+
   const handleCheckboxChange = (iocName: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -130,6 +232,31 @@ const ScanIOCWindows = () => {
   };
 
   const nextPage = () => {
+    let isValid = false;
+
+    switch (page) {
+      case 1:
+        isValid = validatePage1();
+        break;
+      case 2:
+        isValid = validatePage2();
+        break;
+      case 3:
+        isValid = true;
+        break;
+      case 4:
+        isValid = validatePage4();
+        break;
+      default:
+        isValid = false;
+    }
+
+    if (!isValid) {
+      setErrors("Please fill in all required fields before proceeding.");
+      return;
+    }
+
+    setErrors(""); // Clear any existing errors
     if (page < 4) setPage((prev) => prev + 1);
   };
 
@@ -139,8 +266,21 @@ const ScanIOCWindows = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validatePage4()) return;
+    setErrors("");
     console.log("Form submitted:", formData);
     // Add your submission logic here
+  };
+
+  const renderError = () => {
+    if (errors) {
+      return (
+        <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
+          {errors}
+        </div>
+      );
+    }
+    return null;
   };
 
   const renderPage = () => {
@@ -148,6 +288,7 @@ const ScanIOCWindows = () => {
       case 1:
         return (
           <div className="space-y-4">
+            {renderError()}
             <h2 className="text-xl font-semibold">General Information</h2>
 
             <div className="flex justify-between items-center">
@@ -193,6 +334,7 @@ const ScanIOCWindows = () => {
       case 2:
         return (
           <div className="space-y-4">
+            {renderError()}
             <h2 className="text-xl font-semibold">Target Details</h2>
             <div className="flex justify-start items-center">
               <p className="block w-70 ">Audit Method:</p>
@@ -209,6 +351,7 @@ const ScanIOCWindows = () => {
                 <SelectContent>
                   <SelectItem value="agent">Agent</SelectItem>
                   <SelectItem value="remoteAccess">Remote Access</SelectItem>
+                  <SelectItem value="uploadConfig">Upload Config</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -248,7 +391,7 @@ const ScanIOCWindows = () => {
                   </Button>
                 </div>
 
-                <div className="flex justify-start items-center">
+                <div className="flex justify-start items-center mb-8">
                   <p className="block w-70 ">Authentication Method:</p>
                   <Select
                     value={formData.authMethod}
@@ -289,6 +432,19 @@ const ScanIOCWindows = () => {
                         name="password"
                         placeholder="Password"
                         value={formData.password}
+                        onChange={handleInputChange}
+                        className="w-80"
+                        required
+                      />
+                    </div>
+                    <div className="flex items-center">
+                      <p className="block w-70 ">Domain:</p>
+
+                      <Input
+                        type="text"
+                        name="domain"
+                        placeholder="Domain"
+                        value={formData.domain}
                         onChange={handleInputChange}
                         className="w-80"
                         required
@@ -443,7 +599,111 @@ const ScanIOCWindows = () => {
                     </div>
                   </div>
                 )}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">
+                    Global Credentials Settings
+                  </h3>
+                  <div className="flex items-center">
+                    <Checkbox
+                      className="mr-4"
+                      checked={
+                        formData.globalCredentials.neverSendCredentials ===
+                        "true"
+                      }
+                      onCheckedChange={(checked) => {
+                        handleNestedInputChange(
+                          "globalCredentials",
+                          "neverSendCredentials",
+                          checked ? "true" : "false"
+                        );
+                      }}
+                    />
+                    <p>Never send credentials in the clear</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Checkbox
+                      className="mr-4"
+                      checked={
+                        formData.globalCredentials.dontUseNTLMv1 === "true"
+                      }
+                      onCheckedChange={(checked) => {
+                        handleNestedInputChange(
+                          "globalCredentials",
+                          "dontUseNTLMv1",
+                          checked ? "true" : "false"
+                        );
+                      }}
+                    />
+                    <p>Do not use NTLMv1 authentication</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Checkbox
+                      className="mr-4"
+                      checked={
+                        formData.globalCredentials
+                          .startRemoteRegistryService === "true"
+                      }
+                      onCheckedChange={(checked) => {
+                        handleNestedInputChange(
+                          "globalCredentials",
+                          "startRemoteRegistryService",
+                          checked ? "true" : "false"
+                        );
+                      }}
+                    />
+                    <p>start the remote registry service during the scan</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Checkbox
+                      className="mr-4"
+                      checked={
+                        formData.globalCredentials
+                          .enableAdministrativeShares === "true"
+                      }
+                      onCheckedChange={(checked) => {
+                        handleNestedInputChange(
+                          "globalCredentials",
+                          "enableAdministrativeShares",
+                          checked ? "true" : "false"
+                        );
+                      }}
+                    />
+                    <p>Enable administrative shares during the scan</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Checkbox
+                      className="mr-4"
+                      checked={
+                        formData.globalCredentials.startServerService === "true"
+                      }
+                      onCheckedChange={(checked) => {
+                        handleNestedInputChange(
+                          "globalCredentials",
+                          "startServerService",
+                          checked ? "true" : "false"
+                        );
+                      }}
+                    />
+                    <p>Start the Server Service during the scan</p>
+                  </div>
+                </div>
               </div>
+            )}
+
+            {formData.auditMethod === "uploadConfig" && (
+              <>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <Button
+                      type="button"
+                      className="px-4 py-2 bg-black text-white rounded"
+                      onClick={() => console.log("Uploading config")}
+                    >
+                      Upload config
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         );
@@ -452,13 +712,6 @@ const ScanIOCWindows = () => {
           <>
             <div className="space-y-6">
               <h2 className="text-xl font-semibold">IOC Controls</h2>
-              {errors !== "" ? (
-                <>
-                  <p className="mb-2 text-red-700 font-semibold">{errors}</p>
-                </>
-              ) : (
-                <></>
-              )}
               <div className="flex flex-col space-y-4">
                 {IOCdata.map((ioc: any) => {
                   const iocName = ioc["IOC Names "].trim();
@@ -493,6 +746,7 @@ const ScanIOCWindows = () => {
       case 4:
         return (
           <div className="space-y-6">
+            {renderError()}
             <h2 className="text-xl font-semibold">Scan Settings</h2>
 
             {/* Schedule Section */}
@@ -632,25 +886,6 @@ const ScanIOCWindows = () => {
           <Card className="w-full mt-4">
             <CardContent className="w-full p-4 pl-12">
               <div className="w-[80%] space-y-6">
-                {/* Progress indicator
-            <div className="flex justify-start gap-8 mb-8">
-              {[1, 2, 3, 4].map((step) => (
-                <div
-                  key={step}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center
-                                ${
-                                  page >= step
-                                    ? "bg-black text-white"
-                                    : "bg-gray-200"
-                                }`}
-                >
-                  {step}
-                </div>
-              ))}
-            </div>
-
-            {*/}
-
                 <form onSubmit={handleSubmit}>
                   {renderPage()}
 
@@ -667,31 +902,13 @@ const ScanIOCWindows = () => {
                     </button>
                     <Breadcrumbs currentPage={page} pages={formPages} />
                     {page === 4 ? (
-                      <div className="flex">
-                        <button
-                          type="submit"
-                          className="px-4 py-2 bg-black text-white rounded-l"
-                        >
-                          Save
-                        </button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="px-3 py-2 bg-black text-white rounded-r flex items-center justify-center">
-                              <ChevronDown size={20} />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            side="bottom"
-                            align="end"
-                            alignOffset={1}
-                            className="w-28" // Adjust as needed
-                          >
-                            <DropdownMenuItem className="w-2">
-                              Launch
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSubmit}
+                        className="px-4 py-2 bg-green-500 text-white rounded"
+                      >
+                        Submit
+                      </button>
                     ) : (
                       <button
                         type="button"

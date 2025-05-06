@@ -5,32 +5,60 @@ import Sidebar from "@/components/Sidebar"
 import Header from "@/components/Header"
 import { useEffect, useState } from 'react';
 import api from "./api"
+import { Link } from "react-router-dom"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
+
 
 
 function DashboardContent() {
-  const [scanData, setScanData] = useState([]);
+  const [projectData, setProjectData] = useState([]);
+  const token = localStorage.getItem("access"); 
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
+  
 
   const fetchData = async () => {
+    if (!token) {
+      console.error('JWT Token not found');
+      return;  // Token is not found, no API call will be made.
+    }
     try {
-      const response = await api.get('scans/');
-      setScanData(response.data);
+      const response = await api.get('projects/', {
+        headers: {
+          'Authorization': `Bearer ${token}`,  // Include JWT token
+        },
+      });
+      console.log("JWT Token: ", token);  // Debug the token
+      setProjectData(response.data);
+      console.log(response.data);  // Debug the response data
     } catch (error) {
-      console.error('Error fetching scan data:', error);
+      console.error('Error fetching project data:', error);
     }
   };
-
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [token]);
 
-  const handleMoveToTrash = async (scanId: string) => {
+  const moveToTrash = async (projectId: string) => {
     try {
-      await api.put(`scans/${scanId}/trash/`);
-      fetchData();
-    } catch (error) {
-      console.error('Error moving to trash:', error);
+      await api.put(`project/trash/${projectId}/`, { trash: true });
+      console.log(`Project ${projectId} moved to trash.`);
+      fetchData();  // Refresh the list after moving the project to trash
+    } catch (err) {
+      console.error("Failed to move project to trash", err);
     }
   };
+  
 
 
   return (
@@ -44,18 +72,48 @@ function DashboardContent() {
                   <TableRow>
                     <TableHead className="w-[40px]"></TableHead>
                     <TableHead>Project Name</TableHead>
-                    <TableHead>Scan Author</TableHead>
+                    <TableHead>Project Author</TableHead>
                     <TableHead>Trash</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {scanData.map((scan, id) => (
-                    <TableRow key={id}>
+                  {projectData.map((pro, project_id) => (
+                    <TableRow key={project_id}>
+
+                      
                       <TableCell></TableCell>
-                      <TableCell className="font-medium">{scan.project_name}</TableCell>
-                      <TableCell>{scan.scan_author}</TableCell>
+                      <TableCell className="font-medium">
+                        <Link to={`/project/${pro.project_id}`}>
+                          {pro.project_name}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{pro.project_author}</TableCell>
                       <TableCell>
-                        <button onClick={() => handleMoveToTrash(scan.scan_id)}>❌</button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button onClick={() => setSelectedProjectId(pro.project_id)}>❌</button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will move the project to trash. You can restore it later if needed.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => {
+                                  if (selectedProjectId) {
+                                    moveToTrash(selectedProjectId);
+                                  }
+                                }}
+                              >
+                                Move to Trash
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -76,7 +134,7 @@ function Dashboard() {
     <div className="flex h-screen text-black">
       <Sidebar settings={false} scanSettings={false} homeSettings={true} />
       <div className="flex-1 flex flex-col ml-64">
-        <Header title="My Projects" />
+        <Header title="My Projects"></Header>
         <div className="p-4 overflow-auto max-h-[calc(100vh-100px)]">
           <DashboardContent />
         </div>

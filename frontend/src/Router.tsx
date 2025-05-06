@@ -26,7 +26,9 @@ import ScanCAWAServers from "./pages/scanPages/ScanCAWAServers";
 import Users from "./pages/Users";
 import Myaccounts from "./pages/Myaccounts";
 import CreateUser from "./pages/CreateUser";
-import path from "path";
+
+import ProjectScans from "./pages/ProjectScans";
+
 
 const Router = [
     {
@@ -44,6 +46,10 @@ const Router = [
     {
         path: "/dashboard/trash",
         element: <Trash/>
+    },
+    {
+        path: "/project/:project_id",
+        element: <ProjectScans/>
     },
     {
         path: "/login",
