@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import FileUploader from "@/components/FileUploader";
 import api from "../api";
 import {
   DropdownMenu,
@@ -311,13 +311,8 @@ const ScanCAWindows = () => {
             {formData.auditMethod === "agent" && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <Button
-                    type="button"
-                    className="px-4 py-2 bg-black text-white rounded"
-                    onClick={() => console.log("Download agent")}
-                  >
-                    Download Script
-                  </Button>
+                  
+                  <FileUploader></FileUploader>
                 </div>
               </div>
             )}

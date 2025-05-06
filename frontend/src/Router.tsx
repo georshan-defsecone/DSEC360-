@@ -132,7 +132,7 @@ const Router = [
     {
         path:"/settings/ldap",
         element: <LDAP/>
-    }
+    },
 ]
 
 export default Router;
