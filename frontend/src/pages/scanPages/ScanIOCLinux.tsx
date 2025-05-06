@@ -270,8 +270,8 @@ const ScanIOCLinux = () => {
             {renderError()}
             <h2 className="text-xl font-semibold">General Information</h2>
 
-            <div className="flex justify-between items-center">
-              <p className="block w-40 ">Project Name:</p>
+            <div className="flex items-center">
+              <p className="block w-70 ">Project Name:</p>
 
               <Input
                 type="text"
@@ -279,12 +279,13 @@ const ScanIOCLinux = () => {
                 placeholder="Project Name"
                 value={formData.projectName}
                 onChange={handleInputChange}
+                className="w-80"
                 required
               />
             </div>
 
-            <div className="flex justify-between items-center">
-              <p className="block w-40 ">Scan Name:</p>
+            <div className="flex items-center">
+              <p className="block w-70 ">Scan Name:</p>
 
               <Input
                 type="text"
@@ -292,19 +293,20 @@ const ScanIOCLinux = () => {
                 placeholder="Scan Name"
                 value={formData.scanName}
                 onChange={handleInputChange}
+                className="w-80"
                 required
               />
             </div>
 
-            <div className="flex justify-between items-center">
-              <p className="block w-40 ">Project Description:</p>
+            <div className="flex items-center">
+              <p className="block w-70 ">Project Description:</p>
 
               <Textarea
                 name="description"
                 placeholder="Project Description"
                 value={formData.description}
                 onChange={handleInputChange}
-                className="resize-none"
+                className="resize-none w-80"
                 //className="w-full p-2 border rounded"
               />
             </div>
