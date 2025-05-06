@@ -8,7 +8,6 @@ import { X } from 'lucide-react';
 import api from "./api";
 import { CircleUserRound } from "lucide-react";
 import { Pencil } from "lucide-react";
-import { X } from "lucide-react";
 const Myaccounts = () => {
   const [username, setUserName] = useState("");
   const [useremail, setUserEmail] = useState("");
