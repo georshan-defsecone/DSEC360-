@@ -83,8 +83,7 @@ const ScanIOCWindows = () => {
   const validatePage1 = () => {
     return (
       formData.scanName.trim() !== "" &&
-      formData.projectName.trim() !== "" &&
-      formData.description.trim() !== ""
+      formData.projectName.trim() !== ""
     );
   };
 
@@ -117,43 +116,6 @@ const ScanIOCWindows = () => {
     }
 
     return true; // For agent and uploadConfig methods
-  };
-
-  const validatePage4 = () => {
-    if (formData.schedule !== "true" && formData.notification !== "true") {
-      setErrors("Please enable either scheduling or notifications");
-      return false;
-    }
-
-    // Validate schedule settings
-    if (formData.schedule === "true") {
-      if (
-        !formData.scheduleFrequency ||
-        !formData.scheduleStartDate ||
-        !formData.scheduleStartTime ||
-        !formData.scheduleTimezone
-      ) {
-        setErrors("Please fill in all schedule fields");
-        return false;
-      }
-    }
-
-    // Validate notification settings
-    if (formData.notification === "true") {
-      if (!formData.notificationEmail) {
-        setErrors("Please enter an email address");
-        return false;
-      }
-      // Basic email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.notificationEmail)) {
-        setErrors("Please enter a valid email address");
-        return false;
-      }
-    }
-
-    // If all validations pass
-    return true;
   };
 
   useEffect(() => {
@@ -245,7 +207,7 @@ const ScanIOCWindows = () => {
         isValid = true;
         break;
       case 4:
-        isValid = validatePage4();
+        isValid = true
         break;
       default:
         isValid = false;
@@ -265,10 +227,9 @@ const ScanIOCWindows = () => {
   };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validatePage4()) return;
-    setErrors("");
-    console.log("Form submitted:", formData);
+    e.preventDefault()
+    setErrors("")
+    console.log("Form submitted:", formData)
     // Add your submission logic here
   };
 
