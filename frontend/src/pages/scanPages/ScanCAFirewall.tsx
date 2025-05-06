@@ -1,6 +1,7 @@
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
+import { ElevatePrivilegeForm } from "@/components/ElevatePrivilegeForm";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
@@ -92,10 +93,88 @@ const ScanCAFirewall = () => {
     notificationEmail: "",
   });
 
+  const validatePage1 = () => {
+    return (
+      formData.scanName.trim() !== "" &&
+      formData.projectName.trim() !== "" &&
+      formData.description.trim() !== ""
+    );
+  };
+  
+  const validatePage2 = () => {
+    if (!formData.auditMethod || !formData.OS) return false;
+  
+    if (formData.auditMethod === "remoteAccess") {
+      if (!formData.target) return false;
+      if (!formData.authMethod) return false;
+  
+      // Validate based on authentication method
+      switch (formData.authMethod) {
+        case "password":
+          return formData.username && formData.password;
+        case "ntlm":
+          return formData.username && formData.ntlmHash && formData.domain;
+        case "kerberos":
+          return (
+            formData.username &&
+            formData.password &&
+            formData.kdc &&
+            formData.kdcPort &&
+            formData.domain
+          );
+        case "lm":
+          return formData.username && formData.lmHash && formData.domain;
+        default:
+          return false;
+      }
+    }
+  
+    return true; // For agent and uploadConfig methods
+  };
+  
+  const validatePage3 = () => {
+    return (
+      formData.complianceCategory !== "" &&
+      formData.complianceSecurityStandard !== ""
+    );
+  };
+  
+  const validatePage4 = () => {
+    if (formData.schedule !== "true" && formData.notification !== "true") {
+      setErrors("Please enable either scheduling or notifications");
+      return false;
+    }
+  
+    // Validate schedule settings
+    if (formData.schedule === "true") {
+      if (!formData.scheduleFrequency || !formData.scheduleStartDate || !formData.scheduleStartTime || !formData.scheduleTimezone) {
+        setErrors("Please fill in all schedule fields");
+        return false;
+      }
+    }
+  
+    // Validate notification settings
+    if (formData.notification === "true") {
+      if (!formData.notificationEmail) {
+        setErrors("Please enter an email address");
+        return false;
+      }
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.notificationEmail)) {
+        setErrors("Please enter a valid email address");
+        return false;
+      }
+    }
+  
+    // If all validations pass
+    return true;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get("/compliance/firewall/"); // Adjust the endpoint as needed
+        const response = await api.get("/scans/compliance/configaudit/firewall/");
         console.log("Fetched data:", response.data);
         setComplianceData(response.data);
       } catch (error) {
@@ -144,6 +223,31 @@ const ScanCAFirewall = () => {
   };
 
   const nextPage = () => {
+    let isValid = false;
+
+    switch (page) {
+      case 1:
+        isValid = validatePage1();
+        break;
+      case 2:
+        isValid = validatePage2();
+        break;
+      case 3:
+        isValid = validatePage3();
+        break;
+      case 4:
+        isValid = validatePage4();
+        break;
+      default:
+        isValid = false;
+    }
+
+    if (!isValid) {
+      setErrors("Please fill in all required fields before proceeding.");
+      return;
+    }
+
+    setErrors(""); // Clear any existing errors
     if (page < 4) setPage((prev) => prev + 1);
   };
 
@@ -151,261 +255,28 @@ const ScanCAFirewall = () => {
     if (page > 1) setPage((prev) => prev - 1);
   };
 
-  interface ElevatePrivilegeFormProps {
-    formData: {
-      elevatePrivilege: string;
-      EP_escalationAccount: string;
-      EP_escalationPassword: string;
-      EP_dzdoDirectory: string;
-      EP_suDirectory: string;
-      EP_pbrunDirectory: string;
-      EP_su_sudoDirectory: string;
-      EP_su_login: string;
-      EP_su_user: string;
-      EP_sudoUser: string;
-      EPsshUserPassword: string;
-      EPenablePassword: string;
-    };
-    handleInputChange: (
-      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string,
-      field?: string
-    ) => void;
-  }
-
-  const ElevatePrivilegeForm = ({
-    formData,
-    handleInputChange,
-  }: ElevatePrivilegeFormProps) => {
-    return (
-      <div className="space-y-4">
-        <div className="flex justify-start items-center mb-8">
-          <p className="block w-70">Elevate privileges with</p>
-          <Select
-            value={formData.elevatePrivilege}
-            onValueChange={(value) =>
-              handleInputChange(value, "elevatePrivilege")
-            }
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Elevate privilege" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="nothing">Nothing</SelectItem>
-              <SelectItem value=".k5login">.k5login</SelectItem>
-              <SelectItem value="ciscoEnable">Cisco 'enable'</SelectItem>
-              <SelectItem value="dzdo">dzdo</SelectItem>
-              <SelectItem value="su">su</SelectItem>
-              <SelectItem value="pbrun">pbrun</SelectItem>
-              <SelectItem value="su+sudo">su+sudo</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {formData.elevatePrivilege === ".k5login" && (
-          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
-            <div className="flex items-center">
-              <p className="block w-70">Escalation Account:</p>
-              <Input
-                type="text"
-                name="EP_escalationAccount"
-                placeholder="Enter escalation account"
-                value={formData.EP_escalationAccount}
-                onChange={handleInputChange}
-                className="w-80"
-                required
-              />
-            </div>
-          </div>
-        )}
-
-        {formData.elevatePrivilege === "ciscoEnable" && (
-          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
-            <div className="flex items-center">
-              <p className="block w-70">Enable Password:</p>
-              <Input
-                type="password"
-                name="EPenablePassword"
-                placeholder="Enter enable password"
-                value={formData.EPenablePassword}
-                onChange={handleInputChange}
-                className="w-80"
-                required
-              />
-            </div>
-          </div>
-        )}
-
-        {formData.elevatePrivilege === "dzdo" && (
-          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
-            <div className="flex items-center">
-              <p className="block w-70">Escalation Account:</p>
-              <Input
-                type="text"
-                name="EP_escalationAccount"
-                placeholder="Enter escalation account"
-                value={formData.EP_escalationAccount}
-                onChange={handleInputChange}
-                className="w-80"
-                required
-              />
-            </div>
-            <div className="flex items-center">
-              <p className="block w-70">Escalation Password:</p>
-              <Input
-                type="password"
-                name="EP_escalationPassword"
-                placeholder="Enter escalation password"
-                value={formData.EP_escalationPassword}
-                onChange={handleInputChange}
-                className="w-80"
-                required
-              />
-            </div>
-            <div className="flex items-center">
-              <p className="block w-70">dzdo Directory:</p>
-              <Input
-                type="text"
-                name="EP_dzdoDirectory"
-                placeholder="Enter dzdo directory"
-                value={formData.EP_dzdoDirectory}
-                onChange={handleInputChange}
-                className="w-80"
-                required
-              />
-            </div>
-          </div>
-        )}
-
-        {formData.elevatePrivilege === "su" && (
-          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
-            <div className="flex items-center">
-              <p className="block w-70">su Directory:</p>
-              <Input
-                type="text"
-                name="EP_suDirectory"
-                placeholder="Enter su directory"
-                value={formData.EP_suDirectory}
-                onChange={handleInputChange}
-                className="w-80"
-                required
-              />
-            </div>
-            <div className="flex items-center">
-              <p className="block w-70">su Login:</p>
-              <Input
-                type="text"
-                name="EP_su_login"
-                placeholder="Enter su login"
-                value={formData.EP_su_login}
-                onChange={handleInputChange}
-                className="w-80"
-                required
-              />
-            </div>
-            <div className="flex items-center">
-              <p className="block w-70">Escalation Password:</p>
-              <Input
-                type="password"
-                name="EP_escalationPassword"
-                placeholder="Enter escalation password"
-                value={formData.EP_escalationPassword}
-                onChange={handleInputChange}
-                className="w-80"
-                required
-              />
-            </div>
-          </div>
-        )}
-
-        {formData.elevatePrivilege === "pbrun" && (
-          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
-            <div className="flex items-center">
-              <p className="block w-70">pbrun Directory:</p>
-              <Input
-                type="text"
-                name="EP_pbrunDirectory"
-                placeholder="Enter pbrun directory"
-                value={formData.EP_pbrunDirectory}
-                onChange={handleInputChange}
-                className="w-80"
-                required
-              />
-            </div>
-            <div className="flex items-center">
-              <p className="block w-70">SSH User Password:</p>
-              <Input
-                type="password"
-                name="EPsshUserPassword"
-                placeholder="Enter SSH user password"
-                value={formData.EPsshUserPassword}
-                onChange={handleInputChange}
-                className="w-80"
-                required
-              />
-            </div>
-          </div>
-        )}
-
-        {formData.elevatePrivilege === "su+sudo" && (
-          <div className="space-y-4 pl-4 border-l-2 border-gray-200">
-            <div className="flex items-center">
-              <p className="block w-70">su+sudo Directory:</p>
-              <Input
-                type="text"
-                name="EP_su_sudoDirectory"
-                placeholder="Enter su+sudo directory"
-                value={formData.EP_su_sudoDirectory}
-                onChange={handleInputChange}
-                className="w-80"
-                required
-              />
-            </div>
-            <div className="flex items-center">
-              <p className="block w-70">su User:</p>
-              <Input
-                type="text"
-                name="EP_su_user"
-                placeholder="Enter su user"
-                value={formData.EP_su_user}
-                onChange={handleInputChange}
-                className="w-80"
-                required
-              />
-            </div>
-            <div className="flex items-center">
-              <p className="block w-70">sudo User:</p>
-              <Input
-                type="text"
-                name="EP_sudoUser"
-                placeholder="Enter sudo user"
-                value={formData.EP_sudoUser}
-                onChange={handleInputChange}
-                className="w-80"
-                required
-              />
-            </div>
-            <div className="flex items-center">
-              <p className="block w-70">Escalation Password:</p>
-              <Input
-                type="password"
-                name="EP_escalationPassword"
-                placeholder="Enter escalation password"
-                value={formData.EP_escalationPassword}
-                onChange={handleInputChange}
-                className="w-80"
-                required
-              />
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validatePage4()) {
+      return;
+    }
+
+    setErrors(""); // Clear any existing errors
+
     console.log("Form submitted:", formData);
     // Add your submission logic here
+  };
+
+  const renderError = () => {
+    if (errors) {
+      return (
+        <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
+          {errors}
+        </div>
+      );
+    }
+    return null;
   };
 
   const renderPage = () => {
@@ -413,6 +284,7 @@ const ScanCAFirewall = () => {
       case 1:
         return (
           <div className="space-y-4">
+            {renderError()}
             <h2 className="text-xl font-semibold">General Information</h2>
 
             <div className="flex justify-between items-center">
@@ -458,6 +330,7 @@ const ScanCAFirewall = () => {
       case 2:
         return (
           <div className="space-y-4">
+            {renderError()}
             <h2 className="text-xl font-semibold">Target Details</h2>
             <div className="flex justify-start items-center gap-2">
               <p className="block w-70 ">Audit Method:</p>
@@ -583,8 +456,22 @@ const ScanCAFirewall = () => {
                         required
                       />
                     </div>
+                    <div className="flex items-center">
+                      <p className="block w-70 ">Domain:</p>
+
+                      <Input
+                        type="text"
+                        name="domain"
+                        placeholder="Domain"
+                        value={formData.domain}
+                        onChange={handleInputChange}
+                        className="w-80"
+                        required
+                      />
+                    </div>
                     {formData.OS === "linux" && (
                       <ElevatePrivilegeForm
+                        elevatePrivilege={formData.elevatePrivilege}
                         formData={formData}
                         handleInputChange={handleInputChange}
                       />
@@ -699,6 +586,7 @@ const ScanCAFirewall = () => {
                     </div>
                     {formData.OS === "linux" && (
                       <ElevatePrivilegeForm
+                        elevatePrivilege={formData.elevatePrivilege}
                         formData={formData}
                         handleInputChange={handleInputChange}
                       />
@@ -738,6 +626,7 @@ const ScanCAFirewall = () => {
                         />
                       </div>
                       <ElevatePrivilegeForm
+                        elevatePrivilege={formData.elevatePrivilege}
                         formData={formData}
                         handleInputChange={handleInputChange}
                       />
@@ -780,6 +669,7 @@ const ScanCAFirewall = () => {
                         />
                       </div>
                       <ElevatePrivilegeForm
+                        elevatePrivilege={formData.elevatePrivilege}
                         formData={formData}
                         handleInputChange={handleInputChange}
                       />
@@ -951,7 +841,7 @@ const ScanCAFirewall = () => {
                       <div className="flex items-center">
                         <p className="block w-70">Attempt Least Privilege</p>
                         <Checkbox
-                          checked={formData.attemptLeastPrivelege === "true"}
+                          checked={formData.attemptLeastPrivilege === "true"}
                           onCheckedChange={(checked) => {
                             handleInputChange(
                               checked ? "true" : "false",
@@ -969,6 +859,7 @@ const ScanCAFirewall = () => {
             {formData.auditMethod === "uploadConfig" && (
               <>
                 <div className="space-y-4">
+                  {renderError()}
                   <div className="flex justify-between items-center">
                     <Button
                       type="button"
@@ -996,6 +887,7 @@ const ScanCAFirewall = () => {
 
         return (
           <div className="space-y-4">
+            {renderError()}
             <h2 className="text-xl font-semibold">Compliance Information</h2>
 
             {/* Operating System Selection */}
@@ -1045,6 +937,7 @@ const ScanCAFirewall = () => {
       case 4:
         return (
           <div className="space-y-6">
+            {renderError()}
             <h2 className="text-xl font-semibold">Scan Settings</h2>
 
             {/* Schedule Section */}
@@ -1182,13 +1075,6 @@ const ScanCAFirewall = () => {
 
         <Card className="w-full mt-4">
           <CardContent className="w-full p-4 pl-12">
-            {errors !== "" ? (
-              <>
-                <p className="mb-2 text-red-700 font-semibold">{errors}</p>
-              </>
-            ) : (
-              <></>
-            )}
             <div className="w-[80%] space-y-6">
               <form onSubmit={handleSubmit}>
                 {renderPage()}
@@ -1207,7 +1093,8 @@ const ScanCAFirewall = () => {
                   <Breadcrumbs currentPage={page} pages={formPages} />
                   {page === 4 ? (
                     <button
-                      type="submit"
+                      type="button"
+                      onClick={handleSubmit}
                       className="px-4 py-2 bg-green-500 text-white rounded"
                     >
                       Submit
