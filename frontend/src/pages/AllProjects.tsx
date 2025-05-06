@@ -144,6 +144,7 @@ const AllProjectsPage = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 
