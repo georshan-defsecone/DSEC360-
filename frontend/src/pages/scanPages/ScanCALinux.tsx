@@ -274,7 +274,6 @@ const ScanCALinux = () => {
                 value={formData.scanName}
                 className="w-80"
                 onChange={handleInputChange}
-                className="w-80"
                 required
               />
             </div>
