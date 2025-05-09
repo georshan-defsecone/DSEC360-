@@ -1,11 +1,5 @@
 @echo off
 
-SETLOCAL ENABLEEXTENSIONS
-
-REM --- Install PostgreSQL ---
-echo Checking and installing PostgreSQL...
-powershell -NoProfile -ExecutionPolicy Bypass -File setup_postgres_windows.ps1 -pgVersion "16.3"
-
 SET VENV_DIR=venv
 
 REM Check if virtual environment exists

@@ -29,6 +29,17 @@ else
     echo "PostgreSQL installation complete."
 fi
 
+echo "Checking if python3-venv is installed..."
+
+if ! python3 -m venv --help >/dev/null 2>&1; then
+    echo "python3-venv is not installed. Installing..."
+    sudo apt update
+    sudo apt install -y python3-venv
+else
+    echo "python3-venv is already installed."
+fi
+
+
 # Create user if it doesn't exist
 sudo -u postgres psql <<EOF
 DO \$\$
