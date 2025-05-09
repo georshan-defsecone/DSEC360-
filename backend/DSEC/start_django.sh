@@ -4,7 +4,6 @@ APP_NAME="psql"
 PG_USER="dsec360"
 PG_PASSWORD="dsec360@123"
 PG_DB="dsec360"
-POSTGRES_PASSWORD="dsec360@123"
 
 # Check if PostgreSQL is installed
 if command -v $APP_NAME >/dev/null 2>&1; then
@@ -55,10 +54,6 @@ sudo -u postgres psql <<EOF
 GRANT ALL PRIVILEGES ON DATABASE $PG_DB TO $PG_USER;
 ALTER ROLE $PG_USER CREATEDB;
 EOF
-
-# Set password for postgres role
-echo "Setting password for 'postgres' user..."
-sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '$POSTGRES_PASSWORD';"
 
 # Find the actual path to pg_hba.conf
 echo "Locating pg_hba.conf..."
