@@ -200,9 +200,11 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
   return (
     <div className="fixed top-0 left-0 h-screen w-64 flex flex-col p-6 justify-between  z-10 bg-white">
       <div>
-        <div className="flex items-center mb-6">
+        <div className="mb-6">
+          <a href="/" className="inline-flex items-center gap-4">
           <img src={logo} alt="Logo" className="w-10" />
-          <h2 className="text-2xl font-bold ml-3">DES360+</h2>
+          <h2 className="text-2xl font-bold">DES360+</h2>
+          </a>
         </div>
       </div>
 
