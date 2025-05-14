@@ -35,7 +35,8 @@ import RequireAdmin from "./components/RequireAdmin";
 const Router = [
     {
         path: "/",
-        element: <ProtectedRoute><RequireAdmin><Dashboard/></RequireAdmin></ProtectedRoute>
+        //element: <ProtectedRoute><RequireAdmin><Dashboard/></RequireAdmin></ProtectedRoute>
+        element: <Dashboard/>
     },
     {
         path: "/dashboard/allprojects",
