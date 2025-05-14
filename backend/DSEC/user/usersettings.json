@@ -1,0 +1,36 @@
+{
+  "proxy": {
+    "enabled": false,
+    "host": "dhanishlee",
+    "port": "5432",
+    "username": "",
+    "password": "",
+    "authMethod": "none",
+    "userAgent": "dhanish"
+  },
+  "smtp": {
+    "enabled": false,
+    "host": "jhds",
+    "port": "djkh",
+    "from": "dsjkb",
+    "encryption": "no encryption",
+    "hostname": "dsmjn",
+    "authMethod": "none",
+    "username": "",
+    "password": ""
+  },
+  "ldap": {
+    "enabled": false,
+    "ldapUrl": "",
+    "baseDn": "",
+    "samAccount": "",
+    "bindMethod": "",
+    "bindDn": "",
+    "bindPassword": "",
+    "groupBaseDn": "",
+    "adminGroup": "",
+    "normalGroup": "",
+    "useSSL": false,
+    "port": ""
+  }
+}

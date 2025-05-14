@@ -44,9 +44,9 @@ export default function Header({ title }: { title: string }) {
   };
 
   return (
-    <header className="fixed top-0 left-64 w-[calc(100%-16rem)] h-20 bg-white   flex items-center justify-between px-6 z-50">
+    <header className="fixed top-0 left-70 w-[calc(100%-16rem)] h-20 bg-white flex items-center justify-between pr-16 z-50">
       {/* Page Title */}
-      <div className="text-xl font-bold text-gray-800">{title}</div>
+      <div className="text-3xl font-bold ml-8 text-gray-800">{title}</div>
 
       {/* User Menu */}
       <DropdownMenu>

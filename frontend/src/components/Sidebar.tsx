@@ -10,9 +10,10 @@ import {
   PanelTop,
   TerminalSquare,
   Settings,
-  LogOut
+  LogOut,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import SidebarSection from "@/components/SidebarSection";
 import logo from "@/assets/logo.png";
 import "@/styles/sidebar.css";
 import { jwtDecode } from "jwt-decode";
@@ -25,40 +26,6 @@ type SidebarProps = {
 };
 
 //scan sidebar
-
-const SidebarSection = ({
-  title,
-  links,
-}: {
-  title: string;
-  links: { to: string; label: string; icon: JSX.Element }[];
-}) => {
-  const [isOpen, setIsOpen] = useState(true);
-
-  return (
-    <div>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full text-left px-4 py-3 font-bold text-sm tracking-wide uppercase"
-      >
-        <span>{title}</span>
-        {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-      </button>
-      {isOpen && (
-        <div className="space-y-2 mt-1 font-semibold">
-          {links.map(({ to, label, icon }) => (
-            <Link to={to} key={to}>
-              <button className="flex items-center gap-2 w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium text-sm">
-                {icon} {label}
-              </button>
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
 const ScanSettingSidebar = () => {
   return (
     <nav className="space-y-2">
@@ -198,32 +165,31 @@ const HomeSettingSidebar = () => {
 
   return (
     <>
-      <nav className="space-y-2">
-        <Link to={"/"}>
-          <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-            My Projects
-          </button>
-        </Link>
-        {isAdmin && (
-          <Link to={"/dashboard/allprojects"}>
-            <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-              All Projects
-            </button>
-          </Link>
-        )}
-
-        <Link to={"/dashboard/results"}>
-          <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-            Results
-          </button>
-        </Link>
-
-        <Link to={"/dashboard/trash"}>
-          <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-            Trash
-          </button>
-        </Link>
-      </nav>
+      <SidebarSection
+        title="Projects"
+        links={[
+          {
+            to: "/",
+            label: "My Projects",
+          },
+          ...(isAdmin
+            ? [
+                {
+                  to: "/dashboard/allprojects",
+                  label: "All Projects",
+                },
+              ]
+            : []),
+          {
+            to: "/dashboard/results",
+            label: "Results",
+          },
+          {
+            to: "/dashboard/trash",
+            label: "Trash",
+          },
+        ]}
+      />
     </>
   );
 };
@@ -232,7 +198,7 @@ const HomeSettingSidebar = () => {
 
 const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
   return (
-    <div className="fixed top-0 left-0 h-screen w-64 flex flex-col p-6 justify-between  z-10 bg-white ">
+    <div className="fixed top-0 left-0 h-screen w-64 flex flex-col p-6 justify-between  z-10 bg-white">
       <div>
         <div className="flex items-center mb-6">
           <img src={logo} alt="Logo" className="w-10" />
@@ -247,13 +213,11 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
       </div>
 
       <div className="mt-4">
-        
         <button className="flex items-center px-4 py-2">
-        <Link to={"/settings/about"}>
-          <Settings className="w-5 h-5 mr-2" />
+          <Link to={"/settings/about"}>
+            <Settings className="w-5 h-5 mr-2" />
           </Link>
         </button>
-         
       </div>
     </div>
   );

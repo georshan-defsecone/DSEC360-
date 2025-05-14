@@ -20,7 +20,7 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     checkAuth();
   }, [navigate]);
 
-  if (isLoading) return <div>Loading...</div>;
+  //if (isLoading) return <div>Loading...</div>;
 
   return isAuthenticated ? children : null;
 };
