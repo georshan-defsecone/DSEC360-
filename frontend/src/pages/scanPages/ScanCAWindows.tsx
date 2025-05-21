@@ -845,7 +845,7 @@ const ScanCAWindows = () => {
         <Header title="Windows Configuration Audit Scan" />
         <div className="w-full flex justify-left items-center mt-2">
 
-        <Card className="w-[70%] mt-4 ml-4 shadow-xl">
+        <Card className="w-[70%] mt-4 ml-4 shadow-2xl">
           <CardContent className="w-full p-4 px-12">
             <div className="w-auto space-y-6">
               {/* Progress indicator
