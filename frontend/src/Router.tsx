@@ -1,15 +1,15 @@
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/projectPages/Dashboard";
 import Login from "./pages/Login";
 import About from "./pages/About";
 
 
-import SMTP from "./pages/SMTP";
-import ProxyServer from "./pages/ProxyServer";
-import AllProjects from "./pages/AllProjects";
-import Trash from "./pages/Trash";
-import Result from "./pages/Result";
-import Advanced from "./pages/Advanced";
-import LDAP from "./pages/LDAP";
+import SMTP from "./pages/settingsPages/SMTP";
+import ProxyServer from "./pages/settingsPages/ProxyServer";
+import AllProjects from "./pages/projectPages/AllProjects";
+import Trash from "./pages/projectPages/Trash";
+import Result from "./pages/projectPages/Result";
+import Advanced from "./pages/settingsPages/Advanced";
+import LDAP from "./pages/settingsPages/LDAP";
 
 import ScanHome from "./pages/scanPages/ScanHome";
 import ScanCAWindows from "./pages/scanPages/ScanCAWindows";
@@ -23,11 +23,11 @@ import ScanIOCLinux from "./pages/scanPages/ScanIOCLinux";
 import ScanIOCWindows from "./pages/scanPages/ScanIOCWindows";
 import ScanCAWAServers from "./pages/scanPages/ScanCAWAServers";
 
-import Users from "./pages/Users";
-import Myaccounts from "./pages/Myaccounts";
-import CreateUser from "./pages/CreateUser";
+import Users from "./pages/settingsPages/Users";
+import Myaccounts from "./pages/settingsPages/Myaccounts";
+import CreateUser from "./pages/settingsPages/CreateUser";
 
-import ProjectScans from "./pages/ProjectScans";
+import ProjectScans from "./pages/projectPages/ProjectScans";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import RequireAdmin from "./components/RequireAdmin";

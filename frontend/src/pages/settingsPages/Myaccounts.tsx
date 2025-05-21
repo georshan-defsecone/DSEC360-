@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X } from 'lucide-react';
-import api from "./api";
+import api from "../api";
 import { CircleUserRound } from "lucide-react";
 import { Pencil } from "lucide-react";
 const Myaccounts = () => {

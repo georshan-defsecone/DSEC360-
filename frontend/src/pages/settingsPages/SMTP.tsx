@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import api from "./api";
+import api from "../api";
 
 const SMTP = () => {
   const [isSMTPEnabled, setIsSMTPEnabled] = useState(false);

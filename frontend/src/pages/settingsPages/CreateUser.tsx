@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Eye, EyeOff } from "lucide-react";
-import api from "./api";
+import api from "../api";
 
 const CreateUser = () => {
   const [showPassword, setShowPassword] = useState(false);

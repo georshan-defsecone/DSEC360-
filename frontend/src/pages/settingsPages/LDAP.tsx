@@ -13,7 +13,7 @@ import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import api from "./api";
+import api from "../api";
 
 const LDAP = () => {
   const [isEditMode, setIsEditMode] = useState(false);

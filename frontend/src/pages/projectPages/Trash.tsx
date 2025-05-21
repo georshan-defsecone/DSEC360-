@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useEffect, useState } from 'react';
-import api from "./api"
+import api from "../api"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { ArchiveRestore } from 'lucide-react';
+import { ArchiveRestore, Trash2 } from 'lucide-react';
 
 
 export default function Trash() {
@@ -103,17 +103,12 @@ export default function Trash() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog></Header>
-          <div className="p-4 overflow-auto max-h-[calc(100vh-100px)]">
-            <div className="grid lg:grid-cols-1 gap-4">
-              <div className="col-span-2">
-                <Card className="mt-3 w-full">
-                  <CardContent className="p-4">
+                <Card className="mt-3 w-[80%] shadow-2xl ml-12">
+                  <CardContent className="p-4 px-12">
                     <ScrollArea className="rounded-md border">
-
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="w-[40px]"></TableHead>
                             <TableHead>Project Name</TableHead>
                             <TableHead>Project Author</TableHead>
                             <TableHead>Restore</TableHead>
@@ -121,9 +116,15 @@ export default function Trash() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {trashedProject.map((pro, project_id) => (
+                          {trashedProject.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={4} className="text-center">
+                              No projects found.
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            trashedProject.map((pro, project_id) => (
                             <TableRow key={pro.project_id}>
-                              <TableCell></TableCell>
                               <TableCell className="font-medium">{pro.project_name}</TableCell>
                               <TableCell>{pro.project_author}</TableCell>
                               <TableCell>
@@ -165,7 +166,7 @@ export default function Trash() {
                                       onClick={() => setSelectedProjectId(pro.project_id)}
                                       className="text-red-600 cursor-pointer"
                                     >
-                                      🗑️
+                                      <Trash2/>
                                     </button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
@@ -192,7 +193,8 @@ export default function Trash() {
                                 </AlertDialog>
                               </TableCell>
                             </TableRow>
-                          ))}
+                          ))
+                        )}
                         </TableBody>
                       </Table>
                     </ScrollArea>
@@ -200,14 +202,8 @@ export default function Trash() {
                 </Card>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
 
     </>
   )
-}
-function setIsDeleteAllDialogOpen(arg0: boolean) {
-  throw new Error("Function not implemented.")
 }
 
