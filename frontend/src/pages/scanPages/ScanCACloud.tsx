@@ -838,7 +838,7 @@ const ScanCAFirewall = () => {
             )}
           </div>
         );
-      case 3:
+      case 3: {
         //get all categories from complianceData
         const categories = [
           ...new Set(complianceData.map((item) => item.Categories)),
@@ -897,7 +897,7 @@ const ScanCAFirewall = () => {
               </Select>
             </div>
           </div>
-        );
+        )};
       case 4:
         return (
           <div className="space-y-6">

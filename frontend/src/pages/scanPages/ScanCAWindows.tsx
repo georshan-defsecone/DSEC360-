@@ -17,15 +17,7 @@ import {
 } from "@/components/ui/select";
 import FileUploader from "@/components/FileUploader";
 import api from "../api";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
+
 
 const ScanCAWindows = () => {
   const [complianceData, setComplianceData] = useState([]);
@@ -654,7 +646,7 @@ const ScanCAWindows = () => {
             )}
           </div>
         );
-      case 3:
+      case 3:{
         //get all categories from complianceData
         const categories = [
           ...new Set(complianceData.map((item) => item.Categories)),
@@ -712,7 +704,7 @@ const ScanCAWindows = () => {
               </Select>
             </div>
           </div>
-        );
+        );}
       case 4:
         return (
           <div className="space-y-6">
