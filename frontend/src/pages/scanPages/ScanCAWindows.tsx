@@ -30,6 +30,12 @@ const ScanCAWindows = () => {
     "Scan Settings",
   ];
 
+  const formPagesAgent = [
+    "General Info",
+    "Target Details",
+    "Compliance Info",
+  ]
+
   const [page, setPage] = useState(1);
   const [formData, setFormData] = useState({
     // General Info
@@ -300,14 +306,7 @@ const ScanCAWindows = () => {
               </Select>
             </div>
 
-            {formData.auditMethod === "agent" && (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  
-                  <FileUploader></FileUploader>
-                </div>
-              </div>
-            )}
+            
 
             {formData.auditMethod === "remoteAccess" && (
               <div className="space-y-4">
@@ -704,7 +703,7 @@ const ScanCAWindows = () => {
               </Select>
             </div>
           </div>
-        );}
+        )};
       case 4:
         return (
           <div className="space-y-6">
@@ -881,7 +880,7 @@ const ScanCAWindows = () => {
                   >
                     Previous
                   </button>
-                  <Breadcrumbs currentPage={page} pages={formPages} />
+                  <Breadcrumbs currentPage={page} pages={formData.auditMethod === "agent" ? formPagesAgent : formPages} />
                   {page === 4 ? (
                     <button
                       type="button"
@@ -890,7 +889,9 @@ const ScanCAWindows = () => {
                     >
                       Submit
                     </button>
-                  ) : (
+                  ) : formData.auditMethod === "agent" && page === 3 ? (
+                    <Button>Download script</Button>
+                  ): (
                     <button
                       type="button"
                       onClick={nextPage}

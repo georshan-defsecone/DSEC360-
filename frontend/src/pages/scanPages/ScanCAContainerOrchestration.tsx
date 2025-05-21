@@ -30,6 +30,12 @@ const ScanCAFirewall = () => {
     "Scan Settings",
   ];
 
+  const formPagesAgent = [
+    "General Info",
+    "Target Details",
+    "Compliance Info",
+  ]
+
   const [page, setPage] = useState(1);
   const [formData, setFormData] = useState({
     // General Info
@@ -329,19 +335,7 @@ const ScanCAFirewall = () => {
               </Select>
             </div>
 
-            {formData.auditMethod === "agent" && (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <Button
-                    type="button"
-                    className="px-4 py-2 bg-black text-white rounded"
-                    onClick={() => console.log("Download agent")}
-                  >
-                    Download Script
-                  </Button>
-                </div>
-              </div>
-            )}
+            
 
             {formData.auditMethod === "remoteAccess" && (
               <div className="space-y-4">
@@ -1054,7 +1048,7 @@ const ScanCAFirewall = () => {
                   >
                     Previous
                   </button>
-                  <Breadcrumbs currentPage={page} pages={formPages} />
+                  <Breadcrumbs currentPage={page} pages={formData.auditMethod === "agent" ? formPagesAgent : formPages} />
                   {page === 4 ? (
                     <button
                       type="button"
@@ -1063,7 +1057,9 @@ const ScanCAFirewall = () => {
                     >
                       Submit
                     </button>
-                  ) : (
+                  ) : formData.auditMethod === "agent" && page === 3 ? (
+                    <Button>Download script</Button>
+                  ): (
                     <button
                       type="button"
                       onClick={nextPage}
