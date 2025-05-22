@@ -8,10 +8,10 @@ const About = () => {
       <div className="flex h-screen text-black pt-24">
         <Sidebar settings={true} scanSettings={false} homeSettings={false} />
         <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
-          <Header title="About" />
+          <Header title={"About"} />
           <Card className="h-130">
             <CardContent className="p-4 pl-8">
-              <h3 className="font-bold text-xl text-gray-700">
+              <h3 className="font-bold text-xl text-black">
                 Defsecone Scanner
               </h3>
               <div className="flex flex-row">
