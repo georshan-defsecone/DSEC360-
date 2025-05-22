@@ -11,7 +11,6 @@ import Result from "./pages/projectPages/Result";
 import Advanced from "./pages/settingsPages/Advanced";
 import LDAP from "./pages/settingsPages/LDAP";
 
-import ScanHome from "./pages/scanPages/ScanHome";
 import ScanCAWindows from "./pages/scanPages/ScanCAWindows";
 import ScanCALinux from "./pages/scanPages/ScanCALinux";
 import ScanCAFirewall from "./pages/scanPages/ScanCAFirewall";
@@ -29,14 +28,16 @@ import CreateUser from "./pages/settingsPages/CreateUser";
 
 import ProjectScans from "./pages/projectPages/ProjectScans";
 
+import Error404 from "./pages/404Error";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 import RequireAdmin from "./components/RequireAdmin";
+import path from "path";
 
 const Router = [
     {
         path: "/",
-        //element: <ProtectedRoute><RequireAdmin><Dashboard/></RequireAdmin></ProtectedRoute>
-        element: <Dashboard/>
+        element: <ProtectedRoute><RequireAdmin><Dashboard/></RequireAdmin></ProtectedRoute>
     },
     {
         path: "/dashboard/allprojects",
@@ -64,7 +65,7 @@ const Router = [
     },
     {
         path: "/scan",
-        element: <ScanHome/>
+        element: <About/>
     },
     {
         path: "/scan/configaudit/windows",
@@ -136,6 +137,10 @@ const Router = [
         path:"/settings/ldap",
         element: <LDAP/>
     },
+    {
+        path: "*",
+        element: <Error404/>
+    }
 ]
 
 export default Router;
