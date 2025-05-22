@@ -21,6 +21,7 @@ import ScanCANetworkDevices from "./pages/scanPages/ScanCANetworkDevices";
 import ScanIOCLinux from "./pages/scanPages/ScanIOCLinux";
 import ScanIOCWindows from "./pages/scanPages/ScanIOCWindows";
 import ScanCAWAServers from "./pages/scanPages/ScanCAWAServers";
+import ScanHome from "./pages/scanPages/ScanHome";
 
 import Users from "./pages/settingsPages/Users";
 import Myaccounts from "./pages/settingsPages/Myaccounts";
@@ -32,7 +33,6 @@ import Error404 from "./pages/404Error";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import RequireAdmin from "./components/RequireAdmin";
-import path from "path";
 
 const Router = [
     {
@@ -65,7 +65,7 @@ const Router = [
     },
     {
         path: "/scan",
-        element: <About/>
+        element: <ScanHome/>
     },
     {
         path: "/scan/configaudit/windows",
