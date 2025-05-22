@@ -13,7 +13,7 @@ const SidebarSection = ({
   const location = useLocation();
 
   return (
-    <div>
+    <nav>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-between w-full text-left px-4 py-3 font-bold text-sm tracking-wide uppercase"
@@ -27,7 +27,7 @@ const SidebarSection = ({
             const isActive = location.pathname === to
             return (
               <Link to={to} key={to}>
-                <button className={`flex items-center gap-2 w-full text-left px-4 py-2 rounded ${isActive ? "bg-black text-white" : "hover:bg-black hover:text-white"}`}>
+                <button className={`flex items-center gap-2 w-full text-left px-4 py-2 rounded ${isActive ? "bg-neutral-800 text-white" : "hover:bg-neutral-700 hover:text-white"}`}>
                   {icon && icon}{label}
                 </button>
               </Link>
@@ -35,7 +35,7 @@ const SidebarSection = ({
         })}
         </div>
       )}
-    </div>
+    </nav>
   );
 };
 
