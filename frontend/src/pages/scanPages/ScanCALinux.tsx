@@ -835,7 +835,7 @@ const ScanCALinux = () => {
                   <button
                     type="button"
                     onClick={prevPage}
-                    className={`px-4 py-2 rounded ${
+                    className={`px-4 py-2 rounded w-25 ${
                       page === 1 ? "bg-gray-300" : "bg-black text-white"
                     }`}
                     disabled={page === 1}
@@ -847,7 +847,7 @@ const ScanCALinux = () => {
                     <button
                       type="button"
                       onClick={handleSubmit}
-                      className="px-4 py-2 bg-green-500 text-white rounded"
+                      className="px-4 py-2 w-25 bg-green-500 text-white rounded"
                     >
                       Submit
                     </button>
@@ -857,7 +857,7 @@ const ScanCALinux = () => {
                     <button
                       type="button"
                       onClick={nextPage}
-                      className="px-4 py-2 bg-black text-white rounded"
+                      className="px-4 py-2 bg-black text-white rounded w-25"
                     >
                       Next
                     </button>

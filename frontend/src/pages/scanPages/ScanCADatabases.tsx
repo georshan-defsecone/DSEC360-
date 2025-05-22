@@ -1054,17 +1054,17 @@ const ScanCAFirewall = () => {
                     <button
                       type="button"
                       onClick={handleSubmit}
-                      className="px-4 py-2 bg-green-500 text-white rounded"
+                      className="px-4 py-2 bg-green-500 w-25 text-white rounded"
                     >
                       Submit
                     </button>
                   ) : formData.auditMethod === "agent" && page === 3 ? (
-                    <Button>Download script</Button>
+                    <Button className="px-4 py-2 bg-black text-white h-10 rounded">Download script</Button>
                   ): (
                     <button
                       type="button"
                       onClick={nextPage}
-                      className="px-4 py-2 bg-black text-white rounded"
+                      className="px-4 py-2 bg-black w-25 text-white rounded"
                     >
                       Next
                     </button>

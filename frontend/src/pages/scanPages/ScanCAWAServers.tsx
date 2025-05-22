@@ -1027,7 +1027,7 @@ const ScanCAFirewall = () => {
     <div className="flex h-screen text-black">
       <Sidebar settings={false} scanSettings={true} homeSettings={false} />
       <div className="flex-1 flex flex-col pr-8 pl-8 ml-64 pt-20">
-        <Header title="Web And Application Servers Configuration Audit Scan" />
+        <Header title="Web And Application Servers" />
 
         <Card className="w-[70%] mt-4 ml-4 shadow-2xl">
           <CardContent className="w-full p-4 px-12">
@@ -1051,17 +1051,17 @@ const ScanCAFirewall = () => {
                     <button
                       type="button"
                       onClick={handleSubmit}
-                      className="px-4 py-2 bg-green-500 text-white rounded"
+                      className="px-4 py-2 bg-green-500 w-25 text-white rounded"
                     >
                       Submit
                     </button>
                   ) : formData.auditMethod === "agent" && page === 3 ? (
-                    <Button>Download script</Button>
+                    <Button className="px-4 py-2 bg-black text-white h-10 rounded">Download script</Button>
                   ): (
                     <button
                       type="button"
                       onClick={nextPage}
-                      className="px-4 py-2 bg-black text-white rounded"
+                      className="px-4 py-2 w-25 bg-black text-white rounded"
                     >
                       Next
                     </button>
