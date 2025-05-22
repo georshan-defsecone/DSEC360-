@@ -48,8 +48,8 @@ export default function Header({ title }: { title: string }) {
 
       {/* User Menu */}
       <div className="flex gap-4">
-        <Button><Link to="/">Home</Link></Button>
-        <Button><Link to="/scan">New Scan</Link></Button>
+        <Button className="px-4 py-2 bg-black text-white rounded w-25"><Link to="/">Home</Link></Button>
+        <Button className="px-4 py-2 bg-black text-white rounded w-25"><Link to="/scan">New Scan</Link></Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="outline-none">
