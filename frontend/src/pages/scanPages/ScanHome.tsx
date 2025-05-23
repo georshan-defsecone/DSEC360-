@@ -19,3 +19,4 @@ const ScanHome = () => {
 };
 
 export default ScanHome;
+  

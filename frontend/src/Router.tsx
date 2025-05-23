@@ -22,6 +22,7 @@ import ScanIOCLinux from "./pages/scanPages/ScanIOCLinux";
 import ScanIOCWindows from "./pages/scanPages/ScanIOCWindows";
 import ScanCAWAServers from "./pages/scanPages/ScanCAWAServers";
 import ScanHome from "./pages/scanPages/ScanHome";
+import ScanADWindows from "./pages/scanPages/ScanADWindows";
 
 import Users from "./pages/settingsPages/Users";
 import Myaccounts from "./pages/settingsPages/Myaccounts";
@@ -106,6 +107,10 @@ const Router = [
     {
         path: "/scan/configaudit/WAservers",
         element: <ScanCAWAServers/>
+    },
+    {
+        path: "/scan/ad/windows",
+        element: <ScanADWindows/>
     },
     {
         path: "/settings/SMTP",

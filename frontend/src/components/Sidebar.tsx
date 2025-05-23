@@ -90,6 +90,11 @@ const ScanSettingSidebar = () => {
           },
         ]}
       />
+
+      <SidebarSection
+      title="Asset Discovery"
+      links={[{to: "/scan/ad/windows", label: "Windows Domain Scan", icon:<PanelTop size={16} />,}]}
+      />
     </nav>
   );
 };
