@@ -84,8 +84,6 @@ export default function Header({ title }: { title: string }) {
                 My Profile
               </button>
 
-              <span className="text-gray-300">|</span>
-
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-1 text-red-600 hover:text-red-800 transition"
