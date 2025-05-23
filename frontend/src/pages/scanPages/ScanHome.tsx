@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 
