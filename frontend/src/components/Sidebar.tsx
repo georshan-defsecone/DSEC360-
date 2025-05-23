@@ -208,7 +208,7 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto scrollbar-hide">
+      <div className="flex-1 overflow-y-auto scrollbar-hide pt-4">
         {scanSettings && <ScanSettingSidebar />}
         {homeSettings && <HomeSettingSidebar />}
         {settings && <SettingSidebar />}

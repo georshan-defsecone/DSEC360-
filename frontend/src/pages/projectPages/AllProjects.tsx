@@ -71,7 +71,7 @@ const AllProjects = () => {
         <Sidebar settings={false} scanSettings={false} homeSettings={true} />
         <div className="flex-1 flex flex-col ml-64 pt-20">
           <Header title="All Projects"></Header>
-          <Card className="mt-3 w-[80%] shadow-2xl ml-12">
+          <Card className="mt-10 w-[80%] shadow-2xl ml-12">
             <CardContent className="p-4 px-12">
               <ScrollArea className="rounded-md border">
                 <Table>

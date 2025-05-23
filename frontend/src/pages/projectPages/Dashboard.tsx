@@ -62,7 +62,7 @@ function DashboardContent() {
 
 
   return (
-        <Card className="mt-3 w-[80%] shadow-2xl ml-12">
+        <Card className="mt-10 w-[80%] shadow-2xl ml-12">
           <CardContent className="p-4 px-12">
             <ScrollArea className="rounded-md border">
               <Table>

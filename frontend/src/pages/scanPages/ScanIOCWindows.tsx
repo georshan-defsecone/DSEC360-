@@ -837,7 +837,7 @@ const ScanIOCWindows = () => {
         <div className="flex-1 flex flex-col pr-8 pl-8 ml-64 pt-20">
           <Header title="Windows Compromise Assessment Scan" />
 
-          <Card className="w-[70%] mt-4 ml-4 shadow-2xl">
+          <Card className="w-[70%] mt-10 ml-4 shadow-2xl">
             <CardContent className="w-full p-4 px-12">
               <div className="w-auto space-y-6">
                 <form onSubmit={handleSubmit}>
