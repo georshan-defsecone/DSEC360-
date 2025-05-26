@@ -42,7 +42,11 @@ const Myaccounts = () => {
       alert("Passwords do not match");
       return;
     }
-    console.log("Password updated:", { currentPassword, newPassword, confirmPassword });
+    console.log("Password updated:", {
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    });
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
@@ -89,24 +93,34 @@ const Myaccounts = () => {
           <CardContent className="w-full p-4 px-12">
             <div className="flex items-center gap-6">
               {/* Avatar with Initials */}
-              <div className="relative w-24 h-24 mb-15 mr-5 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+              <div className="w-24 h-24 mb-12 mr-5 rounded-full bg-gradient-to-br from-blue-500 to-gray-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg shrink-0">
                 {getInitials(username || "U")}
               </div>
 
               {/* Info Section */}
               <div className="space-y-2 w-full">
                 <div className="flex items-center">
-                  <div className="w-28 text-gray-600 text-base font-semibold">Username</div>
-                  <div className="text-gray-800 text-base font-medium">{username}</div>
+                  <div className="w-28 text-gray-600 text-base font-semibold">
+                    Username
+                  </div>
+                  <div className="text-gray-800 text-base font-medium">
+                    {username}
+                  </div>
                 </div>
 
                 <div className="flex items-center">
-                  <div className="w-28 text-gray-600 text-base font-semibold">Email</div>
-                  <div className="text-gray-800 text-base font-medium">{useremail}</div>
+                  <div className="w-28 text-gray-600 text-base font-semibold">
+                    Email
+                  </div>
+                  <div className="text-gray-800 text-base font-medium">
+                    {useremail}
+                  </div>
                 </div>
 
                 <div className="flex items-center">
-                  <div className="w-28 text-gray-600 text-base font-semibold">Role</div>
+                  <div className="w-28 text-gray-600 text-base font-semibold">
+                    Role
+                  </div>
                   <span className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
                     {role}
                   </span>
@@ -125,7 +139,10 @@ const Myaccounts = () => {
           </CardContent>
 
           <div className="absolute bottom-4 right-4">
-            <Button onClick={handleEditCardOpen} className="bg-black text-white hover:bg-gray-800">
+            <Button
+              onClick={handleEditCardOpen}
+              className="bg-black text-white hover:bg-gray-800"
+            >
               Edit
             </Button>
           </div>
@@ -144,9 +161,13 @@ const Myaccounts = () => {
                 >
                   <X />
                 </button>
-                <h2 className="text-xl font-semibold text-center">Change Password</h2>
+                <h2 className="text-xl font-semibold text-center">
+                  Change Password
+                </h2>
                 <div className="space-y-1">
-                  <label className="text-sm text-gray-600">Current Password</label>
+                  <label className="text-sm text-gray-600">
+                    Current Password
+                  </label>
                   <Input
                     type="password"
                     value={currentPassword}
@@ -164,7 +185,9 @@ const Myaccounts = () => {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm text-gray-600">Confirm Password</label>
+                  <label className="text-sm text-gray-600">
+                    Confirm Password
+                  </label>
                   <Input
                     type="password"
                     value={confirmPassword}
@@ -198,7 +221,9 @@ const Myaccounts = () => {
                 >
                   <X />
                 </button>
-                <h2 className="text-xl font-semibold text-center">Edit User Info</h2>
+                <h2 className="text-xl font-semibold text-center">
+                  Edit User Info
+                </h2>
                 <div className="space-y-1">
                   <label className="text-sm text-gray-600">Username</label>
                   <Input
