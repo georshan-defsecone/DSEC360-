@@ -1,6 +1,6 @@
 {
   "proxy": {
-    "enabled": false,
+    "enabled": true,
     "host": "dhanishlee",
     "port": "5432",
     "username": "",

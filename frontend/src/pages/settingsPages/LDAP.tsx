@@ -155,13 +155,13 @@ const LDAP = () => {
   };
 
   return (
-    <div className="flex h-screen text-black pt-24">
+    <div className="flex h-screen text-gray-800 pt-24 font-sans">
       <Sidebar settings={true} scanSettings={false} homeSettings={false} />
       <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
         <Header title="LDAP" />
-        <Card>
-          <CardContent className="p-3 pl-12">
-            <div className="flex flex-col items-start space-y-6">
+        <Card className="bg-white shadow-lg rounded-lg border border-gray-300">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-start space-y-6 font-medium">
 
               {/* Enable LDAP Switch */}
               <div className="flex items-center mb-4">
@@ -177,8 +177,7 @@ const LDAP = () => {
 
               {isLdapEnabled && (
                 <>
-                  {/* All input fields */}
-                  {[
+                  {[ 
                     { label: "LDAP Server URL", value: ldapUrl, setter: setLdapUrl, error: errors.ldapUrl },
                     { label: "Base DN", value: baseDn, setter: setBaseDn, error: errors.baseDn },
                     { label: "SAM Account Name", value: samAccount, setter: setSamAccount, error: errors.samAccount },
@@ -203,7 +202,6 @@ const LDAP = () => {
                     </div>
                   ))}
 
-                  {/* Bind Method */}
                   <div className="flex items-center">
                     <p className="w-60">Bind Method:</p>
                     {isEditMode ? (
@@ -221,7 +219,6 @@ const LDAP = () => {
                     )}
                   </div>
 
-                  {/* Bind DN and Password if authenticating */}
                   {bindMethod === "authenticating" && (
                     <>
                       <div className="flex items-center">
@@ -254,7 +251,6 @@ const LDAP = () => {
                     </>
                   )}
 
-                  {/* SSL Checkbox */}
                   <div className="flex items-center">
                     <p className="w-60">Use SSL:</p>
                     {isEditMode ? (
@@ -267,7 +263,6 @@ const LDAP = () => {
                     )}
                   </div>
 
-                  {/* Save/Edit Button */}
                   <Button
                     className="ml-auto"
                     onClick={() => {

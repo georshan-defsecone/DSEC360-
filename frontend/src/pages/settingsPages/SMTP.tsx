@@ -40,8 +40,7 @@ const SMTP = () => {
   const handleSwitchChange = async () => {
     const newState = !isSMTPEnabled;
     setIsSMTPEnabled(newState);
-    setIsEditMode(newState); // Enable editing when SMTP is turned on
-
+    setIsEditMode(newState);
     if (!newState) {
       try {
         await api.post("save-smtp-settings/", {
@@ -73,16 +72,9 @@ const SMTP = () => {
       encryption: !encryption,
       hostname: !hostname,
     };
-
     setErrors(newErrors);
-
-  
-
     const hasError = Object.values(newErrors).some(Boolean);
-    if (hasError) {
-      return;
-    }
-
+    if (hasError) return;
     try {
       await api.post("save-smtp-settings/", {
         enabled: true,
@@ -108,7 +100,6 @@ const SMTP = () => {
       try {
         const response = await api.get("get-smtp-settings/");
         const data = response.data;
-
         setIsSMTPEnabled(data.enabled || false);
         setHost(data.host || "");
         setPort(data.port || "");
@@ -124,199 +115,163 @@ const SMTP = () => {
         alert("Something went wrong while fetching SMTP settings.");
       }
     };
-
     fetchSMTPSettings();
   }, []);
 
   return (
-    <>
-      <div className="flex h-screen text-black pt-24">
-        <Sidebar settings={true} scanSettings={false} homeSettings={false} />
-        <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
-          <Header title="SMTP" />
-          <Card>
-            <CardContent className="p-2 pl-12">
-              <div className="flex flex-col items-start space-y-10">
-                {/* SMTP Enable Switch */}
-                <div className="flex items-center">
-                  <Switch
-                    id="smtp"
-                    checked={isSMTPEnabled}
-                    onCheckedChange={handleSwitchChange}
-                  />
-                  <label htmlFor="smtp" className="ml-4 text-lg font-semibold">
-                    Enable SMTP
-                  </label>
-                </div>
+    <div className="flex h-screen text-black font-sans pt-24">
+      <Sidebar settings={true} scanSettings={false} homeSettings={false} />
+      <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
+        <Header title="SMTP" />
+        <Card className="rounded-2xl shadow-lg border border-gray-200">
+          <CardContent className="p-6">
+            <div className="space-y-8">
+              {/* Enable Switch */}
+              <div className="flex items-center space-x-4">
+                <Switch
+                  id="smtp"
+                  checked={isSMTPEnabled}
+                  onCheckedChange={handleSwitchChange}
+                />
+                <label htmlFor="smtp" className="text-lg font-semibold">
+                  Enable SMTP
+                </label>
+              </div>
 
               {isSMTPEnabled && (
-                <>
+                <div className="grid grid-cols-[200px_1fr] gap-4 items-center">
                   {/* Host */}
-                  <div className="flex items-center">
-                    <p className="w-60">
-                      Host:<span className="text-red-500">*</span>
-                    </p>
-                    {isEditMode ? (
-                      <Input
-                        type="text"
-                        className={`w-60 ${errors.host ? "border-red-500" : ""}`}
-                        value={host}
-                        onChange={(e) => setHost(e.target.value)}
-                        placeholder={errors.host ? "Please fill in" : ""}
-                      />
-                    ) : (
-                      <p>{host}</p>
-                    )}
-                  </div>
-
-                  {/* Port */}
-                  <div className="flex items-center">
-                    <p className="w-60">
-                      Port:<span className="text-red-500">*</span>
-                    </p>
-                    {isEditMode ? (
-                      <Input
-                        type="text"
-                        className={`w-60 ${errors.port ? "border-red-500" : ""}`}
-                        value={port}
-                        onChange={(e) => setPort(e.target.value)}
-                        placeholder={errors.port ? "Please fill in" : ""}
-                      />
-                    ) : (
-                      <p>{port}</p>
-                    )}
-                  </div>
-
-                  {/* From */}
-                  <div className="flex items-center">
-                    <p className="w-60">
-                      From:<span className="text-red-500">*</span>
-                    </p>
-                    {isEditMode ? (
-                      <Input
-                        type="text"
-                        className={`w-60 ${errors.from ? "border-red-500" : ""}`}
-                        value={from}
-                        onChange={(e) => setFrom(e.target.value)}
-                        placeholder={errors.from ? "Please fill in" : ""}
-                      />
-                    ) : (
-                      <p>{from}</p>
-                    )}
-                  </div>
-
-                  {/* Encryption */}
-                  <div className="flex items-center">
-                    <p className="w-60">
-                      Encryption:<span className="text-red-500">*</span>
-                    </p>
-                    {isEditMode ? (
-                      <Select
-                        onValueChange={(value) => setEncryption(value)}
-                        value={encryption}
-                      >
-                        <SelectTrigger className={`w-[180px] ${errors.encryption ? "border-red-500" : ""}`}>
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="no encryption">No encryption</SelectItem>
-                          <SelectItem value="force ssl">Force SSL</SelectItem>
-                          <SelectItem value="force tls">Force TLS</SelectItem>
-                          <SelectItem value="use tls if available">Use TLS If Available</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <p>{encryption}</p>
-                    )}
-                  </div>
-
-                  {/* Hostname */}
-                  <div className="flex items-center">
-                    <p className="w-60">
-                      Hostname:<span className="text-red-500">*</span>
-                    </p>
-                    {isEditMode ? (
-                      <Input
-                        type="text"
-                        className={`w-60 ${errors.hostname ? "border-red-500" : ""}`}
-                        value={hostname}
-                        onChange={(e) => setHostname(e.target.value)}
-                        placeholder={errors.hostname ? "Please fill in" : ""}
-                      />
-                    ) : (
-                      <p>{hostname}</p>
-                    )}
-                  </div>
-
-                  {/* Auth Method */}
-                  <div className="flex items-center">
-                    <p className="w-60">
-                      Auth Method:<span className="text-red-500">*</span>
-                    </p>
-                    {isEditMode ? (
-                      <Select
-                        onValueChange={(value) => setAuthMethod(value)}
-                        value={authMethod}
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
-                          <SelectItem value="plain">Plain</SelectItem>
-                          <SelectItem value="login">Login</SelectItem>
-                          <SelectItem value="ntlm">NTLM</SelectItem>
-                          <SelectItem value="cram md5">CRAM MD5</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <p>{authMethod}</p>
-                    )}
-                  </div>
-
-                  {/* Username and Password */}
-                  {authMethod !== "none" && (
-                    <>
-                      <div className="flex items-center">
-                        <p className="w-60">
-                          Username:<span className="text-red-500">*</span>
-                        </p>
-                        {isEditMode ? (
-                          <Input
-                            type="text"
-                            className={`w-60 ${errors.username ? "border-red-500" : ""}`}
-                            value={username}
-                            onChange={(e) => setUserName(e.target.value)}
-                            placeholder={errors.username ? "Please fill in" : ""}
-                          />
-                        ) : (
-                          <p>{username}</p>
-                        )}
-                      </div>
-
-                      <div className="flex items-center">
-                        <p className="w-60">
-                          Password:<span className="text-red-500">*</span>
-                        </p>
-                        {isEditMode ? (
-                          <Input
-                            type="password"
-                            className={`w-60 ${errors.password ? "border-red-500" : ""}`}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder={errors.password ? "Please fill in" : ""}
-                          />
-                        ) : (
-                          <p>••••••••</p>
-                        )}
-                      </div>
-                    </>
+                  <label>Host</label>
+                  {isEditMode ? (
+                    <Input
+                      className={`w-64 ${errors.host ? "border-red-500" : ""}`}
+                      value={host}
+                      onChange={(e) => setHost(e.target.value)}
+                      placeholder={errors.host ? "Please fill in" : ""}
+                    />
+                  ) : (
+                    <p>{host}</p>
                   )}
 
-                  {/* Save / Edit Button */}
+                  {/* Port */}
+                  <label>Port</label>
+                  {isEditMode ? (
+                    <Input
+                      className={`w-64 ${errors.port ? "border-red-500" : ""}`}
+                      value={port}
+                      onChange={(e) => setPort(e.target.value)}
+                      placeholder={errors.port ? "Please fill in" : ""}
+                    />
+                  ) : (
+                    <p>{port}</p>
+                  )}
+
+                  {/* From */}
+                  <label>From</label>
+                  {isEditMode ? (
+                    <Input
+                      className={`w-64 ${errors.from ? "border-red-500" : ""}`}
+                      value={from}
+                      onChange={(e) => setFrom(e.target.value)}
+                      placeholder={errors.from ? "Please fill in" : ""}
+                    />
+                  ) : (
+                    <p>{from}</p>
+                  )}
+
+                  {/* Encryption */}
+                  <label>Encryption</label>
+                  {isEditMode ? (
+                    <Select
+                      onValueChange={setEncryption}
+                      value={encryption}
+                    >
+                      <SelectTrigger
+                        className={`w-64 ${errors.encryption ? "border-red-500" : ""}`}
+                      >
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="no encryption">No encryption</SelectItem>
+                        <SelectItem value="force ssl">Force SSL</SelectItem>
+                        <SelectItem value="force tls">Force TLS</SelectItem>
+                        <SelectItem value="use tls if available">Use TLS If Available</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p>{encryption}</p>
+                  )}
+
+                  {/* Hostname */}
+                  <label>Hostname</label>
+                  {isEditMode ? (
+                    <Input
+                      className={`w-64 ${errors.hostname ? "border-red-500" : ""}`}
+                      value={hostname}
+                      onChange={(e) => setHostname(e.target.value)}
+                      placeholder={errors.hostname ? "Please fill in" : ""}
+                    />
+                  ) : (
+                    <p>{hostname}</p>
+                  )}
+
+                  {/* Auth Method */}
+                  <label>Auth Method</label>
+                  {isEditMode ? (
+                    <Select onValueChange={setAuthMethod} value={authMethod}>
+                      <SelectTrigger className="w-64">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        <SelectItem value="plain">Plain</SelectItem>
+                        <SelectItem value="login">Login</SelectItem>
+                        <SelectItem value="ntlm">NTLM</SelectItem>
+                        <SelectItem value="cram md5">CRAM MD5</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p>{authMethod}</p>
+                  )}
+
+                  {/* Username & Password - only if authMethod !== none */}
+                  {authMethod !== "none" && (
+                    <>
+                      <label>Username</label>
+                      {isEditMode ? (
+                        <Input
+                          className={`w-64 ${errors.username ? "border-red-500" : ""}`}
+                          value={username}
+                          onChange={(e) => setUserName(e.target.value)}
+                          placeholder={errors.username ? "Please fill in" : ""}
+                        />
+                      ) : (
+                        <p>{username}</p>
+                      )}
+
+                      <label>Password</label>
+                      {isEditMode ? (
+                        <Input
+                          type="password"
+                          className={`w-64 ${errors.password ? "border-red-500" : ""}`}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder={errors.password ? "Please fill in" : ""}
+                        />
+                      ) : (
+                        <p>••••••••</p>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Save/Edit Button */}
+              {isSMTPEnabled && (
+                <div className="flex justify-end">
                   <Button
                     variant="outline"
-                    className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition ml-auto mr-6"
+                    className="bg-black text-white hover:bg-gray-800"
                     onClick={() => {
                       if (isEditMode) {
                         handleSave();
@@ -336,15 +291,14 @@ const SMTP = () => {
                   >
                     {isEditMode ? "Save" : "Edit"}
                   </Button>
-                </>
+                </div>
               )}
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
-    </>
   );
-}
+};
 
 export default SMTP;

@@ -6,34 +6,48 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs"
+} from "@/components/ui/tabs";
 
 const Advanced = () => {
   return (
-    <>
-      <div className="flex h-screen text-black pt-24">
-        <Sidebar settings={true} scanSettings={false} homeSettings={false} />
-        <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
-          <Header title="Advanced" /> 
-          <Card className="h-130">
-            <CardContent className="p-4 pl-8 w-full">
-            <Tabs defaultValue="account" className="w-full">
-      <TabsList className="flex justify-evenly gap-4 bg-white">
-        <TabsTrigger value="user interface" className="hover:bg-black hover:text-white data-[state=active]:bg-black data-[state=active]:text-white transition-colors duration-200 px-4 py-2 rounded">User Interface</TabsTrigger>
-        <TabsTrigger value="scanning" className="hover:bg-black hover:text-white data-[state=active]:bg-black data-[state=active]:text-white transition-colors duration-200 px-4 py-2 rounded">Scanning</TabsTrigger>
-        <TabsTrigger value="logging" className="hover:bg-black hover:text-white data-[state=active]:bg-black data-[state=active]:text-white transition-colors duration-200 px-4 py-2 rounded">Logging</TabsTrigger>
-        <TabsTrigger value="performance" className="hover:bg-black hover:text-white data-[state=active]:bg-black data-[state=active]:text-white transition-colors duration-200 px-4 py-2 rounded">Performance</TabsTrigger>
-        <TabsTrigger value="security" className="hover:bg-black hover:text-white data-[state=active]:bg-black data-[state=active]:text-white transition-colors duration-200 px-4 py-2 rounded">Security</TabsTrigger>
-        <TabsTrigger value="miscellanous" className="hover:bg-black hover:text-white data-[state=active]:bg-black data-[state=active]:text-white transition-colors duration-200 px-4 py-2 rounded">Miscellanous</TabsTrigger>
-        <TabsTrigger value="custom" className="hover:bg-black hover:text-white data-[state=active]:bg-black data-[state=active]:text-white transition-colors duration-200 px-4 py-2 rounded">Custom</TabsTrigger>
-      </TabsList>
-      </Tabs>
-              <div className="flex flex-row"></div>
-            </CardContent>
-          </Card>
-        </div>
+    <div className="flex h-screen text-black pt-24">
+      <Sidebar settings={true} scanSettings={false} homeSettings={false} />
+
+      <div className="flex-1 flex flex-col ml-64 px-8">
+        <Header title="Advanced" />
+
+        <Card className="rounded-2xl shadow-xl mt-6">
+          <CardContent className="p-6 w-full">
+            <Tabs defaultValue="user interface" className="w-full">
+              <TabsList className="flex flex-wrap justify-center gap-4 bg-white p-2 rounded-lg border">
+                {[
+                  "user interface",
+                  "scanning",
+                  "logging",
+                  "performance",
+                  "security",
+                  "miscellanous",
+                  "custom",
+                ].map((tab) => (
+                  <TabsTrigger
+                    key={tab}
+                    value={tab}
+                    className="text-sm text-gray-700 hover:bg-black hover:text-white data-[state=active]:bg-black data-[state=active]:text-white transition-colors duration-200 px-4 py-2 rounded-md font-medium capitalize"
+                  >
+                    {tab}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {/* Placeholder for future content */}
+              <TabsContent value="user interface" className="pt-6">
+                <div className="text-center text-gray-600">User Interface settings will appear here.</div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
-    </>
+    </div>
   );
 };
 

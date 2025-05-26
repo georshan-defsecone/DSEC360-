@@ -63,9 +63,7 @@ const ProxyServer = () => {
     setErrors(newErrors);
 
     const hasError = Object.values(newErrors).some(Boolean);
-    if (hasError) {
-      return; // No alert needed now
-    }
+    if (hasError) return;
 
     const data = {
       enabled: isProxyEnabled,
@@ -113,74 +111,75 @@ const ProxyServer = () => {
   };
 
   return (
-    <>
-      <div className="flex h-screen text-black pt-24">
-        <Sidebar settings={true} scanSettings={false} homeSettings={false} />
-        <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
-          <Header title="Proxy Server" />
-          <Card className="">
-            <CardContent className="p-2 pl-12">
-              <div className="flex flex-col items-start space-y-10">
-                {/* Toggle Switch */}
-                <div className="flex items-center">
-                  <Switch
-                    id="proxyserver"
-                    checked={isProxyEnabled}
-                    onCheckedChange={handleSwitchChange}
-                  />
-                  <label
-                    htmlFor="proxyserver"
-                    className="ml-4 text-lg font-semibold"
-                  >
-                    Enable Proxy
-                  </label>
-                </div>
+    <div className="flex h-screen text-black pt-24">
+      <Sidebar settings={true} scanSettings={false} homeSettings={false} />
+
+      <div className="flex-1 flex flex-col ml-64 px-8">
+        <Header title="Proxy Server" />
+
+        <Card className="rounded-2xl shadow-xl mt-6">
+          <CardContent className="p-6">
+            <div className="flex flex-col space-y-8 text-base text-gray-800">
+              {/* Toggle Switch */}
+              <div className="flex items-center space-x-4">
+                <Switch
+                  id="proxyserver"
+                  checked={isProxyEnabled}
+                  onCheckedChange={handleSwitchChange}
+                />
+                <label
+                  htmlFor="proxyserver"
+                  className="text-lg font-semibold"
+                >
+                  Enable Proxy
+                </label>
+              </div>
 
               {isProxyEnabled && (
                 <>
                   {/* Host */}
-                  <div className="flex items-center">
-                    <p className="w-60">
-                      Host:<span className="text-red-500">*</span>
+                  <div className="flex items-center gap-4">
+                    <p className="w-48 font-medium">
+                      Host:
                     </p>
                     {isEditMode ? (
                       <Input
                         value={host}
                         onChange={(e) => setHost(e.target.value)}
-                        className={`w-60 ${errors.host ? "border-red-500" : ""}`}
+                        className={`w-64 ${errors.host ? "border-red-500" : ""}`}
                         placeholder={errors.host ? "Please fill in" : ""}
                       />
                     ) : (
-                      <p className="w-60">{host || "-"}</p>
+                      <p className="w-64">{host || "-"}</p>
                     )}
                   </div>
 
                   {/* Port */}
-                  <div className="flex items-center">
-                    <p className="w-60">
-                      Port:<span className="text-red-500">*</span>
+                  <div className="flex items-center gap-4">
+                    <p className="w-48 font-medium">
+                      Port:
                     </p>
                     {isEditMode ? (
                       <Input
                         value={port}
                         onChange={(e) => setPort(e.target.value)}
-                        className={`w-60 ${errors.port ? "border-red-500" : ""}`}
+                        className={`w-64 ${errors.port ? "border-red-500" : ""}`}
                         placeholder={errors.port ? "Please fill in" : ""}
                       />
                     ) : (
-                      <p className="w-60">{port || "-"}</p>
+                      <p className="w-64">{port || "-"}</p>
                     )}
                   </div>
 
                   {/* Auth Method */}
-                  <div className="flex items-center">
-                    <p className="w-60">Auth Method:</p>
+                  <div className="flex items-center gap-4">
+                    <p className="w-48 font-medium">Auth Method:</p>
                     {isEditMode ? (
                       <Select
                         value={authMethod}
                         onValueChange={(value) => setAuthMethod(value)}
                       >
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-64">
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
@@ -192,82 +191,83 @@ const ProxyServer = () => {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <p className="w-60 capitalize">{authMethod || "-"}</p>
+                      <p className="w-64 capitalize">{authMethod || "-"}</p>
                     )}
                   </div>
 
                   {authMethod !== "none" && (
                     <>
                       {/* Username */}
-                      <div className="flex items-center">
-                        <p className="w-60">
-                          Username:<span className="text-red-500">*</span>
+                      <div className="flex items-center gap-4">
+                        <p className="w-48 font-medium">
+                          Username:
                         </p>
                         {isEditMode ? (
                           <Input
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            className={`w-60 ${errors.username ? "border-red-500" : ""}`}
+                            className={`w-64 ${errors.username ? "border-red-500" : ""}`}
                             placeholder={errors.username ? "Please fill in" : ""}
                           />
                         ) : (
-                          <p className="w-60">{username || "-"}</p>
+                          <p className="w-64">{username || "-"}</p>
                         )}
                       </div>
 
                       {/* Password */}
-                      <div className="flex items-center">
-                        <p className="w-60">
-                          Password:<span className="text-red-500">*</span>
+                      <div className="flex items-center gap-4">
+                        <p className="w-48 font-medium">
+                          Password:
                         </p>
                         {isEditMode ? (
                           <Input
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className={`w-60 ${errors.password ? "border-red-500" : ""}`}
                             type="password"
+                            className={`w-64 ${errors.password ? "border-red-500" : ""}`}
                             placeholder={errors.password ? "Please fill in" : ""}
                           />
                         ) : (
-                          <p className="w-60">{password ? "••••••••" : "-"}</p>
+                          <p className="w-64">{password ? "••••••••" : "-"}</p>
                         )}
                       </div>
                     </>
                   )}
 
                   {/* User Agent */}
-                  <div className="flex items-center">
-                    <p className="w-60">User Agent:</p>
+                  <div className="flex items-center gap-4">
+                    <p className="w-48 font-medium">User Agent:</p>
                     {isEditMode ? (
                       <Input
                         value={userAgent}
                         onChange={(e) => setUserAgent(e.target.value)}
-                        className="w-60"
+                        className="w-64"
                       />
                     ) : (
-                      <p className="w-60">{userAgent || "-"}</p>
+                      <p className="w-64">{userAgent || "-"}</p>
                     )}
                   </div>
 
                   {/* Save/Edit Button */}
-                  <Button
-                    className="ml-auto"
-                    onClick={() => {
-                      if (isEditMode) {
-                        handleSave();
-                      } else {
-                        setErrors({
-                          host: false,
-                          port: false,
-                          username: false,
-                          password: false,
-                        });
-                        setIsEditMode(true);
-                      }
-                    }}
-                  >
-                    {isEditMode ? "Save" : "Edit"}
-                  </Button>
+                  <div className="flex justify-end pt-4 w-full">
+                    <Button
+                      onClick={() => {
+                        if (isEditMode) {
+                          handleSave();
+                        } else {
+                          setErrors({
+                            host: false,
+                            port: false,
+                            username: false,
+                            password: false,
+                          });
+                          setIsEditMode(true);
+                        }
+                      }}
+                    >
+                      {isEditMode ? "Save" : "Edit"}
+                    </Button>
+                  </div>
                 </>
               )}
             </div>
@@ -275,7 +275,6 @@ const ProxyServer = () => {
         </Card>
       </div>
     </div>
-    </>
   );
 };
 

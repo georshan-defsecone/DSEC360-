@@ -102,8 +102,8 @@ WSGI_APPLICATION = 'DSEC.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'dsec360',
-        'USER': 'dsec360',
+        'NAME': 'defsecone',
+        'USER': 'postgres',
         'PASSWORD': 'dsec360@123',
         'HOST': '127.0.0.1',
         'PORT': '5432'

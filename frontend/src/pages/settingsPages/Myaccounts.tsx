@@ -4,23 +4,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { X } from 'lucide-react';
+import { X } from "lucide-react";
 import api from "../api";
-import { CircleUserRound } from "lucide-react";
-import { Pencil } from "lucide-react";
+
 const Myaccounts = () => {
   const [username, setUserName] = useState("");
   const [useremail, setUserEmail] = useState("");
   const [role, setRole] = useState("User");
+
   const [showPasswordCard, setShowPasswordCard] = useState(false);
-  const [showEditCard, setShowEditCard] = useState(false); // State to show the edit modal
+  const [showEditCard, setShowEditCard] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [newUsername, setNewUsername] = useState(""); // New username for editing
-  const [newEmail, setNewEmail] = useState(""); // New email for editing
+  const [newUsername, setNewUsername] = useState("");
+  const [newEmail, setNewEmail] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,14 +42,7 @@ const Myaccounts = () => {
       alert("Passwords do not match");
       return;
     }
-    // Add your password update API call here
-    console.log("Password updated:", {
-      currentPassword,
-      newPassword,
-      confirmPassword,
-    });
-
-    // Clear fields and close
+    console.log("Password updated:", { currentPassword, newPassword, confirmPassword });
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
@@ -57,20 +50,14 @@ const Myaccounts = () => {
   };
 
   const handleSaveEdit = async () => {
-    const updatedData = {};
-
-    // If username is provided, set it to updatedData
+    const updatedData: any = {};
     if (newUsername) updatedData.username = newUsername;
-    // If email is provided, set it to updatedData
     if (newEmail) updatedData.email = newEmail;
 
     try {
-      // Make an API call to update the username and/or email
       const response = await api.put("updateuser/", updatedData);
       setUserName(response.data.username);
       setUserEmail(response.data.email);
-
-      // Close the edit modal
       setShowEditCard(false);
     } catch (error) {
       console.error("Error updating user information:", error);
@@ -78,100 +65,86 @@ const Myaccounts = () => {
     }
   };
 
-  // Reset values when the Edit modal is shown (to ensure the input fields are empty and only show placeholders)
   const handleEditCardOpen = () => {
-    setNewUsername("");  // Clear the current username value
-    setNewEmail("");     // Clear the current email value
+    setNewUsername("");
+    setNewEmail("");
     setShowEditCard(true);
   };
 
-  return (
-    <div className="flex h-screen text-black relative pt-16">
-      <Sidebar settings={true} scanSettings={false} homeSettings={false} />
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
+  };
 
+  return (
+    <div className="flex h-screen text-black pt-16 relative">
+      <Sidebar settings={true} scanSettings={false} homeSettings={false} />
       <div className="flex-1 flex flex-col ml-64 p-8">
         <Header title="My Account" />
 
-        <Card className="min-h-130 relative">
-          <CardContent className="p-8">
-            <div className="flex items-start gap-8">
-              {/* Profile Icon */}
-              {/* Profile Icon */}
-              <CircleUserRound className="w-32 h-32 text-gray-600 mt-1" />
-              {/* User Info and Button */}
-              <div className="w-full max-w-md space-y-4">
-                {/* Username Row */}
-                <div className="flex items-center border-b pb-2">
-                  <div className="w-32 text-gray-500">Username</div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-800">
-                      {username}
-                    </span>
-                    <button className="text-gray-500 hover:text-black transition">
-                      <Pencil />
-                    </button>
-                  </div>
-                </div>
+        <Card className="w-[70%] mt-10 ml-4 shadow-2xl">
+          <CardContent className="w-full p-4 px-12">
+            <div className="flex items-center gap-6">
+              {/* Avatar with Initials */}
+              <div className="relative w-24 h-24 mb-15 mr-5 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                {getInitials(username || "U")}
+              </div>
 
-                {/* Email Row */}
-                <div className="flex items-center border-b pb-2">
-                  <div className="w-32 text-gray-500">Email</div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-800">
-                      {useremail}
-                    </span>
-                    <button className="text-gray-500 hover:text-black transition">
-                      <Pencil/>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Role Row */}
+              {/* Info Section */}
+              <div className="space-y-2 w-full">
                 <div className="flex items-center">
-                  <div className="w-32 text-gray-500">Role</div>
-                  <span className="font-medium text-gray-800">{role}</span>
+                  <div className="w-28 text-gray-600 text-base font-semibold">Username</div>
+                  <div className="text-gray-800 text-base font-medium">{username}</div>
                 </div>
 
-                {/* Change Password Button */}
-                <div className="pt-6">
-                  <button
-                    className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition"
+                <div className="flex items-center">
+                  <div className="w-28 text-gray-600 text-base font-semibold">Email</div>
+                  <div className="text-gray-800 text-base font-medium">{useremail}</div>
+                </div>
+
+                <div className="flex items-center">
+                  <div className="w-28 text-gray-600 text-base font-semibold">Role</div>
+                  <span className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
+                    {role}
+                  </span>
+                </div>
+
+                <div className="pt-4">
+                  <Button
                     onClick={() => setShowPasswordCard(true)}
+                    className="bg-black text-white hover:bg-gray-800"
                   >
                     Change Password
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
           </CardContent>
 
-          {/* Edit Button at the bottom right of the card */}
           <div className="absolute bottom-4 right-4">
-            <button
-              className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition"
-              onClick={handleEditCardOpen} // Show the Edit Card
-            >
+            <Button onClick={handleEditCardOpen} className="bg-black text-white hover:bg-gray-800">
               Edit
-            </button>
+            </Button>
           </div>
         </Card>
       </div>
 
-      {/* Change Password Popup Card */}
+      {/* Change Password Modal */}
       {showPasswordCard && (
         <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
           <div className="pointer-events-auto w-xl">
-            <Card className="w-full max-w-lg shadow-xl ml-15 relative">
+            <Card className="w-full max-w-lg shadow-2xl relative">
               <CardContent className="p-8 space-y-6">
-                {/* Close button */}
                 <button
                   className="absolute top-3 right-3 text-gray-500 hover:text-black"
                   onClick={() => setShowPasswordCard(false)}
-                ><X/></button>
-
+                >
+                  <X />
+                </button>
                 <h2 className="text-xl font-semibold text-center">Change Password</h2>
-
-                {/* Inputs */}
                 <div className="space-y-1">
                   <label className="text-sm text-gray-600">Current Password</label>
                   <Input
@@ -181,7 +154,6 @@ const Myaccounts = () => {
                     placeholder="Enter your current password"
                   />
                 </div>
-
                 <div className="space-y-1">
                   <label className="text-sm text-gray-600">New Password</label>
                   <Input
@@ -191,7 +163,6 @@ const Myaccounts = () => {
                     placeholder="Enter new password"
                   />
                 </div>
-
                 <div className="space-y-1">
                   <label className="text-sm text-gray-600">Confirm Password</label>
                   <Input
@@ -201,8 +172,6 @@ const Myaccounts = () => {
                     placeholder="Retype new password"
                   />
                 </div>
-
-                {/* Save button */}
                 <div className="pt-4">
                   <Button
                     onClick={handleSavePassword}
@@ -217,23 +186,19 @@ const Myaccounts = () => {
         </div>
       )}
 
-      {/* Edit User Info Popup Card */}
+      {/* Edit User Modal */}
       {showEditCard && (
         <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
           <div className="pointer-events-auto w-xl">
-            <Card className="w-full max-w-lg shadow-xl ml-15 relative">
+            <Card className="w-full max-w-lg shadow-2xl relative">
               <CardContent className="p-8 space-y-6">
-                {/* Close button */}
                 <button
                   className="absolute top-3 right-3 text-gray-500 hover:text-black"
                   onClick={() => setShowEditCard(false)}
                 >
                   <X />
                 </button>
-
                 <h2 className="text-xl font-semibold text-center">Edit User Info</h2>
-
-                {/* Inputs for username and email */}
                 <div className="space-y-1">
                   <label className="text-sm text-gray-600">Username</label>
                   <Input
@@ -243,7 +208,6 @@ const Myaccounts = () => {
                     placeholder="Enter new username (Leave blank to keep current)"
                   />
                 </div>
-
                 <div className="space-y-1">
                   <label className="text-sm text-gray-600">Email</label>
                   <Input
@@ -253,12 +217,10 @@ const Myaccounts = () => {
                     placeholder="Enter new email (Leave blank to keep current)"
                   />
                 </div>
-
-                {/* Save button */}
                 <div className="pt-4">
                   <Button
                     onClick={handleSaveEdit}
-                    className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition"
+                    className="bg-black text-white hover:bg-gray-800 w-full"
                   >
                     Save Changes
                   </Button>
@@ -273,4 +235,3 @@ const Myaccounts = () => {
 };
 
 export default Myaccounts;
-
