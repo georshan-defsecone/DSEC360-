@@ -102,43 +102,37 @@ const ScanSettingSidebar = () => {
 //Settings sidebar
 
 const SettingSidebar = () => {
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  const navItems = [
+    { label: "About", path: "/settings/about" },
+    { label: "My Accounts", path: "/settings/myaccounts" },
+    { label: "Advance", path: "/settings/advance" },
+    { label: "Proxy Server", path: "/settings/proxyserver" },
+    { label: "SMTP Server", path: "/settings/smtp" },
+    { label: "LDAP", path: "/settings/ldap" },
+    { label: "Users", path: "/settings/users" },
+  ];
+
   return (
     <nav className="space-y-2">
-      <Link to={"/settings/about"}>
-        <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-          About
-        </button>
-      </Link>
-      <Link to={"/settings/myaccounts"}>
-        <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-          My Accounts
-        </button>
-      </Link>
-      <Link to={"/settings/advance"}>
-        <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-          Advance
-        </button>
-      </Link>
-      <Link to={"/settings/proxyserver"}>
-        <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-          Proxy Server
-        </button>
-      </Link>
-      <Link to={"/settings/smtp"}>
-        <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-          SMTP Server
-        </button>
-      </Link>
-      <Link to={"/settings/ldap"}>
-        <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-          LDAP
-        </button>
-      </Link>
-      <Link to={"/settings/users"}>
-        <button className="block w-full text-left px-4 py-2 rounded hover:bg-black hover:text-white font-medium">
-          Users
-        </button>
-      </Link>
+      {navItems.map((item) => {
+        const isActive = currentPath === item.path;
+        return (
+          <Link to={item.path} key={item.path}>
+            <button
+              className={`block w-full text-left px-4 py-2 rounded font-medium ${
+                isActive
+                  ? "bg-black text-white"
+                  : "hover:bg-gray-400 hover:text-white"
+              }`}
+            >
+              {item.label}
+            </button>
+          </Link>
+        );
+      })}
     </nav>
   );
 };

@@ -31,7 +31,6 @@ const CreateUser = () => {
       });
       console.log("User created:", response.data);
       alert("User created successfully!");
-      // Clear form
       setUsername("");
       setEmail("");
       setPassword("");
@@ -41,89 +40,74 @@ const CreateUser = () => {
       alert("Failed to create user.");
     }
   };
+
   return (
-    <>
-      <div className="flex h-screen text-black pt-24">
-        <Sidebar settings={true} scanSettings={false} homeSettings={false} />
-        <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
-          <Header title="Create User" />
-          <Card className="">
-            <CardContent className="p-2 pl-12">
-              <div className="flex flex-col items-start space-y-10">
-                {/* Toggle Switch */}
-                <div className="flex items-center"></div>
-
-                {/* Row 1: Host */}
-                <div className="flex items-center">
-                  <p className="text-lg font-semibold w-40">Username:</p>
+    <div className="flex h-screen text-black pt-24">
+      <Sidebar settings={true} scanSettings={false} homeSettings={false} />
+      <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
+        <Header title="Create User" />
+        
+        <Card className="shadow-md border rounded-lg p-6 w-[96%] mt-6">
+          <CardContent className="space-y-6 p-0">
+            <div className="space-y-3">
+              <p className="text-sm text-gray-500 font-medium">
+                Username:{" "}
+                <Input
+                  type="text"
+                  className="w-72 mt-1 text-gray-900"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </p>
+              <p className="text-sm text-gray-500 font-medium">
+                Email:{" "}
+                <Input
+                  type="email"
+                  className="w-72 mt-1 text-gray-900"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </p>
+              <p className="text-sm text-gray-500 font-medium">
+                Password:{" "}
+                <div className="relative w-72 mt-1">
                   <Input
-                    type="text"
-                    className="w-60"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    type={showPassword ? "text" : "password"}
+                    className="pr-10 text-gray-900"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
-                </div>
-
-                {/* Row 2: Port */}
-
-                {/* Row 3: Username */}
-                <div className="flex items-center">
-                  <p className="text-lg font-semibold w-40">Email:</p>
-                  <Input
-                    type="text"
-                    className="w-60"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-
-                {/* Row 4: Password */}
-                <div className="flex items-center">
-                  <p className="text-lg font-semibold w-40">Password:</p>
-                  <div className="relative w-60">
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      className="w-full pr-10"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                    <div
-                      className="absolute inset-y-0 right-2 flex items-center cursor-pointer"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </div>
+                  <div
+                    className="absolute inset-y-0 right-2 flex items-center cursor-pointer"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </div>
                 </div>
+              </p>
+              <p className="text-sm text-gray-500 font-medium">
+                Role:{" "}
+                <Select onValueChange={(value) => setRole(value)} value={role}>
+                  <SelectTrigger className="w-72 mt-1">
+                    <SelectValue placeholder="Select Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </p>
+            </div>
 
-                {/* Row 5: Auth Method */}
-                <div className="flex items-center">
-                  <p className="text-lg font-semibold w-40">Role:</p>
-                  <Select onValueChange={(value) => setRole(value)}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="autodetect">User</SelectItem>
-                      <SelectItem value="none">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-20 mt-6 ml-auto mr-6"
-                  onClick={handleCreateUser}
-                >
-                  Create
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Save Button - Show only if proxy is enabled */}
-        </div>
+            <div className="flex justify-end">
+              <Button variant="outline" className="w-24 bg-black text-white hover:bg-gray-800" onClick={handleCreateUser}>
+                Create
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    </>
+    </div>
   );
 };
 

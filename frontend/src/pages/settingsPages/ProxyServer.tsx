@@ -117,7 +117,7 @@ const ProxyServer = () => {
       <div className="flex-1 flex flex-col ml-64 px-8">
         <Header title="Proxy Server" />
 
-        <Card className="rounded-2xl shadow-xl mt-6">
+        <Card className="rounded-2xl shadow-xl mt-6 w-[96%]">
           <CardContent className="p-6">
             <div className="flex flex-col space-y-8 text-base text-gray-800">
               {/* Toggle Switch */}

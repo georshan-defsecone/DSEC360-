@@ -1,24 +1,16 @@
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableCaption,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Pencil, X, Plus } from "lucide-react";
 import api from "@/pages/api";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 10;
+  const usersPerPage = 2;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,62 +42,65 @@ const Users = () => {
   };
 
   return (
-    <>
-      <div className="flex h-screen overflow-hidden text-black pt-24">
-        <Sidebar settings={true} scanSettings={false} homeSettings={false} />
-        <div className="flex-1 flex flex-col pr-8 pl-8 ml-64 overflow-hidden">
-          <Header title="Users" />
-          <div className="flex justify-end mt-4 mb-2">
-            <Link to="/settings/users/createuser">
-              <Button className="flex items-center gap-2">
-                <Plus size={16} /> Add User
-              </Button>
-            </Link>
-          </div>
+    <div className="flex h-screen text-black pt-24 overflow-hidden">
+      <Sidebar settings={true} scanSettings={false} homeSettings={false} />
 
-          {/* Scrollable Table Container */}
-          <div className="overflow-y-auto max-h-[calc(100vh-260px)] border rounded-md">
-            <Table className="bg-white text-black">
-              
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {currentUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.username}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.is_admin ? "Admin" : "User"}</TableCell>
-                    <TableCell className="flex justify-end gap-2">
-                      <Pencil size={16} className="cursor-pointer text-blue-600" />
-                      <X size={16} className="cursor-pointer text-red-500" />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+      <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
+        <Header title="Users" />
 
-          {/* Pagination Controls */}
-          <div className="flex justify-center items-center mr-12 mt-4 gap-4">
-            <Button onClick={handlePrevPage} disabled={currentPage === 1}>
-              Previous
+        <div className="flex justify-end mt-4 mb-4">
+          <Link to="/settings/users/createuser">
+            <Button className="flex items-center gap-2 mr-14">
+              <Plus size={16} /> Add User
             </Button>
-            <span className="text-sm">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button onClick={handleNextPage} disabled={currentPage === totalPages}>
-              Next
-            </Button>
-          </div>
+          </Link>
+        </div>
+
+        {/* Card Container - no scroll */}
+        <div className="space-y-4">
+          {currentUsers.map((user) => (
+            <Card key={user.id} className="shadow-md border rounded-lg p-4 w-[96%]">
+              <CardContent className="flex justify-between items-center p-0">
+                <div className="space-y-1">
+                  <p className="text-sm text-gray-500 font-medium">
+                    Name: <span className="text-gray-900">{user.username}</span>
+                  </p>
+                  <p className="text-sm text-gray-500 font-medium">
+                    Email: <span className="text-gray-900">{user.email}</span>
+                  </p>
+                  <p className="text-sm text-gray-500 font-medium">
+                    Role: <span className="text-gray-900">{user.is_admin ? "Admin" : "User"}</span>
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <Pencil
+                    size={18}
+                    className="cursor-pointer text-blue-600 hover:scale-110 transition"
+                  />
+                  <X
+                    size={18}
+                    className="cursor-pointer text-red-500 hover:scale-110 transition"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex justify-center items-center mr-12 mt-4 gap-4">
+          <Button onClick={handlePrevPage} disabled={currentPage === 1}>
+            Previous
+          </Button>
+          <span className="text-sm">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button onClick={handleNextPage} disabled={currentPage === totalPages}>
+            Next
+          </Button>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

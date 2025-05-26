@@ -9,7 +9,7 @@
     "userAgent": "dhanish"
   },
   "smtp": {
-    "enabled": false,
+    "enabled": true,
     "host": "jhds",
     "port": "djkh",
     "from": "dsjkb",
