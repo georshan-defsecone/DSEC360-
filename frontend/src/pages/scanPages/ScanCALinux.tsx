@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
- 
+import FileUploader from "@/components/FileUploader";
 
 import api from "../api";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,6 +26,8 @@ import { ChevronDown } from "lucide-react";
 const ScanCALinux = () => {
   const [complianceData, setComplianceData] = useState([]);
   const [errors, setErrors] = useState("");
+  const [fileIPs, setFileIPs] = useState<string[]>([])
+
 
   const formPages = [
     "●",
@@ -50,6 +52,7 @@ const ScanCALinux = () => {
     // Target Details
     auditMethod: "",
     target: "",
+    targetList: "",
     authMethod: "",
     elevatePrivilege: "", //can be .k5login, Cisco enable, dzdo, su, pbrun, su+sudo, nothing
     username: "",
@@ -196,6 +199,14 @@ const ScanCALinux = () => {
     }
   };
 
+  const handleFileParsed = (parsedIps: string[]) => {
+    setFileIPs(parsedIps)
+    setFormData((prev) => ({
+      ...prev,
+      targetList: parsedIps
+    }))
+  }
+
   const nextPage = () => {
     let isValid = false;
 
@@ -340,9 +351,7 @@ const ScanCALinux = () => {
                     //className="w-full p-2 border rounded"
                   />
 
-                  <Button className="ml-4" type="button">
-                    Upload
-                  </Button>
+                  <FileUploader onFileParsed={handleFileParsed}></FileUploader>
                 </div>
 
                 <div className="flex justify-start items-center mb-8">
@@ -573,7 +582,7 @@ const ScanCALinux = () => {
                     <p className="block w-70">Preferred port</p>
                     <Input
                       type="number"
-                      name="preferredPort"
+                      name="port"
                       placeholder="port"
                       value={formData.port}
                       onChange={handleInputChange}
