@@ -16,18 +16,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import FileUploader from "@/components/FileUploader";
 
 import api from "../api";
 const ScanIOCLinux = () => {
   const [IOCdata, setIOCdata] = useState([]);
   const [errors, setErrors] = useState("");
+  const [fileIPs, setFileIPs] = useState<string[]>([])
+
 
   const formPages = [
-    "General Info",
-    "Target Details",
-    "Controls",
-    "Scan Settings",
+    "●",
+    "●",
+    "●",
+    "●",
   ];
+  
   const [page, setPage] = useState(1);
 
   const [formData, setFormData] = useState({
@@ -39,6 +43,7 @@ const ScanIOCLinux = () => {
     // Target Details
     auditMethod: "",
     target: "",
+    targetList: "",
     authMethod: "",
     username: "",
     password: "",
@@ -202,6 +207,14 @@ const ScanIOCLinux = () => {
     }));
   };
 
+  const handleFileParsed = (parsedIps: string[]) => {
+    setFileIPs(parsedIps)
+    setFormData((prev) => ({
+      ...prev,
+      targetList: parsedIps
+    }))
+  }
+
   const nextPage = () => {
     let isValid = false;
 
@@ -358,9 +371,7 @@ const ScanIOCLinux = () => {
                     //className="w-full p-2 border rounded"
                   />
 
-                  <Button className="ml-4" type="button">
-                    Upload
-                  </Button>
+                  <FileUploader onFileParsed={handleFileParsed}></FileUploader>
                 </div>
 
                 <div className="flex justify-start items-center mb-8">

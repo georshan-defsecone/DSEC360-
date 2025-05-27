@@ -1,52 +1,34 @@
-import axios from "axios";
 import { useState } from "react";
 import { Input } from "./ui/input";
 
-type UploadStatus = "idle" | "uploading" | "success" | "error";
+interface  FileUploaderProps {
+    onFileParsed: (data:string[]) => void
+}
 
-const FileUploader = () => {
+const FileUploader = ({onFileParsed}: FileUploaderProps) => {
     const [file, setFile] = useState<File | null>(null)
-    const [status, setStatus] = useState<UploadStatus>("idle")
 
     function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-        if(e.target.files) {
-            setFile(e.target.files[0])
+        if(e.target.files && e.target.files[0]) {
+            const selectedFile = e.target.files[0]
+            setFile(selectedFile)
+            parseCSVfile(selectedFile)
         }
     }
 
-    async function uploadFile(){
-        if(!file) return
-        setStatus("uploading")
-
-        const formData = new FormData()
-        formData.append("file", file)
-
-        try {
-            await axios.post("http://localhost:8000/api/scans/upload/", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            })
-            setStatus("success")
-        } catch {
-            setStatus("error")
+    function parseCSVfile(file: File) {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+            const text = e.target?.result as string;
+            const lines = text.split('\n').map(line => line.trim()).filter(Boolean)
+            onFileParsed(lines)
         }
+        reader.readAsText(file)
     }
 
     return(
-        <div className="space-y-2">
-            <Input type="file" onChange={handleFileChange}/>
-            {file && status !== "uploading" &&
-                <button onClick={uploadFile}>upload</button>
-            }
-
-            {file && status === "success" &&
-                <p className="text-green-500">File uploaded successfully!</p>
-            }
-
-            {file && status === "error" &&
-                <p className="text-red-500">Error uploading file!</p>
-            }
+        <div className="ml-4">
+            <Input type="file" onChange={handleFileChange} className="w-60" placeholder="Choose File"/>
         </div>
     )
 }

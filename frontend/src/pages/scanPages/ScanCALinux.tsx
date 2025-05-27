@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
- 
+import FileUploader from "@/components/FileUploader";
 
 import api from "../api";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,18 +26,20 @@ import { ChevronDown } from "lucide-react";
 const ScanCALinux = () => {
   const [complianceData, setComplianceData] = useState([]);
   const [errors, setErrors] = useState("");
+  const [fileIPs, setFileIPs] = useState<string[]>([])
+
 
   const formPages = [
-    "General Info",
-    "Target Details",
-    "Compliance Info",
-    "Scan Settings",
+    "●",
+    "●",
+    "●",
+    "●",
   ];
 
   const formPagesAgent = [
-    "General Info",
-    "Target Details",
-    "Compliance Info",
+    "●",
+    "●",
+    "●",
   ]
 
   const [page, setPage] = useState(1);
@@ -50,6 +52,7 @@ const ScanCALinux = () => {
     // Target Details
     auditMethod: "",
     target: "",
+    targetList: "",
     authMethod: "",
     elevatePrivilege: "", //can be .k5login, Cisco enable, dzdo, su, pbrun, su+sudo, nothing
     username: "",
@@ -196,6 +199,14 @@ const ScanCALinux = () => {
     }
   };
 
+  const handleFileParsed = (parsedIps: string[]) => {
+    setFileIPs(parsedIps)
+    setFormData((prev) => ({
+      ...prev,
+      targetList: parsedIps
+    }))
+  }
+
   const nextPage = () => {
     let isValid = false;
 
@@ -340,9 +351,7 @@ const ScanCALinux = () => {
                     //className="w-full p-2 border rounded"
                   />
 
-                  <Button className="ml-4" type="button">
-                    Upload
-                  </Button>
+                  <FileUploader onFileParsed={handleFileParsed}></FileUploader>
                 </div>
 
                 <div className="flex justify-start items-center mb-8">
@@ -561,51 +570,6 @@ const ScanCALinux = () => {
                     />
                   </div>
                 )}
-                <div className="space-y-4">
-                  <h2 className="text-xl font-semibold">
-                    Global Credential Settings
-                  </h2>
-                  <div className="flex items-center">
-                    <p className="block w-70">known_hosts file</p>
-                    <Button>Add file</Button>
-                  </div>
-                  <div className="flex items-center">
-                    <p className="block w-70">Preferred port</p>
-                    <Input
-                      type="number"
-                      name="preferredPort"
-                      placeholder="port"
-                      value={formData.port}
-                      onChange={handleInputChange}
-                      className="w-80"
-                      required
-                    />
-                  </div>
-                  <div className="flex items-center">
-                    <p className="block w-70">Client Version</p>
-                    <Input
-                      type="text"
-                      name="clientVersion"
-                      placeholder="Client Version"
-                      value={formData.clientVersion}
-                      onChange={handleInputChange}
-                      className="w-80"
-                      required
-                    />
-                  </div>
-                  <div className="flex items-center">
-                    <p className="block w-70">Attempt Least Privilege</p>
-                    <Checkbox
-                      checked={formData.attemptLeastPrivelege === "true"}
-                      onCheckedChange={(checked) => {
-                        handleInputChange(
-                          checked ? "true" : "false",
-                          "attemptLeastPrivelege"
-                        );
-                      }}
-                    />
-                  </div>
-                </div>
               </div>
             )}
 
@@ -684,6 +648,51 @@ const ScanCALinux = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">
+                    Global Credential Settings
+                  </h2>
+                  <div className="flex items-center">
+                    <p className="block w-70">known_hosts file</p>
+                    <Button>Add file</Button>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">Preferred port</p>
+                    <Input
+                      type="number"
+                      name="port"
+                      placeholder="port"
+                      value={formData.port}
+                      onChange={handleInputChange}
+                      className="w-80"
+                      required
+                    />
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">Client Version</p>
+                    <Input
+                      type="text"
+                      name="clientVersion"
+                      placeholder="Client Version"
+                      value={formData.clientVersion}
+                      onChange={handleInputChange}
+                      className="w-80"
+                      required
+                    />
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">Attempt Least Privilege</p>
+                    <Checkbox
+                      checked={formData.attemptLeastPrivelege === "true"}
+                      onCheckedChange={(checked) => {
+                        handleInputChange(
+                          checked ? "true" : "false",
+                          "attemptLeastPrivelege"
+                        );
+                      }}
+                    />
+                  </div>
+                </div>
           </div>
         )}
       case 4:
@@ -835,7 +844,7 @@ const ScanCALinux = () => {
                   <button
                     type="button"
                     onClick={prevPage}
-                    className={`px-4 py-2 rounded w-25 ${
+                    className={`px-4 py-2 rounded ${
                       page === 1 ? "bg-gray-300" : "bg-black text-white"
                     }`}
                     disabled={page === 1}

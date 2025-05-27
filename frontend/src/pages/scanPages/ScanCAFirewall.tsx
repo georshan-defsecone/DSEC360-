@@ -16,24 +16,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import FileUploader from "@/components/FileUploader";
 
 import api from "../api";
 
 const ScanCAFirewall = () => {
   const [complianceData, setComplianceData] = useState([]);
   const [errors, setErrors] = useState("");
+  const [fileIPs, setFileIPs] = useState<string[]>([])
 
   const formPages = [
-    "General Info",
-    "Target Details",
-    "Compliance Info",
-    "Scan Settings",
+    "●",
+    "●",
+    "●",
+    "●",
   ];
 
   const formPagesAgent = [
-    "General Info",
-    "Target Details",
-    "Compliance Info",
+    "●",
+    "●",
+    "●",
   ]
 
   const [page, setPage] = useState(1);
@@ -47,6 +49,7 @@ const ScanCAFirewall = () => {
     auditMethod: "",
     OS: "",
     target: "",
+    targetList: [],
     elevatePrivilege: "",
     authMethod: "",
     username: "",
@@ -195,6 +198,14 @@ const ScanCAFirewall = () => {
     });
   };
 
+  const handleFileParsed = (parsedIps: string[]) => {
+    setFileIPs(parsedIps)
+    setFormData((prev) => ({
+      ...prev,
+      targetList: parsedIps
+    }))
+  }
+
   const nextPage = () => {
     let isValid = false;
 
@@ -303,7 +314,7 @@ const ScanCAFirewall = () => {
             {renderError()}
             <h2 className="text-xl font-semibold">Target Details</h2>
             <div className="flex justify-start items-center gap-2">
-              <p className="block w-70 ">Audit Method:</p>
+              <p className="block w-68 ">Audit Method:</p>
 
               <Select
                 value={formData.OS}
@@ -352,9 +363,7 @@ const ScanCAFirewall = () => {
                     //className="w-full p-2 border rounded"
                   />
 
-                  <Button className="ml-4" type="button">
-                    Upload
-                  </Button>
+                  <FileUploader onFileParsed={handleFileParsed}></FileUploader>
                 </div>
 
                 <div className="flex justify-start items-center">
@@ -673,7 +682,86 @@ const ScanCAFirewall = () => {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {formData.auditMethod === "uploadConfig" && (
+              <>
                 <div className="space-y-4">
+                  {renderError()}
+                  <div className="flex justify-between items-center">
+                    <Button
+                      type="button"
+                      className="px-4 py-2 bg-black text-white rounded"
+                      onClick={() => console.log("Uploading config")}
+                    >
+                      Upload config
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        );
+      case 3:{
+        //get all categories from complianceData
+        const categories = [
+          ...new Set(complianceData.map((item) => item.Categories)),
+        ];
+
+        //get all standards filtered by category
+        const standards = complianceData
+          .filter((item) => item.Categories === formData.complianceCategory)
+          .map((item) => item["Security Standards"]);
+
+        return (
+          <div className="space-y-4">
+            {renderError()}
+            <h2 className="text-xl font-semibold">Compliance Information</h2>
+
+            {/* Operating System Selection */}
+            <div className="flex items-center">
+              <p className="block w-70">Network Solution:</p>
+              <Select
+                value={formData.complianceCategory}
+                onValueChange={(value) =>
+                  handleInputChange(value, "complianceCategory")
+                }
+              >
+                <SelectTrigger className="w-80">
+                  <SelectValue placeholder="Select Network Solution" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Security Standard Selection */}
+            <div className="flex items-center">
+              <p className="block w-70">Security Standard:</p>
+              <Select
+                value={formData.complianceSecurityStandard}
+                onValueChange={(value) =>
+                  handleInputChange(value, "complianceSecurityStandard")
+                }
+              >
+                <SelectTrigger className="w-80">
+                  <SelectValue placeholder="Select Security Standard" />
+                </SelectTrigger>
+                <SelectContent>
+                  {standards.map((standard) => (
+                    <SelectItem key={standard} value={standard}>
+                      {standard}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-4">
                   <h3 className="text-xl font-semibold">
                     Global Credentials Settings
                   </h3>
@@ -810,85 +898,6 @@ const ScanCAFirewall = () => {
                     </>
                   )}
                 </div>
-              </div>
-            )}
-
-            {formData.auditMethod === "uploadConfig" && (
-              <>
-                <div className="space-y-4">
-                  {renderError()}
-                  <div className="flex justify-between items-center">
-                    <Button
-                      type="button"
-                      className="px-4 py-2 bg-black text-white rounded"
-                      onClick={() => console.log("Uploading config")}
-                    >
-                      Upload config
-                    </Button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        );
-      case 3:{
-        //get all categories from complianceData
-        const categories = [
-          ...new Set(complianceData.map((item) => item.Categories)),
-        ];
-
-        //get all standards filtered by category
-        const standards = complianceData
-          .filter((item) => item.Categories === formData.complianceCategory)
-          .map((item) => item["Security Standards"]);
-
-        return (
-          <div className="space-y-4">
-            {renderError()}
-            <h2 className="text-xl font-semibold">Compliance Information</h2>
-
-            {/* Operating System Selection */}
-            <div className="flex items-center">
-              <p className="block w-70">Network Solution:</p>
-              <Select
-                value={formData.complianceCategory}
-                onValueChange={(value) =>
-                  handleInputChange(value, "complianceCategory")
-                }
-              >
-                <SelectTrigger className="w-80">
-                  <SelectValue placeholder="Select Network Solution" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {/* Security Standard Selection */}
-            <div className="flex items-center">
-              <p className="block w-70">Security Standard:</p>
-              <Select
-                value={formData.complianceSecurityStandard}
-                onValueChange={(value) =>
-                  handleInputChange(value, "complianceSecurityStandard")
-                }
-              >
-                <SelectTrigger className="w-80">
-                  <SelectValue placeholder="Select Security Standard" />
-                </SelectTrigger>
-                <SelectContent>
-                  {standards.map((standard) => (
-                    <SelectItem key={standard} value={standard}>
-                      {standard}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         )};
       case 4:
