@@ -23,11 +23,12 @@ const ScanIOCLinux = () => {
   const [errors, setErrors] = useState("");
 
   const formPages = [
-    "General Info",
-    "Target Details",
-    "Controls",
-    "Scan Settings",
+    "●",
+    "●",
+    "●",
+    "●",
   ];
+  
   const [page, setPage] = useState(1);
 
   const [formData, setFormData] = useState({

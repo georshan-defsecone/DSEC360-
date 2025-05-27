@@ -28,16 +28,16 @@ const ScanCALinux = () => {
   const [errors, setErrors] = useState("");
 
   const formPages = [
-    "General Info",
-    "Target Details",
-    "Compliance Info",
-    "Scan Settings",
+    "●",
+    "●",
+    "●",
+    "●",
   ];
 
   const formPagesAgent = [
-    "General Info",
-    "Target Details",
-    "Compliance Info",
+    "●",
+    "●",
+    "●",
   ]
 
   const [page, setPage] = useState(1);
@@ -835,7 +835,7 @@ const ScanCALinux = () => {
                   <button
                     type="button"
                     onClick={prevPage}
-                    className={`px-4 py-2 rounded w-25 ${
+                    className={`px-4 py-2 rounded ${
                       page === 1 ? "bg-gray-300" : "bg-black text-white"
                     }`}
                     disabled={page === 1}

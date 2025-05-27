@@ -41,7 +41,12 @@ function ScanADWindows() {
         mode: "onBlur"
     });
 
-    const formPages = ["General Info", "Target Details", "Scan Settings"];
+    const formPages = [
+        "●",
+        "●",
+        "●",
+        "●",
+    ];
 
     const onSubmit = async (data: assetDiscoveryFields) => {
         await new Promise((resolve) => setTimeout(resolve, 1000));

@@ -24,16 +24,16 @@ const ScanCAFirewall = () => {
   const [errors, setErrors] = useState("");
 
   const formPages = [
-    "General Info",
-    "Target Details",
-    "Compliance Info",
-    "Scan Settings",
+    "●",
+    "●",
+    "●",
+    "●",
   ];
 
   const formPagesAgent = [
-    "General Info",
-    "Target Details",
-    "Compliance Info",
+    "●",
+    "●",
+    "●",
   ]
 
   const [page, setPage] = useState(1);
