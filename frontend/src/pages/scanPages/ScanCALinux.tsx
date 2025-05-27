@@ -570,51 +570,6 @@ const ScanCALinux = () => {
                     />
                   </div>
                 )}
-                <div className="space-y-4">
-                  <h2 className="text-xl font-semibold">
-                    Global Credential Settings
-                  </h2>
-                  <div className="flex items-center">
-                    <p className="block w-70">known_hosts file</p>
-                    <Button>Add file</Button>
-                  </div>
-                  <div className="flex items-center">
-                    <p className="block w-70">Preferred port</p>
-                    <Input
-                      type="number"
-                      name="port"
-                      placeholder="port"
-                      value={formData.port}
-                      onChange={handleInputChange}
-                      className="w-80"
-                      required
-                    />
-                  </div>
-                  <div className="flex items-center">
-                    <p className="block w-70">Client Version</p>
-                    <Input
-                      type="text"
-                      name="clientVersion"
-                      placeholder="Client Version"
-                      value={formData.clientVersion}
-                      onChange={handleInputChange}
-                      className="w-80"
-                      required
-                    />
-                  </div>
-                  <div className="flex items-center">
-                    <p className="block w-70">Attempt Least Privilege</p>
-                    <Checkbox
-                      checked={formData.attemptLeastPrivelege === "true"}
-                      onCheckedChange={(checked) => {
-                        handleInputChange(
-                          checked ? "true" : "false",
-                          "attemptLeastPrivelege"
-                        );
-                      }}
-                    />
-                  </div>
-                </div>
               </div>
             )}
 
@@ -693,6 +648,51 @@ const ScanCALinux = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">
+                    Global Credential Settings
+                  </h2>
+                  <div className="flex items-center">
+                    <p className="block w-70">known_hosts file</p>
+                    <Button>Add file</Button>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">Preferred port</p>
+                    <Input
+                      type="number"
+                      name="port"
+                      placeholder="port"
+                      value={formData.port}
+                      onChange={handleInputChange}
+                      className="w-80"
+                      required
+                    />
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">Client Version</p>
+                    <Input
+                      type="text"
+                      name="clientVersion"
+                      placeholder="Client Version"
+                      value={formData.clientVersion}
+                      onChange={handleInputChange}
+                      className="w-80"
+                      required
+                    />
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">Attempt Least Privilege</p>
+                    <Checkbox
+                      checked={formData.attemptLeastPrivelege === "true"}
+                      onCheckedChange={(checked) => {
+                        handleInputChange(
+                          checked ? "true" : "false",
+                          "attemptLeastPrivelege"
+                        );
+                      }}
+                    />
+                  </div>
+                </div>
           </div>
         )}
       case 4:
