@@ -74,7 +74,7 @@ export default function Trash() {
 
   return (
     <>
-        <div className="flex h-screen text-black pt-18">
+        <div className="flex h-screen text-black pt-20">
             <Sidebar settings={false} scanSettings={false} homeSettings={true} />
         <div className="flex-1 flex flex-col ml-64">
           <Header title="Trash"><AlertDialog>
