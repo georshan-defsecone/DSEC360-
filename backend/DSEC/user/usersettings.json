@@ -3,9 +3,9 @@
     "enabled": true,
     "host": "dhanishlee",
     "port": "5432",
-    "username": "",
-    "password": "",
-    "authMethod": "none",
+    "username": "n ",
+    "password": "mn",
+    "authMethod": "autodetect",
     "userAgent": "dhanish"
   },
   "smtp": {

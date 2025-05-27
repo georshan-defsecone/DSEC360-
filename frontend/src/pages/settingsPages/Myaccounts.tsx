@@ -89,15 +89,14 @@ const Myaccounts = () => {
       <div className="flex-1 flex flex-col ml-64 p-8">
         <Header title="My Account" />
 
+        {/* Account Info Card */}
         <Card className="w-[70%] mt-10 ml-4 shadow-2xl">
           <CardContent className="w-full p-4 px-12">
             <div className="flex items-center gap-6">
-              {/* Avatar with Initials */}
               <div className="w-24 h-24 mb-12 mr-5 rounded-full bg-gradient-to-br from-blue-500 to-gray-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg shrink-0">
                 {getInitials(username || "U")}
               </div>
 
-              {/* Info Section */}
               <div className="space-y-2 w-full">
                 <div className="flex items-center">
                   <div className="w-28 text-gray-600 text-base font-semibold">
@@ -137,16 +136,17 @@ const Myaccounts = () => {
               </div>
             </div>
           </CardContent>
-
-          <div className="absolute bottom-4 right-4">
-            <Button
-              onClick={handleEditCardOpen}
-              className="bg-black text-white hover:bg-gray-800"
-            >
-              Edit
-            </Button>
-          </div>
         </Card>
+
+        {/* Edit Button Below the Card */}
+        <div className="w-[70%] mt-4 ml-4 flex justify-end">
+          <Button
+            onClick={handleEditCardOpen}
+            className="bg-black text-white hover:bg-gray-800 w-20"
+          >
+            Edit
+          </Button>
+        </div>
       </div>
 
       {/* Change Password Modal */}

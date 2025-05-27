@@ -47,7 +47,7 @@ const CreateUser = () => {
       <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
         <Header title="Create User" />
         
-        <Card className="shadow-md border rounded-lg p-6 w-[96%] mt-6">
+        <Card className="shadow-2xl border rounded-lg p-6 w-[96%] mt-6">
           <CardContent className="space-y-6 p-0">
             <div className="space-y-3">
               <p className="text-sm text-gray-500 font-medium">

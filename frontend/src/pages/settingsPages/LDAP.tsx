@@ -159,7 +159,7 @@ const LDAP = () => {
       <Sidebar settings={true} scanSettings={false} homeSettings={false} />
       <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
         <Header title="LDAP" />
-        <Card className="bg-white shadow-lg rounded-lg border border-gray-300 w-[96%]">
+        <Card className="bg-white shadow-2xl rounded-lg border border-gray-300 w-[96%]">
           <CardContent className="p-6">
             <div className="flex flex-col items-start space-y-6 font-medium">
 

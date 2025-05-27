@@ -26,7 +26,7 @@ const Advanced = () => {
       <div className="flex-1 flex flex-col ml-64 px-8">
         <Header title="Advanced" />
 
-        <Card className="rounded-2xl shadow-xl mt-6 w-[96%]">
+        <Card className="rounded-2xl shadow-2xl mt-6 w-[96%]">
           <CardContent className="p-6 w-full">
             <Tabs defaultValue="user interface" className="w-full">
               <TabsList className="grid grid-cols-7 gap-2 w-full bg-transparent border-none shadow-none">

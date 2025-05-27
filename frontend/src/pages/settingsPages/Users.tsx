@@ -59,7 +59,7 @@ const Users = () => {
         {/* Card Container - no scroll */}
         <div className="space-y-4">
           {currentUsers.map((user) => (
-            <Card key={user.id} className="shadow-md border rounded-lg p-4 w-[96%]">
+            <Card key={user.id} className="shadow-2xl border rounded-lg p-4 w-[96%]">
               <CardContent className="flex justify-between items-center p-0">
                 <div className="space-y-1">
                   <p className="text-sm text-gray-500 font-medium">
