@@ -303,7 +303,7 @@ const ScanCAFirewall = () => {
             {renderError()}
             <h2 className="text-xl font-semibold">Target Details</h2>
             <div className="flex justify-start items-center gap-2">
-              <p className="block w-70 ">Audit Method:</p>
+              <p className="block w-68 ">Audit Method:</p>
 
               <Select
                 value={formData.OS}
