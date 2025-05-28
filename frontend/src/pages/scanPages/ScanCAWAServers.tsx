@@ -100,16 +100,66 @@ const ScanCAWAServers = () => {
         );
     };
 
-    const validatePage2 = () => {
+    const isValidIPv4 = (ip: string) => {
         const ipv4Regex =
             /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+        return ipv4Regex.test(ip);
+    };
+
+    const isValidCIDR = (input: string) => {
+        const cidrRegex =
+            /^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\/([0-9]|[1-2][0-9]|3[0-2])$/;
+        return cidrRegex.test(input);
+    };
+
+    const isValidRange = (input: string) => {
+        const rangeRegex =
+            /^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(\d{1,3})-(\d{1,3})$/;
+        const match = input.match(rangeRegex);
+        if (!match) return false;
+
+        const base = input.substring(0, input.lastIndexOf(".")) + "."; // e.g. "192.168.1."
+        const start = parseInt(match[3], 10); // start of range (last octet)
+        const end = parseInt(match[4], 10); // end of range (last octet)
+
+        // Check range validity
+        if (isNaN(start) || isNaN(end)) return false;
+        if (start > end) return false;
+        if (start < 0 || start > 255) return false;
+        if (end < 0 || end > 255) return false;
+
+        // Validate full IPs constructed from base + start/end
+        return isValidIPv4(base + start) && isValidIPv4(base + end);
+    };
+
+    const isValidHostname = (input: string) => {
+        const hostnameRegex = /^(?!:\/\/)([a-zA-Z0-9-_]+\.)+[a-zA-Z]{2,}$/;
+        return hostnameRegex.test(input);
+    };
+
+    const validateTargetIPInput = (input: string) => {
+        const targets = input
+            .split(/[ ,]+/)
+            .map((t) => t.trim())
+            .filter(Boolean);
+
+        return targets.every(
+            (target) =>
+                isValidIPv4(target) ||
+                isValidCIDR(target) ||
+                isValidRange(target) ||
+                isValidHostname(target)
+        );
+    };
+
+    const validatePage2 = () => {
 
         if (!formData.auditMethod) return "Audit method is required.";
         if (!formData.OS) return "Operating system is required.";
 
         if (formData.auditMethod === "remoteAccess") {
             if (!formData.target) return "Target IP is required.";
-            if (!ipv4Regex.test(formData.target))
+            if (!validateTargetIPInput(formData.target))
                 return "Invalid IP address format.";
             if (!formData.authMethod)
                 return "Authentication method is required.";
@@ -1261,7 +1311,7 @@ const ScanCAWAServers = () => {
                                     <button
                                         type="button"
                                         onClick={prevPage}
-                                        className={`px-4 py-2 rounded ${
+                                        className={`px-4 py-2 rounded cursor-pointer ${
                                             page === 1
                                                 ? "bg-gray-300"
                                                 : "bg-black text-white"
@@ -1282,20 +1332,20 @@ const ScanCAWAServers = () => {
                                         <button
                                             type="button"
                                             onClick={handleSubmit}
-                                            className="px-4 py-2 bg-green-500 w-25 text-white rounded"
+                                            className="px-4 py-2 bg-green-500 w-25 text-white rounded cursor-pointer"
                                         >
                                             Submit
                                         </button>
                                     ) : formData.auditMethod === "agent" &&
                                       page === 4 ? (
-                                        <Button className="px-4 py-2 bg-black text-white h-10 rounded">
+                                        <Button className="px-4 py-2 bg-black text-white h-10 rounded cursor-pointer">
                                             Download script
                                         </Button>
                                     ) : (
                                         <button
                                             type="button"
                                             onClick={nextPage}
-                                            className="px-4 py-2 w-25 bg-black text-white rounded"
+                                            className="px-4 py-2 w-25 bg-black text-white rounded cursor-pointer"
                                         >
                                             Next
                                         </button>

@@ -88,25 +88,79 @@ const ScanIOCLinux = () => {
         );
     };
 
+    const isValidIPv4 = (ip: string) => {
+        const ipv4Regex =
+            /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+        return ipv4Regex.test(ip);
+    };
+
+    const isValidCIDR = (input: string) => {
+        const cidrRegex =
+            /^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\/([0-9]|[1-2][0-9]|3[0-2])$/;
+        return cidrRegex.test(input);
+    };
+
+    const isValidRange = (input: string) => {
+        const rangeRegex =
+            /^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(\d{1,3})-(\d{1,3})$/;
+        const match = input.match(rangeRegex);
+        if (!match) return false;
+
+        const base = input.substring(0, input.lastIndexOf(".")) + "."; // e.g. "192.168.1."
+        const start = parseInt(match[3], 10); // start of range (last octet)
+        const end = parseInt(match[4], 10); // end of range (last octet)
+
+        // Check range validity
+        if (isNaN(start) || isNaN(end)) return false;
+        if (start > end) return false;
+        if (start < 0 || start > 255) return false;
+        if (end < 0 || end > 255) return false;
+
+        // Validate full IPs constructed from base + start/end
+        return isValidIPv4(base + start) && isValidIPv4(base + end);
+    };
+
+    const isValidHostname = (input: string) => {
+        const hostnameRegex = /^(?!:\/\/)([a-zA-Z0-9-_]+\.)+[a-zA-Z]{2,}$/;
+        return hostnameRegex.test(input);
+    };
+
+    const validateTargetIPInput = (input: string) => {
+        const targets = input
+            .split(/[ ,]+/)
+            .map((t) => t.trim())
+            .filter(Boolean);
+
+        return targets.every(
+            (target) =>
+                isValidIPv4(target) ||
+                isValidCIDR(target) ||
+                isValidRange(target) ||
+                isValidHostname(target)
+        );
+    };
+
     const validatePage2 = () => {
-        if (!formData.auditMethod) return false;
+        if (!formData.auditMethod) return "Audit method is required.";
 
         if (formData.auditMethod === "remoteAccess") {
-            if (!formData.target) return false;
-            if (!formData.authMethod) return false;
+            if (!formData.target) return "Target IP is required.";
+            if (!validateTargetIPInput(formData.target))
+                return "IP Address incorrect";
+            if (!formData.authMethod)
+                return "Authentication method is required.";
 
             // Validate based on authentication method
             switch (formData.authMethod) {
                 case "password":
-                    if (!formData.username || !formData.password) return false;
+                    if (!formData.username || !formData.password)
+                        return "Username and password are required.";
                     break;
                 case "publicKey":
-                    if (!formData.username || !formData.privateKeyPassphrase)
-                        return false;
-                    break;
                 case "certificate":
-                    if (!formData.username || !formData.privateKeyPassphrase)
-                        return false;
+                    if (!formData.username || !formData.privateKeyPassphrase) {
+                        return "Username and private key passphrase are required.";
+                    }
                     break;
                 case "kerberos":
                     if (
@@ -115,44 +169,50 @@ const ScanIOCLinux = () => {
                         !formData.kdc ||
                         !formData.kdcPort ||
                         !formData.domain
-                    )
-                        return false;
+                    ) {
+                        return "All Kerberos fields are required.";
+                    }
                     break;
                 default:
-                    return false;
+                    return "Unsupported authentication method.";
             }
 
             // Validate elevation privilege fields if selected
             if (formData.elevatePrivilege) {
                 switch (formData.elevatePrivilege) {
                     case ".k5login":
-                        if (!formData.EP_escalationAccount) return false;
+                        if (!formData.EP_escalationAccount)
+                            return "Escalation account is required for .k5login.";
                         break;
                     case "ciscoEnable":
-                        if (!formData.EPenablePassword) return false;
+                        if (!formData.EPenablePassword)
+                            return "Enable password is required for Cisco.";
                         break;
                     case "dzdo":
                         if (
                             !formData.EP_escalationAccount ||
                             !formData.EP_escalationPassword ||
                             !formData.EP_dzdoDirectory
-                        )
-                            return false;
+                        ) {
+                            return "All dzdo fields are required.";
+                        }
                         break;
                     case "su":
                         if (
                             !formData.EP_suDirectory ||
                             !formData.EP_su_login ||
                             !formData.EP_escalationPassword
-                        )
-                            return false;
+                        ) {
+                            return "All su fields are required.";
+                        }
                         break;
                     case "pbrun":
                         if (
                             !formData.EP_pbrunDirectory ||
                             !formData.EPsshUserPassword
-                        )
-                            return false;
+                        ) {
+                            return "All pbrun fields are required.";
+                        }
                         break;
                     case "su+sudo":
                         if (
@@ -160,14 +220,19 @@ const ScanIOCLinux = () => {
                             !formData.EP_su_user ||
                             !formData.EP_sudoUser ||
                             !formData.EP_escalationPassword
-                        )
-                            return false;
+                        ) {
+                            return "All su+sudo fields are required.";
+                        }
                         break;
+                    case "nothing":
+                        return true;
+                    default:
+                        return "Unsupported privilege elevation method.";
                 }
             }
         }
 
-        return true;
+        return true; // Passed validation
     };
 
     useEffect(() => {
@@ -236,30 +301,33 @@ const ScanIOCLinux = () => {
     };
 
     const nextPage = () => {
-        let isValid = false;
+        let validationResult = false;
 
         switch (page) {
             case 1:
-                isValid = validatePage1();
+                validationResult = validatePage1();
                 break;
             case 2:
-                isValid = validatePage2();
+                validationResult = validatePage2();
                 break;
             case 3:
-                isValid = true;
+                validationResult = true;
                 break;
             case 4:
-                isValid = true;
+                validationResult = true
                 break;
             case 5:
-                isValid = true;
+                validationResult = true;
                 break;
             default:
-                isValid = false;
+                validationResult = false;
         }
 
-        if (!isValid) {
-            setErrors("Please fill in all required fields before proceeding.");
+        if (validationResult !== true) {
+            setErrors(
+                validationResult ||
+                    "Please fill in all required fields before proceeding."
+            );
             return;
         }
 
@@ -986,7 +1054,7 @@ const ScanIOCLinux = () => {
                                         <button
                                             type="button"
                                             onClick={prevPage}
-                                            className={`px-4 py-2 rounded ${
+                                            className={`px-4 py-2 rounded cursor-pointer ${
                                                 page === 1
                                                     ? "bg-gray-300"
                                                     : "bg-black text-white"
@@ -1007,20 +1075,20 @@ const ScanIOCLinux = () => {
                                             <button
                                                 type="button"
                                                 onClick={handleSubmit}
-                                                className="px-4 py-2 bg-green-500 w-25 text-white rounded"
+                                                className="px-4 py-2 bg-green-500 w-25 text-white rounded cursor-pointer"
                                             >
                                                 Submit
                                             </button>
                                         ) : formData.auditMethod === "agent" &&
                                           page === 4 ? (
-                                            <Button className="px-4 py-2 bg-black text-white h-10 rounded">
+                                            <Button className="px-4 py-2 bg-black text-white h-10 rounded cursor-pointer">
                                                 Download script
                                             </Button>
                                         ) : (
                                             <button
                                                 type="button"
                                                 onClick={nextPage}
-                                                className="px-4 py-2 bg-black w-25 text-white rounded"
+                                                className="px-4 py-2 bg-black w-25 text-white rounded cursor-pointer"
                                             >
                                                 Next
                                             </button>
