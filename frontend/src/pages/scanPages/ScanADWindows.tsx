@@ -269,7 +269,7 @@ function ScanADWindows() {
                                                 <button
                                                     type="button"
                                                     onClick={prevPage}
-                                                    className={`px-4 py-2 rounded ${
+                                                    className={`px-4 py-2 rounded cursor-pointer ${
                                                         page === 1
                                                             ? "bg-gray-300"
                                                             : "bg-black text-white"
@@ -283,7 +283,7 @@ function ScanADWindows() {
                                                     pages={formPages}
                                                 />
                                                 {page === 3 ? (
-                                                    <button type="button" className="px-4 py-2 bg-black text-white" onClick={async () => {
+                                                    <button type="button" className="px-4 py-2 bg-black text-white cursor-pointer" onClick={async () => {
                                                         const isValid = await validateCurrentPage()
                                                         if(isValid) {
                                                             methods.handleSubmit(onSubmit)()
@@ -295,7 +295,7 @@ function ScanADWindows() {
                                                     <button
                                                         type="button"
                                                         onClick={nextPage}
-                                                        className="px-4 py-2 bg-black w-25 text-white rounded"
+                                                        className="px-4 py-2 bg-black w-25 text-white rounded cursor-pointer"
                                                     >
                                                         Next
                                                     </button>
