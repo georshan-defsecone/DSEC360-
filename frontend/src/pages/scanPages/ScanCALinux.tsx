@@ -102,61 +102,74 @@ const ScanCALinux = () => {
   };
   
   const validatePage2 = () => {
-    if (!formData.auditMethod) return false;
-  
-    if (formData.auditMethod === "remoteAccess") {
-      if (!formData.target) return false;
-      if (!formData.authMethod) return false;
-  
-      // Validate based on authentication method
-      switch (formData.authMethod) {
-        case "password":
-          if (!formData.username || !formData.password) return false;
-          break;
-        case "publicKey":
-          if (!formData.username || !formData.privateKeyPassphrase) return false;
-          break;
-        case "certificate":
-          if (!formData.username || !formData.privateKeyPassphrase) return false;
-          break;
-        case "kerberos":
-          if (!formData.username || !formData.password || !formData.kdc || 
-              !formData.kdcPort || !formData.domain) return false;
-          break;
-        default:
-          return false;
-      }
-  
-      // Validate elevation privilege fields if selected
-      if (formData.elevatePrivilege) {
-        switch (formData.elevatePrivilege) {
-          case ".k5login":
-            if (!formData.EP_escalationAccount) return false;
-            break;
-          case "ciscoEnable":
-            if (!formData.EPenablePassword) return false;
-            break;
-          case "dzdo":
-            if (!formData.EP_escalationAccount || !formData.EP_escalationPassword ||
-                !formData.EP_dzdoDirectory) return false;
-            break;
-          case "su":
-            if (!formData.EP_suDirectory || !formData.EP_su_login ||
-                !formData.EP_escalationPassword) return false;
-            break;
-          case "pbrun":
-            if (!formData.EP_pbrunDirectory || !formData.EPsshUserPassword) return false;
-            break;
-          case "su+sudo":
-            if (!formData.EP_su_sudoDirectory || !formData.EP_su_user ||
-                !formData.EP_sudoUser || !formData.EP_escalationPassword) return false;
-            break;
+  const ipv4Regex = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+  if (!formData.auditMethod) return "Audit method is required.";
+
+  if (formData.auditMethod === "remoteAccess") {
+    if (!formData.target) return "Target IP is required.";
+    if(!ipv4Regex.test(formData.target)) return "IP Address incorrect"
+    if (!formData.authMethod) return "Authentication method is required.";
+
+    // Validate based on authentication method
+    switch (formData.authMethod) {
+      case "password":
+        if (!formData.username || !formData.password) return "Username and password are required.";
+        break;
+      case "publicKey":
+      case "certificate":
+        if (!formData.username || !formData.privateKeyPassphrase) {
+          return "Username and private key passphrase are required.";
         }
+        break;
+      case "kerberos":
+        if (!formData.username || !formData.password || !formData.kdc || 
+            !formData.kdcPort || !formData.domain) {
+          return "All Kerberos fields are required.";
+        }
+        break;
+      default:
+        return "Unsupported authentication method.";
+    }
+
+    // Validate elevation privilege fields if selected
+    if (formData.elevatePrivilege) {
+      switch (formData.elevatePrivilege) {
+        case ".k5login":
+          if (!formData.EP_escalationAccount) return "Escalation account is required for .k5login.";
+          break;
+        case "ciscoEnable":
+          if (!formData.EPenablePassword) return "Enable password is required for Cisco.";
+          break;
+        case "dzdo":
+          if (!formData.EP_escalationAccount || !formData.EP_escalationPassword || !formData.EP_dzdoDirectory) {
+            return "All dzdo fields are required.";
+          }
+          break;
+        case "su":
+          if (!formData.EP_suDirectory || !formData.EP_su_login || !formData.EP_escalationPassword) {
+            return "All su fields are required.";
+          }
+          break;
+        case "pbrun":
+          if (!formData.EP_pbrunDirectory || !formData.EPsshUserPassword) {
+            return "All pbrun fields are required.";
+          }
+          break;
+        case "su+sudo":
+          if (!formData.EP_su_sudoDirectory || !formData.EP_su_user || !formData.EP_sudoUser || !formData.EP_escalationPassword) {
+            return "All su+sudo fields are required.";
+          }
+          break;
+        case "nothing":
+          return true
+        default:
+          return "Unsupported privilege elevation method.";
       }
     }
-  
-    return true;
-  };
+  }
+
+  return true; // Passed validation
+};
   
   const validatePage3 = () => {
     return (
@@ -208,33 +221,33 @@ const ScanCALinux = () => {
   }
 
   const nextPage = () => {
-    let isValid = false;
+  let validationResult = false;
 
   switch (page) {
     case 1:
-      isValid = validatePage1();
+      validationResult = validatePage1();
       break;
     case 2:
-      isValid = validatePage2();
+      validationResult = validatePage2();
       break;
     case 3:
-      isValid = validatePage3();
+      validationResult = validatePage3();
       break;
     case 4:
-      isValid = true
+      validationResult = true;
       break;
     default:
-      isValid = false;
+      validationResult = false;
   }
 
-  if (!isValid) {
-    setErrors("Please fill in all required fields before proceeding.");
+  if (validationResult !== true) {
+    setErrors(validationResult || "Please fill in all required fields before proceeding.");
     return;
   }
 
   setErrors(""); // Clear any existing errors
   if (page < 4) setPage((prev) => prev + 1);
-  };
+};
 
   const prevPage = () => {
     if (page > 1) setPage((prev) => prev - 1);

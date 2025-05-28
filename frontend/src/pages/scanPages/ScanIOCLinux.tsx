@@ -602,7 +602,7 @@ const ScanIOCLinux = () => {
                     <p className="block w-70">Preferred port</p>
                     <Input
                       type="number"
-                      name="preferredPort"
+                      name="port"
                       placeholder="port"
                       value={formData.port}
                       onChange={handleInputChange}

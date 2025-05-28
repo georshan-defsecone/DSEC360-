@@ -20,7 +20,7 @@ import FileUploader from "@/components/FileUploader";
 
 import api from "../api";
 
-const ScanCAFirewall = () => {
+const ScanCANetworkDevices = () => {
   const [complianceData, setComplianceData] = useState([]);
   const [errors, setErrors] = useState("");
   const [fileIPs, setFileIPs] = useState<string[]>([])
@@ -111,35 +111,50 @@ const ScanCAFirewall = () => {
   };
   
   const validatePage2 = () => {
-    if (!formData.auditMethod || !formData.OS) return false;
-  
-    if (formData.auditMethod === "remoteAccess") {
-      if (!formData.target) return false;
-      if (!formData.authMethod) return false;
-  
-      // Validate based on authentication method
-      switch (formData.authMethod) {
-        case "password":
-          return formData.username && formData.password;
-        case "ntlm":
-          return formData.username && formData.ntlmHash && formData.domain;
-        case "kerberos":
-          return (
-            formData.username &&
-            formData.password &&
-            formData.kdc &&
-            formData.kdcPort &&
-            formData.domain
-          );
-        case "lm":
-          return formData.username && formData.lmHash && formData.domain;
-        default:
-          return false;
-      }
+  const ipv4Regex = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+
+  if (!formData.auditMethod) return "Audit method is required.";
+  if (!formData.OS) return "Operating system is required.";
+
+  if (formData.auditMethod === "remoteAccess") {
+    if (!formData.target) return "Target IP is required.";
+    if (!ipv4Regex.test(formData.target)) return "Invalid IP address format.";
+    if (!formData.authMethod) return "Authentication method is required.";
+
+    switch (formData.authMethod) {
+      case "password":
+        if (!formData.username || !formData.password) {
+          return "Username and password are required.";
+        }
+        break;
+      case "ntlm":
+        if (!formData.username || !formData.ntlmHash || !formData.domain) {
+          return "Username, NTLM hash, and domain are required.";
+        }
+        break;
+      case "kerberos":
+        if (!formData.username || !formData.password || !formData.kdc || !formData.kdcPort || !formData.domain) {
+          return "All Kerberos fields are required.";
+        }
+        break;
+      case "lm":
+        if (!formData.username || !formData.lmHash || !formData.domain) {
+          return "Username, LM hash, and domain are required.";
+        }
+        break;
+      case "publicKey":
+      case "certificate":
+        if (!formData.username || !formData.privateKeyPassphrase) {
+          return "Username and private key passphrase are required.";
+        }
+        break;
+      default:
+        return "Unsupported authentication method.";
     }
-  
-    return true; // For agent and uploadConfig methods
-  };
+  }
+
+  return true; // Valid for agent and uploadConfig
+};
   
   const validatePage3 = () => {
     return (
@@ -208,33 +223,33 @@ const ScanCAFirewall = () => {
   }
 
   const nextPage = () => {
-    let isValid = false;
+        let validationResult = false;
 
-    switch (page) {
-      case 1:
-        isValid = validatePage1();
-        break;
-      case 2:
-        isValid = validatePage2();
-        break;
-      case 3:
-        isValid = validatePage3();
-        break;
-      case 4:
-        isValid = true
-        break;
-      default:
-        isValid = false;
-    }
+        switch (page) {
+            case 1:
+            validationResult = validatePage1();
+            break;
+            case 2:
+            validationResult = validatePage2();
+            break;
+            case 3:
+            validationResult = validatePage3();
+            break;
+            case 4:
+            validationResult = true;
+            break;
+            default:
+            validationResult = false;
+        }
 
-    if (!isValid) {
-      setErrors("Please fill in all required fields before proceeding.");
-      return;
-    }
+        if (validationResult !== true) {
+            setErrors(validationResult || "Please fill in all required fields before proceeding.");
+            return;
+        }
 
-    setErrors(""); // Clear any existing errors
-    if (page < 4) setPage((prev) => prev + 1);
-  };
+        setErrors(""); // Clear any existing errors
+        if (page < 4) setPage((prev) => prev + 1);
+    };
 
   const prevPage = () => {
     if (page > 1) setPage((prev) => prev - 1);
@@ -584,7 +599,7 @@ const ScanCAFirewall = () => {
                         <p className="block w-70">Private Key Passphrase</p>
                         <Input
                           type="text"
-                          name="passphrase"
+                          name="privateKeyPassphrase"
                           placeholder="Passphrase"
                           value={formData.privateKeyPassphrase}
                           onChange={handleInputChange}
@@ -864,7 +879,7 @@ const ScanCAFirewall = () => {
                         <p className="block w-70">Preferred port</p>
                         <Input
                           type="number"
-                          name="preferredPort"
+                          name="port"
                           placeholder="port"
                           value={formData.port}
                           onChange={handleInputChange}
@@ -1087,4 +1102,4 @@ const ScanCAFirewall = () => {
   );
 };
 
-export default ScanCAFirewall;
+export default ScanCANetworkDevices;
