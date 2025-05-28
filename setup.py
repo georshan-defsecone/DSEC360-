@@ -1,8 +1,8 @@
-
 #!/usr/bin/env python3
 """
 Cross-platform project launcher for React + Django application
 Automatically detects OS and sets up PostgreSQL, Django backend, and React frontend
+v3
 """
 
 import os
@@ -55,6 +55,28 @@ def run_command(command, shell=True, check=True, capture_output=False, ignore_er
 def check_command_exists(command):
     """Check if a command exists in the system PATH"""
     return shutil.which(command) is not None
+
+def update_system_packages():
+    """Update system packages first (Unix systems)"""
+    print("Updating system packages...")
+    
+    if check_command_exists("apt"):
+        print("Updating apt packages...")
+        run_command("sudo apt update")
+        print("Upgrading system packages...")
+        run_command("sudo apt upgrade -y")
+    elif check_command_exists("dnf"):
+        print("Updating dnf packages...")
+        run_command("sudo dnf update -y")
+    elif check_command_exists("pacman"):
+        print("Updating pacman packages...")
+        run_command("sudo pacman -Syu --noconfirm")
+    elif check_command_exists("brew"):
+        print("Updating Homebrew...")
+        run_command("brew update")
+        run_command("brew upgrade")
+    else:
+        print("No supported package manager found for system updates.")
 
 def install_postgresql_windows():
     """Install PostgreSQL on Windows automatically"""
@@ -122,7 +144,6 @@ def install_postgresql_unix():
     
     if check_command_exists("apt"):
         print("Installing PostgreSQL with apt...")
-        run_command("sudo apt update")
         run_command("sudo apt install -y postgresql postgresql-contrib")
     elif check_command_exists("dnf"):
         print("Installing PostgreSQL with dnf...")
@@ -318,6 +339,34 @@ def setup_postgresql_unix():
     grant_script = f'GRANT ALL PRIVILEGES ON DATABASE {PG_DB} TO {PG_USER}; ALTER ROLE {PG_USER} CREATEDB;'
     run_command(f'sudo -u postgres psql -c "{grant_script}"', check=False)
     
+    # Update pg_hba.conf for password authentication
+    print("Configuring PostgreSQL authentication...")
+    pg_hba_locations = [
+        "/etc/postgresql/*/main/pg_hba.conf",
+        "/var/lib/pgsql/data/pg_hba.conf",
+        "/usr/local/var/postgres/pg_hba.conf"
+    ]
+    
+    import glob
+    for location_pattern in pg_hba_locations:
+        for pg_hba_path in glob.glob(location_pattern):
+            if os.path.exists(pg_hba_path):
+                print(f"Updating {pg_hba_path}...")
+                try:
+                    # Backup original file
+                    run_command(f"sudo cp {pg_hba_path} {pg_hba_path}.backup", check=False)
+                    
+                    # Update authentication method for local connections
+                    sed_cmd = f"sudo sed -i 's/local.*all.*all.*peer/local   all             all                                     md5/' {pg_hba_path}"
+                    run_command(sed_cmd, check=False)
+                    
+                    # Restart PostgreSQL to apply changes
+                    run_command("sudo systemctl restart postgresql", check=False)
+                    time.sleep(3)
+                    break
+                except:
+                    print(f"Could not update {pg_hba_path}")
+    
     # Test the connection with the new user
     print("Testing connection with new user...")
     test_connection_cmd = f'PGPASSWORD="{PG_PASSWORD}" psql -U {PG_USER} -d {PG_DB} -c "SELECT current_database();"'
@@ -327,40 +376,79 @@ def setup_postgresql_unix():
         return True
     else:
         print("⚠️  PostgreSQL setup completed but connection test failed.")
-        print("You may need to configure pg_hba.conf for password authentication.")
+        print("You may need to configure pg_hba.conf for password authentication manually.")
         return True  # Continue anyway as the setup might still work
+
+def install_python_venv_packages():
+    """Install python3-venv package on Unix systems"""
+    print("Installing python3-venv package...")
+    
+    # Get Python version
+    python_version_output = run_command("python3 --version", capture_output=True, check=False)
+    if not python_version_output:
+        print("Python3 not found!")
+        return False
+    
+    print(f"Detected Python: {python_version_output}")
+    
+    # Extract version number
+    import re
+    version_match = re.search(r'Python (\d+\.\d+)', str(python_version_output))
+    if version_match:
+        python_version = version_match.group(1)
+        print(f"Python version: {python_version}")
+    else:
+        python_version = None
+    
+    if check_command_exists("apt"):
+        if python_version:
+            # Try version-specific package first
+            print(f"Installing python{python_version}-venv...")
+            if run_command(f"sudo apt install -y python{python_version}-venv", check=False):
+                return True
+        
+        # Fallback to generic package
+        print("Installing python3-venv...")
+        return run_command("sudo apt install -y python3-venv", check=False)
+    
+    elif check_command_exists("dnf"):
+        print("Installing python3-virtualenv...")
+        return run_command("sudo dnf install -y python3-virtualenv", check=False)
+    
+    elif check_command_exists("pacman"):
+        print("Installing python-virtualenv...")
+        return run_command("sudo pacman -S --noconfirm python-virtualenv", check=False)
+    
+    elif check_command_exists("brew"):
+        print("Python venv should be available with Homebrew Python")
+        return True
+    
+    else:
+        print("No supported package manager found for installing python3-venv")
+        return False
 
 def setup_python_venv():
     """Setup Python virtual environment"""
     print("Setting up Python virtual environment...")
     
-    # Check if python3-venv is available (Linux)
     os_type = get_os_type()
-    if os_type == "unix" and platform.system().lower() == "linux":
-        # Check Python version
+    
+    if os_type == "unix":
+        # Check if python3-venv is available
         python_version = run_command("python3 --version", capture_output=True, check=False)
         print(f"Detected Python: {python_version}")
         
-        # Try to create venv to test if python3-venv is installed
+        # Test if venv module is available
         test_venv = run_command("python3 -m venv --help", capture_output=True, check=False)
         if not test_venv:
             print("python3-venv not found. Installing...")
-            # Get Python version for the specific venv package
-            version_output = run_command("python3 --version", capture_output=True, check=False)
-            if version_output:
-                # Extract version like "3.12" from "Python 3.12.x"
-                import re
-                version_match = re.search(r'Python (\d+\.\d+)', str(version_output))
-                if version_match:
-                    python_version = version_match.group(1)
-                    print(f"Installing python{python_version}-venv...")
-                    if not run_command(f"sudo apt update && sudo apt install -y python{python_version}-venv", check=False):
-                        # Fallback to generic python3-venv
-                        run_command("sudo apt install -y python3-venv", check=False)
-                else:
-                    run_command("sudo apt install -y python3-venv", check=False)
-            else:
-                run_command("sudo apt install -y python3-venv", check=False)
+            if not install_python_venv_packages():
+                print("Failed to install python3-venv package.")
+                print("Please install manually:")
+                print("  sudo apt install python3-venv  # On Ubuntu/Debian")
+                print("  sudo dnf install python3-virtualenv  # On Fedora")
+                print("  sudo pacman -S python-virtualenv  # On Arch")
+                return False
     
     # Remove existing venv if it's corrupted
     if os.path.exists(VENV_DIR):
@@ -373,7 +461,8 @@ def setup_python_venv():
     if not run_command(f"{python_cmd} -m venv {VENV_DIR}"):
         print("Failed to create virtual environment.")
         print("Please ensure python3-venv is installed:")
-        print("  sudo apt install python3-venv")
+        if os_type == "unix":
+            print("  sudo apt install python3-venv")
         return False
     
     return True
@@ -579,6 +668,11 @@ def main():
     os_type = get_os_type()
     
     try:
+        # Step 0: Update system packages first (Unix only)
+        if os_type == "unix":
+            print("\n--- Updating system packages ---")
+            update_system_packages()
+        
         # Step 1: Setup PostgreSQL
         print("\n--- Setting up PostgreSQL ---")
         if os_type == "windows":
