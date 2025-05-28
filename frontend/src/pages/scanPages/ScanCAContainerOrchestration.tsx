@@ -24,9 +24,9 @@ const ScanCAContainerOrchestration = () => {
     const [complianceData, setComplianceData] = useState([]);
     const [errors, setErrors] = useState("");
 
-    const formPages = ["●", "●", "●", "●"];
+    const formPages = ["●", "●", "●", "●", "●"];
 
-    const formPagesAgent = ["●", "●", "●"];
+    const formPagesAgent = ["●", "●", "●", "●"];
 
     const [page, setPage] = useState(1);
     const [fileIPs, setFileIPs] = useState<string[]>([]);
@@ -163,7 +163,7 @@ const ScanCAContainerOrchestration = () => {
         return true; // Valid for agent and uploadConfig
     };
 
-    const validatePage3 = () => {
+    const validatePage4 = () => {
         return (
             formData.complianceCategory !== "" &&
             formData.complianceSecurityStandard !== ""
@@ -247,9 +247,12 @@ const ScanCAContainerOrchestration = () => {
                 validationResult = validatePage2();
                 break;
             case 3:
-                validationResult = validatePage3();
+                validationResult = true;
                 break;
             case 4:
+                validationResult = validatePage4();
+                break;
+            case 5:
                 validationResult = true;
                 break;
             default:
@@ -265,7 +268,7 @@ const ScanCAContainerOrchestration = () => {
         }
 
         setErrors(""); // Clear any existing errors
-        if (page < 4) setPage((prev) => prev + 1);
+        if (page < 5) setPage((prev) => prev + 1);
     };
     const prevPage = () => {
         if (page > 1) setPage((prev) => prev - 1);
@@ -832,7 +835,165 @@ const ScanCAContainerOrchestration = () => {
                         )}
                     </div>
                 );
-            case 3: {
+            case 3:
+                return (
+                    <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">
+                            Global Credentials Settings
+                        </h3>
+                        {formData.OS === "windows" && (
+                            <>
+                                <div className="flex items-center">
+                                    <Checkbox
+                                        className="mr-4"
+                                        checked={
+                                            formData.globalCredentials
+                                                .neverSendCredentials === "true"
+                                        }
+                                        onCheckedChange={(checked) => {
+                                            handleNestedInputChange(
+                                                "globalCredentials",
+                                                "neverSendCredentials",
+                                                checked ? "true" : "false"
+                                            );
+                                        }}
+                                    />
+                                    <p>Never send credentials in the clear</p>
+                                </div>
+                                <div className="flex items-center">
+                                    <Checkbox
+                                        className="mr-4"
+                                        checked={
+                                            formData.globalCredentials
+                                                .dontUseNTLMv1 === "true"
+                                        }
+                                        onCheckedChange={(checked) => {
+                                            handleNestedInputChange(
+                                                "globalCredentials",
+                                                "dontUseNTLMv1",
+                                                checked ? "true" : "false"
+                                            );
+                                        }}
+                                    />
+                                    <p>Do not use NTLMv1 authentication</p>
+                                </div>
+                                <div className="flex items-center">
+                                    <Checkbox
+                                        className="mr-4"
+                                        checked={
+                                            formData.globalCredentials
+                                                .startRemoteRegistryService ===
+                                            "true"
+                                        }
+                                        onCheckedChange={(checked) => {
+                                            handleNestedInputChange(
+                                                "globalCredentials",
+                                                "startRemoteRegistryService",
+                                                checked ? "true" : "false"
+                                            );
+                                        }}
+                                    />
+                                    <p>
+                                        start the remote registry service during
+                                        the scan
+                                    </p>
+                                </div>
+                                <div className="flex items-center">
+                                    <Checkbox
+                                        className="mr-4"
+                                        checked={
+                                            formData.globalCredentials
+                                                .enableAdministrativeShares ===
+                                            "true"
+                                        }
+                                        onCheckedChange={(checked) => {
+                                            handleNestedInputChange(
+                                                "globalCredentials",
+                                                "enableAdministrativeShares",
+                                                checked ? "true" : "false"
+                                            );
+                                        }}
+                                    />
+                                    <p>
+                                        Enable administrative shares during the
+                                        scan
+                                    </p>
+                                </div>
+                                <div className="flex items-center">
+                                    <Checkbox
+                                        className="mr-4"
+                                        checked={
+                                            formData.globalCredentials
+                                                .startServerService === "true"
+                                        }
+                                        onCheckedChange={(checked) => {
+                                            handleNestedInputChange(
+                                                "globalCredentials",
+                                                "startServerService",
+                                                checked ? "true" : "false"
+                                            );
+                                        }}
+                                    />
+                                    <p>
+                                        Start the Server Service during the scan
+                                    </p>
+                                </div>
+                            </>
+                        )}
+                        {formData.OS === "linux" && (
+                            <>
+                                <div className="flex items-center">
+                                    <p className="block w-70">
+                                        known_hosts file
+                                    </p>
+                                    <Button>Add file</Button>
+                                </div>
+                                <div className="flex items-center">
+                                    <p className="block w-70">Preferred port</p>
+                                    <Input
+                                        type="number"
+                                        name="port"
+                                        placeholder="port"
+                                        value={formData.port}
+                                        onChange={handleInputChange}
+                                        className="w-80"
+                                        required
+                                    />
+                                </div>
+                                <div className="flex items-center">
+                                    <p className="block w-70">Client Version</p>
+                                    <Input
+                                        type="text"
+                                        name="clientVersion"
+                                        placeholder="Client Version"
+                                        value={formData.clientVersion}
+                                        onChange={handleInputChange}
+                                        className="w-80"
+                                        required
+                                    />
+                                </div>
+                                <div className="flex items-center">
+                                    <p className="block w-70">
+                                        Attempt Least Privilege
+                                    </p>
+                                    <Checkbox
+                                        checked={
+                                            formData.attemptLeastPrivilege ===
+                                            "true"
+                                        }
+                                        onCheckedChange={(checked) => {
+                                            handleInputChange(
+                                                checked ? "true" : "false",
+                                                "attemptLeastPrivelege"
+                                            );
+                                        }}
+                                    />
+                                </div>
+                            </>
+                        )}
+                    </div>
+                );
+            case 4: {
                 //get all categories from complianceData
                 const categories = [
                     ...new Set(complianceData.map((item) => item.Categories)),
@@ -907,174 +1068,10 @@ const ScanCAContainerOrchestration = () => {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="space-y-4">
-                            <h3 className="text-xl font-semibold">
-                                Global Credentials Settings
-                            </h3>
-                            {formData.OS === "windows" && (
-                                <>
-                                    <div className="flex items-center">
-                                        <Checkbox
-                                            className="mr-4"
-                                            checked={
-                                                formData.globalCredentials
-                                                    .neverSendCredentials ===
-                                                "true"
-                                            }
-                                            onCheckedChange={(checked) => {
-                                                handleNestedInputChange(
-                                                    "globalCredentials",
-                                                    "neverSendCredentials",
-                                                    checked ? "true" : "false"
-                                                );
-                                            }}
-                                        />
-                                        <p>
-                                            Never send credentials in the clear
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center">
-                                        <Checkbox
-                                            className="mr-4"
-                                            checked={
-                                                formData.globalCredentials
-                                                    .dontUseNTLMv1 === "true"
-                                            }
-                                            onCheckedChange={(checked) => {
-                                                handleNestedInputChange(
-                                                    "globalCredentials",
-                                                    "dontUseNTLMv1",
-                                                    checked ? "true" : "false"
-                                                );
-                                            }}
-                                        />
-                                        <p>Do not use NTLMv1 authentication</p>
-                                    </div>
-                                    <div className="flex items-center">
-                                        <Checkbox
-                                            className="mr-4"
-                                            checked={
-                                                formData.globalCredentials
-                                                    .startRemoteRegistryService ===
-                                                "true"
-                                            }
-                                            onCheckedChange={(checked) => {
-                                                handleNestedInputChange(
-                                                    "globalCredentials",
-                                                    "startRemoteRegistryService",
-                                                    checked ? "true" : "false"
-                                                );
-                                            }}
-                                        />
-                                        <p>
-                                            start the remote registry service
-                                            during the scan
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center">
-                                        <Checkbox
-                                            className="mr-4"
-                                            checked={
-                                                formData.globalCredentials
-                                                    .enableAdministrativeShares ===
-                                                "true"
-                                            }
-                                            onCheckedChange={(checked) => {
-                                                handleNestedInputChange(
-                                                    "globalCredentials",
-                                                    "enableAdministrativeShares",
-                                                    checked ? "true" : "false"
-                                                );
-                                            }}
-                                        />
-                                        <p>
-                                            Enable administrative shares during
-                                            the scan
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center">
-                                        <Checkbox
-                                            className="mr-4"
-                                            checked={
-                                                formData.globalCredentials
-                                                    .startServerService ===
-                                                "true"
-                                            }
-                                            onCheckedChange={(checked) => {
-                                                handleNestedInputChange(
-                                                    "globalCredentials",
-                                                    "startServerService",
-                                                    checked ? "true" : "false"
-                                                );
-                                            }}
-                                        />
-                                        <p>
-                                            Start the Server Service during the
-                                            scan
-                                        </p>
-                                    </div>
-                                </>
-                            )}
-                            {formData.OS === "linux" && (
-                                <>
-                                    <div className="flex items-center">
-                                        <p className="block w-70">
-                                            known_hosts file
-                                        </p>
-                                        <Button>Add file</Button>
-                                    </div>
-                                    <div className="flex items-center">
-                                        <p className="block w-70">
-                                            Preferred port
-                                        </p>
-                                        <Input
-                                            type="number"
-                                            name="port"
-                                            placeholder="port"
-                                            value={formData.port}
-                                            onChange={handleInputChange}
-                                            className="w-80"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="flex items-center">
-                                        <p className="block w-70">
-                                            Client Version
-                                        </p>
-                                        <Input
-                                            type="text"
-                                            name="clientVersion"
-                                            placeholder="Client Version"
-                                            value={formData.clientVersion}
-                                            onChange={handleInputChange}
-                                            className="w-80"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="flex items-center">
-                                        <p className="block w-70">
-                                            Attempt Least Privilege
-                                        </p>
-                                        <Checkbox
-                                            checked={
-                                                formData.attemptLeastPrivilege ===
-                                                "true"
-                                            }
-                                            onCheckedChange={(checked) => {
-                                                handleInputChange(
-                                                    checked ? "true" : "false",
-                                                    "attemptLeastPrivelege"
-                                                );
-                                            }}
-                                        />
-                                    </div>
-                                </>
-                            )}
-                        </div>
                     </div>
                 );
             }
-            case 4:
+            case 5:
                 return (
                     <div className="space-y-6">
                         {renderError()}
@@ -1280,7 +1277,7 @@ const ScanCAContainerOrchestration = () => {
                                                 : formPages
                                         }
                                     />
-                                    {page === 4 ? (
+                                    {page === 5 ? (
                                         <button
                                             type="button"
                                             onClick={handleSubmit}
@@ -1289,7 +1286,7 @@ const ScanCAContainerOrchestration = () => {
                                             Submit
                                         </button>
                                     ) : formData.auditMethod === "agent" &&
-                                      page === 3 ? (
+                                      page === 4 ? (
                                         <Button className="px-4 py-2 bg-black text-white h-10 rounded">
                                             Download script
                                         </Button>

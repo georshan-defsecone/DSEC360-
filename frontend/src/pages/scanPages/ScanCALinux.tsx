@@ -34,12 +34,14 @@ const ScanCALinux = () => {
     "●",
     "●",
     "●",
+    "●"
   ];
 
   const formPagesAgent = [
     "●",
     "●",
     "●",
+    "●"
   ]
 
   const [page, setPage] = useState(1);
@@ -171,7 +173,7 @@ const ScanCALinux = () => {
   return true; // Passed validation
 };
   
-  const validatePage3 = () => {
+  const validatePage4 = () => {
     return (
       formData.complianceCategory !== "" &&
       formData.complianceSecurityStandard !== ""
@@ -231,9 +233,12 @@ const ScanCALinux = () => {
       validationResult = validatePage2();
       break;
     case 3:
-      validationResult = validatePage3();
+      validationResult = true;
       break;
     case 4:
+      validationResult = validatePage4();
+      break;
+    case 5:
       validationResult = true;
       break;
     default:
@@ -246,7 +251,7 @@ const ScanCALinux = () => {
   }
 
   setErrors(""); // Clear any existing errors
-  if (page < 4) setPage((prev) => prev + 1);
+  if (page < 5) setPage((prev) => prev + 1);
 };
 
   const prevPage = () => {
@@ -367,7 +372,7 @@ const ScanCALinux = () => {
                   <FileUploader onFileParsed={handleFileParsed}></FileUploader>
                 </div>
 
-                <div className="flex justify-start items-center mb-8">
+                <div className="flex justify-start items-center mb-4">
                   <p className="block w-70 ">Authentication Method (SSH)</p>
                   <Select
                     value={formData.authMethod}
@@ -603,7 +608,56 @@ const ScanCALinux = () => {
             )}
           </div>
         );
-      case 3: {
+      
+      case 3: 
+      return(
+        <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">
+                    Global Credential Settings
+                  </h2>
+                  <div className="flex items-center">
+                    <p className="block w-70">known_hosts file</p>
+                    <Button>Add file</Button>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">Preferred port</p>
+                    <Input
+                      type="number"
+                      name="port"
+                      placeholder="port"
+                      value={formData.port}
+                      onChange={handleInputChange}
+                      className="w-80"
+                      required
+                    />
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">Client Version</p>
+                    <Input
+                      type="text"
+                      name="clientVersion"
+                      placeholder="Client Version"
+                      value={formData.clientVersion}
+                      onChange={handleInputChange}
+                      className="w-80"
+                      required
+                    />
+                  </div>
+                  <div className="flex items-center">
+                    <p className="block w-70">Attempt Least Privilege</p>
+                    <Checkbox
+                      checked={formData.attemptLeastPrivelege === "true"}
+                      onCheckedChange={(checked) => {
+                        handleInputChange(
+                          checked ? "true" : "false",
+                          "attemptLeastPrivelege"
+                        );
+                      }}
+                    />
+                  </div>
+                </div>
+      )
+      case 4: {
         //get all categories from complianceData
         const categories = [
           ...new Set(complianceData.map((item) => item.Categories)),
@@ -661,54 +715,9 @@ const ScanCALinux = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-4">
-                  <h2 className="text-xl font-semibold">
-                    Global Credential Settings
-                  </h2>
-                  <div className="flex items-center">
-                    <p className="block w-70">known_hosts file</p>
-                    <Button>Add file</Button>
-                  </div>
-                  <div className="flex items-center">
-                    <p className="block w-70">Preferred port</p>
-                    <Input
-                      type="number"
-                      name="port"
-                      placeholder="port"
-                      value={formData.port}
-                      onChange={handleInputChange}
-                      className="w-80"
-                      required
-                    />
-                  </div>
-                  <div className="flex items-center">
-                    <p className="block w-70">Client Version</p>
-                    <Input
-                      type="text"
-                      name="clientVersion"
-                      placeholder="Client Version"
-                      value={formData.clientVersion}
-                      onChange={handleInputChange}
-                      className="w-80"
-                      required
-                    />
-                  </div>
-                  <div className="flex items-center">
-                    <p className="block w-70">Attempt Least Privilege</p>
-                    <Checkbox
-                      checked={formData.attemptLeastPrivelege === "true"}
-                      onCheckedChange={(checked) => {
-                        handleInputChange(
-                          checked ? "true" : "false",
-                          "attemptLeastPrivelege"
-                        );
-                      }}
-                    />
-                  </div>
-                </div>
           </div>
         )}
-      case 4:
+      case 5:
         return (
           <div className="space-y-6">
             {renderError()}
@@ -865,7 +874,7 @@ const ScanCALinux = () => {
                     Previous
                   </button>
                   <Breadcrumbs currentPage={page} pages={formData.auditMethod === "agent" ? formPagesAgent : formPages} />
-                  {page === 4 ? (
+                  {page === 5 ? (
                     <button
                       type="button"
                       onClick={handleSubmit}
@@ -873,8 +882,8 @@ const ScanCALinux = () => {
                     >
                       Submit
                     </button>
-                  ) : formData.auditMethod === "agent" && page === 3 ? (
-                    <Button>Download script</Button>
+                  ) : formData.auditMethod === "agent" && page === 4 ? (
+                    <Button className="px-4 py-2 bg-black text-white rounded h-10">Download script</Button>
                   ): (
                     <button
                       type="button"

@@ -9,888 +9,1003 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import FileUploader from "@/components/FileUploader";
 
 import api from "../api";
 const ScanIOCWindows = () => {
-  const [IOCdata, setIOCdata] = useState([]);
-  const [errors, setErrors] = useState("");
-  const [fileIPs, setFileIPs] = useState<string[]>([])
+    const [IOCdata, setIOCdata] = useState([]);
+    const [errors, setErrors] = useState("");
+    const [fileIPs, setFileIPs] = useState<string[]>([]);
 
-  const formPages = [
-    "●",
-    "●",
-    "●",
-    "●",
-  ];
+    const formPages = ["●", "●", "●", "●", "●"];
+    const formPagesAgent = ["●", "●", "●", "●"];
 
-  const [page, setPage] = useState(1);
+    const [page, setPage] = useState(1);
 
-  const [formData, setFormData] = useState({
-    // General Info
-    scanName: "",
-    projectName: "",
-    description: "",
+    const [formData, setFormData] = useState({
+        // General Info
+        scanName: "",
+        projectName: "",
+        description: "",
 
-    // Target Details
-    auditMethod: "",
-    target: "",
-    targetList: [],
-    authMethod: "",
-    username: "",
-    password: "",
-    domain: "",
-    ntlmHash: "",
-    lmHash: "",
-    kdc: "",
-    kdcPort: "",
-    kdcTransport: "",
-    certificate: "",
-    publicKey: "",
+        // Target Details
+        auditMethod: "",
+        target: "",
+        targetList: [],
+        authMethod: "",
+        username: "",
+        password: "",
+        domain: "",
+        ntlmHash: "",
+        lmHash: "",
+        kdc: "",
+        kdcPort: "",
+        kdcTransport: "",
+        certificate: "",
+        publicKey: "",
 
-    globalCredentials: {
-      neverSendCredentials: "false",
-      dontUseNTLMv1: "false",
-      startRemoteRegistryService: "false",
-      enableAdministrativeShares: "false",
-      startServerService: "false",
-    },
+        globalCredentials: {
+            neverSendCredentials: "false",
+            dontUseNTLMv1: "false",
+            startRemoteRegistryService: "false",
+            enableAdministrativeShares: "false",
+            startServerService: "false",
+        },
 
-    //Get control info
-    IOCcontrols: {} as Record<string, boolean>,
+        //Get control info
+        IOCcontrols: {} as Record<string, boolean>,
 
-    //Scan settings
-    schedule: "",
-    scheduleFrequency: "",
-    scheduleStartDate: "",
-    scheduleStartTime: "",
-    scheduleTimezone: "",
-    notification: "",
-    notificationEmail: "",
-  });
+        //Scan settings
+        schedule: "",
+        scheduleFrequency: "",
+        scheduleStartDate: "",
+        scheduleStartTime: "",
+        scheduleTimezone: "",
+        notification: "",
+        notificationEmail: "",
+    });
 
-  const validatePage1 = () => {
-    return (
-      formData.scanName.trim() !== "" &&
-      formData.projectName.trim() !== ""
-    );
-  };
-
-  const validatePage2 = () => {
-    if (!formData.auditMethod) return false;
-
-    if (formData.auditMethod === "remoteAccess") {
-      if (!formData.target) return false;
-      if (!formData.authMethod) return false;
-
-      // Validate based on authentication method
-      switch (formData.authMethod) {
-        case "password":
-          return formData.username && formData.password;
-        case "ntlm":
-          return formData.username && formData.ntlmHash && formData.domain;
-        case "kerberos":
-          return (
-            formData.username &&
-            formData.password &&
-            formData.kdc &&
-            formData.kdcPort &&
-            formData.domain
-          );
-        case "lm":
-          return formData.username && formData.lmHash && formData.domain;
-        default:
-          return false;
-      }
-    }
-
-    return true; // For agent and uploadConfig methods
-  };
-
-  useEffect(() => {
-    const fetchIOCdata = async () => {
-      try {
-        const response = await api.get("/scans/compliance/ioc/windows/");
-        console.log(response.data);
-        setIOCdata(response.data);
-
-        const initalControls = response.data.reduce(
-          (acc: Record<string, boolean>, ioc: any) => {
-            const key = ioc["IOC Names "].trim();
-            acc[key] = true;
-            return acc;
-          },
-          {}
+    const validatePage1 = () => {
+        return (
+            formData.scanName.trim() !== "" &&
+            formData.projectName.trim() !== ""
         );
-
-        setFormData((prev) => ({
-          ...prev,
-          IOCcontrols: initalControls,
-        }));
-      } catch (error) {
-        console.error("Error fetching IOC data:", error);
-        setErrors("Failed to fetch IOC data. Please try again later.");
-      }
     };
 
-    fetchIOCdata();
-  }, []);
+    const validatePage2 = () => {
+        if (!formData.auditMethod) return false;
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string,
-    field?: string
-  ) => {
-    if (typeof e === "string" && field) {
-      setFormData((prev) => ({
-        ...prev,
-        [field]: e,
-      }));
-    } else if (typeof e === "object" && "target" in e) {
-      const { name, value } = e.target;
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
-  };
+        if (formData.auditMethod === "remoteAccess") {
+            if (!formData.target) return false;
+            if (!formData.authMethod) return false;
 
-  const handleNestedInputChange = (
-    field: string,
-    nestedField: string,
-    value: string
-  ) => {
-    setFormData((prev) => {
-      const updatedField = {
-        ...((prev[field as keyof typeof prev] || {}) as Record<string, string>),
-        [nestedField]: value,
-      };
+            // Validate based on authentication method
+            switch (formData.authMethod) {
+                case "password":
+                    return formData.username && formData.password;
+                case "ntlm":
+                    return (
+                        formData.username &&
+                        formData.ntlmHash &&
+                        formData.domain
+                    );
+                case "kerberos":
+                    return (
+                        formData.username &&
+                        formData.password &&
+                        formData.kdc &&
+                        formData.kdcPort &&
+                        formData.domain
+                    );
+                case "lm":
+                    return (
+                        formData.username && formData.lmHash && formData.domain
+                    );
+                default:
+                    return false;
+            }
+        }
 
-      return {
-        ...prev,
-        [field]: updatedField,
-      };
-    });
-  };
+        return true; // For agent and uploadConfig methods
+    };
 
-  const handleFileParsed = (parsedIps: string[]) => {
-    setFileIPs(parsedIps)
-    setFormData((prev) => ({
-      ...prev,
-      targetList: parsedIps
-    }))
-  }
+    useEffect(() => {
+        const fetchIOCdata = async () => {
+            try {
+                const response = await api.get(
+                    "/scans/compliance/ioc/windows/"
+                );
+                console.log(response.data);
+                setIOCdata(response.data);
 
-  const handleCheckboxChange = (iocName: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      IOCcontrols: {
-        ...prev.IOCcontrols,
-        [iocName]: !prev.IOCcontrols[iocName],
-      },
-    }));
-  };
+                const initalControls = response.data.reduce(
+                    (acc: Record<string, boolean>, ioc: any) => {
+                        const key = ioc["IOC Names "].trim();
+                        acc[key] = true;
+                        return acc;
+                    },
+                    {}
+                );
 
-  const nextPage = () => {
-    let isValid = false;
+                setFormData((prev) => ({
+                    ...prev,
+                    IOCcontrols: initalControls,
+                }));
+            } catch (error) {
+                console.error("Error fetching IOC data:", error);
+                setErrors("Failed to fetch IOC data. Please try again later.");
+            }
+        };
 
-    switch (page) {
-      case 1:
-        isValid = validatePage1();
-        break;
-      case 2:
-        isValid = validatePage2();
-        break;
-      case 3:
-        isValid = true;
-        break;
-      case 4:
-        isValid = true
-        break;
-      default:
-        isValid = false;
-    }
+        fetchIOCdata();
+    }, []);
 
-    if (!isValid) {
-      setErrors("Please fill in all required fields before proceeding.");
-      return;
-    }
+    const handleInputChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string,
+        field?: string
+    ) => {
+        if (typeof e === "string" && field) {
+            setFormData((prev) => ({
+                ...prev,
+                [field]: e,
+            }));
+        } else if (typeof e === "object" && "target" in e) {
+            const { name, value } = e.target;
+            setFormData((prev) => ({
+                ...prev,
+                [name]: value,
+            }));
+        }
+    };
 
-    setErrors(""); // Clear any existing errors
-    if (page < 4) setPage((prev) => prev + 1);
-  };
+    const handleNestedInputChange = (
+        field: string,
+        nestedField: string,
+        value: string
+    ) => {
+        setFormData((prev) => {
+            const updatedField = {
+                ...((prev[field as keyof typeof prev] || {}) as Record<
+                    string,
+                    string
+                >),
+                [nestedField]: value,
+            };
 
-  const prevPage = () => {
-    if (page > 1) setPage((prev) => prev - 1);
-  };
+            return {
+                ...prev,
+                [field]: updatedField,
+            };
+        });
+    };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setErrors("")
-    console.log("Form submitted:", formData)
-    // Add your submission logic here
-  };
+    const handleFileParsed = (parsedIps: string[]) => {
+        setFileIPs(parsedIps);
+        setFormData((prev) => ({
+            ...prev,
+            targetList: parsedIps,
+        }));
+    };
 
-  const renderError = () => {
-    if (errors) {
-      return (
-        <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
-          {errors}
-        </div>
-      );
-    }
-    return null;
-  };
+    const handleCheckboxChange = (iocName: string) => {
+        setFormData((prev) => ({
+            ...prev,
+            IOCcontrols: {
+                ...prev.IOCcontrols,
+                [iocName]: !prev.IOCcontrols[iocName],
+            },
+        }));
+    };
 
-  const renderPage = () => {
-    switch (page) {
-      case 1:
-        return (
-          <div className="space-y-4">
-            {renderError()}
-            <h2 className="text-xl font-semibold">General Information</h2>
+    const nextPage = () => {
+        let isValid = false;
 
-            <div className="flex items-center">
-              <p className="block w-70">Project Name:</p>
+        switch (page) {
+            case 1:
+                isValid = validatePage1();
+                break;
+            case 2:
+                isValid = validatePage2();
+                break;
+            case 3:
+                isValid = true;
+                break;
+            case 4:
+                isValid = true;
+                break;
+            case 5:
+                isValid = true;
+                break;
+            default:
+                isValid = false;
+        }
 
-              <Input
-                type="text"
-                name="projectName"
-                placeholder="Project Name"
-                value={formData.projectName}
-                onChange={handleInputChange}
-                className="w-80"
-                required
-              />
-            </div>
+        if (!isValid) {
+            setErrors("Please fill in all required fields before proceeding.");
+            return;
+        }
 
-            <div className="flex items-center">
-              <p className="block w-70 ">Scan Name:</p>
+        setErrors(""); // Clear any existing errors
+        if (page < 5) setPage((prev) => prev + 1);
+    };
 
-              <Input
-                type="text"
-                name="scanName"
-                placeholder="Scan Name"
-                value={formData.scanName}
-                className="w-80"
-                onChange={handleInputChange}
-                required
-              />
-            </div>
+    const prevPage = () => {
+        if (page > 1) setPage((prev) => prev - 1);
+    };
 
-            <div className="flex items-center">
-              <p className="block w-70 ">Project Description:</p>
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setErrors("");
+        console.log("Form submitted:", formData);
+        // Add your submission logic here
+    };
 
-              <Textarea
-                name="description"
-                placeholder="Project Description"
-                value={formData.description}
-                onChange={handleInputChange}
-                className="resize-none w-80"
-                //className="w-full p-2 border rounded"
-              />
-            </div>
-          </div>
-        );
-      case 2:
-        return (
-          <div className="space-y-4">
-            {renderError()}
-            <h2 className="text-xl font-semibold">Target Details</h2>
-            <div className="flex justify-start items-center">
-              <p className="block w-70 ">Audit Method:</p>
-
-              <Select
-                value={formData.auditMethod}
-                onValueChange={(value) =>
-                  handleInputChange(value, "auditMethod")
-                }
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select Audit Method" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="agent">Agent</SelectItem>
-                  <SelectItem value="remoteAccess">Remote Access</SelectItem>
-                  <SelectItem value="uploadConfig">Upload Config</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {formData.auditMethod === "agent" && (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <Button
-                    type="button"
-                    className="px-4 py-2 bg-black text-white rounded"
-                    onClick={() => console.log("Download agent")}
-                  >
-                    Download Script
-                  </Button>
+    const renderError = () => {
+        if (errors) {
+            return (
+                <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {errors}
                 </div>
-              </div>
-            )}
-
-            {formData.auditMethod === "remoteAccess" && (
-              <div className="space-y-4">
-                <div className="flex items-center">
-                  <p className="block w-70">Target:</p>
-
-                  <Input
-                    type="text"
-                    name="target"
-                    placeholder="target"
-                    value={formData.target}
-                    onChange={handleInputChange}
-                    className="w-80"
-                    required
-                    //className="w-full p-2 border rounded"
-                  />
-
-                  <FileUploader onFileParsed={handleFileParsed}></FileUploader>
-                </div>
-
-                <div className="flex justify-start items-center mb-8">
-                  <p className="block w-70 ">Authentication Method:</p>
-                  <Select
-                    value={formData.authMethod}
-                    onValueChange={(value) =>
-                      handleInputChange(value, "authMethod")
-                    }
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select Auth Method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="password">Password</SelectItem>
-                      <SelectItem value="ntlm">NTLM Hash</SelectItem>
-                      <SelectItem value="lm">LM Hash</SelectItem>
-                      <SelectItem value="kerberos">Kerberos</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {formData.authMethod === "password" && (
-                  <div className="space-y-4">
-                    <div className="flex items-center">
-                      <p className="block w-70">Username:</p>
-                      <Input
-                        type="text"
-                        name="username"
-                        placeholder="Username"
-                        value={formData.username}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">Password:</p>
-                      <Input
-                        type="password"
-                        name="password"
-                        placeholder="Password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70 ">Domain:</p>
-
-                      <Input
-                        type="text"
-                        name="domain"
-                        placeholder="Domain"
-                        value={formData.domain}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {formData.authMethod === "ntlm" && (
-                  <div className="space-y-4">
-                    <div className="flex items-center">
-                      <p className="block w-70">Username:</p>
-                      <Input
-                        type="text"
-                        name="username"
-                        placeholder="Username"
-                        value={formData.username}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">NTLM Hash:</p>
-                      <Input
-                        type="text"
-                        name="ntlmHash"
-                        placeholder="NTLM Hash"
-                        value={formData.ntlmHash}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">Domain:</p>
-                      <Input
-                        type="text"
-                        name="domain"
-                        placeholder="Domain"
-                        value={formData.domain}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                  </div>
-                )}
-                {formData.authMethod === "kerberos" && (
-                  <div className="space-y-4">
-                    <div className="flex items-center">
-                      <p className="block w-70">Username:</p>
-                      <Input
-                        type="text"
-                        name="username"
-                        placeholder="Username"
-                        value={formData.username}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">Password:</p>
-                      <Input
-                        type="password"
-                        name="password"
-                        placeholder="Password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">
-                        Key Distribution Center (KDC):
-                      </p>
-                      <Input
-                        type="text"
-                        name="kdc"
-                        placeholder="kdc.example.com"
-                        value={formData.kdc}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">KDC Transport: </p>
-                      <Input
-                        type="text"
-                        name="kdcPort"
-                        placeholder="KDC Port"
-                        value={formData.kdcPort}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">Domain:</p>
-                      <Input
-                        type="text"
-                        name="domain"
-                        placeholder="Domain"
-                        value={formData.domain}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                  </div>
-                )}
-                {formData.authMethod === "lm" && (
-                  <div className="space-y-4 border-l-2 border-gray-200">
-                    <div className="flex items-center">
-                      <p className="block w-70">Username:</p>
-                      <Input
-                        type="text"
-                        name="username"
-                        placeholder="Username"
-                        value={formData.username}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">LM Hash:</p>
-                      <Input
-                        type="text"
-                        name="lmHash"
-                        placeholder="LM Hash"
-                        value={formData.lmHash}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">Domain:</p>
-                      <Input
-                        type="text"
-                        name="domain"
-                        placeholder="Domain"
-                        value={formData.domain}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                  </div>
-                )}
-                <div className="space-y-4">
-                  <h3 className="text-xl font-semibold">
-                    Global Credentials Settings
-                  </h3>
-                  <div className="flex items-center">
-                    <Checkbox
-                      className="mr-4"
-                      checked={
-                        formData.globalCredentials.neverSendCredentials ===
-                        "true"
-                      }
-                      onCheckedChange={(checked) => {
-                        handleNestedInputChange(
-                          "globalCredentials",
-                          "neverSendCredentials",
-                          checked ? "true" : "false"
-                        );
-                      }}
-                    />
-                    <p>Never send credentials in the clear</p>
-                  </div>
-                  <div className="flex items-center">
-                    <Checkbox
-                      className="mr-4"
-                      checked={
-                        formData.globalCredentials.dontUseNTLMv1 === "true"
-                      }
-                      onCheckedChange={(checked) => {
-                        handleNestedInputChange(
-                          "globalCredentials",
-                          "dontUseNTLMv1",
-                          checked ? "true" : "false"
-                        );
-                      }}
-                    />
-                    <p>Do not use NTLMv1 authentication</p>
-                  </div>
-                  <div className="flex items-center">
-                    <Checkbox
-                      className="mr-4"
-                      checked={
-                        formData.globalCredentials
-                          .startRemoteRegistryService === "true"
-                      }
-                      onCheckedChange={(checked) => {
-                        handleNestedInputChange(
-                          "globalCredentials",
-                          "startRemoteRegistryService",
-                          checked ? "true" : "false"
-                        );
-                      }}
-                    />
-                    <p>start the remote registry service during the scan</p>
-                  </div>
-                  <div className="flex items-center">
-                    <Checkbox
-                      className="mr-4"
-                      checked={
-                        formData.globalCredentials
-                          .enableAdministrativeShares === "true"
-                      }
-                      onCheckedChange={(checked) => {
-                        handleNestedInputChange(
-                          "globalCredentials",
-                          "enableAdministrativeShares",
-                          checked ? "true" : "false"
-                        );
-                      }}
-                    />
-                    <p>Enable administrative shares during the scan</p>
-                  </div>
-                  <div className="flex items-center">
-                    <Checkbox
-                      className="mr-4"
-                      checked={
-                        formData.globalCredentials.startServerService === "true"
-                      }
-                      onCheckedChange={(checked) => {
-                        handleNestedInputChange(
-                          "globalCredentials",
-                          "startServerService",
-                          checked ? "true" : "false"
-                        );
-                      }}
-                    />
-                    <p>Start the Server Service during the scan</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {formData.auditMethod === "uploadConfig" && (
-              <>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <Button
-                      type="button"
-                      className="px-4 py-2 bg-black text-white rounded"
-                      onClick={() => console.log("Uploading config")}
-                    >
-                      Upload config
-                    </Button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        );
-      case 3:
-        return (
-          <>
-            <div className="space-y-6">
-              <h2 className="text-xl font-semibold">IOC Controls</h2>
-              <div className="flex flex-col space-y-4">
-                {IOCdata.map((ioc: any) => {
-                  const iocName = ioc["IOC Names "].trim();
-                  return (
-                    <div
-                      key={ioc["ID Number "]}
-                      className="flex items-center space-x-3"
-                    >
-                      <Checkbox
-                        id={`ioc-${ioc["ID Number "]}`}
-                        checked={
-                          formData.IOCcontrols[ioc["IOC Names "]] || false
-                        }
-                        onCheckedChange={() =>
-                          handleCheckboxChange(ioc["IOC Names "])
-                        }
-                      />
-                      <label
-                        htmlFor={`ioc-${ioc["ID Number "]}`}
-                        className="text-sm font-medium leading-none"
-                      >
-                        {ioc["IOC Names "]}
-                      </label>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </>
-        );
-
-      case 4:
-        return (
-          <div className="space-y-6">
-            {renderError()}
-            <h2 className="text-xl font-semibold">Scan Settings</h2>
-
-            {/* Schedule Section */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <p className="font-medium">Schedule Scan</p>
-                  <p className="text-sm text-gray-500">
-                    Enable to schedule recurring scans
-                  </p>
-                </div>
-                <Switch
-                  checked={formData.schedule === "true"}
-                  onCheckedChange={(checked) =>
-                    handleInputChange(checked.toString(), "schedule")
-                  }
-                />
-              </div>
-
-              {formData.schedule === "true" && (
-                <div className="space-y-4 pl-4 border-l-2 border-gray-200">
-                  <div className="flex items-center">
-                    <p className="block w-70">Frequency:</p>
-                    <Select
-                      value={formData.scheduleFrequency}
-                      onValueChange={(value) =>
-                        handleInputChange(value, "scheduleFrequency")
-                      }
-                    >
-                      <SelectTrigger className="w-80">
-                        <SelectValue placeholder="Select frequency" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                        <SelectItem value="yearly">Yearly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-center">
-                    <p className="block w-70">Start Date:</p>
-                    <Input
-                      type="date"
-                      name="scheduleStartDate"
-                      value={formData.scheduleStartDate}
-                      onChange={handleInputChange}
-                      className="w-80"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex items-center">
-                    <p className="block w-70">Start Time:</p>
-                    <Input
-                      type="time"
-                      name="scheduleStartTime"
-                      value={formData.scheduleStartTime}
-                      onChange={handleInputChange}
-                      className="w-80"
-                      required
-                    />
-                  </div>
-                  <div className="flex items-center">
-                    <p className="block w-70">Timezone:</p>
-                    <Select
-                      value={formData.scheduleTimezone}
-                      onValueChange={(value) =>
-                        handleInputChange(value, "scheduleTimezone")
-                      }
-                    >
-                      <SelectTrigger className="w-80">
-                        <SelectValue placeholder="Select timezone" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="IST">IST</SelectItem>
-                        <SelectItem value="UTC">UTC</SelectItem>
-                        <SelectItem value="EST">EST</SelectItem>
-                        <SelectItem value="PST">PST</SelectItem>
-                        {/* Add more timezones as needed */}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Notification Section */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <p className="font-medium">Email Notifications</p>
-                  <p className="text-sm text-gray-500">
-                    Get notified about scan results
-                  </p>
-                </div>
-                <Switch
-                  checked={formData.notification === "true"}
-                  onCheckedChange={(checked) =>
-                    handleInputChange(checked.toString(), "notification")
-                  }
-                />
-              </div>
-
-              {formData.notification === "true" && (
-                <div className="space-y-4 pl-4 border-l-2 border-gray-200">
-                  <div className="flex items-center">
-                    <p className="block w-70">Email Address:</p>
-                    <Input
-                      type="email"
-                      name="notificationEmail"
-                      placeholder="Enter email address"
-                      value={formData.notificationEmail}
-                      onChange={handleInputChange}
-                      className="w-80"
-                      required
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      default:
+            );
+        }
         return null;
-    }
-  };
+    };
 
-  return (
-    <>
-      <div className="flex h-screen text-black">
-        <Sidebar settings={false} scanSettings={true} homeSettings={false} />
-        <div className="flex-1 flex flex-col pr-8 pl-8 ml-64 pt-20">
-          <Header title="Windows Compromise Assessment Scan" />
+    const renderPage = () => {
+        switch (page) {
+            case 1:
+                return (
+                    <div className="space-y-4">
+                        {renderError()}
+                        <h2 className="text-xl font-semibold">
+                            General Information
+                        </h2>
 
-          <Card className="w-[70%] mt-10 ml-4 shadow-2xl">
-            <CardContent className="w-full p-4 px-12">
-              <div className="w-auto space-y-6">
-                <form onSubmit={handleSubmit}>
-                  {renderPage()}
+                        <div className="flex items-center">
+                            <p className="block w-70">Project Name:</p>
 
-                  <div className="flex justify-between mt-6">
-                    <button
-                      type="button"
-                      onClick={prevPage}
-                      className={`px-4 py-2 rounded ${
-                        page === 1 ? "bg-gray-300" : "bg-black text-white"
-                      }`}
-                      disabled={page === 1}
-                    >
-                      Previous
-                    </button>
-                    <Breadcrumbs currentPage={page} pages={formPages} />
-                    {page === 4 ? (
-                      <button
-                        type="button"
-                        onClick={handleSubmit}
-                        className="px-4 py-2 bg-green-500 w-25 text-white rounded"
-                      >
-                        Submit
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={nextPage}
-                        className="px-4 py-2 bg-black w-25 text-white rounded"
-                      >
-                        Next
-                      </button>
-                    )}
-                  </div>
-                </form>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </>
-  );
+                            <Input
+                                type="text"
+                                name="projectName"
+                                placeholder="Project Name"
+                                value={formData.projectName}
+                                onChange={handleInputChange}
+                                className="w-80"
+                                required
+                            />
+                        </div>
+
+                        <div className="flex items-center">
+                            <p className="block w-70 ">Scan Name:</p>
+
+                            <Input
+                                type="text"
+                                name="scanName"
+                                placeholder="Scan Name"
+                                value={formData.scanName}
+                                className="w-80"
+                                onChange={handleInputChange}
+                                required
+                            />
+                        </div>
+
+                        <div className="flex items-center">
+                            <p className="block w-70 ">Project Description:</p>
+
+                            <Textarea
+                                name="description"
+                                placeholder="Project Description"
+                                value={formData.description}
+                                onChange={handleInputChange}
+                                className="resize-none w-80"
+                                //className="w-full p-2 border rounded"
+                            />
+                        </div>
+                    </div>
+                );
+            case 2:
+                return (
+                    <div className="space-y-4">
+                        {renderError()}
+                        <h2 className="text-xl font-semibold">
+                            Target Details
+                        </h2>
+                        <div className="flex justify-start items-center">
+                            <p className="block w-70 ">Audit Method:</p>
+
+                            <Select
+                                value={formData.auditMethod}
+                                onValueChange={(value) =>
+                                    handleInputChange(value, "auditMethod")
+                                }
+                            >
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Select Audit Method" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="agent">Agent</SelectItem>
+                                    <SelectItem value="remoteAccess">
+                                        Remote Access
+                                    </SelectItem>
+                                    <SelectItem value="uploadConfig">
+                                        Upload Config
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {formData.auditMethod === "remoteAccess" && (
+                            <div className="space-y-4">
+                                <div className="flex items-center">
+                                    <p className="block w-70">Target:</p>
+
+                                    <Input
+                                        type="text"
+                                        name="target"
+                                        placeholder="target"
+                                        value={formData.target}
+                                        onChange={handleInputChange}
+                                        className="w-80"
+                                        required
+                                        //className="w-full p-2 border rounded"
+                                    />
+
+                                    <FileUploader
+                                        onFileParsed={handleFileParsed}
+                                    ></FileUploader>
+                                </div>
+
+                                <div className="flex justify-start items-center mb-4">
+                                    <p className="block w-70 ">
+                                        Authentication Method:
+                                    </p>
+                                    <Select
+                                        value={formData.authMethod}
+                                        onValueChange={(value) =>
+                                            handleInputChange(
+                                                value,
+                                                "authMethod"
+                                            )
+                                        }
+                                    >
+                                        <SelectTrigger className="w-[180px]">
+                                            <SelectValue placeholder="Select Auth Method" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="password">
+                                                Password
+                                            </SelectItem>
+                                            <SelectItem value="ntlm">
+                                                NTLM Hash
+                                            </SelectItem>
+                                            <SelectItem value="lm">
+                                                LM Hash
+                                            </SelectItem>
+                                            <SelectItem value="kerberos">
+                                                Kerberos
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {formData.authMethod === "password" && (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center">
+                                            <p className="block w-70">
+                                                Username:
+                                            </p>
+                                            <Input
+                                                type="text"
+                                                name="username"
+                                                placeholder="Username"
+                                                value={formData.username}
+                                                onChange={handleInputChange}
+                                                className="w-80"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex items-center">
+                                            <p className="block w-70">
+                                                Password:
+                                            </p>
+                                            <Input
+                                                type="password"
+                                                name="password"
+                                                placeholder="Password"
+                                                value={formData.password}
+                                                onChange={handleInputChange}
+                                                className="w-80"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex items-center">
+                                            <p className="block w-70 ">
+                                                Domain:
+                                            </p>
+
+                                            <Input
+                                                type="text"
+                                                name="domain"
+                                                placeholder="Domain"
+                                                value={formData.domain}
+                                                onChange={handleInputChange}
+                                                className="w-80"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {formData.authMethod === "ntlm" && (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center">
+                                            <p className="block w-70">
+                                                Username:
+                                            </p>
+                                            <Input
+                                                type="text"
+                                                name="username"
+                                                placeholder="Username"
+                                                value={formData.username}
+                                                onChange={handleInputChange}
+                                                className="w-80"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex items-center">
+                                            <p className="block w-70">
+                                                NTLM Hash:
+                                            </p>
+                                            <Input
+                                                type="text"
+                                                name="ntlmHash"
+                                                placeholder="NTLM Hash"
+                                                value={formData.ntlmHash}
+                                                onChange={handleInputChange}
+                                                className="w-80"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex items-center">
+                                            <p className="block w-70">
+                                                Domain:
+                                            </p>
+                                            <Input
+                                                type="text"
+                                                name="domain"
+                                                placeholder="Domain"
+                                                value={formData.domain}
+                                                onChange={handleInputChange}
+                                                className="w-80"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                                {formData.authMethod === "kerberos" && (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center">
+                                            <p className="block w-70">
+                                                Username:
+                                            </p>
+                                            <Input
+                                                type="text"
+                                                name="username"
+                                                placeholder="Username"
+                                                value={formData.username}
+                                                onChange={handleInputChange}
+                                                className="w-80"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex items-center">
+                                            <p className="block w-70">
+                                                Password:
+                                            </p>
+                                            <Input
+                                                type="password"
+                                                name="password"
+                                                placeholder="Password"
+                                                value={formData.password}
+                                                onChange={handleInputChange}
+                                                className="w-80"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex items-center">
+                                            <p className="block w-70">
+                                                Key Distribution Center (KDC):
+                                            </p>
+                                            <Input
+                                                type="text"
+                                                name="kdc"
+                                                placeholder="kdc.example.com"
+                                                value={formData.kdc}
+                                                onChange={handleInputChange}
+                                                className="w-80"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex items-center">
+                                            <p className="block w-70">
+                                                KDC Transport:{" "}
+                                            </p>
+                                            <Input
+                                                type="text"
+                                                name="kdcPort"
+                                                placeholder="KDC Port"
+                                                value={formData.kdcPort}
+                                                onChange={handleInputChange}
+                                                className="w-80"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex items-center">
+                                            <p className="block w-70">
+                                                Domain:
+                                            </p>
+                                            <Input
+                                                type="text"
+                                                name="domain"
+                                                placeholder="Domain"
+                                                value={formData.domain}
+                                                onChange={handleInputChange}
+                                                className="w-80"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                                {formData.authMethod === "lm" && (
+                                    <div className="space-y-4 border-l-2 border-gray-200">
+                                        <div className="flex items-center">
+                                            <p className="block w-70">
+                                                Username:
+                                            </p>
+                                            <Input
+                                                type="text"
+                                                name="username"
+                                                placeholder="Username"
+                                                value={formData.username}
+                                                onChange={handleInputChange}
+                                                className="w-80"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex items-center">
+                                            <p className="block w-70">
+                                                LM Hash:
+                                            </p>
+                                            <Input
+                                                type="text"
+                                                name="lmHash"
+                                                placeholder="LM Hash"
+                                                value={formData.lmHash}
+                                                onChange={handleInputChange}
+                                                className="w-80"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex items-center">
+                                            <p className="block w-70">
+                                                Domain:
+                                            </p>
+                                            <Input
+                                                type="text"
+                                                name="domain"
+                                                placeholder="Domain"
+                                                value={formData.domain}
+                                                onChange={handleInputChange}
+                                                className="w-80"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {formData.auditMethod === "uploadConfig" && (
+                            <>
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <Button
+                                            type="button"
+                                            className="px-4 py-2 bg-black text-white rounded"
+                                            onClick={() =>
+                                                console.log("Uploading config")
+                                            }
+                                        >
+                                            Upload config
+                                        </Button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                );
+            case 3:
+                return (
+                    <div className="space-y-4">
+                        <h3 className="text-xl font-semibold">
+                            Global Credentials Settings
+                        </h3>
+                        <div className="flex items-center">
+                            <Checkbox
+                                className="mr-4"
+                                checked={
+                                    formData.globalCredentials
+                                        .neverSendCredentials === "true"
+                                }
+                                onCheckedChange={(checked) => {
+                                    handleNestedInputChange(
+                                        "globalCredentials",
+                                        "neverSendCredentials",
+                                        checked ? "true" : "false"
+                                    );
+                                }}
+                            />
+                            <p>Never send credentials in the clear</p>
+                        </div>
+                        <div className="flex items-center">
+                            <Checkbox
+                                className="mr-4"
+                                checked={
+                                    formData.globalCredentials.dontUseNTLMv1 ===
+                                    "true"
+                                }
+                                onCheckedChange={(checked) => {
+                                    handleNestedInputChange(
+                                        "globalCredentials",
+                                        "dontUseNTLMv1",
+                                        checked ? "true" : "false"
+                                    );
+                                }}
+                            />
+                            <p>Do not use NTLMv1 authentication</p>
+                        </div>
+                        <div className="flex items-center">
+                            <Checkbox
+                                className="mr-4"
+                                checked={
+                                    formData.globalCredentials
+                                        .startRemoteRegistryService === "true"
+                                }
+                                onCheckedChange={(checked) => {
+                                    handleNestedInputChange(
+                                        "globalCredentials",
+                                        "startRemoteRegistryService",
+                                        checked ? "true" : "false"
+                                    );
+                                }}
+                            />
+                            <p>
+                                start the remote registry service during the
+                                scan
+                            </p>
+                        </div>
+                        <div className="flex items-center">
+                            <Checkbox
+                                className="mr-4"
+                                checked={
+                                    formData.globalCredentials
+                                        .enableAdministrativeShares === "true"
+                                }
+                                onCheckedChange={(checked) => {
+                                    handleNestedInputChange(
+                                        "globalCredentials",
+                                        "enableAdministrativeShares",
+                                        checked ? "true" : "false"
+                                    );
+                                }}
+                            />
+                            <p>Enable administrative shares during the scan</p>
+                        </div>
+                        <div className="flex items-center">
+                            <Checkbox
+                                className="mr-4"
+                                checked={
+                                    formData.globalCredentials
+                                        .startServerService === "true"
+                                }
+                                onCheckedChange={(checked) => {
+                                    handleNestedInputChange(
+                                        "globalCredentials",
+                                        "startServerService",
+                                        checked ? "true" : "false"
+                                    );
+                                }}
+                            />
+                            <p>Start the Server Service during the scan</p>
+                        </div>
+                    </div>
+                );
+            case 4:
+                return (
+                    <>
+                        <div className="space-y-6">
+                            <h2 className="text-xl font-semibold">
+                                IOC Controls
+                            </h2>
+                            <div className="flex flex-col space-y-4">
+                                {IOCdata.map((ioc: any) => {
+                                    const iocName = ioc["IOC Names "].trim();
+                                    return (
+                                        <div
+                                            key={ioc["ID Number "]}
+                                            className="flex items-center space-x-3"
+                                        >
+                                            <Checkbox
+                                                id={`ioc-${ioc["ID Number "]}`}
+                                                checked={
+                                                    formData.IOCcontrols[
+                                                        ioc["IOC Names "]
+                                                    ] || false
+                                                }
+                                                onCheckedChange={() =>
+                                                    handleCheckboxChange(
+                                                        ioc["IOC Names "]
+                                                    )
+                                                }
+                                            />
+                                            <label
+                                                htmlFor={`ioc-${ioc["ID Number "]}`}
+                                                className="text-sm font-medium leading-none"
+                                            >
+                                                {ioc["IOC Names "]}
+                                            </label>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </>
+                );
+
+            case 5:
+                return (
+                    <div className="space-y-6">
+                        {renderError()}
+                        <h2 className="text-xl font-semibold">Scan Settings</h2>
+
+                        {/* Schedule Section */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-0.5">
+                                    <p className="font-medium">Schedule Scan</p>
+                                    <p className="text-sm text-gray-500">
+                                        Enable to schedule recurring scans
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={formData.schedule === "true"}
+                                    onCheckedChange={(checked) =>
+                                        handleInputChange(
+                                            checked.toString(),
+                                            "schedule"
+                                        )
+                                    }
+                                />
+                            </div>
+
+                            {formData.schedule === "true" && (
+                                <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+                                    <div className="flex items-center">
+                                        <p className="block w-70">Frequency:</p>
+                                        <Select
+                                            value={formData.scheduleFrequency}
+                                            onValueChange={(value) =>
+                                                handleInputChange(
+                                                    value,
+                                                    "scheduleFrequency"
+                                                )
+                                            }
+                                        >
+                                            <SelectTrigger className="w-80">
+                                                <SelectValue placeholder="Select frequency" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="daily">
+                                                    Daily
+                                                </SelectItem>
+                                                <SelectItem value="weekly">
+                                                    Weekly
+                                                </SelectItem>
+                                                <SelectItem value="monthly">
+                                                    Monthly
+                                                </SelectItem>
+                                                <SelectItem value="yearly">
+                                                    Yearly
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div className="flex items-center">
+                                        <p className="block w-70">
+                                            Start Date:
+                                        </p>
+                                        <Input
+                                            type="date"
+                                            name="scheduleStartDate"
+                                            value={formData.scheduleStartDate}
+                                            onChange={handleInputChange}
+                                            className="w-80"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center">
+                                        <p className="block w-70">
+                                            Start Time:
+                                        </p>
+                                        <Input
+                                            type="time"
+                                            name="scheduleStartTime"
+                                            value={formData.scheduleStartTime}
+                                            onChange={handleInputChange}
+                                            className="w-80"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="flex items-center">
+                                        <p className="block w-70">Timezone:</p>
+                                        <Select
+                                            value={formData.scheduleTimezone}
+                                            onValueChange={(value) =>
+                                                handleInputChange(
+                                                    value,
+                                                    "scheduleTimezone"
+                                                )
+                                            }
+                                        >
+                                            <SelectTrigger className="w-80">
+                                                <SelectValue placeholder="Select timezone" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="IST">
+                                                    IST
+                                                </SelectItem>
+                                                <SelectItem value="UTC">
+                                                    UTC
+                                                </SelectItem>
+                                                <SelectItem value="EST">
+                                                    EST
+                                                </SelectItem>
+                                                <SelectItem value="PST">
+                                                    PST
+                                                </SelectItem>
+                                                {/* Add more timezones as needed */}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Notification Section */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-0.5">
+                                    <p className="font-medium">
+                                        Email Notifications
+                                    </p>
+                                    <p className="text-sm text-gray-500">
+                                        Get notified about scan results
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={formData.notification === "true"}
+                                    onCheckedChange={(checked) =>
+                                        handleInputChange(
+                                            checked.toString(),
+                                            "notification"
+                                        )
+                                    }
+                                />
+                            </div>
+
+                            {formData.notification === "true" && (
+                                <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+                                    <div className="flex items-center">
+                                        <p className="block w-70">
+                                            Email Address:
+                                        </p>
+                                        <Input
+                                            type="email"
+                                            name="notificationEmail"
+                                            placeholder="Enter email address"
+                                            value={formData.notificationEmail}
+                                            onChange={handleInputChange}
+                                            className="w-80"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <>
+            <div className="flex h-screen text-black">
+                <Sidebar
+                    settings={false}
+                    scanSettings={true}
+                    homeSettings={false}
+                />
+                <div className="flex-1 flex flex-col pr-8 pl-8 ml-64 pt-20">
+                    <Header title="Windows Compromise Assessment Scan" />
+
+                    <Card className="w-[70%] mt-10 ml-4 shadow-2xl">
+                        <CardContent className="w-full p-4 px-12">
+                            <div className="w-auto space-y-6">
+                                <form onSubmit={handleSubmit}>
+                                    {renderPage()}
+
+                                    <div className="flex justify-between mt-6">
+                                        <button
+                                            type="button"
+                                            onClick={prevPage}
+                                            className={`px-4 py-2 rounded ${
+                                                page === 1
+                                                    ? "bg-gray-300"
+                                                    : "bg-black text-white"
+                                            }`}
+                                            disabled={page === 1}
+                                        >
+                                            Previous
+                                        </button>
+                                        <Breadcrumbs
+                                            currentPage={page}
+                                            pages={
+                                                formData.auditMethod === "agent"
+                                                    ? formPagesAgent
+                                                    : formPages
+                                            }
+                                        />
+                                        {page === 5 ? (
+                                            <button
+                                                type="button"
+                                                onClick={handleSubmit}
+                                                className="px-4 py-2 bg-green-500 w-25 text-white rounded"
+                                            >
+                                                Submit
+                                            </button>
+                                        ) : formData.auditMethod === "agent" &&
+                                          page === 4 ? (
+                                            <Button className="px-4 py-2 bg-black text-white h-10 rounded">
+                                                Download script
+                                            </Button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={nextPage}
+                                                className="px-4 py-2 bg-black w-25 text-white rounded"
+                                            >
+                                                Next
+                                            </button>
+                                        )}
+                                    </div>
+                                </form>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        </>
+    );
 };
 
 export default ScanIOCWindows;
