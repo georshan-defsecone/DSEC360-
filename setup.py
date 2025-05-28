@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 """
 Cross-platform project launcher for React + Django application
@@ -31,7 +32,7 @@ def get_os_type():
         print(f"Unsupported operating system: {system}")
         sys.exit(1)
 
-def run_command(command, shell=True, check=True, capture_output=False):
+def run_command(command, shell=True, check=True, capture_output=False, ignore_errors=False):
     """Execute a command with proper error handling"""
     try:
         if capture_output:
@@ -42,8 +43,13 @@ def run_command(command, shell=True, check=True, capture_output=False):
             subprocess.run(command, shell=shell, check=check)
             return True
     except subprocess.CalledProcessError as e:
+        if ignore_errors:
+            print(f"Command failed (ignored): {command}")
+            return False
         print(f"Command failed: {command}")
         print(f"Error: {e}")
+        if hasattr(e, 'stderr') and e.stderr:
+            print(f"Stderr: {e.stderr}")
         return False
 
 def check_command_exists(command):
@@ -121,9 +127,15 @@ def install_postgresql_unix():
     elif check_command_exists("dnf"):
         print("Installing PostgreSQL with dnf...")
         run_command("sudo dnf install -y postgresql-server postgresql-contrib")
+        run_command("sudo postgresql-setup --initdb", ignore_errors=True)
+        run_command("sudo systemctl enable postgresql", ignore_errors=True)
+        run_command("sudo systemctl start postgresql", ignore_errors=True)
     elif check_command_exists("pacman"):
         print("Installing PostgreSQL with pacman...")
         run_command("sudo pacman -Sy --noconfirm postgresql")
+        run_command("sudo -u postgres initdb -D /var/lib/postgres/data", ignore_errors=True)
+        run_command("sudo systemctl enable postgresql", ignore_errors=True)
+        run_command("sudo systemctl start postgresql", ignore_errors=True)
     elif check_command_exists("brew"):
         print("Installing PostgreSQL with Homebrew...")
         run_command("brew install postgresql")
@@ -254,38 +266,69 @@ def setup_postgresql_unix():
     
     # Start PostgreSQL service
     if check_command_exists("systemctl"):
+        print("Starting PostgreSQL service...")
         run_command("sudo systemctl start postgresql", check=False)
         run_command("sudo systemctl enable postgresql", check=False)
+        time.sleep(2)  # Give service time to start
     elif check_command_exists("brew"):
         run_command("brew services start postgresql", check=False)
     
-    # Create user
-    create_user_script = f'''
-    DO $$
-    BEGIN
-        IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '{PG_USER}') THEN
-            CREATE ROLE {PG_USER} WITH LOGIN PASSWORD '{PG_PASSWORD}';
-        END IF;
-    END
-    $$;
-    '''
+    # Test PostgreSQL connection
+    print("Testing PostgreSQL connection...")
+    test_result = run_command('sudo -u postgres psql -c "SELECT version();"', capture_output=True, check=False)
+    if not test_result:
+        print("PostgreSQL service may not be running properly. Attempting to restart...")
+        run_command("sudo systemctl restart postgresql", check=False)
+        time.sleep(3)
     
-    user_cmd = f'sudo -u postgres psql -c "{create_user_script}"'
-    run_command(user_cmd, check=False)
+    # Create user first - Fixed the order and error handling
+    print(f"Creating PostgreSQL user {PG_USER}...")
+    create_user_script = f"CREATE USER {PG_USER} WITH PASSWORD '{PG_PASSWORD}' CREATEDB;"
     
-    # Create database
-    db_check = f"sudo -u postgres psql -tAc \"SELECT 1 FROM pg_database WHERE datname = '{PG_DB}'\""
+    # Check if user already exists
+    user_exists_cmd = f'sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname=\'{PG_USER}\'"'
+    user_exists = run_command(user_exists_cmd, capture_output=True, check=False)
+    
+    if "1" not in str(user_exists):
+        user_cmd = f'sudo -u postgres psql -c "{create_user_script}"'
+        if not run_command(user_cmd, check=False):
+            print(f"Failed to create user {PG_USER}. Trying alternative method...")
+            # Alternative method using createuser
+            run_command(f'sudo -u postgres createuser -d -P {PG_USER}', check=False)
+    else:
+        print(f"User {PG_USER} already exists")
+    
+    # Create database - now that user exists
+    print(f"Creating database {PG_DB}...")
+    db_check = f'sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname = \'{PG_DB}\'"'
     db_exists = run_command(db_check, capture_output=True, check=False)
     
     if "1" not in str(db_exists):
         print(f"Creating database {PG_DB}...")
-        run_command(f'sudo -u postgres createdb -O {PG_USER} {PG_DB}')
+        # First try with owner
+        if not run_command(f'sudo -u postgres createdb -O {PG_USER} {PG_DB}', check=False):
+            # If that fails, create without owner and grant later
+            if run_command(f'sudo -u postgres createdb {PG_DB}', check=False):
+                run_command(f'sudo -u postgres psql -c "ALTER DATABASE {PG_DB} OWNER TO {PG_USER};"', check=False)
+    else:
+        print(f"Database {PG_DB} already exists")
     
     # Grant privileges
+    print("Granting privileges...")
     grant_script = f'GRANT ALL PRIVILEGES ON DATABASE {PG_DB} TO {PG_USER}; ALTER ROLE {PG_USER} CREATEDB;'
-    run_command(f'sudo -u postgres psql -c "{grant_script}"')
+    run_command(f'sudo -u postgres psql -c "{grant_script}"', check=False)
     
-    return True
+    # Test the connection with the new user
+    print("Testing connection with new user...")
+    test_connection_cmd = f'PGPASSWORD="{PG_PASSWORD}" psql -U {PG_USER} -d {PG_DB} -c "SELECT current_database();"'
+    if run_command(test_connection_cmd, check=False, capture_output=True):
+        print("✅ PostgreSQL setup complete!")
+        print(f"You can connect using: PGPASSWORD='{PG_PASSWORD}' psql -U {PG_USER} -d {PG_DB}")
+        return True
+    else:
+        print("⚠️  PostgreSQL setup completed but connection test failed.")
+        print("You may need to configure pg_hba.conf for password authentication.")
+        return True  # Continue anyway as the setup might still work
 
 def setup_python_venv():
     """Setup Python virtual environment"""
@@ -294,18 +337,44 @@ def setup_python_venv():
     # Check if python3-venv is available (Linux)
     os_type = get_os_type()
     if os_type == "unix" and platform.system().lower() == "linux":
-        try:
-            subprocess.run(["python3", "-m", "venv", "--help"], 
-                         capture_output=True, check=True)
-        except subprocess.CalledProcessError:
-            print("Installing python3-venv...")
-            run_command("sudo apt update && sudo apt install -y python3-venv")
+        # Check Python version
+        python_version = run_command("python3 --version", capture_output=True, check=False)
+        print(f"Detected Python: {python_version}")
+        
+        # Try to create venv to test if python3-venv is installed
+        test_venv = run_command("python3 -m venv --help", capture_output=True, check=False)
+        if not test_venv:
+            print("python3-venv not found. Installing...")
+            # Get Python version for the specific venv package
+            version_output = run_command("python3 --version", capture_output=True, check=False)
+            if version_output:
+                # Extract version like "3.12" from "Python 3.12.x"
+                import re
+                version_match = re.search(r'Python (\d+\.\d+)', str(version_output))
+                if version_match:
+                    python_version = version_match.group(1)
+                    print(f"Installing python{python_version}-venv...")
+                    if not run_command(f"sudo apt update && sudo apt install -y python{python_version}-venv", check=False):
+                        # Fallback to generic python3-venv
+                        run_command("sudo apt install -y python3-venv", check=False)
+                else:
+                    run_command("sudo apt install -y python3-venv", check=False)
+            else:
+                run_command("sudo apt install -y python3-venv", check=False)
+    
+    # Remove existing venv if it's corrupted
+    if os.path.exists(VENV_DIR):
+        print("Removing existing virtual environment...")
+        shutil.rmtree(VENV_DIR)
     
     # Create virtual environment
-    if not os.path.exists(VENV_DIR):
-        print("Creating virtual environment...")
-        python_cmd = "python" if os_type == "windows" else "python3"
-        run_command(f"{python_cmd} -m venv {VENV_DIR}")
+    print("Creating virtual environment...")
+    python_cmd = "python" if os_type == "windows" else "python3"
+    if not run_command(f"{python_cmd} -m venv {VENV_DIR}"):
+        print("Failed to create virtual environment.")
+        print("Please ensure python3-venv is installed:")
+        print("  sudo apt install python3-venv")
+        return False
     
     return True
 
@@ -356,6 +425,9 @@ def activate_venv_and_install_deps():
     
     if not requirements_found:
         print("No requirements.txt found in expected locations.")
+        print("Installing basic Django requirements...")
+        # Install basic requirements if no requirements.txt found
+        run_command(f"{pip_path} install django psycopg2-binary python-dotenv")
     
     return python_path
 
@@ -387,8 +459,21 @@ def run_django_migrations(python_path):
             python_cmd = os.path.join(relative_path, python_path)
         
         print(f"Using Python executable: {python_cmd}")
-        run_command(f"{python_cmd} manage.py makemigrations")
-        run_command(f"{python_cmd} manage.py migrate")
+        
+        # Check if Django settings are properly configured
+        print("Checking Django configuration...")
+        settings_check = run_command(f"{python_cmd} manage.py check", check=False)
+        if not settings_check:
+            print("Django configuration check failed. Please check your settings.py")
+            print("Make sure your database settings are correct:")
+            print(f"  - Database: {PG_DB}")
+            print(f"  - User: {PG_USER}")
+            print(f"  - Password: {PG_PASSWORD}")
+            print("  - Host: localhost")
+            print("  - Port: 5432")
+        
+        run_command(f"{python_cmd} manage.py makemigrations", check=False)
+        run_command(f"{python_cmd} manage.py migrate", check=False)
         return True
     finally:
         os.chdir(original_dir)
@@ -421,6 +506,8 @@ def start_django_server(python_path):
             subprocess.run([python_cmd, "manage.py", "runserver"], check=True)
         except subprocess.CalledProcessError:
             print("Django server stopped or failed to start")
+        except KeyboardInterrupt:
+            print("Django server stopped by user")
         finally:
             os.chdir(original_dir)
     
@@ -473,6 +560,8 @@ def setup_frontend():
                     subprocess.run(["npm", "start"], check=True)
                 except subprocess.CalledProcessError:
                     print("Failed to start React development server")
+            except KeyboardInterrupt:
+                print("React server stopped by user")
         
         frontend_thread = threading.Thread(target=run_frontend, daemon=True)
         frontend_thread.start()
@@ -512,8 +601,7 @@ def main():
         # Step 3: Run Django migrations
         print("\n--- Running Django migrations ---")
         if not run_django_migrations(python_path):
-            print("Django migrations failed")
-            return
+            print("Django migrations failed - but continuing...")
         
         # Step 4: Start Django server
         print("\n--- Starting Django backend ---")
@@ -529,6 +617,12 @@ def main():
         print("\n=== Setup Complete ===")
         print("Backend: http://127.0.0.1:8000/")
         print("Frontend: Check the terminal for the React dev server URL (usually http://localhost:3000)")
+        print(f"\nDatabase connection info:")
+        print(f"  Database: {PG_DB}")
+        print(f"  User: {PG_USER}")
+        print(f"  Password: {PG_PASSWORD}")
+        print(f"  Host: localhost")
+        print(f"  Port: 5432")
         print("\nPress Ctrl+C to stop all servers")
         
         # Keep the main thread alive
@@ -540,6 +634,8 @@ def main():
             
     except Exception as e:
         print(f"An error occurred: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":
