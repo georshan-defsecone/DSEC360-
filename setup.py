@@ -83,7 +83,7 @@ def install_postgresql_windows():
     import urllib.request
     import tempfile
     
-    PG_VERSION = "16.3"
+    PG_VERSION = "17.4"
     POSTGRES_PASSWORD = "dsec360@123"
     
     major_version = PG_VERSION.split(".")[0]
@@ -169,7 +169,7 @@ def setup_postgresql_windows():
     """Setup PostgreSQL on Windows"""
     print("Setting up PostgreSQL on Windows...")
     
-    PG_VERSION = "16.3"
+    PG_VERSION = "17.4"
     POSTGRES_PASSWORD = "dsec360@123"
     major_version = PG_VERSION.split(".")[0]
     
@@ -618,7 +618,8 @@ def setup_frontend():
         return False
     
     # Look for frontend directory
-    frontend_path = "frontend"
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    frontend_path = os.path.join(script_dir, "frontend")
     
     if not os.path.exists(frontend_path):
         print("Frontend directory not found!")
@@ -643,6 +644,7 @@ def setup_frontend():
         print("Starting React development server...")
         def run_frontend():
             try:
+                os.chdir(frontend_path)
                 subprocess.run(["npm", "run", "dev"], check=True)
             except subprocess.CalledProcessError:
                 try:
@@ -659,6 +661,7 @@ def setup_frontend():
     
     finally:
         os.chdir(original_dir)
+
 
 def main():
     """Main function to orchestrate the setup and launch process"""
