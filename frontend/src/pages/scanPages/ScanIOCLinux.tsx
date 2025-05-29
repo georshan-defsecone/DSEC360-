@@ -17,6 +17,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import FileUploader from "@/components/FileUploader";
+import { toast, Toaster } from "sonner";
+import { CheckCircle2 } from "lucide-react";
 
 import api from "../api";
 const ScanIOCLinux = () => {
@@ -28,6 +30,7 @@ const ScanIOCLinux = () => {
     const formPagesAgent = ["●", "●", "●", "●"];
 
     const [page, setPage] = useState(1);
+  const [userName, setUserName] = useState("");
 
     const [formData, setFormData] = useState({
         // General Info
@@ -238,7 +241,9 @@ const ScanIOCLinux = () => {
     useEffect(() => {
         const fetchIOCdata = async () => {
             try {
-                const response = await api.get("/scans/compliance/ioc/linux/");
+                const response1 = await api.get("users/userinfo");
+setUserName(response1.data.username);
+        const response = await api.get("/scans/compliance/ioc/linux/");
                 console.log(response.data);
                 setIOCdata(response.data);
 
@@ -339,12 +344,78 @@ const ScanIOCLinux = () => {
         if (page > 1) setPage((prev) => prev - 1);
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setErrors("");
-        console.log("Form submitted:", formData);
-        // Add your submission logic here
-    };
+  const handleSubmit = async () => {
+  try {
+    const response = await api.post("/api/create-scan/", {
+      project_name: formData.projectName,
+      scan_name: formData.scanName,
+      scan_author: userName,  // Replace as needed
+      scan_status: "Pending",        // Or dynamic
+
+      scan_data: {
+        scanType:"IOC",
+        description: formData.description,
+
+        // Target Details
+        auditMethod: formData.auditMethod,
+        target: formData.target,
+        authMethod: formData.authMethod,
+        username: formData.username,
+        password: formData.password,
+        domain: formData.domain,
+        ntlmHash: formData.ntlmHash,
+        lmHash: formData.lmHash,
+        kdc: formData.kdc,
+        kdcPort: formData.kdcPort,
+        kdcTransport: formData.kdcTransport,
+        certificate: formData.certificate,
+        publicKey: formData.publicKey,
+        privateKeyPassphrase: formData.privateKeyPassphrase,
+        elevatePrivilege: formData.elevatePrivilege,
+        port: formData.port,
+        clientVersion: formData.clientVersion,
+        attemptLeastPrivilege: formData.attemptLeastPrivilege,
+
+        // Elevation Privilege Fields
+        EP_escalationAccount: formData.EP_escalationAccount,
+        EP_escalationPassword: formData.EP_escalationPassword,
+        EP_dzdoDirectory: formData.EP_dzdoDirectory,
+        EP_suDirectory: formData.EP_suDirectory,
+        EP_pbrunDirectory: formData.EP_pbrunDirectory,
+        EP_su_sudoDirectory: formData.EP_su_sudoDirectory,
+        EP_su_login: formData.EP_su_login,
+        EP_su_user: formData.EP_su_user,
+        EP_sudoUser: formData.EP_sudoUser,
+        EPsshUserPassword: formData.EPsshUserPassword,
+        EPenablePassword: formData.EPenablePassword,
+
+        // IOC Controls
+        IOCcontrols: formData.IOCcontrols,
+
+        // Scan Settings
+        schedule: formData.schedule,
+        scheduleFrequency: formData.scheduleFrequency,
+        scheduleStartDate: formData.scheduleStartDate,
+        scheduleStartTime: formData.scheduleStartTime,
+        scheduleTimezone: formData.scheduleTimezone,
+        notification: formData.notification,
+        notificationEmail: formData.notificationEmail,
+      },
+    });
+
+    console.log("Scan created:", response.data);
+    toast.success("Scan created succesfully", {
+  icon: <CheckCircle2 className="text-green-500" />,
+});
+
+    // Optionally reset form:
+    // setFormData(initialFormData);
+  } catch (error) {
+    console.error("Error creating scan:", error.response?.data || error.message);
+    alert("Failed to create scan.");
+  }
+};
+
 
     const renderError = () => {
         if (errors) {
@@ -1044,11 +1115,11 @@ const ScanIOCLinux = () => {
                 <div className="flex-1 flex flex-col pr-8 pl-8 ml-64 pt-20">
                     <Header title="Linux Compromise Assessment Scan" />
 
-                    <Card className="w-[70%] mt-10 ml-4 shadow-2xl">
-                        <CardContent className="w-full p-4 px-12">
-                            <div className="w-auto space-y-6">
-                                <form onSubmit={handleSubmit}>
-                                    {renderPage()}
+          <Card className=" w-[85%] mt-10 ml-4 shadow-2xl">
+            <CardContent className="w-full p-4 px-12">
+              <div className="w-auto space-y-6">
+                <form onSubmit={handleSubmit}>
+                  {renderPage()}
 
                                     <div className="flex justify-between mt-6">
                                         <button

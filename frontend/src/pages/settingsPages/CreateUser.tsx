@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/select";
 import { Eye, EyeOff } from "lucide-react";
 import api from "../api";
+import { toast } from "sonner";
+import { CheckCircle2 } from "lucide-react";
 
 const CreateUser = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -30,7 +32,9 @@ const CreateUser = () => {
         is_admin: role === "admin",
       });
       console.log("User created:", response.data);
-      alert("User created successfully!");
+      toast.success("User created successfully", {
+  icon: <CheckCircle2 className="text-green-500" />,
+});
       setUsername("");
       setEmail("");
       setPassword("");

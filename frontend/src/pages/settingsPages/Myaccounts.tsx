@@ -90,7 +90,7 @@ const Myaccounts = () => {
         <Header title="My Account" />
 
         {/* Account Info Card */}
-        <Card className="w-[70%] mt-10 ml-4 shadow-2xl">
+        <Card className="w-[85%] mt-10 ml-4 shadow-2xl">
           <CardContent className="w-full p-4 px-12">
             <div className="flex items-center gap-6">
               <div className="w-24 h-24 mb-12 mr-5 rounded-full bg-gradient-to-br from-blue-500 to-gray-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg shrink-0">
@@ -139,7 +139,7 @@ const Myaccounts = () => {
         </Card>
 
         {/* Edit Button Below the Card */}
-        <div className="w-[70%] mt-4 ml-4 flex justify-end">
+        <div className="w-[70%] mt-4 ml-48 flex justify-end">
           <Button
             onClick={handleEditCardOpen}
             className="bg-black text-white hover:bg-gray-800 w-20"

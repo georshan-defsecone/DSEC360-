@@ -21,18 +21,7 @@ from rest_framework import status
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer
 from django.db.models import Q
-
-
-
-class MyProjectsView(APIView):
-    # permission_classes = [IsAuthenticated]
-    permission_classes = [AllowAny]
-    
-    def get(self, request):
-        scans = Scan.objects.filter(trash=False)
-        serializer = ScanSerializer(scans, many=True)
-        return Response(serializer.data)
-
+from django.views.decorators.csrf import csrf_exempt
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -331,3 +320,42 @@ def post_scan_file(request):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
     return Response({'error': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_scan(request):
+    data = request.data.copy()  # Make it mutable
+
+    project_name = data.get("project_name")
+    scan_author = data.get("scan_author", "unknown")
+
+    if not project_name:
+        return Response({"error": "project_name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Find or create the project
+    project, created = Project.objects.get_or_create(
+    project_name=project_name,
+    defaults={
+        "project_id": str(uuid.uuid4()),
+        "project_author": scan_author,
+        "trash": False,
+    }
+)
+
+    data["project"] = project.pk  # Inject FK ID
+    data["scan_id"] = str(uuid.uuid4())
+
+    # You may also want to remove project_name before validation if not in the model
+    data.pop("project_name", None)
+
+    serializer = ScanSerializer(data=data)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            "message": "Scan created successfully.",
+            "scan": serializer.data
+        }, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
