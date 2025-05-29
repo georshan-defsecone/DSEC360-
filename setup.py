@@ -604,17 +604,148 @@ def start_django_server(python_path):
     django_thread.start()
     return django_thread
 
+def install_nodejs_windows():
+    """Install Node.js on Windows automatically"""
+    import urllib.request
+    import tempfile
+    
+    NODE_VERSION = "20.11.0"  # LTS version
+    installer_url = f"https://nodejs.org/dist/v{NODE_VERSION}/node-v{NODE_VERSION}-x64.msi"
+    
+    print(f"Downloading Node.js {NODE_VERSION} installer...")
+    
+    # Download installer to temp directory
+    with tempfile.NamedTemporaryFile(suffix='.msi', delete=False) as tmp_file:
+        installer_path = tmp_file.name
+    
+    try:
+        urllib.request.urlretrieve(installer_url, installer_path)
+        print("Download complete. Installing Node.js silently...")
+        
+        # Install Node.js silently
+        install_args = [
+            "msiexec",
+            "/i", installer_path,
+            "/quiet",
+            "/norestart",
+            "ADDLOCAL=ALL"
+        ]
+        
+        result = subprocess.run(install_args, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"Installation failed: {result.stderr}")
+            return False
+        
+        print("Node.js installation complete.")
+        
+        # Add Node.js to PATH
+        node_path = r"C:\Program Files\nodejs"
+        current_path = os.environ.get('PATH', '')
+        if node_path not in current_path:
+            os.environ['PATH'] = f"{current_path};{node_path}"
+        
+        # Wait for installation to complete
+        print("Waiting for Node.js to be available...")
+        time.sleep(5)
+        
+        return True
+        
+    except Exception as e:
+        print(f"Failed to download or install Node.js: {e}")
+        return False
+    finally:
+        # Clean up installer file
+        try:
+            os.unlink(installer_path)
+        except:
+            pass
+
+def install_nodejs_unix():
+    """Install Node.js on Unix-like systems"""
+    print("Installing Node.js...")
+    
+    if check_command_exists("apt"):
+        print("Installing Node.js with apt...")
+        # Install NodeSource repository for latest Node.js
+        run_command("curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -", check=False)
+        return run_command("sudo apt install -y nodejs", check=False)
+    
+    elif check_command_exists("dnf"):
+        print("Installing Node.js with dnf...")
+        return run_command("sudo dnf install -y nodejs npm", check=False)
+    
+    elif check_command_exists("pacman"):
+        print("Installing Node.js with pacman...")
+        return run_command("sudo pacman -S --noconfirm nodejs npm", check=False)
+    
+    elif check_command_exists("brew"):
+        print("Installing Node.js with Homebrew...")
+        return run_command("brew install node", check=False)
+    
+    else:
+        print("No supported package manager found for installing Node.js")
+        print("Please install Node.js manually from: https://nodejs.org/")
+        return False
+
+def ensure_nodejs_installed():
+    """Ensure Node.js and npm are installed, install if missing"""
+    os_type = get_os_type()
+    
+    # Check if Node.js is installed
+    if not check_command_exists("node"):
+        print("Node.js is not installed. Installing...")
+        
+        if os_type == "windows":
+            if not install_nodejs_windows():
+                print("Failed to install Node.js automatically.")
+                print("Please install Node.js manually from: https://nodejs.org/")
+                return False
+        else:
+            if not install_nodejs_unix():
+                print("Failed to install Node.js automatically.")
+                print("Please install Node.js manually from: https://nodejs.org/")
+                return False
+        
+        # Verify installation
+        if not check_command_exists("node"):
+            print("Node.js installation verification failed.")
+            return False
+    
+    # Check if npm is installed (should come with Node.js)
+    if not check_command_exists("npm"):
+        print("npm is not available. This usually comes with Node.js.")
+        
+        if os_type == "unix":
+            # Try to install npm separately on Unix systems
+            print("Attempting to install npm separately...")
+            if check_command_exists("apt"):
+                run_command("sudo apt install -y npm", check=False)
+            elif check_command_exists("dnf"):
+                run_command("sudo dnf install -y npm", check=False)
+            elif check_command_exists("pacman"):
+                run_command("sudo pacman -S --noconfirm npm", check=False)
+        
+        # Final check
+        if not check_command_exists("npm"):
+            print("npm is still not available. Please install it manually.")
+            return False
+    
+    # Display versions
+    node_version = run_command("node --version", capture_output=True, check=False)
+    npm_version = run_command("npm --version", capture_output=True, check=False)
+    
+    print(f"✅ Node.js version: {node_version}")
+    print(f"✅ npm version: {npm_version}")
+    
+    return True
+
 def setup_frontend():
     """Setup and start React frontend"""
     print("Setting up React frontend...")
     
-    # Check if Node.js and npm are installed
-    if not check_command_exists("node"):
-        print("Node.js is not installed. Please install Node.js from: https://nodejs.org/")
-        return False
-    
-    if not check_command_exists("npm"):
-        print("npm is not installed. Please install npm.")
+    # Ensure Node.js and npm are installed
+    if not ensure_nodejs_installed():
+        print("❌ Failed to ensure Node.js and npm are available")
         return False
     
     # Look for frontend directory
@@ -638,24 +769,32 @@ def setup_frontend():
     try:
         # Install dependencies
         print("Installing npm dependencies...")
-        run_command("npm install")
+        if not run_command("npm install", check=False):
+            print("Failed to install npm dependencies. Trying with --force flag...")
+            run_command("npm install --force", check=False)
         
         # Start development server
         print("Starting React development server...")
         def run_frontend():
             try:
                 os.chdir(frontend_path)
-                subprocess.run(["npm", "run", "dev"], check=True)
-            except subprocess.CalledProcessError:
-                try:
-                    subprocess.run(["npm", "start"], check=True)
-                except subprocess.CalledProcessError:
-                    print("Failed to start React development server")
+                # Try different start commands based on package.json scripts
+                if run_command("npm run dev", check=False):
+                    return
+                elif run_command("npm start", check=False):
+                    return
+                elif run_command("npm run serve", check=False):
+                    return
+                else:
+                    print("❌ Failed to start React development server")
             except KeyboardInterrupt:
                 print("React server stopped by user")
         
         frontend_thread = threading.Thread(target=run_frontend, daemon=True)
         frontend_thread.start()
+        
+        # Give frontend server time to start
+        time.sleep(3)
         
         return frontend_thread
     
