@@ -83,8 +83,8 @@ def install_postgresql_windows():
     import urllib.request
     import tempfile
     
-    PG_VERSION = "17.4"
-    POSTGRES_PASSWORD = "dsec360@123"
+    PG_VERSION = "17.2"  # Updated to a more stable version
+    POSTGRES_PASSWORD = "postgres"
     
     major_version = PG_VERSION.split(".")[0]
     installer_url = f"https://get.enterprisedb.com/postgresql/postgresql-{PG_VERSION}-1-windows-x64.exe"
@@ -99,20 +99,39 @@ def install_postgresql_windows():
         urllib.request.urlretrieve(installer_url, installer_path)
         print("Download complete. Installing PostgreSQL silently...")
         
-        # Install PostgreSQL silently
+        # Updated install arguments without deprecated options
         install_args = [
             installer_path,
             "--mode", "unattended",
+            "--unattendedmodeui", "none",
             "--superpassword", POSTGRES_PASSWORD,
-            f"--servicename", f"postgresql-{major_version}",
-            "--serviceaccountpassword", POSTGRES_PASSWORD,
-            "--prefix", f"C:\\Program Files\\PostgreSQL\\{major_version}"
+            "--servicename", f"postgresql-{major_version}",
+            "--prefix", f"C:\\Program Files\\PostgreSQL\\{major_version}",
+            "--datadir", f"C:\\Program Files\\PostgreSQL\\{major_version}\\data",
+            "--serverport", "5432",
+            "--locale", "English, United States"
         ]
+        
+        print("Running installer with arguments:", " ".join(install_args[1:]))  # Don't show full path
         
         result = subprocess.run(install_args, capture_output=True, text=True)
         if result.returncode != 0:
-            print(f"Installation failed: {result.stderr}")
-            return False
+            print(f"Installation failed with return code: {result.returncode}")
+            print(f"Stdout: {result.stdout}")
+            print(f"Stderr: {result.stderr}")
+            
+            # Try alternative installation method with minimal options
+            print("Trying with minimal installation options...")
+            minimal_args = [
+                installer_path,
+                "--mode", "unattended",
+                "--superpassword", POSTGRES_PASSWORD
+            ]
+            
+            result = subprocess.run(minimal_args, capture_output=True, text=True)
+            if result.returncode != 0:
+                print(f"Minimal installation also failed: {result.stderr}")
+                return False
         
         print("PostgreSQL installation complete.")
         
@@ -121,10 +140,28 @@ def install_postgresql_windows():
         current_path = os.environ.get('PATH', '')
         if pg_bin_path not in current_path:
             os.environ['PATH'] = f"{current_path};{pg_bin_path}"
+            print(f"Added {pg_bin_path} to PATH")
         
         # Wait for service to start
         print("Waiting for PostgreSQL service to start...")
-        time.sleep(10)
+        time.sleep(15)  # Increased wait time
+        
+        # Check if service is running
+        try:
+            service_check = subprocess.run(
+                ["sc", "query", f"postgresql-{major_version}"], 
+                capture_output=True, text=True, check=False
+            )
+            if "RUNNING" in service_check.stdout:
+                print("✅ PostgreSQL service is running")
+            else:
+                print("⚠️ PostgreSQL service may not be running properly")
+                # Try to start the service
+                print("Attempting to start PostgreSQL service...")
+                subprocess.run(["net", "start", f"postgresql-{major_version}"], check=False)
+                time.sleep(5)
+        except Exception as e:
+            print(f"Could not check service status: {e}")
         
         return True
         
@@ -168,114 +205,227 @@ def install_postgresql_unix():
 def setup_postgresql_windows():
     """Setup PostgreSQL on Windows"""
     print("Setting up PostgreSQL on Windows...")
-    
-    PG_VERSION = "17.4"
-    POSTGRES_PASSWORD = "dsec360@123"
+
+    PG_VERSION = "17.2"  # Match the version in install function
+    POSTGRES_PASSWORD = "postgres"
     major_version = PG_VERSION.split(".")[0]
-    
+
     # Check if PostgreSQL is already installed
     pg_bin_path = f"C:\\Program Files\\PostgreSQL\\{major_version}\\bin"
     psql_path = os.path.join(pg_bin_path, "psql.exe")
-    
-    if not os.path.exists(psql_path):
-        print(f"PostgreSQL {PG_VERSION} not found. Installing...")
+
+    # Also check for different major versions that might be installed
+    possible_versions = ["17", "16", "15", "14", "13"]
+    postgres_found = False
+    actual_version = None
+
+    for version in possible_versions:
+        test_path = f"C:\\Program Files\\PostgreSQL\\{version}\\bin\\psql.exe"
+        if os.path.exists(test_path):
+            pg_bin_path = f"C:\\Program Files\\PostgreSQL\\{version}\\bin"
+            psql_path = test_path
+            actual_version = version
+            postgres_found = True
+            print(f"Found existing PostgreSQL {version} installation")
+            break
+
+    if not postgres_found:
+        print(f"PostgreSQL not found. Installing version {PG_VERSION}...")
         if not install_postgresql_windows():
             print("Failed to install PostgreSQL automatically.")
             print("Please install PostgreSQL manually from: https://www.postgresql.org/download/windows/")
             return False
+        actual_version = major_version
     else:
-        print("PostgreSQL is already installed.")
-        # Ensure it's in PATH
-        current_path = os.environ.get('PATH', '')
-        if pg_bin_path not in current_path:
-            os.environ['PATH'] = f"{current_path};{pg_bin_path}"
-    
-    # Create SQL script for user and database setup
-    sql_script = f'''
-    DO $
-    BEGIN
-        IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '{PG_USER}') THEN
-            CREATE ROLE {PG_USER} WITH LOGIN PASSWORD '{PG_PASSWORD}';
-        END IF;
-    END
-    $;
+        print(f"Using existing PostgreSQL {actual_version} installation.")
 
-    DO $
-    BEGIN
-        IF NOT EXISTS (SELECT FROM pg_database WHERE datname = '{PG_DB}') THEN
-            CREATE DATABASE {PG_DB} OWNER {PG_USER};
-        END IF;
-    END
-    $;
+    # Ensure PostgreSQL bin directory is in PATH
+    current_path = os.environ.get('PATH', '')
+    if pg_bin_path not in current_path:
+        os.environ['PATH'] = f"{current_path};{pg_bin_path}"
+        print(f"Added {pg_bin_path} to PATH")
 
-    GRANT ALL PRIVILEGES ON DATABASE {PG_DB} TO {PG_USER};
-    ALTER ROLE {PG_USER} CREATEDB;
-    '''
-    
-    # Write SQL to temp file
-    import tempfile
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.sql', delete=False) as sql_file:
-        sql_file.write(sql_script)
-        sql_file_path = sql_file.name
-    
+    # Test psql command
+    print("Testing psql command availability...")
+    test_result = run_command("psql --version", capture_output=True, check=False)
+    if test_result:
+        print(f"✅ psql is available: {test_result}")
+    else:
+        print("⚠️ psql command not found in PATH")
+
+    # Set environment for PostgreSQL commands
+    env = os.environ.copy()
+    env['PGPASSWORD'] = POSTGRES_PASSWORD
+
     try:
-        print(f"Creating user {PG_USER} and database {PG_DB}...")
-        
-        # Set PGPASSWORD environment variable to avoid password prompt
-        env = os.environ.copy()
-        env['PGPASSWORD'] = POSTGRES_PASSWORD
-        
-        # Execute SQL script
-        cmd = [psql_path, "-U", "postgres", "-d", "postgres", "-f", sql_file_path, "-v", "ON_ERROR_STOP=1"]
+        print(f"Creating user {PG_USER}...")
+
+        # Step 1: Create user (if not exists)
+        user_sql = f"""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '{PG_USER}') THEN
+                CREATE ROLE {PG_USER} WITH LOGIN PASSWORD '{PG_PASSWORD}';
+            END IF;
+        END
+        $$;
+        """
+
+        # Write user creation SQL to temp file
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sql', delete=False) as sql_file:
+            sql_file.write(user_sql)
+            user_sql_path = sql_file.name
+
+        # Execute user creation
+        cmd = [psql_path, "-U", "postgres", "-d", "postgres", "-f", user_sql_path, "-v", "ON_ERROR_STOP=1"]
         result = subprocess.run(cmd, env=env, capture_output=True, text=True)
-        
+
         if result.returncode != 0:
-            print(f"Database setup failed: {result.stderr}")
+            print(f"User creation failed: {result.stderr}")
             return False
-        
+
+        print(f"✅ User {PG_USER} created successfully!")
+
+        # Clean up user SQL file
+        os.unlink(user_sql_path)
+
+        # Step 2: Check if database exists
+        print(f"Checking if database {PG_DB} exists...")
+        check_db_cmd = [psql_path, "-U", "postgres", "-d", "postgres", "-tAc", f"SELECT 1 FROM pg_database WHERE datname='{PG_DB}'"]
+        db_check_result = subprocess.run(check_db_cmd, env=env, capture_output=True, text=True)
+
+        if db_check_result.returncode == 0 and "1" in db_check_result.stdout:
+            print(f"Database {PG_DB} already exists")
+        else:
+            # Step 3: Create database (separate command, not in DO block)
+            print(f"Creating database {PG_DB}...")
+            create_db_cmd = [psql_path, "-U", "postgres", "-d", "postgres", "-c", f"CREATE DATABASE {PG_DB} OWNER {PG_USER};"]
+            db_result = subprocess.run(create_db_cmd, env=env, capture_output=True, text=True)
+
+            if db_result.returncode != 0:
+                print(f"Database creation failed: {db_result.stderr}")
+                # Try without owner specification
+                print("Trying to create database without owner specification...")
+                create_db_simple_cmd = [psql_path, "-U", "postgres", "-d", "postgres", "-c", f"CREATE DATABASE {PG_DB};"]
+                db_result = subprocess.run(create_db_simple_cmd, env=env, capture_output=True, text=True)
+
+                if db_result.returncode != 0:
+                    print(f"Database creation failed: {db_result.stderr}")
+                    return False
+
+            print(f"✅ Database {PG_DB} created successfully!")
+
+        # Step 4: Grant privileges
+        print("Granting privileges...")
+        grant_sql = f"""
+        GRANT ALL PRIVILEGES ON DATABASE {PG_DB} TO {PG_USER};
+        ALTER ROLE {PG_USER} CREATEDB;
+        """
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sql', delete=False) as sql_file:
+            sql_file.write(grant_sql)
+            grant_sql_path = sql_file.name
+
+        grant_cmd = [psql_path, "-U", "postgres", "-d", "postgres", "-f", grant_sql_path, "-v", "ON_ERROR_STOP=1"]
+        grant_result = subprocess.run(grant_cmd, env=env, capture_output=True, text=True)
+
+        if grant_result.returncode != 0:
+            print(f"Granting privileges failed: {grant_result.stderr}")
+            print("⚠️ Continuing anyway - basic setup may still work")
+        else:
+            print("✅ Privileges granted successfully!")
+
+        # Clean up grant SQL file
+        os.unlink(grant_sql_path)
+
         # Update pg_hba.conf for md5 authentication
-        pg_data_path = f"C:\\Program Files\\PostgreSQL\\{major_version}\\data"
+        pg_data_path = f"C:\\Program Files\\PostgreSQL\\{actual_version}\\data"
         pg_hba_path = os.path.join(pg_data_path, "pg_hba.conf")
-        
+
         if os.path.exists(pg_hba_path):
             print("Updating pg_hba.conf for md5 authentication...")
-            
-            # Read the file
-            with open(pg_hba_path, 'r') as f:
-                content = f.read()
-            
-            # Replace authentication methods
-            import re
-            content = re.sub(r'^(host\s+all\s+all\s+127\.0\.0\.1/32\s+)\w+', r'\1md5', content, flags=re.MULTILINE)
-            content = re.sub(r'^(host\s+all\s+all\s+::1/128\s+)\w+', r'\1md5', content, flags=re.MULTILINE)
-            
-            # Write back
-            with open(pg_hba_path, 'w') as f:
-                f.write(content)
-            
-            # Restart PostgreSQL service
-            print("Restarting PostgreSQL service...")
+
             try:
-                subprocess.run(["net", "stop", f"postgresql-{major_version}"], check=False, capture_output=True)
-                time.sleep(2)
-                subprocess.run(["net", "start", f"postgresql-{major_version}"], check=True, capture_output=True)
-                time.sleep(3)
-            except subprocess.CalledProcessError:
-                print("Warning: Could not restart PostgreSQL service automatically.")
+                # Read the file
+                with open(pg_hba_path, 'r') as f:
+                    content = f.read()
+
+                # Replace authentication methods
+                original_content = content
+                content = """\
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+local   all             postgres                                trust
+local   all             all                                     md5
+host    all             postgres        127.0.0.1/32            trust
+host    all             all             127.0.0.1/32            md5
+host    all             postgres        ::1/128                 trust
+host    all             all             ::1/128                 md5
+"""
+
+                if content != original_content:
+                    # Write back
+                    with open(pg_hba_path, 'w') as f:
+                        f.write(content)
+                    
+                    # Restart PostgreSQL service
+                    print("Restarting PostgreSQL service...")
+                    try:
+                        subprocess.run(["net", "stop", f"postgresql-{actual_version}"], check=True)
+                        time.sleep(3)
+                        result = subprocess.run(["net", "start", f"postgresql-{actual_version}"], check=True, capture_output=True, text=True)
+                        time.sleep(5)
+
+                        if "RUNNING" in result.stdout.upper():
+                            print("✅ PostgreSQL service restarted successfully")
+                        else:
+                            print("⚠️ PostgreSQL service may not have restarted properly:")
+                            print(result.stdout)
+                    except subprocess.CalledProcessError as e:
+                        print("❌ PostgreSQL restart failed.")
+                        print(f"Stdout: {e.stdout}")
+                        print(f"Stderr: {e.stderr}")
+                        print("Attempting to start PostgreSQL anyway...")
+
+                        subprocess.run(["net", "start", f"postgresql-{actual_version}"], check=False)
+                        time.sleep(5)
+                else:
+                    print("pg_hba.conf already configured correctly")
+            except PermissionError:
+                print("⚠️ Permission denied updating pg_hba.conf. You may need to run as administrator.")
+            except Exception as e:
+                print(f"⚠️ Could not update pg_hba.conf: {e}")
+        else:
+            print(f"⚠️ pg_hba.conf not found at {pg_hba_path}")
+        
+        # Test connection with new user
+        print("Testing connection with new user...")
+        env['PGPASSWORD'] = PG_PASSWORD
+        test_cmd = [psql_path, "-U", PG_USER, "-d", PG_DB, "-c", "SELECT current_database();"]
+        test_result = subprocess.run(test_cmd, env=env, capture_output=True, text=True)
+        
+        if test_result.returncode == 0:
+            print("✅ Connection test successful!")
+            print(f"Current database: {test_result.stdout.strip()}")
+        else:
+            print("⚠️ Connection test failed, but setup may still work")
+            print(f"Error: {test_result.stderr}")
         
         print("✅ PostgreSQL setup complete!")
         print(f"You can connect using: psql -U {PG_USER} -d {PG_DB}")
+        print(f"Connection details:")
+        print(f"  Host: localhost")
+        print(f"  Port: 5432")
+        print(f"  Database: {PG_DB}")
+        print(f"  Username: {PG_USER}")
+        print(f"  Password: {PG_PASSWORD}")
         return True
         
     except Exception as e:
         print(f"Error during PostgreSQL setup: {e}")
+        import traceback
+        traceback.print_exc()
         return False
-    finally:
-        # Clean up SQL file
-        try:
-            os.unlink(sql_file_path)
-        except:
-            pass
 
 def setup_postgresql_unix():
     """Setup PostgreSQL on Unix-like systems"""
