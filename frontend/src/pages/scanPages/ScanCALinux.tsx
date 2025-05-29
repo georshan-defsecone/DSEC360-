@@ -15,6 +15,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { toast, Toaster } from "sonner";
+import { CheckCircle2 } from "lucide-react";
 import FileUploader from "@/components/FileUploader";
 
 import api from "../api";
@@ -31,6 +33,7 @@ import { ChevronDown } from "lucide-react";
 const ScanCALinux = () => {
     const [complianceData, setComplianceData] = useState([]);
     const [errors, setErrors] = useState("");
+  const [userName, setUserName] = useState("");
     const [fileIPs, setFileIPs] = useState<string[]>([]);
 
     const formPages = ["●", "●", "●", "●", "●"];
@@ -249,10 +252,14 @@ const ScanCALinux = () => {
         );
     };
 
+
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await api.get(
+                const response1 = await api.get("users/userinfo");
+setUserName(response1.data.username);
+
+        const response = await api.get(
                     "/scans/compliance/configaudit/linux/"
                 ); // Adjust the endpoint as needed
                 console.log("Fetched data:", response.data);
@@ -333,13 +340,78 @@ const ScanCALinux = () => {
         if (page > 1) setPage((prev) => prev - 1);
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setErrors(""); // Clear any existing errors
+  const handleSubmit = async () => {
+  try {
+    const payload = {
+      project_name: formData.projectName,
+      scan_name: formData.scanName,
+      scan_author: userName, // Replace with user context if needed
+      scan_status: "Pending",
+      scan_data: {
+        scanType:"Configuration Audit",
+        description: formData.description,
 
-        console.log("Form submitted:", formData);
-        // Add your submission logic here
+        // Target Details
+        auditMethod: formData.auditMethod,
+        target: formData.target,
+        authMethod: formData.authMethod,
+        elevatePrivilege: formData.elevatePrivilege,
+        username: formData.username,
+        password: formData.password,
+        domain: formData.domain,
+        kdc: formData.kdc,
+        kdcPort: formData.kdcPort,
+        kdcTransport: formData.kdcTransport,
+        certificate: formData.certificate,
+        publicKey: formData.publicKey,
+        port: formData.port,
+        clientVersion: formData.clientVersion,
+        attemptLeastPrivelege: formData.attemptLeastPrivelege,
+        privateKeyPassphrase: formData.privateKeyPassphrase,
+
+        // Elevation Params
+        EP_escalationAccount: formData.EP_escalationAccount,
+        EP_escalationPassword: formData.EP_escalationPassword,
+        EP_dzdoDirectory: formData.EP_dzdoDirectory,
+        EP_suDirectory: formData.EP_suDirectory,
+        EP_pbrunDirectory: formData.EP_pbrunDirectory,
+        EP_su_sudoDirectory: formData.EP_su_sudoDirectory,
+        EP_su_login: formData.EP_su_login,
+        EP_su_user: formData.EP_su_user,
+        EP_sudoUser: formData.EP_sudoUser,
+        EPsshUserPassword: formData.EPsshUserPassword,
+        EPenablePassword: formData.EPenablePassword,
+
+        // Compliance Info
+        complianceCategory: formData.complianceCategory,
+        complianceSecurityStandard: formData.complianceSecurityStandard,
+
+        // Scan Schedule
+        schedule: formData.schedule,
+        scheduleFrequency: formData.scheduleFrequency,
+        scheduleStartDate: formData.scheduleStartDate,
+        scheduleStartTime: formData.scheduleStartTime,
+        scheduleTimezone: formData.scheduleTimezone,
+        notification: formData.notification,
+        notificationEmail: formData.notificationEmail,
+      },
     };
+
+    const response = await api.post("scans/create-scan/", payload); // Ensure "test/" maps to your backend view
+
+    console.log("Scan created:", response.data);
+    toast.success("Scan created succesfully", {
+  icon: <CheckCircle2 className="text-green-500" />,
+});
+
+    // Optionally reset form
+    // setFormData(initialState);
+  } catch (error) {
+    console.error("Error creating scan:", error);
+    alert("Failed to create scan.");
+  }
+};
+
 
     const renderError = () => {
         if (errors) {
@@ -1065,11 +1137,11 @@ const ScanCALinux = () => {
             <div className="flex-1 flex flex-col pr-8 pl-8 ml-64 pt-20">
                 <Header title="Linux Configuration Audit Scan" />
 
-                <Card className="w-[70%] mt-10 ml-4 shadow-2xl">
-                    <CardContent className="w-full p-4 px-12">
-                        <div className="w-auto space-y-6">
-                            <form onSubmit={handleSubmit}>
-                                {renderPage()}
+        <Card className=" w-[85%] mt-10 ml-4 shadow-2xl">
+          <CardContent className="w-full p-4 px-12">
+            <div className="w-auto space-y-6">
+              <form onSubmit={handleSubmit}>
+                {renderPage()}
 
                                 <div className="flex justify-between mt-6">
                                     <button

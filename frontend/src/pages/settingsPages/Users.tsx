@@ -6,6 +6,8 @@ import { Link } from "react-router-dom";
 import { Pencil, X, Plus } from "lucide-react";
 import api from "@/pages/api";
 import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
+import { CheckCircle2 } from "lucide-react";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -50,8 +52,8 @@ const Users = () => {
 
         <div className="flex justify-end mt-4 mb-4">
           <Link to="/settings/users/createuser">
-            <Button className="flex items-center gap-2 mr-14">
-              <Plus size={16} /> Add User
+            <Button className="flex items-center gap-2 mr-44">
+               Add User
             </Button>
           </Link>
         </div>
@@ -59,7 +61,7 @@ const Users = () => {
         {/* Card Container - no scroll */}
         <div className="space-y-4">
           {currentUsers.map((user) => (
-            <Card key={user.id} className="shadow-2xl border rounded-lg p-4 w-[96%]">
+            <Card key={user.id} className="shadow-2xl border rounded-lg p-4 w-[86%]">
               <CardContent className="flex justify-between items-center p-0">
                 <div className="space-y-1">
                   <p className="text-sm text-gray-500 font-medium">

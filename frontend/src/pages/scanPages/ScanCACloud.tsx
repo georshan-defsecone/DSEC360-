@@ -16,6 +16,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { toast, Toaster } from "sonner";
+import { CheckCircle2 } from "lucide-react";
 import FileUploader from "@/components/FileUploader";
 
 import api from "../api";
@@ -29,12 +31,13 @@ const ScanCACloud = () => {
 
     const formPagesAgent = ["●", "●", "●", "●"];
 
-    const [page, setPage] = useState(1);
-    const [formData, setFormData] = useState({
-        // General Info
-        scanName: "",
-        projectName: "",
-        description: "",
+  const [page, setPage] = useState(1);
+  const [userName, setUserName] = useState("");
+  const [formData, setFormData] = useState({
+    // General Info
+    scanName: "",
+    projectName: "",
+    description: "",
 
         // Target Details
         auditMethod: "",
@@ -223,7 +226,9 @@ const ScanCACloud = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await api.get(
+                 const response1 = await api.get("users/userinfo");
+setUserName(response1.data.username);
+        const response = await api.get(
                     "/scans/compliance/configaudit/cloud/"
                 );
                 console.log("Fetched data:", response.data);
@@ -325,13 +330,82 @@ const ScanCACloud = () => {
         if (page > 1) setPage((prev) => prev - 1);
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setErrors(""); // Clear any existing errors
+  const handleSubmit = async () => {
+  try {
+    const response = await api.post("/api/create-scan/", {
+      project_name: formData.projectName,
+      scan_name: formData.scanName,
+      scan_author: userName, // Replace with actual username if available
+      scan_status: "Pending",       // Adjust as needed
 
-        console.log("Form submitted:", formData);
-        // Add your submission logic here
-    };
+      scan_data: {
+        scanType:"Configuration Audit",
+        description: formData.description,
+        auditMethod: formData.auditMethod,
+        OS: formData.OS,
+        target: formData.target,
+        elevatePrivilege: formData.elevatePrivilege,
+        authMethod: formData.authMethod,
+        username: formData.username,
+        password: formData.password,
+        domain: formData.domain,
+        ntlmHash: formData.ntlmHash,
+        lmHash: formData.lmHash,
+        kdc: formData.kdc,
+        kdcPort: formData.kdcPort,
+        kdcTransport: formData.kdcTransport,
+        certificate: formData.certificate,
+        publicKey: formData.publicKey,
+        privateKeyPassphrase: formData.privateKeyPassphrase,
+        port: formData.port,
+        clientVersion: formData.clientVersion,
+        attemptLeastPrivilege: formData.attemptLeastPrivilege,
+
+        EP_escalationAccount: formData.EP_escalationAccount,
+        EP_escalationPassword: formData.EP_escalationPassword,
+        EP_dzdoDirectory: formData.EP_dzdoDirectory,
+        EP_suDirectory: formData.EP_suDirectory,
+        EP_pbrunDirectory: formData.EP_pbrunDirectory,
+        EP_su_sudoDirectory: formData.EP_su_sudoDirectory,
+        EP_su_login: formData.EP_su_login,
+        EP_su_user: formData.EP_su_user,
+        EP_sudoUser: formData.EP_sudoUser,
+        EPsshUserPassword: formData.EPsshUserPassword,
+        EPenablePassword: formData.EPenablePassword,
+
+        globalCredentials: {
+          neverSendCredentials: formData.globalCredentials.neverSendCredentials,
+          dontUseNTLMv1: formData.globalCredentials.dontUseNTLMv1,
+          startRemoteRegistryService: formData.globalCredentials.startRemoteRegistryService,
+          enableAdministrativeShares: formData.globalCredentials.enableAdministrativeShares,
+          startServerService: formData.globalCredentials.startServerService,
+        },
+
+        complianceCategory: formData.complianceCategory,
+        complianceSecurityStandard: formData.complianceSecurityStandard,
+
+        schedule: formData.schedule,
+        scheduleFrequency: formData.scheduleFrequency,
+        scheduleStartDate: formData.scheduleStartDate,
+        scheduleStartTime: formData.scheduleStartTime,
+        scheduleTimezone: formData.scheduleTimezone,
+        notification: formData.notification,
+        notificationEmail: formData.notificationEmail,
+      },
+    });
+
+    console.log("Scan created:", response.data);
+     toast.success("Scan saved succesfully", {
+  icon: <CheckCircle2 className="text-green-500" />,
+});
+    // Optional: reset the form
+    // setFormData(initialFormState);
+  } catch (error) {
+    console.error("Error creating scan:", error.response?.data || error.message);
+    alert("Failed to create scan.");
+  }
+};
+
 
     const renderError = () => {
         if (errors) {
@@ -1301,11 +1375,11 @@ const ScanCACloud = () => {
             <div className="flex-1 flex flex-col pr-8 pl-8 ml-64 pt-20">
                 <Header title="Cloud Configuration Audit Scan" />
 
-                <Card className="w-[70%] mt-10 ml-4 shadow-2xl">
-                    <CardContent className="w-full p-4 px-12">
-                        <div className="w-auto space-y-6">
-                            <form onSubmit={handleSubmit}>
-                                {renderPage()}
+        <Card className=" w-[85%] mt-10 ml-4 shadow-2xl">
+          <CardContent className="w-full p-4 px-12">
+            <div className="w-auto space-y-6">
+              <form onSubmit={handleSubmit}>
+                {renderPage()}
 
                                 <div className="flex justify-between mt-6">
                                     <button
