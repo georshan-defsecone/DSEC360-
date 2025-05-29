@@ -15,7 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import { toast, Toaster } from "sonner";
+import { CheckCircle2 } from "lucide-react";
 import api from "../api";
 const ScanIOCWindows = () => {
   const [IOCdata, setIOCdata] = useState([]);
@@ -28,6 +29,7 @@ const ScanIOCWindows = () => {
     "Scan Settings",
   ];
   const [page, setPage] = useState(1);
+  const [userName, setUserName] = useState("");
 
   const [formData, setFormData] = useState({
     // General Info
@@ -112,6 +114,8 @@ const ScanIOCWindows = () => {
   useEffect(() => {
     const fetchIOCdata = async () => {
       try {
+        const response1 = await api.get("users/userinfo");
+setUserName(response1.data.username);
         const response = await api.get("/scans/compliance/ioc/windows/");
         console.log(response.data);
         setIOCdata(response.data);
@@ -217,12 +221,68 @@ const ScanIOCWindows = () => {
     if (page > 1) setPage((prev) => prev - 1);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setErrors("")
-    console.log("Form submitted:", formData)
-    // Add your submission logic here
-  };
+  const handleSubmit = async () => {
+  try {
+    const response = await api.post("/api/create-scan/", {
+      project_name: formData.projectName,
+      scan_name: formData.scanName,
+      scan_author: userName, // adjust as needed
+      scan_status: "Pending",       // or dynamic status
+
+      scan_data: {
+        scanType:"IOC",
+        description: formData.description,
+
+        // Target Details
+        auditMethod: formData.auditMethod,
+        target: formData.target,
+        authMethod: formData.authMethod,
+        username: formData.username,
+        password: formData.password,
+        domain: formData.domain,
+        ntlmHash: formData.ntlmHash,
+        lmHash: formData.lmHash,
+        kdc: formData.kdc,
+        kdcPort: formData.kdcPort,
+        kdcTransport: formData.kdcTransport,
+        certificate: formData.certificate,
+        publicKey: formData.publicKey,
+
+        // Global Credentials
+        globalCredentials: {
+          neverSendCredentials: formData.globalCredentials.neverSendCredentials,
+          dontUseNTLMv1: formData.globalCredentials.dontUseNTLMv1,
+          startRemoteRegistryService: formData.globalCredentials.startRemoteRegistryService,
+          enableAdministrativeShares: formData.globalCredentials.enableAdministrativeShares,
+          startServerService: formData.globalCredentials.startServerService,
+        },
+
+        // IOC Controls
+        IOCcontrols: formData.IOCcontrols,
+
+        // Scan Settings
+        schedule: formData.schedule,
+        scheduleFrequency: formData.scheduleFrequency,
+        scheduleStartDate: formData.scheduleStartDate,
+        scheduleStartTime: formData.scheduleStartTime,
+        scheduleTimezone: formData.scheduleTimezone,
+        notification: formData.notification,
+        notificationEmail: formData.notificationEmail,
+      },
+    });
+
+    console.log("Scan created:", response.data);
+    alert("Scan created successfully!");
+
+    // Optionally reset form:
+    // setFormData(initialFormData);
+  } catch (error) {
+    console.error("Error creating scan:", error.response?.data || error.message);
+    toast.success("Scan created succesfully", {
+  icon: <CheckCircle2 className="text-green-500" />,
+});
+  }
+};
 
   const renderError = () => {
     if (errors) {
@@ -837,7 +897,7 @@ const ScanIOCWindows = () => {
         <div className="flex-1 flex flex-col pr-8 pl-8 ml-64 pt-20">
           <Header title="Windows Compromise Assessment Scan" />
 
-          <Card className="w-[70%] mt-10 ml-4 shadow-2xl">
+          <Card className=" w-[85%] mt-10 ml-4 shadow-2xl">
             <CardContent className="w-full p-4 px-12">
               <div className="w-auto space-y-6">
                 <form onSubmit={handleSubmit}>

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { useForm, FormProvider} from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormInput, FormSelect, FormCheckbox } from "../../components/formComponents/form";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,6 +12,12 @@ import {
 } from "../../components/formComponents/formSchema";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
+import axios from "axios";
+import { useEffect } from "react";
+import api from "../api";
+import { toast, Toaster } from "sonner";
+import { CheckCircle2 } from "lucide-react";
+
 
 const assetDiscoveryMethodOptions = [
     { label: "Remote", value: "remote" },
@@ -34,22 +40,72 @@ const timezoneOptions = [
 
 function ScanADWindows() {
     const [page, setPage] = useState(1);
+    const [userName, setUserName] = useState("");
 
     const methods = useForm<assetDiscoveryFields>({
         resolver: zodResolver(assetDiscoverySchema),
         defaultValues,
-        mode: "onBlur"
+        mode: "onBlur",
     });
 
     const formPages = ["General Info", "Target Details", "Scan Settings"];
 
-    const onSubmit = async (data: assetDiscoveryFields) => {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        alert(JSON.stringify(data, null, 2));
+    // New handleSubmit function that posts data to backend API
+    const handleSubmit = async () => {
+        const data = methods.getValues();
+
+        try {
+            const response = await axios.post("/api/create-scan/", {
+                project_name: data.projectName,
+                scan_name: data.scanName,
+                scan_author: userName, // adjust as needed
+                scan_status: "Pending",
+
+                scan_data: {
+                    scanType:"Asset Discovery",
+                    description: data.scanDescription,
+                    assetDiscoveryMethod: data.assetDiscoveryMethod,
+                    username: data.username,
+                    password: data.password,
+                    domain: data.domain,
+                    ipAddress: data.ipAddress,
+                    serverIP: data.serverIP,
+                    schedule: data.schedule,
+                    scheduleFrequency: data.scheduleFrequency,
+                    startDate: data.startDate,
+                    startTime: data.startTime,
+                    timeZone: data.timeZone,
+                    notification: data.notification,
+                    email: data.email,
+                },
+            });
+
+            console.log("Scan created:", response.data);
+            toast.success("Scan saved succesfully", {
+  icon: <CheckCircle2 className="text-green-500" />,
+});
+            
+        } catch (error: any) {
+            console.error("Failed to create scan:", error.response?.data || error.message);
+            alert("Failed to create scan.");
+        }
     };
+
     const assetDiscoveryMethod = methods.watch("assetDiscoveryMethod");
     const schedule = methods.watch("schedule");
     const notification = methods.watch("notification");
+
+    useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      const response = await api.get("users/userinfo");
+      setUserName(response.data.username);
+    } catch (error) {
+      console.error("Failed to fetch user info:", error);
+    }
+  };
+  fetchUser();
+}, []);
 
     const page1 = () => {
         return (
@@ -168,27 +224,26 @@ function ScanADWindows() {
             case 2:
                 return (
                     <div className="space-y-4">
-                        <h2 className="text-xl font-semibold">
-                            Target Details
-                        </h2>
+                        <h2 className="text-xl font-semibold">Target Details</h2>
                         {page2()}
                     </div>
                 );
             case 3:
                 return (
                     <div className="space-y-4">
-                        <h2 className="text-xl font-semibold">
-                            Scheduling Scan
-                        </h2>
+                        <h2 className="text-xl font-semibold">Scheduling Scan</h2>
                         {page3()}
                     </div>
                 );
         }
     };
 
-    const getFieldsForPage3 =  async () => {
-        const fieldsToValidate: (keyof assetDiscoveryFields)[] = ["schedule", "notification"]
-        if(methods.getValues("schedule")) {
+    const getFieldsForPage3 = async () => {
+        const fieldsToValidate: (keyof assetDiscoveryFields)[] = [
+            "schedule",
+            "notification",
+        ];
+        if (methods.getValues("schedule")) {
             fieldsToValidate.push(
                 "scheduleFrequency",
                 "startDate",
@@ -196,13 +251,11 @@ function ScanADWindows() {
                 "timeZone"
             );
         }
-        if(methods.getValues("notification")) {
-            fieldsToValidate.push(
-                "email"
-            );
+        if (methods.getValues("notification")) {
+            fieldsToValidate.push("email");
         }
-        return await methods.trigger(fieldsToValidate)
-    }
+        return await methods.trigger(fieldsToValidate);
+    };
 
     const getFieldsForPage2 = async () => {
         if (assetDiscoveryMethod === "remote") {
@@ -219,10 +272,7 @@ function ScanADWindows() {
     const validateCurrentPage = async () => {
         switch (page) {
             case 1:
-                return await methods.trigger([
-                    "scanName",
-                    "projectName",
-                ]);
+                return await methods.trigger(["scanName", "projectName"]);
             case 2:
                 return await getFieldsForPage2();
             case 3:
@@ -250,11 +300,11 @@ function ScanADWindows() {
     return (
         <>
             <div className="flex h-screen text-black">
-                <Sidebar scanSettings={true} settings={false} homeSettings={false}/>
+                <Sidebar scanSettings={true} settings={false} homeSettings={false} />
                 <div className="flex-1 flex flex-col pr-8 pl-8 ml-64 pt-20">
                     <Header title="Asset Discovery" />
                     <div className="w-full flex justify-left items-center">
-                        <Card className="w-[70%] mt-10 ml-4 shadow-2xl">
+                        <Card className=" w-[85%] mt-10 ml-4 shadow-2xl">
                             <CardContent className="w-full p-4 px-12">
                                 <div className="w-auto space-y-6">
                                     <FormProvider {...methods}>
@@ -278,12 +328,16 @@ function ScanADWindows() {
                                                     pages={formPages}
                                                 />
                                                 {page === 3 ? (
-                                                    <button type="button" className="px-4 py-2 bg-black text-white" onClick={async () => {
-                                                        const isValid = await validateCurrentPage()
-                                                        if(isValid) {
-                                                            methods.handleSubmit(onSubmit)()
-                                                        }
-                                                    }}>
+                                                    <button
+                                                        type="button"
+                                                        className="px-4 py-2 bg-black text-white"
+                                                        onClick={async () => {
+                                                            const isValid = await validateCurrentPage();
+                                                            if (isValid) {
+                                                                handleSubmit();
+                                                            }
+                                                        }}
+                                                    >
                                                         Submit
                                                     </button>
                                                 ) : (

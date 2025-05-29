@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/select";
 import FileUploader from "@/components/FileUploader";
 import api from "../api";
-
+import { toast, Toaster } from "sonner";
+import { CheckCircle2 } from "lucide-react";
 
 const ScanCAWindows = () => {
   const [complianceData, setComplianceData] = useState([]);
@@ -29,12 +30,9 @@ const ScanCAWindows = () => {
     "Compliance Info",
     "Scan Settings",
   ];
+  const [userName, setUserName] = useState("");
 
-  const formPagesAgent = [
-    "General Info",
-    "Target Details",
-    "Compliance Info",
-  ]
+  const formPagesAgent = ["General Info", "Target Details", "Compliance Info"];
 
   const [page, setPage] = useState(1);
   const [formData, setFormData] = useState({
@@ -86,6 +84,9 @@ const ScanCAWindows = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const response1 = await api.get("users/userinfo");
+setUserName(response1.data.username);
+
         const response = await api.get("scans/compliance/configaudit/windows/"); // Adjust the endpoint as needed
         console.log("Fetched data:", response.data);
         setComplianceData(response.data);
@@ -100,8 +101,7 @@ const ScanCAWindows = () => {
 
   const validatePage1 = () => {
     return (
-      formData.scanName.trim() !== "" &&
-      formData.projectName.trim() !== ""
+      formData.scanName.trim() !== "" && formData.projectName.trim() !== ""
     );
   };
 
@@ -193,7 +193,7 @@ const ScanCAWindows = () => {
         isValid = validatePage3();
         break;
       case 4:
-        isValid = true
+        isValid = true;
         break;
       default:
         isValid = false;
@@ -212,12 +212,57 @@ const ScanCAWindows = () => {
     if (page > 1) setPage((prev) => prev - 1);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    try {
+      const response = await api.post("scans/create-scan/", {
+        project_name: formData.projectName,
+        scan_name: formData.scanName,
+        scan_author: userName, // adjust as needed or pull from user context
+        scan_status: "Pending", // or dynamic status
+        scan_data: {
+          scanType:"Configuration Audit",
+          description: formData.description,
+          os: formData.os,
 
-    setErrors(""); // Clear any existing errors
-    console.log("Form submitted:", formData);
-    // Add your submission logic here
+          auditMethod: formData.auditMethod,
+          target: formData.target,
+          authMethod: formData.authMethod,
+          username: formData.username,
+          password: formData.password,
+          domain: formData.domain,
+          ntlmHash: formData.ntlmHash,
+          lmHash: formData.lmHash,
+          kdc: formData.kdc,
+          kdcPort: formData.kdcPort,
+          kdcTransport: formData.kdcTransport,
+          certificate: formData.certificate,
+          publicKey: formData.publicKey,
+
+          globalCredentials: formData.globalCredentials,
+          complianceCategory: formData.complianceCategory,
+          complianceSecurityStandard: formData.complianceSecurityStandard,
+
+          schedule: formData.schedule,
+          scheduleFrequency: formData.scheduleFrequency,
+          scheduleStartDate: formData.scheduleStartDate,
+          scheduleStartTime: formData.scheduleStartTime,
+          scheduleTimezone: formData.scheduleTimezone,
+          notification: formData.notification,
+          notificationEmail: formData.notificationEmail,
+        },
+      });
+
+      console.log("Scan created:", response.data);
+      toast.success("Scan created succesfully", {
+  icon: <CheckCircle2 className="text-green-500" />,
+});
+
+      // Optionally reset your form here
+      // setFormData({ ...initialState });
+    } catch (error) {
+      console.error("Error creating scan:", error);
+      alert("Failed to create scan.");
+    }
   };
 
   const renderError = () => {
@@ -305,8 +350,6 @@ const ScanCAWindows = () => {
                 </SelectContent>
               </Select>
             </div>
-
-            
 
             {formData.auditMethod === "remoteAccess" && (
               <div className="space-y-4">
@@ -645,7 +688,7 @@ const ScanCAWindows = () => {
             )}
           </div>
         );
-      case 3:{
+      case 3: {
         //get all categories from complianceData
         const categories = [
           ...new Set(complianceData.map((item) => item.Categories)),
@@ -703,7 +746,8 @@ const ScanCAWindows = () => {
               </Select>
             </div>
           </div>
-        )};
+        );
+      }
       case 4:
         return (
           <div className="space-y-6">
@@ -843,11 +887,10 @@ const ScanCAWindows = () => {
       <div className="flex-1 flex flex-col pr-8 pl-8 ml-64 pt-20">
         <Header title="Windows Configuration Audit Scan" />
         <div className="w-full flex justify-left items-center">
-
-        <Card className="w-[70%] mt-10 ml-4 shadow-2xl">
-          <CardContent className="w-full p-4 px-12">
-            <div className="w-auto space-y-6">
-              {/* Progress indicator
+          <Card className=" w-[85%] mt-10 ml-4 shadow-2xl">
+            <CardContent className="w-full p-4 px-12">
+              <div className="w-auto space-y-6">
+                {/* Progress indicator
             <div className="flex justify-start gap-8 mb-8">
               {[1, 2, 3, 4].map((step) => (
                 <div
@@ -866,45 +909,54 @@ const ScanCAWindows = () => {
 
             {*/}
 
-              <form onSubmit={handleSubmit}>
-                {renderPage()}
+                <form onSubmit={handleSubmit}>
+                  {renderPage()}
 
-                <div className="flex justify-between mt-6">
-                  <button
-                    type="button"
-                    onClick={prevPage}
-                    className={`px-4 py-2 rounded ${
-                      page === 1 ? "bg-gray-300" : "bg-black text-white"
-                    }`}
-                    disabled={page === 1}
-                  >
-                    Previous
-                  </button>
-                  <Breadcrumbs currentPage={page} pages={formData.auditMethod === "agent" ? formPagesAgent : formPages} />
-                  {page === 4 ? (
+                  <div className="flex justify-between mt-6">
                     <button
                       type="button"
-                      onClick={handleSubmit}
-                      className="px-4 py-2 bg-green-500 w-25 text-white rounded"
+                      onClick={prevPage}
+                      className={`px-4 py-2 rounded ${
+                        page === 1 ? "bg-gray-300" : "bg-black text-white"
+                      }`}
+                      disabled={page === 1}
                     >
-                      Submit
+                      Previous
                     </button>
-                  ) : formData.auditMethod === "agent" && page === 3 ? (
-                    <Button className="px-4 py-2 bg-black text-white h-10 rounded">Download script</Button>
-                  ): (
-                    <button
-                      type="button"
-                      onClick={nextPage}
-                      className="px-4 py-2 bg-black w-25 text-white rounded"
-                    >
-                      Next
-                    </button>
-                  )}
-                </div>
-              </form>
-            </div>
-          </CardContent>
-        </Card>
+                    <Breadcrumbs
+                      currentPage={page}
+                      pages={
+                        formData.auditMethod === "agent"
+                          ? formPagesAgent
+                          : formPages
+                      }
+                    />
+                    {page === 4 ? (
+                      <button
+                        type="button"
+                        onClick={handleSubmit}
+                        className="px-4 py-2 bg-green-500 w-25 text-white rounded"
+                      >
+                        Submit
+                      </button>
+                    ) : formData.auditMethod === "agent" && page === 3 ? (
+                      <Button className="px-4 py-2 bg-black text-white h-10 rounded">
+                        Download script
+                      </Button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={nextPage}
+                        className="px-4 py-2 bg-black w-25 text-white rounded"
+                      >
+                        Next
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
