@@ -22,6 +22,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
+from startScan.views import get_config_script
+from startScan.views import download_script
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -325,7 +327,7 @@ def post_scan_file(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def create_scan(request):
-    data = request.data.copy()  # Make it mutable
+    data = request.data.copy()
 
     project_name = data.get("project_name")
     scan_author = data.get("scan_author", "unknown")
@@ -333,29 +335,91 @@ def create_scan(request):
     if not project_name:
         return Response({"error": "project_name is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Find or create the project
     project, created = Project.objects.get_or_create(
-    project_name=project_name,
-    defaults={
-        "project_id": str(uuid.uuid4()),
-        "project_author": scan_author,
-        "trash": False,
-    }
-)
+        project_name=project_name,
+        defaults={
+            "project_id": str(uuid.uuid4()),
+            "project_author": scan_author,
+            "trash": False,
+        }
+    )
 
-    data["project"] = project.pk  # Inject FK ID
+    data["project"] = project.pk
     data["scan_id"] = str(uuid.uuid4())
-
-    # You may also want to remove project_name before validation if not in the model
     data.pop("project_name", None)
 
     serializer = ScanSerializer(data=data)
 
     if serializer.is_valid():
         serializer.save()
+
+        
+        scan_data = data.get("scan_data", {})
+        launch_scan(scan_data)
+
         return Response({
             "message": "Scan created successfully.",
             "scan": serializer.data
         }, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+import re
+
+def launch_scan(scan_data):
+    print("[*] Entered launch_scan()")
+
+    # Normalize and extract values from scan_data
+    scan_type = (scan_data.get("scanType") or "").strip().lower().replace(" ", "").replace("_", "")
+    os_name = (scan_data.get("os") or "").strip().lower()
+    auth_type = (scan_data.get("auditMethod") or "").strip().lower()
+
+    compliance_name = scan_data.get("complianceCategory")
+    standard = scan_data.get("complianceSecurityStandard")
+    checklist = scan_data.get("CheckList")
+    username = scan_data.get("username")
+    password = scan_data.get("password")
+    domain = scan_data.get("domain")
+    iplist = scan_data.get("target")  # your JSON uses 'target' instead of 'iplist'
+
+    # Remove all non-alphanumeric characters including underscores, then lowercase
+    normalized_compliance = re.sub(r'[\W_]+', '', compliance_name or "").lower()
+
+    print(f"[DEBUG] scan_type: {scan_type}")
+    print(f"[DEBUG] compliance: {normalized_compliance}, standard: {standard}")
+    print(f"[DEBUG] os: {os_name}, auth_type: {auth_type}")
+
+    if scan_type == "configurationaudit":
+        script = get_config_script(normalized_compliance, standard)
+        if script:
+            print(f"[+] get_config_script executed successfully. Generated script path: {script}")
+        else:
+            print("[-] get_config_script failed or returned None.")
+
+        if auth_type == "remoteaccess":
+            if os_name == "win":
+                # WmiRemoteAccess(username, password, domain, iplist, script)
+                print("[*] Would call WmiRemoteAccess here")
+            elif os_name == "lin" or os_name == "linux":
+                # SshRemoteAccess(username, password, domain, iplist, script)
+                print("[*] Would call SshRemoteAccess here")
+        elif auth_type == "agent":
+            downloaded = download_script(script)
+            if downloaded:
+               print(f"[+] Script ready for agent download: {downloaded}")
+            else:
+               print("[-] Script download failed.")
+        elif auth_type == "upload":
+            # comp_pass_or_fail()
+            print("[*] Would call comp_pass_or_fail here")
+
+    # elif scan_type == "ioc":
+    #     script = get_ioc_script(os_name, checklist)
+    #     if auth_type == "remote":
+    #         if os_name == "win":
+    #             WmiRemoteAccess(username, password, domain, iplist, script)
+    #         elif os_name == "lin":
+    #             SshRemoteAccess(username, password, domain, iplist, script)
+    #     elif auth_type == "agent":
+    #         download_script(script)
