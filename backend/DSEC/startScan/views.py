@@ -2,7 +2,7 @@ import os
 import subprocess
 import re
 import shutil
-from .oracle import generate_sql
+from .database.oracle import generate_sql
 
 def database_config_audit(scan_data):
     print("[*] Entered database_config_audit()")
@@ -18,7 +18,7 @@ def database_config_audit(scan_data):
     if normalized_compliance == "oracledatabase12cbenchmarkv300":
         try:
             base_dir = os.path.dirname(os.path.abspath(__file__))
-            oracle_dir = os.path.join(base_dir, "oracle")
+            oracle_dir = os.path.join(base_dir,"database","oracle")
             csv_name = "data.csv"
             csv_path = os.path.join(oracle_dir, csv_name)
             sql_output = os.path.join(oracle_dir, "output.sql")
@@ -38,6 +38,7 @@ def database_config_audit(scan_data):
 
             # Step 2: Choose execution method based on auditMethod
             audit_method = (scan_data.get("auditMethod") or "").strip().lower()
+            print(audit_method)
 
             if audit_method == "remoteaccess":
                 print("[*] Using remote access method.")

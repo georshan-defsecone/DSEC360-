@@ -324,6 +324,7 @@ const ScanCADatabases = () => {
     scan_data: {
       scanType: "Configuration Audit",
       description: formData.description,
+      category:"database",
       os: formData.OS,
       auditMethod: formData.auditMethod,
       target: formData.target,

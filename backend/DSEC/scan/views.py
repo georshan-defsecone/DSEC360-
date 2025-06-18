@@ -24,6 +24,7 @@ from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
 from startScan.views import database_config_audit
 from startScan.views import download_script
+from django.http import FileResponse
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -355,7 +356,19 @@ def create_scan(request):
 
         
         scan_data = data.get("scan_data", {})
-        launch_scan(scan_data)
+        sql_file_path=launch_scan(scan_data)
+        if (
+            scan_data.get("auditMethod", "").strip().lower() == "agent"
+            and sql_file_path
+            and os.path.exists(sql_file_path)
+        ):
+            filename = os.path.basename(sql_file_path)
+            return FileResponse(
+                open(sql_file_path, "rb"),
+                as_attachment=True,
+                filename=filename,
+                content_type="application/sql"
+            )
 
         return Response({
             "message": "Scan created successfully.",
@@ -369,7 +382,7 @@ import re
 
 def launch_scan(scan_data):
     print("[*] Entered launch_scan()")
-    print(scan_data)
+    
 
     # Normalize and extract values from scan_data
     scan_type = (scan_data.get("scanType") or "").strip().lower().replace(" ", "").replace("_", "")
@@ -381,14 +394,12 @@ def launch_scan(scan_data):
     standard = scan_data.get("complianceSecurityStandard")
     # Remove all non-alphanumeric characters including underscores, then lowercase
     normalized_compliance = re.sub(r'[\W_]+', '', compliance_name or "").lower()
+    print(scan_data)
 
-    print(f"[DEBUG] scan_type: {scan_type}")
-    print(f"[DEBUG] compliance: {normalized_compliance}, standard: {standard}")
-    print(f"[DEBUG] os: {os_name}, auth_type: {auth_type}")
 
     if scan_type == "configurationaudit":
         if category=="database":
-           database_config_audit(scan_data)
+           return database_config_audit(scan_data)
            
 
         if category=="windows":
