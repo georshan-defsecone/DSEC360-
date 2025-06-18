@@ -343,7 +343,7 @@ const ScanCAContainerOrchestration = () => {
 
         // Target Details
         auditMethod: formData.auditMethod,
-        OS: formData.OS,
+        os: formData.OS,
         target: formData.target,
         elevatePrivilege: formData.elevatePrivilege,
         authMethod: formData.authMethod,

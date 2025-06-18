@@ -38,7 +38,6 @@ const ScanCACloud = () => {
     scanName: "",
     projectName: "",
     description: "",
-
         // Target Details
         auditMethod: "",
         OS: "",
@@ -342,7 +341,8 @@ setUserName(response1.data.username);
         scanType:"Configuration Audit",
         description: formData.description,
         auditMethod: formData.auditMethod,
-        OS: formData.OS,
+        category:"cloud",
+        os: formData.OS,
         target: formData.target,
         elevatePrivilege: formData.elevatePrivilege,
         authMethod: formData.authMethod,

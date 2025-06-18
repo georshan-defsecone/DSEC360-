@@ -22,7 +22,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
-from startScan.views import get_config_script
+from startScan.views import database_config_audit
 from startScan.views import download_script
 
 @api_view(['POST'])
@@ -369,20 +369,16 @@ import re
 
 def launch_scan(scan_data):
     print("[*] Entered launch_scan()")
+    print(scan_data)
 
     # Normalize and extract values from scan_data
     scan_type = (scan_data.get("scanType") or "").strip().lower().replace(" ", "").replace("_", "")
     os_name = (scan_data.get("os") or "").strip().lower()
     auth_type = (scan_data.get("auditMethod") or "").strip().lower()
+    category=(scan_data.get("category")or"").strip().lower()
+    compliance_name=(scan_data.get("complianceCategory")).strip().lower()
 
-    compliance_name = scan_data.get("complianceCategory")
     standard = scan_data.get("complianceSecurityStandard")
-    checklist = scan_data.get("CheckList")
-    username = scan_data.get("username")
-    password = scan_data.get("password")
-    domain = scan_data.get("domain")
-    iplist = scan_data.get("target")  # your JSON uses 'target' instead of 'iplist'
-
     # Remove all non-alphanumeric characters including underscores, then lowercase
     normalized_compliance = re.sub(r'[\W_]+', '', compliance_name or "").lower()
 
@@ -391,35 +387,20 @@ def launch_scan(scan_data):
     print(f"[DEBUG] os: {os_name}, auth_type: {auth_type}")
 
     if scan_type == "configurationaudit":
-        script = get_config_script(normalized_compliance, standard)
-        if script:
-            print(f"[+] get_config_script executed successfully. Generated script path: {script}")
-        else:
-            print("[-] get_config_script failed or returned None.")
+        if category=="database":
+           database_config_audit(scan_data)
+           
 
-        if auth_type == "remoteaccess":
-            if os_name == "win":
-                # WmiRemoteAccess(username, password, domain, iplist, script)
-                print("[*] Would call WmiRemoteAccess here")
-            elif os_name == "lin" or os_name == "linux":
-                # SshRemoteAccess(username, password, domain, iplist, script)
-                print("[*] Would call SshRemoteAccess here")
-        elif auth_type == "agent":
-            downloaded = download_script(script)
-            if downloaded:
-               print(f"[+] Script ready for agent download: {downloaded}")
-            else:
-               print("[-] Script download failed.")
-        elif auth_type == "upload":
-            # comp_pass_or_fail()
-            print("[*] Would call comp_pass_or_fail here")
+        if category=="windows":
+            print("windows_config_audit will be called")
 
-    # elif scan_type == "ioc":
-    #     script = get_ioc_script(os_name, checklist)
-    #     if auth_type == "remote":
-    #         if os_name == "win":
-    #             WmiRemoteAccess(username, password, domain, iplist, script)
-    #         elif os_name == "lin":
-    #             SshRemoteAccess(username, password, domain, iplist, script)
-    #     elif auth_type == "agent":
-    #         download_script(script)
+        if category=="linux":
+            print("linux_config_audit will be called")
+
+        if category=="firewall":
+            print("firewall_config_audit will be called")
+
+
+    
+
+           

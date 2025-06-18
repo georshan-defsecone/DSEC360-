@@ -350,6 +350,7 @@ setUserName(response1.data.username);
       scan_data: {
         scanType:"Configuration Audit",
         description: formData.description,
+        category:"linux",
 
         // Target Details
         auditMethod: formData.auditMethod,

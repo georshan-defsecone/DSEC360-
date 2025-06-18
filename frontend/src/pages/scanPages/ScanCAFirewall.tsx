@@ -341,6 +341,7 @@ setUserName(response1.data.username);
         scanType:"Configuration Audit",
         description: formData.description,
         os: formData.OS, // matches formData
+        category:"firewall",
 
         auditMethod: formData.auditMethod,
         target: formData.target,

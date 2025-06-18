@@ -2,49 +2,61 @@ import os
 import subprocess
 import re
 import shutil
+from .oracle import generate_sql
 
-def get_config_script(compliance_name, standard):
-    # Normalize inputs
-    normalized_compliance = re.sub(r'[\W_]+', '', compliance_name or "").lower()
-    normalized_standard = re.sub(r'[\W_]+', '', standard or "").lower()
+def database_config_audit(scan_data):
+    print("[*] Entered database_config_audit()")
 
-    if normalized_compliance == "mssql2019":
-        # Paths
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        queries_dir = os.path.join(base_dir, "MSSQL", "Queries")
-        original_csv = os.path.join(queries_dir, "query_2019.csv")
-        renamed_csv = os.path.join(queries_dir, f"{normalized_compliance}_{normalized_standard}.csv")
-        script_path = os.path.join(base_dir, "MSSQL", "generate_sql.py")
+    # Normalize compliance and standard names
+    compliance_name = (scan_data.get("complianceCategory") or "").strip().lower()
+    standard = (scan_data.get("complianceSecurityStandard") or "").strip().lower()
 
-        # Use existing renamed file, or rename original if needed
-        if os.path.exists(renamed_csv):
-            print(f"[+] Found existing CSV: {renamed_csv}")
-        elif os.path.exists(original_csv):
-            os.rename(original_csv, renamed_csv)
-            print(f"[+] Renamed {original_csv} to {renamed_csv}")
-        else:
-            print(f"[!] Neither original nor renamed CSV exists.")
-            return None
+    normalized_compliance = re.sub(r'[\W_]+', '', compliance_name)
+    normalized_standard = re.sub(r'[\W_]+', '', standard)
+    print(f"[DEBUG] normalized_compliance: {normalized_compliance}")
 
-        # Execute SQL generation script
+    if normalized_compliance == "oracledatabase12cbenchmarkv300":
         try:
-            result = subprocess.run(
-                ["python", script_path, renamed_csv],
-                check=True,
-                capture_output=True,
-                text=True,
-                cwd=os.path.dirname(script_path)
-            )
-            print(result.stdout)
-        except subprocess.CalledProcessError as e:
-            print(f"[!] Error executing generate_sql.py: {e.stderr}")
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            oracle_dir = os.path.join(base_dir, "oracle")
+            csv_name = "data.csv"
+            csv_path = os.path.join(oracle_dir, csv_name)
+            sql_output = os.path.join(oracle_dir, "output.sql")
+
+            if not os.path.exists(csv_path):
+                print(f"[!] CSV input file not found: {csv_path}")
+                return None
+
+            # Step 1: Generate the SQL script
+            queries = generate_sql.extract_db_queries(csv_path)
+            if not queries:
+                print("[!] No queries extracted from CSV.")
+                return None
+
+            generate_sql.write_queries_to_file(queries, sql_output)
+            print(f"[+] SQL script generated at: {sql_output}")
+
+            # Step 2: Choose execution method based on auditMethod
+            audit_method = (scan_data.get("auditMethod") or "").strip().lower()
+
+            if audit_method == "remoteaccess":
+                print("[*] Using remote access method.")
+                generate_sql.execute_sql_script_remotely(sql_output, scan_data)
+                return sql_output
+            elif audit_method == "agent":
+                print("[*] Using agent method.")
+                return download_script(sql_output)
+            else:
+                print(f"[-] Unsupported audit method: {audit_method}")
+                return None
+
+        except Exception as e:
+            print(f"[!] Exception running Oracle audit: {e}")
             return None
 
-        # Return .sql output path
-        sql_output_path = os.path.splitext(renamed_csv)[0] + ".sql"
-        return sql_output_path
-
-    return None
+    else:
+        print(f"[-] Unsupported compliance type: {normalized_compliance}")
+        return None
 
 
 # startScan/utils.py
@@ -58,7 +70,9 @@ def download_script(script_path):
         print(f"[-] SQL script file not found: {script_path}")
         return None
 
-    download_dir = os.path.join(os.path.dirname(script_path), "downloads")
+    # Use the folder where the script is located
+    script_dir = os.path.dirname(script_path)
+    download_dir = os.path.join(script_dir, "downloads")
     os.makedirs(download_dir, exist_ok=True)
 
     dest_path = os.path.join(download_dir, os.path.basename(script_path))

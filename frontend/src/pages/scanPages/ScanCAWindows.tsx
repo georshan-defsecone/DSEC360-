@@ -314,7 +314,7 @@ setUserName(response1.data.username);
         scan_data: {
           scanType:"Configuration Audit",
           description: formData.description,
-          os: formData.os,
+          category:"windows",
 
           auditMethod: formData.auditMethod,
           target: formData.target,
