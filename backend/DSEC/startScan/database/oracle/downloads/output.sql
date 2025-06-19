@@ -48,42 +48,6 @@ BEGIN
   SELECT cdb INTO v_line FROM v$database;
 
   BEGIN
-    v_sql := q'[  
-        SELECT JSON_OBJECT(
-                 'name' VALUE '2_2_2_Ensure_AUDIT_TRAIL_Is_Set_to_DB_XML_OS_DB_EXTENDED_or_XML_EXTENDED_Scored_',
-                 'results' VALUE JSON_ARRAYAGG(JSON_OBJECT(*))
-               )
-        FROM (
-          SELECT UPPER(VALUE) AS value FROM V$SYSTEM_PARAMETER WHERE UPPER(NAME)='AUDIT_TRAIL'
-        )
-      ]';
-
-    OPEN v_cursor FOR v_sql;
-    FETCH v_cursor INTO v_json;
-    CLOSE v_cursor;
-    DBMS_OUTPUT.PUT_LINE(v_json);
-  EXCEPTION
-    WHEN OTHERS THEN
-      DBMS_OUTPUT.PUT_LINE(
-        JSON_OBJECT(
-          'name' VALUE '2_2_2_Ensure_AUDIT_TRAIL_Is_Set_to_DB_XML_OS_DB_EXTENDED_or_XML_EXTENDED_Scored_',
-          'results' VALUE 'ERROR: ' || SQLERRM
-        )
-      );
-  END;
-END;
-/
-
-
-DECLARE
-  v_json CLOB;
-  v_sql  CLOB;
-  v_cursor SYS_REFCURSOR;
-  v_line   VARCHAR2(32767);
-BEGIN
-  SELECT cdb INTO v_line FROM v$database;
-
-  BEGIN
     IF v_line = 'YES' THEN
       v_sql := q'[  
         SELECT JSON_OBJECT(

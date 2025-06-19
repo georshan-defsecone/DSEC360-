@@ -356,6 +356,7 @@ def create_scan(request):
 
         
         scan_data = data.get("scan_data", {})
+        print(scan_data)
         sql_file_path=launch_scan(scan_data)
         if (
             scan_data.get("auditMethod", "").strip().lower() == "agent"

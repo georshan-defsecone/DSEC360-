@@ -68,7 +68,10 @@ def add_missing_aliases(query):
 
     return fix_decode_aliases(query)
 
-def extract_db_queries(file_path):
+def extract_db_queries(file_path, unchecked_items=None):
+    if unchecked_items is None:
+        unchecked_items = []
+    unchecked_normalized = {re.sub(r'[^\w]+', '_', name).lower() for name in unchecked_items}
     queries = []
     if not os.path.exists(file_path):
         print(f"File not found: {file_path}")
@@ -102,8 +105,12 @@ def extract_db_queries(file_path):
                     query = row.get(col_map['query'], '').strip().rstrip(';')
                     multitenant = row.get(col_map['multitenant'], '').strip()
                     nonmultitenant = row.get(col_map['nonmultitenant'], '').strip()
-                    query = add_missing_aliases(query)
+                    
                     safe_name = re.sub(r'[^\w]+', '_', name)
+                    if safe_name in unchecked_normalized:
+                       continue 
+
+                    query = add_missing_aliases(query)
                     queries.append({
                         'name': safe_name,
                         'common': query if is_null_like(multitenant) and is_null_like(nonmultitenant) else None,
@@ -231,11 +238,17 @@ END;
 """
     return block
 
-def write_queries_to_file(queries, output_file):
+def write_queries_to_file(queries, output_file,unchecked_items=None):
+    if unchecked_items is None:
+        unchecked_items = []
+    unchecked_normalized = {re.sub(r'[^\w]+', '_', name).lower() for name in unchecked_items} 
     with open(output_file, 'w', encoding='utf-8') as sqlfile:
         sqlfile.write("-- Generated Oracle SQL script with JSON output and dynamic SQL error handling\n\n")
         sqlfile.write("SET SERVEROUTPUT ON SIZE UNLIMITED;\n\n")
         for q in queries:
+            if q['name'].lower() in unchecked_normalized:
+                print(f"[-] Skipping unchecked item: {q['name']}")
+                continue
             sqlfile.write(conditional_plsql_block(q['name'], q['common'], q['multitenant'], q['nonmultitenant']))
             sqlfile.write("\n")
 
