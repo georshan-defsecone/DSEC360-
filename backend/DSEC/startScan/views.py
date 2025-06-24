@@ -32,16 +32,17 @@ def database_config_audit(scan_data):
             csv_path = os.path.join(oracle_dir, csv_name)
             sql_output = os.path.join(oracle_dir, "output.sql")
             result_csv=os.path.join(oracle_dir,"result.csv")
+            json_output = os.path.join(oracle_dir, "output.json")
 
             if not os.path.exists(csv_path):
                 print(f"[!] CSV input file not found: {csv_path}")
-                return None
+                return None,None
 
             # Step 1: Generate the SQL script
             queries = generate_sql.extract_db_queries(csv_path, unchecked_items)
             if not queries:
                 print("[!] No queries extracted from CSV.")
-                return None
+                return None,None
 
             generate_sql.write_queries_to_file(queries, sql_output, unchecked_items)
 
@@ -54,21 +55,23 @@ def database_config_audit(scan_data):
             if audit_method == "remoteaccess":
                 print("[*] Using remote access method.")
                 generate_sql.execute_sql_script_remotely(sql_output, scan_data)
-                return result_csv
+
+                return result_csv,json_output
             elif audit_method == "agent":
                 print("[*] Using agent method.")
-                return download_script(sql_output)
+                script_path= download_script(sql_output)
+                return script_path, json_output
             else:
                 print(f"[-] Unsupported audit method: {audit_method}")
-                return None
+                return None,None
 
         except Exception as e:
             print(f"[!] Exception running Oracle audit: {e}")
-            return None
+            return None,None
 
     else:
         print(f"[-] Unsupported compliance type: {normalized_compliance}")
-        return None
+        return None,None
 
 
 # startScan/utils.py

@@ -26,6 +26,7 @@ from django.views.decorators.csrf import csrf_exempt
 from startScan.views import database_config_audit
 from startScan.views import download_script
 from django.http import FileResponse
+import json
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -386,8 +387,20 @@ def create_scan(request):
         
         scan_data = data.get("scan_data", {})
         print(scan_data)
-        file_path = launch_scan(scan_data)
+        file_path, output_json_path = launch_scan(scan_data)
         audit_method = scan_data.get("auditMethod", "").strip().lower()
+
+        scan_instance = Scan.objects.get(scan_id=data["scan_id"])
+
+        # Save output.json content to scan_output field
+        if output_json_path and os.path.exists(output_json_path):
+            with open(output_json_path, "r", encoding="utf-8") as f:
+                try:
+                    output_data = json.load(f)
+                    scan_instance.scan_output = output_data
+                    scan_instance.save()
+                except json.JSONDecodeError:
+                    print("[!] Failed to decode output.json")
 
         if file_path and os.path.exists(file_path):
             filename = os.path.basename(file_path)
@@ -396,23 +409,20 @@ def create_scan(request):
                 with open(file_path, "r", encoding="utf-8") as f:
                     csv_text = f.read()
 
-                # Save CSV to scan_result
-                scan_instance = Scan.objects.get(scan_id=data["scan_id"])
                 scan_instance.scan_result = csv_text
                 scan_instance.save()
 
-                # Return CSV as a FileResponse (not as a download)
                 csv_stream = BytesIO(csv_text.encode("utf-8"))
                 return FileResponse(csv_stream, content_type="text/csv")
 
             else:
-                # Agent scan returns actual file (e.g., SQL)
                 return FileResponse(
                     open(file_path, "rb"),
                     as_attachment=True,
                     filename=os.path.basename(file_path),
                     content_type="application/sql"
                 )
+
 
         return Response({
             "message": "Scan created successfully.",
@@ -447,13 +457,13 @@ def launch_scan(scan_data):
            
 
         if category=="windows":
-            print("windows_config_audit will be called")
+            return None,None
 
         if category=="linux":
-            print("linux_config_audit will be called")
+            return None,None
 
         if category=="firewall":
-            print("firewall_config_audit will be called")
+            return None,None
 
 
     
