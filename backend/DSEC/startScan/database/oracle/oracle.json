@@ -1,5 +1,5 @@
 [
-  { "name": "2.2.1 Ensure 'AUDIT_SYS_OPERATIONS' Is Set to 'TRUE' (Scored)", "check": false },
+  { "name": "2.2.1 Ensure 'AUDIT_SYS_OPERATIONS' Is Set to 'TRUE' (Scored)", "check": true },
   { "name": "2.2.2 Ensure 'AUDIT_TRAIL' Is Set to 'DB', 'XML', 'OS', 'DB,EXTENDED', or 'XML,EXTENDED' (Scored)", "check": true },
   { "name": "2.2.3 Ensure 'GLOBAL_NAMES' Is Set to 'TRUE' (Scored)", "check": true },
   { "name": "2.2.4 Ensure 'O7_DICTIONARY_ACCESSIBILITY' Is Set to 'FALSE' (Scored)", "check": true },

@@ -31,6 +31,7 @@ def database_config_audit(scan_data):
             csv_name = "data.csv"
             csv_path = os.path.join(oracle_dir, csv_name)
             sql_output = os.path.join(oracle_dir, "output.sql")
+            result_csv=os.path.join(oracle_dir,"result.csv")
 
             if not os.path.exists(csv_path):
                 print(f"[!] CSV input file not found: {csv_path}")
@@ -53,7 +54,7 @@ def database_config_audit(scan_data):
             if audit_method == "remoteaccess":
                 print("[*] Using remote access method.")
                 generate_sql.execute_sql_script_remotely(sql_output, scan_data)
-                return sql_output
+                return result_csv
             elif audit_method == "agent":
                 print("[*] Using agent method.")
                 return download_script(sql_output)

@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { useNavigate } from "react-router-dom";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -25,6 +26,7 @@ import { CheckCircle2 } from "lucide-react";
 import api from "../api";
 
 const ScanCADatabases = () => {
+  const navigate = useNavigate();
   const [complianceData, setComplianceData] = useState([]);
   const [errors, setErrors] = useState("");
   const [fileIPs, setFileIPs] = useState<string[]>([]);
@@ -514,7 +516,9 @@ const ScanCADatabases = () => {
       console.log("Scan created successfully:", response.data);
       toast.success("Scan created succesfully", {
         icon: <CheckCircle2 className="text-green-500" />,
-      });
+      }
+    );
+    navigate(`/scan/scanresult/${formData.projectName}/${formData.scanName}`);
 
       // Optionally reset form here
       // setFormData(initialFormData);
@@ -1144,7 +1148,12 @@ const ScanCADatabases = () => {
                   onValueChange={(value) => {
                     handleInputChange(value, "complianceCategory");
 
-                    // Always load audits when category is selected
+                    // Clear audit names and selections before loading new data
+                    setFormData((prev) => ({ ...prev, auditNames: [] }));
+                    setSelectedComplianceItems([]);
+                    setUncheckedComplianceItems([]);
+
+                    // Load fresh audit names based on selected category
                     loadAuditNames(value);
                   }}
                 >

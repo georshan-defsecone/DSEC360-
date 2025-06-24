@@ -17,6 +17,7 @@ class Scan(models.Model):
     scan_author = models.CharField(max_length=255)
     scan_status = models.CharField(max_length=50)
     scan_data = models.JSONField(null=True, blank=True)  # <-- New JSON field added here
+    scan_result = models.TextField(null=True, blank=True)
     trash = models.BooleanField(default=False)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='scans')
 
