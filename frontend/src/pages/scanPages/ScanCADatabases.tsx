@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useNavigate } from "react-router-dom";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -23,6 +26,7 @@ import { CheckCircle2 } from "lucide-react";
 import api from "../api";
 
 const ScanCADatabases = () => {
+  const navigate = useNavigate();
   const [complianceData, setComplianceData] = useState([]);
   const [errors, setErrors] = useState("");
   const [fileIPs, setFileIPs] = useState<string[]>([]);
@@ -33,6 +37,13 @@ const ScanCADatabases = () => {
 
   const [page, setPage] = useState(1);
   const [userName, setUserName] = useState("");
+  const [selectedComplianceItems, setSelectedComplianceItems] = useState<
+    string[]
+  >([]);
+  const [uncheckedComplianceItems, setUncheckedComplianceItems] = useState<
+    string[]
+  >([]);
+
   const [formData, setFormData] = useState({
     // General Info
     scanName: "",
@@ -94,6 +105,7 @@ const ScanCADatabases = () => {
     scheduleTimezone: "",
     notification: "",
     notificationEmail: "",
+    auditNames: [],
   });
 
   const validatePage1 = () => {
@@ -231,14 +243,35 @@ const ScanCADatabases = () => {
     fetchData();
   }, []);
 
+  async function loadAuditNames(complianceCategory) {
+    const filename = complianceCategory.toLowerCase().replace(/\s+/g, "_");
+
+    try {
+      const response = await api.get(`/get-json/${filename}/`);
+      const auditData = response.data;
+
+      // Update formData
+      handleInputChange(auditData, "auditNames");
+
+      // ✅ Preselect items where "check" is true
+      const initiallyChecked = auditData
+        .filter((item) => item.check)
+        .map((item) => item.name);
+
+      setSelectedComplianceItems(initiallyChecked);
+    } catch (error) {
+      console.error("Error fetching compliance data:", error);
+    }
+  }
+
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any,
     field?: string
   ) => {
-    if (typeof e === "string" && field) {
+    if (field) {
       setFormData((prev) => ({
         ...prev,
-        [field]: e,
+        [field]: e, // ✅ Handles strings, arrays, objects, etc.
       }));
     } else if (typeof e === "object" && "target" in e) {
       const { name, value } = e.target;
@@ -315,97 +348,101 @@ const ScanCADatabases = () => {
   };
 
   const downloadScript = async () => {
-  const scanPayload = {
-    project_name: formData.projectName,
-    scan_name: formData.scanName,
-    scan_author: userName || "unknown",
-    scan_status: "Pending",
+    const scanPayload = {
+      project_name: formData.projectName,
+      scan_name: formData.scanName,
+      scan_author: userName || "unknown",
+      scan_status: "Pending",
 
-    scan_data: {
-      scanType: "Configuration Audit",
-      description: formData.description,
-      os: formData.OS,
-      auditMethod: formData.auditMethod,
-      target: formData.target,
-      elevatePrivilege: formData.elevatePrivilege,
-      authMethod: formData.authMethod,
-      username: formData.username,
-      password: formData.password,
-      domain: formData.domain,
-      ntlmHash: formData.ntlmHash,
-      lmHash: formData.lmHash,
-      kdc: formData.kdc,
-      kdcPort: formData.kdcPort,
-      kdcTransport: formData.kdcTransport,
-      certificate: formData.certificate,
-      publicKey: formData.publicKey,
-      privateKeyPassphrase: formData.privateKeyPassphrase,
-      port: formData.port,
-      clientVersion: formData.clientVersion,
-      attemptLeastPrivilege: formData.attemptLeastPrivilege,
+      scan_data: {
+        scanType: "Configuration Audit",
+        description: formData.description,
+        category: "database",
+        os: formData.OS,
+        auditMethod: formData.auditMethod,
+        target: formData.target,
+        elevatePrivilege: formData.elevatePrivilege,
+        authMethod: formData.authMethod,
+        username: formData.username,
+        password: formData.password,
+        domain: formData.domain,
+        ntlmHash: formData.ntlmHash,
+        lmHash: formData.lmHash,
+        kdc: formData.kdc,
+        kdcPort: formData.kdcPort,
+        kdcTransport: formData.kdcTransport,
+        certificate: formData.certificate,
+        publicKey: formData.publicKey,
+        privateKeyPassphrase: formData.privateKeyPassphrase,
+        port: formData.port,
+        clientVersion: formData.clientVersion,
+        attemptLeastPrivilege: formData.attemptLeastPrivilege,
 
-      EP_escalationAccount: formData.EP_escalationAccount,
-      EP_escalationPassword: formData.EP_escalationPassword,
-      EP_dzdoDirectory: formData.EP_dzdoDirectory,
-      EP_suDirectory: formData.EP_suDirectory,
-      EP_pbrunDirectory: formData.EP_pbrunDirectory,
-      EP_su_sudoDirectory: formData.EP_su_sudoDirectory,
-      EP_su_login: formData.EP_su_login,
-      EP_su_user: formData.EP_su_user,
-      EP_sudoUser: formData.EP_sudoUser,
-      EPsshUserPassword: formData.EPsshUserPassword,
-      EPenablePassword: formData.EPenablePassword,
+        EP_escalationAccount: formData.EP_escalationAccount,
+        EP_escalationPassword: formData.EP_escalationPassword,
+        EP_dzdoDirectory: formData.EP_dzdoDirectory,
+        EP_suDirectory: formData.EP_suDirectory,
+        EP_pbrunDirectory: formData.EP_pbrunDirectory,
+        EP_su_sudoDirectory: formData.EP_su_sudoDirectory,
+        EP_su_login: formData.EP_su_login,
+        EP_su_user: formData.EP_su_user,
+        EP_sudoUser: formData.EP_sudoUser,
+        EPsshUserPassword: formData.EPsshUserPassword,
+        EPenablePassword: formData.EPenablePassword,
 
-      globalCredentials: {
-        neverSendCredentials: formData.globalCredentials.neverSendCredentials,
-        dontUseNTLMv1: formData.globalCredentials.dontUseNTLMv1,
-        startRemoteRegistryService:
-          formData.globalCredentials.startRemoteRegistryService,
-        enableAdministrativeShares:
-          formData.globalCredentials.enableAdministrativeShares,
-        startServerService: formData.globalCredentials.startServerService,
+        globalCredentials: {
+          neverSendCredentials: formData.globalCredentials.neverSendCredentials,
+          dontUseNTLMv1: formData.globalCredentials.dontUseNTLMv1,
+          startRemoteRegistryService:
+            formData.globalCredentials.startRemoteRegistryService,
+          enableAdministrativeShares:
+            formData.globalCredentials.enableAdministrativeShares,
+          startServerService: formData.globalCredentials.startServerService,
+        },
+
+        complianceCategory: formData.complianceCategory,
+        complianceSecurityStandard: formData.complianceSecurityStandard,
+
+        schedule: formData.schedule,
+        scheduleFrequency: formData.scheduleFrequency,
+        scheduleStartDate: formData.scheduleStartDate,
+        scheduleStartTime: formData.scheduleStartTime,
+        scheduleTimezone: formData.scheduleTimezone,
+        notification: formData.notification,
+        notificationEmail: formData.notificationEmail,
+        uncheckedComplianceItems: uncheckedComplianceItems,
       },
+    };
 
-      complianceCategory: formData.complianceCategory,
-      complianceSecurityStandard: formData.complianceSecurityStandard,
+    try {
+      const response = await api.post("/scans/create-scan/", scanPayload, {
+        responseType: "blob",
+      });
 
-      schedule: formData.schedule,
-      scheduleFrequency: formData.scheduleFrequency,
-      scheduleStartDate: formData.scheduleStartDate,
-      scheduleStartTime: formData.scheduleStartTime,
-      scheduleTimezone: formData.scheduleTimezone,
-      notification: formData.notification,
-      notificationEmail: formData.notificationEmail,
-    },
-  };
+      const contentDisposition = response.headers["content-disposition"];
+      let filename = "script.sql";
 
-  try {
-    const response = await api.post("/scans/create-scan/", scanPayload, {
-      responseType: "blob",
-    });
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?(.+)"?/);
+        if (match?.[1]) filename = match[1];
+      }
 
-    const contentDisposition = response.headers["content-disposition"];
-    let filename = "script.sql";
-
-    if (contentDisposition) {
-      const match = contentDisposition.match(/filename="?(.+)"?/);
-      if (match?.[1]) filename = match[1];
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(
+        "Error downloading script:",
+        error.response?.data || error.message
+      );
+      alert("Failed to download the script.");
     }
-
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error("Error downloading script:", error.response?.data || error.message);
-    alert("Failed to download the script.");
-  }
-};
-
+  };
 
   const handleSubmit = async () => {
     try {
@@ -418,7 +455,7 @@ const ScanCADatabases = () => {
         scan_data: {
           scanType: "Configuration Audit",
           description: formData.description,
-          category:"database",
+          category: "database",
           os: formData.OS,
           auditMethod: formData.auditMethod,
           target: formData.target,
@@ -472,13 +509,16 @@ const ScanCADatabases = () => {
           scheduleTimezone: formData.scheduleTimezone,
           notification: formData.notification,
           notificationEmail: formData.notificationEmail,
+          uncheckedComplianceItems: uncheckedComplianceItems,
         },
       });
 
       console.log("Scan created successfully:", response.data);
       toast.success("Scan created succesfully", {
         icon: <CheckCircle2 className="text-green-500" />,
-      });
+      }
+    );
+    navigate(`/scan/scanresult/${formData.projectName}/${formData.scanName}`);
 
       // Optionally reset form here
       // setFormData(initialFormData);
@@ -1085,66 +1125,119 @@ const ScanCADatabases = () => {
           </div>
         );
       case 4: {
-        //get all categories from complianceData
         const categories = [
           ...new Set(complianceData.map((item) => item.Categories)),
         ];
 
-        //get all standards filtered by category
         const standards = complianceData
           .filter((item) => item.Categories === formData.complianceCategory)
           .map((item) => item["Security Standards"]);
 
         return (
-          <div className="space-y-4">
-            {renderError()}
-            <h2 className="text-xl font-semibold">Compliance Information</h2>
+          <div className="flex gap-6">
+            {/* Left 70%: Non-scrollable form content */}
+            <div className="w-[70%] space-y-4">
+              {renderError()}
+              <h2 className="text-xl font-semibold">Compliance Information</h2>
 
-            {/* Operating System Selection */}
-            <div className="flex items-center">
-              <p className="block w-70">Network Solution:</p>
-              <Select
-                value={formData.complianceCategory}
-                onValueChange={(value) =>
-                  handleInputChange(value, "complianceCategory")
-                }
-              >
-                <SelectTrigger className="w-80">
-                  <SelectValue placeholder="Select Network Solution" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Network Solution Selection */}
+              <div className="flex items-center">
+                <p className="block w-70">Network Solution:</p>
+                <Select
+                  value={formData.complianceCategory}
+                  onValueChange={(value) => {
+                    handleInputChange(value, "complianceCategory");
+
+                    // Clear audit names and selections before loading new data
+                    setFormData((prev) => ({ ...prev, auditNames: [] }));
+                    setSelectedComplianceItems([]);
+                    setUncheckedComplianceItems([]);
+
+                    // Load fresh audit names based on selected category
+                    loadAuditNames(value);
+                  }}
+                >
+                  <SelectTrigger className="w-80">
+                    <SelectValue placeholder="Select Network Solution" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Security Standard Selection */}
+              <div className="flex items-center">
+                <p className="block w-70">Security Standard:</p>
+                <Select
+                  value={formData.complianceSecurityStandard}
+                  onValueChange={(value) => {
+                    handleInputChange(value, "complianceSecurityStandard");
+
+                    if (formData.complianceCategory) {
+                      loadAuditNames(formData.complianceCategory); // ✅ use the current category (already selected)
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-80">
+                    <SelectValue placeholder="Select Security Standard" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {standards.map((standard) => (
+                      <SelectItem key={standard} value={standard}>
+                        {standard}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            {/* Security Standard Selection */}
-            <div className="flex items-center">
-              <p className="block w-70">Security Standard:</p>
-              <Select
-                value={formData.complianceSecurityStandard}
-                onValueChange={(value) =>
-                  handleInputChange(value, "complianceSecurityStandard")
-                }
-              >
-                <SelectTrigger className="w-80">
-                  <SelectValue placeholder="Select Security Standard" />
-                </SelectTrigger>
-                <SelectContent>
-                  {standards.map((standard) => (
-                    <SelectItem key={standard} value={standard}>
-                      {standard}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+
+            {/* Right 30%: Scrollable content with fixed height */}
+            <div className="w-[30%] flex flex-col">
+              <div className="max-h-96 overflow-y-auto border-l pl-4 pr-2 space-y-3">
+                {formData.auditNames.length > 0 ? (
+                  formData.auditNames.map((item, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`compliance-${index}`}
+                        checked={selectedComplianceItems.includes(item.name)}
+                        onCheckedChange={(checked) => {
+                          setSelectedComplianceItems((prev) =>
+                            checked
+                              ? [...prev, item.name]
+                              : prev.filter((v) => v !== item.name)
+                          );
+
+                          setUncheckedComplianceItems((prev) =>
+                            !checked
+                              ? [...prev, item.name]
+                              : prev.filter((v) => v !== item.name)
+                          );
+                        }}
+                      />
+
+                      <Label
+                        htmlFor={`compliance-${index}`}
+                        className="text-sm"
+                      >
+                        {item.name}
+                      </Label>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500">No compliance data available.</p>
+                )}
+              </div>
             </div>
           </div>
         );
       }
+
       case 5:
         return (
           <div className="space-y-6">
@@ -1277,6 +1370,10 @@ const ScanCADatabases = () => {
         return null;
     }
   };
+  const dummyItems = Array.from(
+    { length: 30 },
+    (_, i) => `Test item #${i + 1}`
+  );
 
   return (
     <div className="flex h-screen text-black">
@@ -1319,14 +1416,12 @@ const ScanCADatabases = () => {
                     </button>
                   ) : formData.auditMethod === "agent" && page === 4 ? (
                     <Button
-  type="button"
-  className="px-4 py-2 bg-black text-white h-10 rounded cursor-pointer"
-  onClick={downloadScript} // no args, uses formData from closure
->
-  Download script
-</Button>
-
-
+                      type="button"
+                      className="px-4 py-2 bg-black text-white h-10 rounded cursor-pointer"
+                      onClick={downloadScript} // no args, uses formData from closure
+                    >
+                      Download script
+                    </Button>
                   ) : (
                     <button
                       type="button"

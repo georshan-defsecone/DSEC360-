@@ -34,6 +34,7 @@ import Error404 from "./pages/404Error";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import RequireAdmin from "./components/RequireAdmin";
+import ScanResult from "./pages/resultPage/ScanResult";
 
 const Router = [
     {
@@ -145,7 +146,11 @@ const Router = [
     {
         path: "*",
         element: <Error404/>
-    }
+    },
+     {
+  path: "/scan/scanresult/:projectName/:scanName",
+  element: <ScanResult />
+}
 ]
 
 export default Router;

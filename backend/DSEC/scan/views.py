@@ -8,6 +8,7 @@ from .serializers import ProjectSerializer, ScanSerializer
 #from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import AllowAny
 import uuid
+from io import BytesIO
 import os
 from django.conf import settings
 import pandas as pd
@@ -24,6 +25,7 @@ from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
 from startScan.views import database_config_audit
 from startScan.views import download_script
+from django.http import FileResponse
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -323,6 +325,34 @@ def post_scan_file(request):
             
     return Response({'error': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_scan_result_view(request, project_name, scan_name):
+    user = request.user
+
+    try:
+        # Find project by name
+        project = Project.objects.get(project_name=project_name, trash=False)
+    except Project.DoesNotExist:
+        return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        # Filter scan by name and project
+        if user.is_admin:
+            scan = Scan.objects.get(scan_name=scan_name, project=project, trash=False)
+        else:
+            scan = Scan.objects.get(scan_name=scan_name, project=project, scan_author=user.username, trash=False)
+    except Scan.DoesNotExist:
+        return Response({'error': 'Scan not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if not scan.scan_result:
+        return Response({'error': 'Scan result is empty or missing.'}, status=status.HTTP_204_NO_CONTENT)
+
+    # Return scan_result as a CSV stream (not downloaded)
+    csv_stream = BytesIO(scan.scan_result.encode('utf-8'))
+    return FileResponse(csv_stream, content_type='text/csv')
+
 @csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -355,7 +385,34 @@ def create_scan(request):
 
         
         scan_data = data.get("scan_data", {})
-        launch_scan(scan_data)
+        print(scan_data)
+        file_path = launch_scan(scan_data)
+        audit_method = scan_data.get("auditMethod", "").strip().lower()
+
+        if file_path and os.path.exists(file_path):
+            filename = os.path.basename(file_path)
+
+            if audit_method != "agent":
+                with open(file_path, "r", encoding="utf-8") as f:
+                    csv_text = f.read()
+
+                # Save CSV to scan_result
+                scan_instance = Scan.objects.get(scan_id=data["scan_id"])
+                scan_instance.scan_result = csv_text
+                scan_instance.save()
+
+                # Return CSV as a FileResponse (not as a download)
+                csv_stream = BytesIO(csv_text.encode("utf-8"))
+                return FileResponse(csv_stream, content_type="text/csv")
+
+            else:
+                # Agent scan returns actual file (e.g., SQL)
+                return FileResponse(
+                    open(file_path, "rb"),
+                    as_attachment=True,
+                    filename=os.path.basename(file_path),
+                    content_type="application/sql"
+                )
 
         return Response({
             "message": "Scan created successfully.",
@@ -369,7 +426,7 @@ import re
 
 def launch_scan(scan_data):
     print("[*] Entered launch_scan()")
-    print(scan_data)
+    
 
     # Normalize and extract values from scan_data
     scan_type = (scan_data.get("scanType") or "").strip().lower().replace(" ", "").replace("_", "")
@@ -381,14 +438,12 @@ def launch_scan(scan_data):
     standard = scan_data.get("complianceSecurityStandard")
     # Remove all non-alphanumeric characters including underscores, then lowercase
     normalized_compliance = re.sub(r'[\W_]+', '', compliance_name or "").lower()
+    print(scan_data)
 
-    print(f"[DEBUG] scan_type: {scan_type}")
-    print(f"[DEBUG] compliance: {normalized_compliance}, standard: {standard}")
-    print(f"[DEBUG] os: {os_name}, auth_type: {auth_type}")
 
     if scan_type == "configurationaudit":
         if category=="database":
-           database_config_audit(scan_data)
+           return database_config_audit(scan_data)
            
 
         if category=="windows":

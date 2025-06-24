@@ -30,6 +30,7 @@ urlpatterns = [
     path('scans/compliance/configaudit/<str:os_name>/', views.get_compliance_data, name='compliance-data'),
     path('scans/compliance/ioc/<str:os_name>/', views.get_compromise_assessment_data, name='compromise-assessment-data'),
     path('scans/create-scan/', views.create_scan, name='create_scan'),
+    path('scans/scan-result/<str:project_name>/<str:scan_name>/',views.get_scan_result_view,name='scan-result'),
    
 
 ]
