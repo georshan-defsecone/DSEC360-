@@ -23,7 +23,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
-from startScan.views import database_config_audit
+from startScan.views import database_config_audit, windows_config_audit
 from startScan.views import download_script
 from django.http import FileResponse
 import json
@@ -457,7 +457,7 @@ def launch_scan(scan_data):
            
 
         if category=="windows":
-            return None,None
+            return windows_config_audit(scan_data)
 
         if category=="linux":
             return None,None
