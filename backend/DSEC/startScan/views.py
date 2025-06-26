@@ -10,6 +10,12 @@ from rest_framework.response import Response
 from django.http import JsonResponse, Http404
 import os
 import json
+import pandas as pd
+import os
+from openpyxl.styles import Font, PatternFill,Alignment
+from openpyxl.utils import get_column_letter
+
+
 
 def database_config_audit(scan_data):
     print("[*] Entered database_config_audit()")
@@ -55,6 +61,7 @@ def database_config_audit(scan_data):
             if audit_method == "remoteaccess":
                 print("[*] Using remote access method.")
                 generate_sql.execute_sql_script_remotely(sql_output, scan_data)
+                convert_csv_to_excel(result_csv)
 
                 return result_csv,json_output
             elif audit_method == "agent":
@@ -99,6 +106,110 @@ def download_script(script_path):
     except Exception as e:
         print(f"[!] Failed to copy script for download: {e}")
         return None
+    
+
+
+
+
+def convert_csv_to_excel(csv_file_path, excel_file_path=None):
+    """
+    Converts a CSV file to an Excel (.xlsx) file with:
+    - Dark blue header row
+    - Green background for 'pass' in Status column
+    - Red background for 'fail' in Status column
+    - Centered alignment for all cells with wrapped text
+    - Auto-sized columns and row heights to show full content
+
+    Args:
+        csv_file_path (str): Path to the input CSV file.
+        excel_file_path (str, optional): Path to save the output Excel file.
+
+    Returns:
+        str: Path to the created Excel file.
+    """
+    import os
+    import pandas as pd
+    from openpyxl import load_workbook
+    from openpyxl.styles import PatternFill, Font, Alignment
+    from openpyxl.utils import get_column_letter
+
+    if not os.path.exists(csv_file_path):
+        raise FileNotFoundError(f"CSV file not found: {csv_file_path}")
+
+    # Load CSV into a DataFrame
+    df = pd.read_csv(csv_file_path)
+
+    # Determine output file path
+    if not excel_file_path:
+        excel_file_path = os.path.splitext(csv_file_path)[0] + ".xlsx"
+
+    # Write DataFrame to Excel (no formatting yet)
+    df.to_excel(excel_file_path, index=False, engine='openpyxl')
+
+    # Open the workbook and worksheet for formatting
+    wb = load_workbook(excel_file_path)
+    ws = wb.active
+
+    # Define styles
+    header_fill = PatternFill(start_color="FF0921D6", end_color="FF0921D6", fill_type="solid")
+    header_font = Font(color="FFFFFF", bold=True)
+    center_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    pass_fill = PatternFill(start_color="FF0DD609", end_color="FF0DD609", fill_type="solid")
+    fail_fill = PatternFill(start_color="FFD60909", end_color="FFD60909", fill_type="solid")
+
+    status_col_index = None
+
+    # Format header row
+    for col_num, cell in enumerate(ws[1], 1):
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = center_alignment
+
+        if cell.value and str(cell.value).strip().lower() == "status":
+            status_col_index = col_num
+
+    # Format all data cells (centered alignment and wrap text)
+    for row in ws.iter_rows(min_row=2):
+        max_lines = 1
+        for cell in row:
+            cell.alignment = center_alignment
+            if isinstance(cell.value, str):
+                lines = cell.value.count('\n') + 1
+                max_lines = max(max_lines, lines)
+        ws.row_dimensions[row[0].row].height = max(15, 13.5 * max_lines)
+
+    # Apply coloring to Status column values
+    if status_col_index:
+        for row in ws.iter_rows(min_row=2, min_col=status_col_index, max_col=status_col_index):
+            for cell in row:
+                value = str(cell.value).strip().lower()
+                if value == "pass":
+                    cell.fill = pass_fill
+                elif value == "fail":
+                    cell.fill = fail_fill
+
+    # Auto-adjust column widths based on longest line in content
+    col_widths = {}
+    for row in ws.iter_rows():
+        for cell in row:
+            if cell.value:
+                col_letter = get_column_letter(cell.column)
+                value = str(cell.value)
+                estimated_width = max(len(line) for line in value.split('\n'))
+                col_widths[col_letter] = max(col_widths.get(col_letter, 0), estimated_width)
+
+    for col_letter, width in col_widths.items():
+        ws.column_dimensions[col_letter].width = min(width * 1.2, 100)  # scale width, cap at 100
+
+    # Save the styled Excel file
+    wb.save(excel_file_path)
+
+    return excel_file_path
+
+
+
+
     
 
 @api_view(['GET'])
