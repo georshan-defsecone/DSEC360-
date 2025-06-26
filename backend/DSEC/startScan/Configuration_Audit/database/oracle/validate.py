@@ -2,6 +2,9 @@ import csv
 import json
 import sys
 import re
+import os
+from openpyxl import Workbook
+from openpyxl.styles import PatternFill, Font, Alignment
 
 def extract_audit_id_from_json_name(json_name):
     parts = json_name.strip('_').split('_')
@@ -17,6 +20,9 @@ def extract_audit_id_from_csv_name(audit_name):
     match = re.match(r'^(\d+(?:\.\d+)+)', audit_name.strip())
     return match.group(1) if match else None
 
+def strip_audit_number(audit_name):
+    return re.sub(r'^\d+(?:\.\d+)+\s*', '', audit_name).strip()
+
 def load_csv(csv_file):
     expected_dict = {}
     with open(csv_file, newline='') as f:
@@ -31,11 +37,75 @@ def load_csv(csv_file):
                 'expected_value': row['expected_value'].strip(),
                 'comparison_type': row['comparison_type'].strip(),
                 'field_to_check': row['field_to_check'].strip(),
-                'description': row.get('description', '').strip()
+                'description': row.get('description', '').strip(),
+                'remediation': row.get('remediation', '').strip()
             }
     return expected_dict
 
-def validate(json_file, expected_dict, output_csv):
+def compare_values(actual, expected, comp_type):
+    try:
+        expected_is_null = expected.strip().lower() == 'null'
+        actual_is_null = actual is None
+
+        if comp_type == 'equals':
+            return actual_is_null if expected_is_null else str(actual) == expected
+        elif comp_type == 'in_list':
+            return actual_is_null if expected_is_null else str(actual) in [val.strip() for val in expected.split(',')]
+        elif comp_type == 'max_value':
+            return False if actual_is_null or expected_is_null else float(actual) <= float(expected)
+        elif comp_type == 'min_value':
+            return False if actual_is_null or expected_is_null else float(actual) >= float(expected)
+        elif comp_type == 'contains':
+            return False if expected_is_null or actual_is_null else expected in str(actual)
+        return False
+    except Exception:
+        return False
+
+def write_csv(results, csv_path):
+    fieldnames = ['CIS.NO', 'Subject', 'Description', 'Current Settings', 'Status', 'Remediation']
+    with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in results:
+            writer.writerow(row)
+
+def write_excel(results, excel_path):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Validation Report"
+
+    headers = ['CIS.NO', 'Subject', 'Description', 'Current Settings', 'Status', 'Remediation']
+    header_fill = PatternFill(start_color="ADD8E6", end_color="ADD8E6", fill_type="solid")
+    pass_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
+    fail_fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+    bold_font = Font(bold=True)
+
+    ws.append(headers)
+    for col in range(1, len(headers) + 1):
+        cell = ws.cell(row=1, column=col)
+        cell.fill = header_fill
+        cell.font = bold_font
+        cell.alignment = Alignment(horizontal="center")
+
+    for row_data in results:
+        row = [
+            row_data['CIS.NO'],
+            row_data['Subject'],
+            row_data['Description'],
+            row_data['Current Settings'],
+            row_data['Status'],
+            row_data['Remediation']
+        ]
+        ws.append(row)
+        status_cell = ws.cell(row=ws.max_row, column=5)
+        if row_data['Status'] == 'PASS':
+            status_cell.fill = pass_fill
+        elif row_data['Status'] == 'FAIL':
+            status_cell.fill = fail_fill
+
+    wb.save(excel_path)
+
+def validate(json_file, expected_dict, output_path):
     with open(json_file) as f:
         try:
             json_objects = json.load(f)
@@ -51,177 +121,129 @@ def validate(json_file, expected_dict, output_csv):
         audit_id = extract_audit_id_from_json_name(json_name)
 
         if not audit_id:
-            msg = 'Could not extract audit ID'
             results_csv.append({
-                'audit_name': json_name,
-                'status': 'FAIL',
-                'current_settings': msg,
-                'description': ''
+                'CIS.NO': '',
+                'Subject': json_name,
+                'Status': 'FAIL',
+                'Current Settings': 'Could not extract audit ID',
+                'Description': '',
+                'Remediation': ''
             })
-            print(f"[FAIL] {json_name}: {msg}")
             continue
 
         seen_audit_ids.add(audit_id)
         expected_info = expected_dict.get(audit_id)
+        remediation = expected_info.get('remediation', '') if expected_info else ''
         if not expected_info:
-            msg = f"No expected value found for audit ID: {audit_id}"
             results_csv.append({
-                'audit_name': json_name,
-                'status': 'FAIL',
-                'current_settings': msg,
-                'description': ''
+                'CIS.NO': audit_id,
+                'Subject': strip_audit_number(json_name),
+                'Status': 'FAIL',
+                'Current Settings': f"No expected value found for audit ID: {audit_id}",
+                'Description': '',
+                'Remediation': remediation
             })
-            print(f"[FAIL] {json_name}: {msg}")
             continue
 
         expected_value = expected_info['expected_value']
         comparison_type = expected_info['comparison_type']
         field_to_check = expected_info['field_to_check']
         audit_name = expected_info['audit_name']
+        audit_clean = strip_audit_number(audit_name)
         description = expected_info.get('description', '')
-
         results = data.get('results', None)
 
         if comparison_type == 'some_result':
-            if results and isinstance(results, list) and len(results) > 0:
-                msg = 'Results found (some_result case)'
-                results_csv.append({
-                    'audit_name': audit_name,
-                    'status': 'PASS',
-                    'current_settings': msg,
-                    'description': description
-                })
-                print(f"[PASS] {audit_name}: {msg}")
-            else:
-                msg = 'No results found (some_result case)'
-                results_csv.append({
-                    'audit_name': audit_name,
-                    'status': 'FAIL',
-                    'current_settings': msg,
-                    'description': description
-                })
-                print(f"[FAIL] {audit_name}: {msg}")
+            status = 'PASS' if results and isinstance(results, list) and len(results) > 0 else 'FAIL'
+            msg = 'Results found' if status == 'PASS' else 'No results found'
+            results_csv.append({
+                'CIS.NO': audit_id,
+                'Subject': audit_clean,
+                'Status': status,
+                'Current Settings': msg,
+                'Description': description,
+                'Remediation': '' if status == 'PASS' else remediation
+            })
             continue
 
         if field_to_check.lower() == 'null':
             expected_is_null = expected_value.strip().lower() == 'null'
+            status, msg = '', ''
             if expected_is_null:
                 if results is None or (isinstance(results, list) and len(results) == 0):
-                    msg = 'Results are null or empty'
-                    results_csv.append({'audit_name': audit_name, 'status': 'PASS', 'current_settings': msg, 'description': description})
-                    print(f"[PASS] {audit_name}: {msg}")
+                    status, msg = 'PASS', 'Results are null or empty'
                 else:
-                    msg = f"Expected null but got {results}"
-                    results_csv.append({'audit_name': audit_name, 'status': 'FAIL', 'current_settings': msg, 'description': description})
-                    print(f"[FAIL] {audit_name}: {msg}")
+                    status, msg = 'FAIL', f"{results}"
             else:
                 if results is None or (isinstance(results, list) and len(results) == 0):
-                    msg = "Expected value present but got null"
-                    results_csv.append({'audit_name': audit_name, 'status': 'FAIL', 'current_settings': msg, 'description': description})
-                    print(f"[FAIL] {audit_name}: {msg}")
+                    status, msg = 'FAIL', 'Expected value present but got null'
                 else:
-                    msg = "Results present as expected"
-                    results_csv.append({'audit_name': audit_name, 'status': 'PASS', 'current_settings': msg, 'description': description})
-                    print(f"[PASS] {audit_name}: {msg}")
+                    status, msg = 'PASS', 'Results present as expected'
+
+            results_csv.append({
+                'CIS.NO': audit_id,
+                'Subject': audit_clean,
+                'Status': status,
+                'Current Settings': msg,
+                'Description': description,
+                'Remediation': '' if status == 'PASS' else remediation
+            })
             continue
 
-        if results is None:
-            msg = "'results' is null"
-            results_csv.append({'audit_name': audit_name, 'status': 'FAIL', 'current_settings': msg, 'description': description})
-            print(f"[FAIL] {audit_name}: {msg}")
-            continue
-        if isinstance(results, str):
-            results_csv.append({'audit_name': audit_name, 'status': 'FAIL', 'current_settings': results, 'description': description})
-            print(f"[FAIL] {audit_name}: {results}")
-            continue
         if not isinstance(results, list):
-            msg = "Invalid type for 'results'"
-            results_csv.append({'audit_name': audit_name, 'status': 'FAIL', 'current_settings': msg, 'description': description})
-            print(f"[FAIL] {audit_name}: {msg}")
+            msg = "'results' is null" if results is None else str(results)
+            results_csv.append({
+                'CIS.NO': audit_id,
+                'Subject': audit_clean,
+                'Status': 'FAIL',
+                'Current Settings': msg,
+                'Description': description,
+                'Remediation': remediation
+            })
             continue
 
         all_passed = True
         fail_reasons = []
 
-        for i, result in enumerate(results, 1):
-            # 🔽 Case-insensitive field lookup
-            actual_value = None
-            for key, value in result.items():
-                if key.lower() == field_to_check.lower():
-                    actual_value = value
-                    break
-
+        for result in results:
+            actual_value = result.get(field_to_check)
             if actual_value is None and expected_value.strip().lower() != 'null':
-                fail_reasons.append(f"Row {i}: Missing field '{field_to_check}'")
+                fail_reasons.append(f"Missing '{field_to_check}'")
                 all_passed = False
                 continue
 
-            passed = compare_values(actual_value, expected_value, comparison_type)
-            if not passed:
-                fail_reasons.append(f"Row {i}: {field_to_check} = {actual_value} (Expected: {comparison_type} {expected_value})")
+            if not compare_values(actual_value, expected_value, comparison_type):
+                fail_reasons.append(f"{field_to_check} = {actual_value}")
                 all_passed = False
 
-        if all_passed:
-            msg = 'All checks passed'
-            results_csv.append({'audit_name': audit_name, 'status': 'PASS', 'current_settings': msg, 'description': description})
-            print(f"[PASS] {audit_name}: {msg}")
-        else:
-            msg = '; '.join(fail_reasons)
-            results_csv.append({'audit_name': audit_name, 'status': 'FAIL', 'current_settings': msg, 'description': description})
-            print(f"[FAIL] {audit_name}: {msg}")
+        results_csv.append({
+            'CIS.NO': audit_id,
+            'Subject': audit_clean,
+            'Status': 'PASS' if all_passed else 'FAIL',
+            'Current Settings': 'All checks passed' if all_passed else '; '.join(fail_reasons),
+            'Description': description,
+            'Remediation': '' if all_passed else remediation
+        })
 
     for audit_id, info in expected_dict.items():
         if audit_id not in seen_audit_ids:
             results_csv.append({
-                'audit_name': info['audit_name'],
-                'status': 'FAIL',
-                'current_settings': 'Audit ID not found in JSON',
-                'description': info.get('description', '')
+                'CIS.NO': audit_id,
+                'Subject': strip_audit_number(info['audit_name']),
+                'Status': 'FAIL',
+                'Current Settings': 'Audit ID not found in JSON',
+                'Description': info.get('description', ''),
+                'Remediation': info.get('remediation', '')
             })
-            print(f"[MISSING] {info['audit_name']}: Not found in JSON")
 
-    with open(output_csv, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=['audit_name', 'status', 'current_settings', 'description'])
-        writer.writeheader()
-        for row in results_csv:
-            writer.writerow(row)
+    # Save CSV
+    write_csv(results_csv, output_path)
 
-    print(f"\n✅ Validation report written to {output_csv}")
+    # Save Excel with same base name
+    excel_path = os.path.splitext(output_path)[0] + '.xlsx'
+    write_excel(results_csv, excel_path)
 
-def compare_values(actual, expected, comp_type):
-    try:
-        expected_is_null = expected.strip().lower() == 'null'
-        actual_is_null = actual is None
-
-        if comp_type == 'equals':
-            if expected_is_null:
-                return actual_is_null
-            return str(actual) == expected
-
-        elif comp_type == 'in_list':
-            if expected_is_null:
-                return actual_is_null
-            return str(actual) in [val.strip() for val in expected.split(',')]
-
-        elif comp_type == 'max_value':
-            if actual_is_null or expected_is_null:
-                return False
-            return float(actual) <= float(expected)
-
-        elif comp_type == 'min_value':
-            if actual_is_null or expected_is_null:
-                return False
-            return float(actual) >= float(expected)
-
-        elif comp_type == 'contains':
-            if expected_is_null or actual_is_null:
-                return False
-            return expected in str(actual)
-
-        else:
-            return False
-    except Exception:
-        return False
+    print(f"\n✅ Validation reports saved:\n- CSV: {output_path}\n- Excel: {excel_path}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
