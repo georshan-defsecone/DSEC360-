@@ -27,6 +27,7 @@ from startScan.views import database_config_audit
 from startScan.views import download_script
 from django.http import FileResponse
 import json
+import mimetypes
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -416,11 +417,14 @@ def create_scan(request):
                 return FileResponse(csv_stream, content_type="text/csv")
 
             else:
+                mime_type, _ = mimetypes.guess_type(file_path)
+                mime_type = mime_type or "application/octet-stream"  # Fallback
+
                 return FileResponse(
-                    open(file_path, "rb"),
-                    as_attachment=True,
-                    filename=os.path.basename(file_path),
-                    content_type="application/sql"
+                 open(file_path, "rb"),
+                 as_attachment=True,
+                 filename=filename,
+                 content_type=mime_type
                 )
 
 
