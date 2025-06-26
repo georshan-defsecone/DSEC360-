@@ -303,6 +303,90 @@ setUserName(response1.data.username);
     const prevPage = () => {
         if (page > 1) setPage((prev) => prev - 1);
     };
+    const downloadScript = async () => {
+        const scanPayload = {
+          project_name: formData.projectName,
+          scan_name: formData.scanName,
+          scan_author: userName || "unknown",
+          scan_status: "Pending",
+    
+          scan_data: {
+            scanType: "Configuration Audit",
+            description: formData.description,
+            category: "database",
+            os: formData.OS,
+            auditMethod: formData.auditMethod,
+            target: formData.target,
+            elevatePrivilege: formData.elevatePrivilege,
+            authMethod: formData.authMethod,
+            username: formData.username,
+            password: formData.password,
+            domain: formData.domain,
+            ntlmHash: formData.ntlmHash,
+            lmHash: formData.lmHash,
+            kdc: formData.kdc,
+            kdcPort: formData.kdcPort,
+            kdcTransport: formData.kdcTransport,
+            certificate: formData.certificate,
+            publicKey: formData.publicKey,
+            privateKeyPassphrase: formData.privateKeyPassphrase,
+            port: formData.port,
+            clientVersion: formData.clientVersion,
+            attemptLeastPrivilege: formData.attemptLeastPrivilege,
+    
+            globalCredentials: {
+              neverSendCredentials: formData.globalCredentials.neverSendCredentials,
+              dontUseNTLMv1: formData.globalCredentials.dontUseNTLMv1,
+              startRemoteRegistryService:
+                formData.globalCredentials.startRemoteRegistryService,
+              enableAdministrativeShares:
+                formData.globalCredentials.enableAdministrativeShares,
+              startServerService: formData.globalCredentials.startServerService,
+            },
+    
+            complianceCategory: formData.complianceCategory,
+            complianceSecurityStandard: formData.complianceSecurityStandard,
+    
+            schedule: formData.schedule,
+            scheduleFrequency: formData.scheduleFrequency,
+            scheduleStartDate: formData.scheduleStartDate,
+            scheduleStartTime: formData.scheduleStartTime,
+            scheduleTimezone: formData.scheduleTimezone,
+            notification: formData.notification,
+            notificationEmail: formData.notificationEmail,
+            uncheckedComplianceItems: uncheckedComplianceItems,
+          },
+        };
+    
+        try {
+          const response = await api.post("/scans/create-scan/", scanPayload, {
+            responseType: "blob",
+          });
+    
+          const contentDisposition = response.headers["content-disposition"];
+          let filename = "script.sql";
+    
+          if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?(.+)"?/);
+            if (match?.[1]) filename = match[1];
+          }
+    
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute("download", filename);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        } catch (error) {
+          console.error(
+            "Error downloading script:",
+            error.response?.data || error.message
+          );
+          alert("Failed to download the script.");
+        }
+      };
 
   const handleSubmit = async () => {
     try {
@@ -1148,7 +1232,8 @@ setUserName(response1.data.username);
                                             </button>
                                         ) : formData.auditMethod === "agent" &&
                                           page === 4 ? (
-                                            <Button className="px-4 py-2 bg-black text-white h-10 rounded cursor-pointer">
+                                            <Button className="px-4 py-2 bg-black text-white h-10 rounded cursor-pointer"
+                                            onClick={downloadScript}>
                                                 Download script
                                             </Button>
                                         ) : (
