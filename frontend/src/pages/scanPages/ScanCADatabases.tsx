@@ -28,6 +28,7 @@ import api from "../api";
 const ScanCADatabases = () => {
   const navigate = useNavigate();
   const [complianceData, setComplianceData] = useState([]);
+  const [flavour,setFlavour]=useState("");
   const [errors, setErrors] = useState("");
   const [fileIPs, setFileIPs] = useState<string[]>([]);
 

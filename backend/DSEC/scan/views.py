@@ -69,14 +69,15 @@ class MyTokenObtainPairView(TokenObtainPairView):
 @permission_classes([AllowAny])
 def get_compliance_data(request, os_name):
     try:
-        file_path = os.path.join(settings.BASE_DIR, 'scan', 'data', 'Configuration_Audit.xlsx')
+        file_path = os.path.join(settings.BASE_DIR, 'scan', 'data', 'Configuration_Audit - Copy.xlsx')
 
         if not os.path.exists(file_path):
             return Response({'error': 'File not found'}, status=404)
 
         df = pd.read_excel(file_path)
         print("DataFrame loaded successfully!")
-        df = df[df['Name'].str.lower() == os_name.lower()]
+        print(os_name)
+        df = df[df['Configuration Name'].str.lower() == os_name.lower()]
         json_data = df.to_dict(orient='records')
         return Response(json_data, status=200)
 
