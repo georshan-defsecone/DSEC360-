@@ -313,7 +313,7 @@ setUserName(response1.data.username);
           scan_data: {
             scanType: "Configuration Audit",
             description: formData.description,
-            category: "database",
+            category: "windows",
             os: formData.OS,
             auditMethod: formData.auditMethod,
             target: formData.target,
@@ -364,7 +364,7 @@ setUserName(response1.data.username);
           });
     
           const contentDisposition = response.headers["content-disposition"];
-          let filename = "script.sql";
+          let filename = "Microsoft_Windows_10_Stand-alone_v3.0.0_Audit_Script.ps1";
     
           if (contentDisposition) {
             const match = contentDisposition.match(/filename="?(.+)"?/);
