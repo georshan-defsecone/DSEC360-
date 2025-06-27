@@ -1,7 +1,7 @@
 
 # Auto-generated PowerShell script
 
-$outputJsonPath = "Microsoft_Windows_11_Stand-alone_v3.0.0_output.json"
+$outputJsonPath = "Microsoft_Windows_10_Stand-alone_v3.0.0_output.json"
 $seceditExportPath = "C:\\secpol.cfg"
 $currentUserSid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
 
@@ -2122,7 +2122,7 @@ foreach ($item in $queries) {
 $json = $results | ConvertTo-Json -Depth 5
 $json = $json -replace '\u0027', "'"
 
-$outputFullPath = [System.IO.Path]::GetFullPath("C:\Windows\Temp\Microsoft_Windows_11_Stand-alone_v3.0.0_output.json")
+$outputFullPath = [System.IO.Path]::GetFullPath("D:\DES\DSEC360-\backend\DSEC\startScan\Configuration_Audit\Windows\Output\Microsoft_Windows_10_Stand-alone_v3.0.0_output.json")
 [System.IO.File]::WriteAllText($outputFullPath, $json, [System.Text.Encoding]::UTF8)
 
 Write-Host "Output successfully written to: $outputFullPath"
