@@ -2,6 +2,7 @@ import os
 import subprocess
 import re
 import shutil
+import zipfile
 from .Configuration_Audit.database.oracle import generate_sql
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -172,28 +173,47 @@ def windows_config_audit(scan_data):
 
 
 
-def download_script(script_path):
+def download_script(script_path, second_file_path=None):
     print("[*] Entered download_script()")
 
+    # Check if the primary script exists
     if not script_path or not os.path.isfile(script_path):
         print(f"[-] Script file not found: {script_path}")
         return None
 
-    # Use the folder where the script is located
+    # Get the directory of the script and prepare download directory
     script_dir = os.path.dirname(script_path)
-    # Create 'downloads' folder in the same location
     download_dir = os.path.join(script_dir, "downloads")
     os.makedirs(download_dir, exist_ok=True)
 
-    dest_path = os.path.join(download_dir, os.path.basename(script_path))
+    # Case 1: Only one file to download (no compression)
+    if second_file_path is None:
+        dest_path = os.path.join(download_dir, os.path.basename(script_path))
+        try:
+            shutil.copy(script_path, dest_path)
+            print(f"[+] Script copied to download location: {dest_path}")
+            return dest_path
+        except Exception as e:
+            print(f"[!] Failed to copy script for download: {e}")
+            return None
 
-    try:
-        shutil.copy(script_path, dest_path)
-        print(f"[+] Script copied to download location: {dest_path}")
-        return dest_path
-    except Exception as e:
-        print(f"[!] Failed to copy script for download: {e}")
-        return None
+    # Case 2: Second file provided, compress both into a ZIP
+    else:
+        # Validate the second file
+        if not os.path.isfile(second_file_path):
+            print(f"[-] Second file not found: {second_file_path}")
+            return None
+
+        zip_filename = os.path.join(download_dir, "scripts_bundle.zip")
+        try:
+            with zipfile.ZipFile(zip_filename, 'w') as zipf:
+                zipf.write(script_path, arcname=os.path.basename(script_path))
+                zipf.write(second_file_path, arcname=os.path.basename(second_file_path))
+            print(f"[+] Both files compressed into: {zip_filename}")
+            return zip_filename
+        except Exception as e:
+            print(f"[!] Failed to create ZIP file: {e}")
+            return None
     
 
 
@@ -302,12 +322,16 @@ def convert_csv_to_excel(csv_file_path, excel_file_path=None):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def get_json_file(request, filename):
+def get_json_file(request, folder_path, filename):
     """
-    Returns the content of a JSON file located in a specific directory
-    based on the filename passed via the URL.
+    Returns the content of a JSON file located in a dynamic folder structure.
     """
-    json_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database', 'oracle')
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Sanitize folder path to prevent directory traversal
+    safe_folder_path = os.path.normpath(folder_path).replace('..', '')
+    
+    json_dir = os.path.join(base_dir, safe_folder_path)
     json_path = os.path.join(json_dir, f'{filename}.json')
 
     if not os.path.exists(json_path):

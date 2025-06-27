@@ -243,26 +243,27 @@ const ScanCADatabases = () => {
     fetchData();
   }, []);
 
-  async function loadAuditNames(complianceCategory) {
+  async function loadAuditNames(folderName, complianceCategory) {
     const filename = complianceCategory.toLowerCase().replace(/\s+/g, "_");
 
+    // Construct the full folder path (e.g., "configurationaudit/database/oracle")
+    const folderPath = `Configuration_audit/database/${folderName.toLowerCase()}`;
+
     try {
-      const response = await api.get(`/get-json/${filename}/`);
-      const auditData = response.data;
+        const response = await api.get(`/get-json/${folderPath}/${filename}/`);
+        const auditData = response.data;
 
-      // Update formData
-      handleInputChange(auditData, "auditNames");
+        handleInputChange(auditData, "auditNames");
 
-      // ✅ Preselect items where "check" is true
-      const initiallyChecked = auditData
-        .filter((item) => item.check)
-        .map((item) => item.name);
+        const initiallyChecked = auditData
+            .filter((item) => item.check)
+            .map((item) => item.name);
 
-      setSelectedComplianceItems(initiallyChecked);
+        setSelectedComplianceItems(initiallyChecked);
     } catch (error) {
-      console.error("Error fetching compliance data:", error);
+        console.error("Error fetching compliance data:", error);
     }
-  }
+}
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any,
@@ -1154,7 +1155,7 @@ const ScanCADatabases = () => {
                     setUncheckedComplianceItems([]);
 
                     // Load fresh audit names based on selected category
-                    loadAuditNames(value);
+                    loadAuditNames(value,value);
                   }}
                 >
                   <SelectTrigger className="w-80">
@@ -1179,7 +1180,7 @@ const ScanCADatabases = () => {
                     handleInputChange(value, "complianceSecurityStandard");
 
                     if (formData.complianceCategory) {
-                      loadAuditNames(formData.complianceCategory); // ✅ use the current category (already selected)
+                      loadAuditNames(formData.complianceCategory,formData.complianceCategory); // ✅ use the current category (already selected)
                     }
                   }}
                 >

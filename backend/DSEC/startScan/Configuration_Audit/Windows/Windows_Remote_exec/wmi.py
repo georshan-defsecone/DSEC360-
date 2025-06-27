@@ -1,9 +1,10 @@
 import os
 import sys
 import traceback
-from impacket.smbconnection import SMBConnection
-from impacket.examples import logger
-from .wmiexec import WMIEXEC
+#import impacket
+# from impacket.smbconnection import SMBConnection
+# from impacket.examples import logger
+# from .wmiexec import WMIEXEC
 
 def upload_file_smb(username, password, domain, target_ip, share_name, local_path, remote_path):
     try:
