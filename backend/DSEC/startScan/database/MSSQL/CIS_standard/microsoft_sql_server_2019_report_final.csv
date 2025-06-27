@@ -1,0 +1,84 @@
+CIS.NO,Subject,Description,CurrentSetting,Result,Remediation
+1.1,Ensure Latest SQL Server Cumulative and Security Updates are Installed,"SQL Server patches contain program updates that fix security and product functionality issues found in the software. These patches can be installed with a security update, which is a single patch, or a cumulative update which is a group of patches. The SQL Server version and patch levels should be the most recent compatible with the organizations' operational needs.","SP_installed:RTM, Version:16.0.1000.6, ProductUpdate_Level:null, KB_Number:null",MANUAL,"Identify the current version and patch level of your SQL Server instances and ensure they contain the latest security fixes. Make sure to test these fixes in your test environments before updating production instances.         
+The most recent SQL Server patches can be found here: 
+          https://learn.microsoft.com/en-us/troubleshoot/sql/releases/download-and-install-latest updates"
+2.1,Ensure 'Ad Hoc Distributed Queries' Server Configuration Option is set to '0',Enabling Ad Hoc Distributed Queries allows users to query data and execute statements on external data sources. This functionality should be disabled.,"value_configured:0, value_in_use:0",PASS,
+2.2,Ensure 'CLR Enabled' Server Configuration Option is set to '0',The clr enabled option specifies whether user assemblies can be run by SQL Server.,"value_configured:0, value_in_use:0",PASS,
+2.3,Ensure 'Cross DB Ownership Chaining' Server Configuration Option is set to '0',The cross db ownership chaining option controls cross-database ownership chaining across all databases at the instance (or server) level.,"value_configured:0, value_in_use:0",PASS,
+2.4,Ensure 'Database Mail XPs' Server Configuration Option is set to '0',The Database Mail XPs option controls the ability to generate and transmit email messages from SQL Server.,"value_configured:0, value_in_use:0",PASS,
+2.5,Ensure 'Ole Automation Procedures' Server Configuration Option is set to '0',The Ole Automation Procedures option controls whether OLE Automation objects can be instantiated within Transact-SQL batches. These are extended stored procedures that allow SQL Server users to execute functions external to SQL Server.,"value_configured:0, value_in_use:0",PASS,
+2.6,Ensure 'Remote Access' Server Configuration Option is set to '0',The remote access option controls the execution of local stored procedures on remote servers or remote stored procedures on local server.,"value_configured:1, value_in_use:1",FAIL,"For AWS RDS Instances, please refer to the documentation for using Parameter Groups here: 
+https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithParamGroups.html
+ 
+Otherwise, run the following T-SQL command: 
+EXECUTE sp_configure 'show advanced options', 1; 
+RECONFIGURE; 
+EXECUTE sp_configure 'remote access', 0; 
+RECONFIGURE; 
+GO 
+EXECUTE sp_configure 'show advanced options', 0; 
+RECONFIGURE; 
+
+Restart the Database Engine."
+2.7,Ensure 'Remote Admin Connections' Server Configuration Option is set to '0',The remote admin connections option controls whether a client application on a remote computer can use the Dedicated Administrator Connection (DAC).,"value_configured:0, value_in_use:0",PASS,
+2.8,Ensure 'Scan For Startup Procs' Server Configuration Option is set to '0',"The scan for startup procs option, if enabled, causes SQL Server to scan for and automatically run all stored procedures that are set to execute upon service startup.","value_configured:0, value_in_use:0",PASS,
+2.9,Ensure 'Trustworthy' Database Property is set to 'Off',The TRUSTWORTHY database option allows database objects to access objects in other databases under certain circumstances.,NULL,PASS,
+2.11,Ensure SQL Server is configured to use non-standard ports,"If installed, a default SQL Server instance will be assigned a default port of TCP:1433 for TCP/IP communication. Administrators can also manually configure named instances to use TCP:1433 for communication. TCP:1433 is a widely known SQL Server port and this port assignment should be changed. In a multi-instance scenario, each instance must be assigned its own dedicated TCP/IP port.",Port1433Count:0,PASS,
+2.12,Ensure 'Hide Instance' option is set to 'Yes' for Production SQL Server instances,Non-clustered SQL Server instances within production environments should be designated as hidden to prevent advertisement by the SQL Server Browser service.,hideinstance:0,FAIL,"Perform either the GUI or T-SQL method shown: 
+
+GUI Method 
+
+1. In SQL Server Configuration Manager, expand SQL Server Network 
+Configuration, right-click Protocols for <InstanceName>, and then select 
+Properties. 
+2. On the Flags tab, in the Hide Instance box, select Yes, and then click OK to 
+close the dialog box. The change takes effect immediately for new connections. 
+
+T-SQL Method 
+Execute the following T-SQL to remediate: 
+
+EXEC master.sys.xp_instance_regwrite 
+      @rootkey = N'HKEY_LOCAL_MACHINE', 
+      @key = N'SOFTWARE\Microsoft\Microsoft SQL 
+Server\MSSQLServer\SuperSocketNetLib', 
+      @value_name = N'HideInstance', 
+      @type = N'REG_DWORD', 
+      @value = 1;"
+2.13,Ensure the 'sa' Login Account is set to 'Disabled',The sa account is a widely known and often widely used SQL Server account with sysadmin privileges. This is the original login created during installation and always has the principal_id=1 and sid=0x01.,NULL,PASS,
+2.15,Ensure 'AUTO_CLOSE' is set to 'OFF' on contained databases,"AUTO_CLOSE determines if a given database is closed or not after a connection terminates. If enabled, subsequent connections to the given database will require the database to be reopened and relevant procedure caches to be rebuilt.",NULL,PASS,
+2.16,Ensure no login exists with the name 'sa',"The sa login (e.g. principal) is a widely known and often widely used SQL Server account. Therefore, there should not be a login called sa even when the original sa login (principal_id = 1) has been renamed.","principal_id:1, name:sa",FAIL,"Execute the appropriate ALTER statement below based on the principal_id returned for the login named sa. Replace the <different_name> value within the below syntax and execute to rename the sa login. 
+ 
+USE [master] 
+GO  
+ALTER LOGIN [sa] WITH NAME = <different_name>; 
+GO "
+2.17,Ensure 'clr strict security' Server Configuration Option is set to '1',The clr strict security option specifies whether the engine applies the PERMISSION_SET on the assemblies.,"value_configured:1, value_in_use:1",PASS,
+3.1,Ensure 'Server Authentication' Property is set to 'Windows Authentication Mode',Uses Windows Authentication to validate attempted connections.,login_mode:0,FAIL,"Perform either the GUI or T-SQL method shown: 
+
+GUI Method 
+1. Open SQL Server Management Studio. 
+2. Open the Object Explorer tab and connect to the target SQL Server instance. 
+3. Right click the instance name and select Properties. 
+4. Select the Security page from the left menu. 
+5. Set the Server authentication setting to Windows Authentication Mode. 
+
+T-SQL Method 
+Run the following T-SQL in a Query Window: 
+
+USE [master] 
+GO 
+EXEC xp_instance_regwrite N'HKEY_LOCAL_MACHINE', 
+N'Software\Microsoft\MSSQLServer\MSSQLServer', N'LoginMode', REG_DWORD, 1 
+GO 
+
+Restart the SQL Server service for the change to take effect. "
+3.4,Ensure SQL Authentication is not used in contained databases,Contained databases do not enforce password complexity rules for SQL Authenticated users.,NULL,PASS,
+3.8,Ensure only the default permissions specified by Microsoft are granted to the public server role,"public is a special fixed server role containing all logins. Unlike other fixed server roles, permissions can be changed for the public role. In keeping with the principle of least privileges, the public server role should not be used to grant permissions at the server scope as these would be inherited by all users.",NULL,PASS,
+3.10,Ensure Windows local groups are not SQL Logins,Local Windows groups should not be used as logins for SQL Server instances,NULL,PASS,
+3.11,Ensure the public role in the msdb database is not granted access to SQL Agent proxies,The public database role contains every user in the msdb database. SQL Agent proxies define a security context in which a job step can run.,NULL,PASS,
+3.13,Ensure membership in admin roles in MSDB database is limited,Based on Microsoft design an account with DB_OWNER can elevate permissions to SYSADMIN,Count:0,PASS,
+4.3,Ensure 'CHECK_POLICY' Option is set to 'ON' for All SQL Authenticated Logins,Applies the same password complexity policy used in Windows to passwords used inside SQL Server.,NULL,PASS,
+5.1,Ensure 'Maximum number of error log files' is set to greater than or equal to '12',SQL Server error log files must be protected from loss. The log files must be backed up before they are overwritten. Retaining more error logs helps prevent loss from frequent recycling before backups can occur.,NumberOfLogFiles:-1,PASS,
+5.2,Ensure 'Default Trace Enabled' Server Configuration Option is set to '1',"The default trace provides audit logging of database activity including account creations, privilege elevation and execution of DBCC commands.","value_configured:1, value_in_use:1",PASS,
+7.3,Ensure Database Backups are Encrypted,Ensure Database Backups are Encrypted,"[{'server_name': None, 'database_name': None, 'backup_set_id': [None]}]",FAIL,
+7.5,Ensure Databases are Encrypted with TDE,Ensure user databases are encrypted using Transparent Data Encryption (TDE). Backups of databases encrypted with TDE are automatically encrypted as well.,NULL,PASS,
