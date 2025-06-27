@@ -3,7 +3,7 @@ import subprocess
 import re
 import shutil
 from .database.oracle import generate_sql
-from .database.Maria import  remote
+from .database.Maria import  connection_maria
 from .database.MSSQL import remote
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -66,8 +66,8 @@ def database_config_audit(scan_data):
         except Exception as e:
             print(f"[!] Exception running Oracle audit: {e}")
             return None
-    
-    elif normalized_compliance=="mariaserverv106" or normalized_compliance=="mariaserverv1011":
+
+    elif normalized_compliance=="mariadb106" or normalized_compliance=="mariadb1011":
         try:
             print(f"[DEBUG] Running MariaDB audit for compliance: {normalized_compliance}")
             base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -81,27 +81,28 @@ def database_config_audit(scan_data):
             domain_name = scan_data.get("domain") or ""
             db_access_method = scan_data.get("auditMethod")
             database_name=scan_data.get("database") or 'mysql'
-            print(f"[DEBUG] excluded_audit: {excluded_audit}, user_name: {user_name}, host_name: {host_name}, port_number: {port_number}, domain_name: {domain_name}, db_access_method: {db_access_method}")
+            print(f"[DEBUG] excluded_audit: {excluded_audit}, user_name: {user_name},password:{password_name}, host_name: {host_name}, port_number: {port_number}, domain_name: {domain_name}, db_access_method: {db_access_method}")
             # Check which version of MariaDB to run
 
-            if normalized_compliance == "mariaserverv106":
+            if normalized_compliance == "mariadb106":
                 print("testing mariadb connection for 10.6")
-                input_csv_path = os.path.join(Maria_dir, "CIS_standard", "Queries", "query_MariaDB_10_6.csv")
-                sql_commands = os.path.join(Maria_dir, "CIS_standard", "script.sql")
-                linux_file = os.path.join(Maria_dir, "CIS_standard", "linux_commands.sh")
-                remote.mariadb_connection(excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
-                if db_access_method == "remoteAccess":
-                    return download_script(os.path.join(Maria_dir, "CIS_standard", "report.csv"))
+                input_csv_path = os.path.join(Maria_dir, "CIS_standard", "Queries", "MariaDB_10_6_query.csv")
+                sql_commands = os.path.join(Maria_dir, "CIS_standard", "MariaDB_10_6_cis_query.sql")
+                linux_file = os.path.join(Maria_dir, "CIS_standard", "MariaDB_10_6_linux_commands.sh")
+                connection_maria.mariadb_connection(excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
                 if db_access_method == "agent":
-                    path_for_sql = os.path.join(Maria_dir, "CIS_standard", "script.sql")
+                    path_for_sql = os.path.join(Maria_dir, "CIS_standard", "MariaDB_10_6_cis_query.sql")
                     #path_for_linux = os.path.join(Maria_dir, "CIS_standard", "linux_commands.sh")
                     return download_script(path_for_sql)
-            if normalized_compliance == "mariaserverv1011":
-                input_csv_path = os.path.join(Maria_dir, "CIS_standard", "Queries", "query_MariaDB_10_11.csv")
-                sql_commands = os.path.join(Maria_dir, "CIS_standard", "script.sql")
-                linux_file = os.path.join(Maria_dir, "CIS_standard", "linux_commands.sh")
-                remote.mariadb_connection(excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
-
+            if normalized_compliance == "mariadb1011":
+                input_csv_path = os.path.join(Maria_dir, "CIS_standard", "Queries", "MariaDB_10_11_query.csv")
+                sql_commands = os.path.join(Maria_dir, "CIS_standard", "MariaDB_10_11_cis_query.sql")
+                linux_file = os.path.join(Maria_dir, "CIS_standard", "MariaDB_10_11_linux_commands.sh")
+                connection_maria.mariadb_connection(excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
+                if db_access_method == "agent":
+                    path_for_sql = os.path.join(Maria_dir, "CIS_standard", "MariaDB_10_11_cis_query.sql")
+                    #path_for_linux = os.path.join(Maria_dir, "CIS_standard", "linux_commands.sh")
+                    return download_script(path_for_sql)
         except Exception as e:
             print(f"[!] Exception running Oracle audit: {e}")
             return None
@@ -125,35 +126,27 @@ def database_config_audit(scan_data):
 
             if normalized_compliance == "microsoftsqlserver2019":
                 print("testing mssql connection for 2019")
-                csv_path=os.path.join(mssql_dir, "CIS_standard", "Queries", "query_2019.csv")
-                sql_output = os.path.join(mssql_dir, "CIS_standard", "output_2019.sql")
-                remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, csv_path, sql_output, normalized_compliance)
+                remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
                 if db_access_method == "agent":
-                    path_for_sql=os.path.join(mssql_dir,"CIS_standard","output_2019.sql")
+                    path_for_sql=os.path.join(mssql_dir,"CIS_standard","microsoft_sql_server_2019_cis_query.sql")
                     return download_script(path_for_sql)
                 
             elif normalized_compliance == "microsoftsqlserver2017":
-                csv_path=os.path.join(mssql_dir, "CIS_standard", "Queries", "query_2017.csv")
-                sql_output = os.path.join(mssql_dir, "CIS_standard", "output_2017.sql")
-                remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, csv_path, sql_output, normalized_compliance)
+                remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
                 if db_access_method == "agent":
-                    path_for_sql=os.path.join(mssql_dir,"CIS_standard","output_2017.sql")
+                    path_for_sql=os.path.join(mssql_dir,"CIS_standard","microsoft_sql_server_2017_cis_query.sql")
                     return download_script(path_for_sql)
                 
             elif normalized_compliance == "microsoftsqlserver2016":
-                csv_path=os.path.join(mssql_dir, "CIS_standard", "Queries", "query_2016.csv")
-                sql_output = os.path.join(mssql_dir, "CIS_standard", "output_2016.sql")
-                remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, csv_path, sql_output, normalized_compliance)
+                remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
                 if db_access_method == "agent":
-                    path_for_sql=os.path.join(mssql_dir,"CIS_standard","output_2016.sql")
+                    path_for_sql=os.path.join(mssql_dir,"CIS_standard","microsoft_sql_server_2016_cis_query.sql")
                     return download_script(path_for_sql)
                 
             elif normalized_compliance == "microsoftsqlserver2022":
-                csv_path=os.path.join(mssql_dir, "CIS_standard", "Queries", "query_2022.csv")
-                sql_output = os.path.join(mssql_dir, "CIS_standard", "output_2022.sql")
-                remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, csv_path, sql_output, normalized_compliance)
+                remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
                 if db_access_method == "agent":
-                    path_for_sql=os.path.join(mssql_dir,"CIS_standard","output_2022.sql")
+                    path_for_sql=os.path.join(mssql_dir,"CIS_standard","microsoft_sql_server_2022_cis_query.sql")
                     return download_script(path_for_sql)
                 
 

@@ -385,27 +385,56 @@ def check_condition(csv_setting, json_setting, csv_name):
     #print(f"Checking '{csv_name}': '{json_setting}' {csv_setting} => {result}")
     return result
 
+import csv
+import re
 
+def format_key(name):
+    # Convert name to match result_lookup key format
+    return re.sub(r'\W+', '_', name).strip('_')
 
-# Write output CSV with result of comparison
-def write_filtered_csv(rows, output_path, result_lookup,included_names):
-    #print(included_names)
-    fieldnames = ['Name', 'Description', 'Settings', 'Remediation']
+def write_filtered_csv(rows, output_path, result_lookup, included_names):
+    fieldnames = ['CIS_no', 'Subject', 'Description', 'Current Setting', 'Result', 'Remediation']
+
     with open(output_path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
-        for row in rows:
-            normal_name=row.get('Name','').strip()
-            a=normalize_name(normal_name)
-            if a not in included_names:
-                continue               
-            writer.writerow({
-                'Name': row.get('Name', ''),
-                'Description': row.get('Description', ''),
-                'Settings': get_setting_value(row, result_lookup),
-                'Remediation': row.get('Remediation', '')
-            })
 
+        for row in rows:
+            original_name = row.get('Name', '').strip()
+            normalized_name = normalize_name(original_name)
+
+            if normalized_name not in included_names:
+                continue
+
+            # Extract CIS number (e.g., 2.1.5)
+            cis_match = re.match(r'^(\d+(?:\.\d+)+)', original_name)
+            cis_no = cis_match.group(1) if cis_match else ''
+
+            # Clean name
+            name_without_cis = re.sub(r'^(\d+(?:\.\d+)+)\s*', '', original_name)
+            name_cleaned = re.sub(r'\s*\(.*?\)', '', name_without_cis).strip()
+
+            # Format key to match result_lookup
+            for i in result_lookup.keys():
+                if normalized_name == i:
+                    current_setting = result_lookup[i]
+                    break
+
+            # Get current setting and result (same value)
+
+            result = get_setting_value(row, result_lookup)
+
+            # Remediation only if original result was "fail"
+            remediation = row.get('Remediation', '') if result.strip().lower() == 'fail' else ''
+
+            writer.writerow({
+                'CIS_no': cis_no,
+                'Subject': name_cleaned,
+                'Description': row.get('Description', ''),
+                'Current Setting': current_setting,
+                'Result': result,
+                'Remediation': remediation
+            })
 
 def get_included_names(json_data):
     """

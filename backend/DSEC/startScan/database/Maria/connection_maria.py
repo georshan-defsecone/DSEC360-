@@ -67,20 +67,29 @@ def mariadb_connection(name, user_name, password_name, host_name, port_number,
         if conn:
             base_dir=os.path.dirname(os.path.abspath(__file__))
             print(base_dir)
-            script_path = os.path.join(base_dir,"CIS_standard", "script.sql")
-            json_data = run_script_and_save_json(conn, script_path,os.path.join(base_dir, "CIS_standard", "query_result.json"))
+            if normalized_compliance == "mariadb106":
+                script_path = os.path.join(base_dir,"CIS_standard", "MariaDB_10_6_cis_query.sql")
+                json_path = os.path.join(base_dir, "CIS_standard", "mariaDB_10_6_query_result.json")
+                json_data = run_script_and_save_json(conn, script_path, json_path)
+            elif normalized_compliance == "mariadb1011":
+                script_path = os.path.join(base_dir,"CIS_standard", "MariaDB_10_11_cis_query.sql")
+                json_path = os.path.join(base_dir, "CIS_standard", "mariaDB_10_11_query_result.json")
+                json_data = run_script_and_save_json(conn, script_path, json_path)
 
             conn.close()
             print(json_data)
             if json_data:
                 # Add these file paths (or pass them from above)
-                if normalized_compliance== "mariaserverv106":
-                    validate_csv = os.path.join(base_dir, "CIS_standard","Validators","validate_MariaDB_10_6.csv")
-                elif normalized_compliance == "mariaserverv1011":
-                    validate_csv = os.path.join(base_dir, "CIS_standard","Validators","validate_MariaDB_10_11.csv")
-                report_csv = os.path.join(base_dir, "CIS_standard","report.csv")
-                json_data= os.path.join(base_dir, "CIS_standard", "query_result.json")  # ⬅️ adjust filename as needed
-                validate_maria_db(json_data, validate_csv, report_csv)
+                if normalized_compliance== "mariadb106":
+                    validate_csv = os.path.join(base_dir, "CIS_standard","Validators","MariaDB_10_6_validate.csv")
+                    json_path= os.path.join(base_dir, "CIS_standard", "mariaDB_10_6_query_result.json")  # ⬅️ adjust filename as needed
+                    report_csv = os.path.join(base_dir, "CIS_standard","MariaDB_10_6_report.csv")
+                elif normalized_compliance == "mariadb1011":
+                    validate_csv = os.path.join(base_dir, "CIS_standard","Validators","MariaDB_10_11_validate.csv")
+                    json_path= os.path.join(base_dir, "CIS_standard", "mariaDB_10_11_query_result.json") 
+                    report_csv = os.path.join(base_dir, "CIS_standard","MariaDB_10_11_report.csv")
+                     # ⬅️ adjust filename as needed
+                validate_maria_db(json_path, validate_csv, report_csv)
 
 
     elif db_access_method == "agent":
