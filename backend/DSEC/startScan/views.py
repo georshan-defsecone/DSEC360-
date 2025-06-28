@@ -3,8 +3,8 @@ import subprocess
 import re
 import shutil
 #from .Configuration_Audit.database.oracle import generate_sql
-from .database.Maria import  connection_maria
-from .database.MSSQL import remote
+from .Configuration_Audit.database.Maria import  connection_maria
+from .Configuration_Audit.database.MSSQL import remote
 import zipfile
 from .Configuration_Audit.database.oracle.CIS import generate_sql
 from rest_framework.decorators import api_view, permission_classes
