@@ -12,8 +12,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Card } from "@/components/ui/card"; // Adjust path based on your setup
-import { CheckCircle, XCircle } from "lucide-react"; // Icons for pass/fail
+import { Card } from "@/components/ui/card";
+import { CheckCircle, XCircle } from "lucide-react";
 
 const ScanResult = () => {
   const { projectName, scanName } = useParams<{ projectName: string; scanName: string }>();
@@ -36,12 +36,32 @@ const ScanResult = () => {
           `/scans/scan-result/${projectName}/${scanName}`,
           { responseType: "blob" }
         );
+
         const text = await response.data.text();
         const rows = text.trim().split("\n").map((row) => row.split(","));
 
-        const headers = rows[0];
-        const statusIndex = headers.indexOf("status");
-        const nameIndex = headers.indexOf("audit_name");
+        if (rows.length < 2) {
+          setError("Scan result is empty or invalid.");
+          return;
+        }
+
+        // Normalize headers
+        const headers = rows[0].map((h) => h.trim().toLowerCase());
+
+        const headerMap = Object.fromEntries(headers.map((h, i) => [h, i]));
+
+        const statusIndex = headerMap["status"];
+        const cisIndex = headerMap["cis.no"];
+        const subjectIndex = headerMap["subject"];
+
+        if (
+          statusIndex === undefined ||
+          cisIndex === undefined ||
+          subjectIndex === undefined
+        ) {
+          setError("CSV headers are missing required fields: 'status', 'cis.no', or 'subject'.");
+          return;
+        }
 
         let pass = 0;
         let fail = 0;
@@ -49,12 +69,14 @@ const ScanResult = () => {
 
         rows.slice(1).forEach((row) => {
           const status = row[statusIndex]?.toLowerCase().trim();
-          const name = row[nameIndex]?.trim();
+          const cis = row[cisIndex]?.trim();
+          const subject = row[subjectIndex]?.trim();
+          const name = cis && subject ? `${cis} - ${subject}` : subject || cis || "Unnamed";
+
           if (status === "pass") pass++;
           else if (status === "fail") fail++;
-          if (name) {
-            audits.push({ name, status });
-          }
+
+          audits.push({ name, status });
         });
 
         setSummary({ pass, fail });
@@ -81,12 +103,14 @@ const ScanResult = () => {
         ) : (
           <div className="flex gap-6 mt-8">
             {/* Left side: Bar Chart */}
-            <div className="w-1/3 h-80 ">
+            <div className="w-1/3 h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={[
-                  { name: "Passed", count: summary.pass },
-                  { name: "Failed", count: summary.fail },
-                ]}>
+                <BarChart
+                  data={[
+                    { name: "Passed", count: summary.pass },
+                    { name: "Failed", count: summary.fail },
+                  ]}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis allowDecimals={false} />

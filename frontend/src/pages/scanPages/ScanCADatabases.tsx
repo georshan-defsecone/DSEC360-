@@ -28,7 +28,6 @@ import api from "../api";
 const ScanCADatabases = () => {
   const navigate = useNavigate();
   const [complianceData, setComplianceData] = useState([]);
-  const [flavour,setFlavour]=useState("");
   const [errors, setErrors] = useState("");
   const [fileIPs, setFileIPs] = useState<string[]>([]);
 
@@ -95,6 +94,7 @@ const ScanCADatabases = () => {
     },
 
     //Get compliance info
+     selectedFlavour: "",
     complianceCategory: "",
     complianceSecurityStandard: "",
 
@@ -235,6 +235,7 @@ const ScanCADatabases = () => {
         );
         console.log("Fetched data:", response.data);
         setComplianceData(response.data);
+        console.log(response.data);
       } catch (error) {
         console.error("Error fetching compliance data:", error);
         setErrors("Error fetching compliance data. Please try again later.");
@@ -244,27 +245,30 @@ const ScanCADatabases = () => {
     fetchData();
   }, []);
 
-  async function loadAuditNames(folderName, complianceCategory) {
-    const filename = complianceCategory.toLowerCase().replace(/\s+/g, "_");
+  async function loadAuditNames(flavour, securityStandard, complianceCategory) {
+  const filename = `${complianceCategory}_${securityStandard}`
+    .toLowerCase()
+    .replace(/\s+/g, "_");
 
-    // Construct the full folder path (e.g., "configurationaudit/database/oracle")
-    const folderPath = `Configuration_audit/database/${folderName.toLowerCase()}`;
+  const folderPath = `Configuration_audit/database/${flavour.toLowerCase()}/${securityStandard.toLowerCase()}`;
 
-    try {
-        const response = await api.get(`/get-json/${folderPath}/${filename}/`);
-        const auditData = response.data;
+  try {
+    const response = await api.get(`/get-json/${folderPath}/${filename}/`);
+    const auditData = response.data;
 
-        handleInputChange(auditData, "auditNames");
+    handleInputChange(auditData, "auditNames");
 
-        const initiallyChecked = auditData
-            .filter((item) => item.check)
-            .map((item) => item.name);
+    const initiallyChecked = auditData
+      .filter((item) => item.check)
+      .map((item) => item.name);
 
-        setSelectedComplianceItems(initiallyChecked);
-    } catch (error) {
-        console.error("Error fetching compliance data:", error);
-    }
+    setSelectedComplianceItems(initiallyChecked);
+  } catch (error) {
+    console.error("Error fetching compliance data:", error);
+  }
 }
+
+
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any,
@@ -518,9 +522,8 @@ const ScanCADatabases = () => {
       console.log("Scan created successfully:", response.data);
       toast.success("Scan created succesfully", {
         icon: <CheckCircle2 className="text-green-500" />,
-      }
-    );
-    // navigate(`/scan/scanresult/${formData.projectName}/${formData.scanName}`);
+      });
+      navigate(`/scan/scanresult/${formData.projectName}/${formData.scanName}`);
 
       // Optionally reset form here
       // setFormData(initialFormData);
@@ -1127,118 +1130,180 @@ const ScanCADatabases = () => {
           </div>
         );
       case 4: {
-        const categories = [
-          ...new Set(complianceData.map((item) => item.Categories)),
-        ];
+  // Get unique flavours from complianceData
+  const flavours = [
+    ...new Set(complianceData.map((item) => item.Flavours)),
+  ];
 
-        const standards = complianceData
-          .filter((item) => item.Categories === formData.complianceCategory)
-          .map((item) => item["Security Standards"]);
+  // Get categories based on selected flavour
+  const categories = [
+    ...new Set(
+      complianceData
+        .filter((item) => item.Flavours === formData.selectedFlavour)
+        .map((item) => item.Categories)
+    ),
+  ];
 
-        return (
-          <div className="flex gap-6">
-            {/* Left 70%: Non-scrollable form content */}
-            <div className="w-[70%] space-y-4">
-              {renderError()}
-              <h2 className="text-xl font-semibold">Compliance Information</h2>
+  // Get standards based on selected category
+  const standards = [
+    ...new Set(
+      complianceData
+        .filter((item) => item.Categories === formData.complianceCategory)
+        .map((item) => item["Security Standards"])
+    ),
+  ];
 
-              {/* Network Solution Selection */}
-              <div className="flex items-center">
-                <p className="block w-70">Network Solution:</p>
-                <Select
-                  value={formData.complianceCategory}
-                  onValueChange={(value) => {
-                    handleInputChange(value, "complianceCategory");
+  return (
+    <div className="flex gap-6">
+      {/* Left 70%: Non-scrollable form content */}
+      <div className="w-[70%] space-y-4">
+        {renderError()}
+        <h2 className="text-xl font-semibold">Compliance Information</h2>
 
-                    // Clear audit names and selections before loading new data
-                    setFormData((prev) => ({ ...prev, auditNames: [] }));
-                    setSelectedComplianceItems([]);
-                    setUncheckedComplianceItems([]);
+        {/* Flavour Selection */}
+        <div className="flex items-center">
+          <p className="block w-70">Select Flavour:</p>
+          <Select
+            value={formData.selectedFlavour}
+            onValueChange={(value) => {
+              handleInputChange(value, "selectedFlavour");
 
-                    // Load fresh audit names based on selected category
-                    loadAuditNames(value,value);
+              // Reset dependent selections
+              setFormData((prev) => ({
+                ...prev,
+                complianceCategory: "",
+                complianceSecurityStandard: "",
+                auditNames: [],
+              }));
+              setSelectedComplianceItems([]);
+              setUncheckedComplianceItems([]);
+            }}
+          >
+            <SelectTrigger className="w-80">
+              <SelectValue placeholder="Select Flavour" />
+            </SelectTrigger>
+            <SelectContent>
+              {flavours.map((item) => (
+                <SelectItem key={item} value={item}>
+                  {item}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Compliance Category Selection */}
+        <div className="flex items-center">
+          <p className="block w-70">Network Solution:</p>
+          <Select
+            value={formData.complianceCategory}
+            onValueChange={(value) => {
+              handleInputChange(value, "complianceCategory");
+
+              // Reset security standard and audit names
+              setFormData((prev) => ({
+                ...prev,
+                complianceSecurityStandard: "",
+                auditNames: [],
+              }));
+              setSelectedComplianceItems([]);
+              setUncheckedComplianceItems([]);
+
+              // Load audit names if all required values are selected
+              if (formData.selectedFlavour && formData.complianceSecurityStandard && value) {
+                loadAuditNames(
+                  formData.selectedFlavour,
+                  formData.complianceSecurityStandard,
+                  value
+                );
+              }
+            }}
+          >
+            <SelectTrigger className="w-80">
+              <SelectValue placeholder="Select Network Solution" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Security Standard Selection */}
+        <div className="flex items-center">
+          <p className="block w-70">Security Standard:</p>
+          <Select
+            value={formData.complianceSecurityStandard}
+            onValueChange={(value) => {
+              handleInputChange(value, "complianceSecurityStandard");
+
+              // Load audit names if all required values are selected
+              if (formData.selectedFlavour && value && formData.complianceCategory) {
+                loadAuditNames(
+                  formData.selectedFlavour,
+                  value,
+                  formData.complianceCategory
+                );
+              }
+            }}
+          >
+            <SelectTrigger className="w-80">
+              <SelectValue placeholder="Select Security Standard" />
+            </SelectTrigger>
+            <SelectContent>
+              {standards.map((standard) => (
+                <SelectItem key={standard} value={standard}>
+                  {standard}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Right 30%: Scrollable content with fixed height */}
+      <div className="w-[30%] flex flex-col">
+        <div className="max-h-96 overflow-y-auto border-l pl-4 pr-2 space-y-3">
+          {formData.auditNames.length > 0 ? (
+            formData.auditNames.map((item, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`compliance-${index}`}
+                  checked={selectedComplianceItems.includes(item.name)}
+                  onCheckedChange={(checked) => {
+                    setSelectedComplianceItems((prev) =>
+                      checked
+                        ? [...prev, item.name]
+                        : prev.filter((v) => v !== item.name)
+                    );
+
+                    setUncheckedComplianceItems((prev) =>
+                      !checked
+                        ? [...prev, item.name]
+                        : prev.filter((v) => v !== item.name)
+                    );
                   }}
+                />
+                <Label
+                  htmlFor={`compliance-${index}`}
+                  className="text-sm"
                 >
-                  <SelectTrigger className="w-80">
-                    <SelectValue placeholder="Select Network Solution" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  {item.name}
+                </Label>
               </div>
+            ))
+          ) : (
+            <p className="text-gray-500">No compliance data available.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-              {/* Security Standard Selection */}
-              <div className="flex items-center">
-                <p className="block w-70">Security Standard:</p>
-                <Select
-                  value={formData.complianceSecurityStandard}
-                  onValueChange={(value) => {
-                    handleInputChange(value, "complianceSecurityStandard");
-
-                    if (formData.complianceCategory) {
-                      loadAuditNames(formData.complianceCategory,formData.complianceCategory); // ✅ use the current category (already selected)
-                    }
-                  }}
-                >
-                  <SelectTrigger className="w-80">
-                    <SelectValue placeholder="Select Security Standard" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {standards.map((standard) => (
-                      <SelectItem key={standard} value={standard}>
-                        {standard}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Right 30%: Scrollable content with fixed height */}
-            <div className="w-[30%] flex flex-col">
-              <div className="max-h-96 overflow-y-auto border-l pl-4 pr-2 space-y-3">
-                {formData.auditNames.length > 0 ? (
-                  formData.auditNames.map((item, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`compliance-${index}`}
-                        checked={selectedComplianceItems.includes(item.name)}
-                        onCheckedChange={(checked) => {
-                          setSelectedComplianceItems((prev) =>
-                            checked
-                              ? [...prev, item.name]
-                              : prev.filter((v) => v !== item.name)
-                          );
-
-                          setUncheckedComplianceItems((prev) =>
-                            !checked
-                              ? [...prev, item.name]
-                              : prev.filter((v) => v !== item.name)
-                          );
-                        }}
-                      />
-
-                      <Label
-                        htmlFor={`compliance-${index}`}
-                        className="text-sm"
-                      >
-                        {item.name}
-                      </Label>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-500">No compliance data available.</p>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      }
 
       case 5:
         return (
