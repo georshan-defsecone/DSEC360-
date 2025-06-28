@@ -2,7 +2,7 @@ import os
 import subprocess
 import re
 import shutil
-from .database.oracle import generate_sql
+#from .Configuration_Audit.database.oracle import generate_sql
 from .database.Maria import  connection_maria
 from .database.MSSQL import remote
 import zipfile
@@ -86,7 +86,7 @@ def database_config_audit(scan_data):
         try:
             print(f"[DEBUG] Running MariaDB audit for compliance: {normalized_compliance}")
             base_dir = os.path.dirname(os.path.abspath(__file__))
-            Maria_dir = os.path.join(base_dir,"database","Maria")
+            Maria_dir = os.path.join(base_dir,"Configuration_Audit","database","Maria")
 
             excluded_audit = scan_data.get("auditNames") or []
             user_name = scan_data.get("username")
@@ -126,7 +126,7 @@ def database_config_audit(scan_data):
         try:
             print(f"[DEBUG] Running MariaDB audit for compliance: {normalized_compliance}")
             base_dir = os.path.dirname(os.path.abspath(__file__))
-            Maria_dir = os.path.join(base_dir,"database","Maria")
+            Maria_dir = os.path.join(base_dir,"Configuration_Audit","database","Maria")
 
             excluded_audit = scan_data.get("auditNames") or []
             user_name = scan_data.get("username")
@@ -168,7 +168,7 @@ def database_config_audit(scan_data):
             print("[*] Running MSSQL audit")
             #assining the initial file paths
             base_dir = os.path.dirname(os.path.abspath(__file__))
-            mssql_dir = os.path.join(base_dir, "database", "MSSQL")
+            mssql_dir = os.path.join(base_dir, "Configuration_Audit", "database", "MSSQL")
             #getting the values from the scan_data
             excluded_audit = scan_data.get("auditNames") or []
             user_name = scan_data.get("username")
