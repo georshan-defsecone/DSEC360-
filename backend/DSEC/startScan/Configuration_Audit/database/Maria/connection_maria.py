@@ -24,6 +24,7 @@ def connect(user, password, host, port, database, domain=None):
         return None
 
 def run_script_and_save_json(conn, script_path, json_path):
+    print(f"Running script: {script_path}")
     cursor = conn.cursor()
     try:
         with open(script_path, 'r') as f:
@@ -46,6 +47,15 @@ def run_script_and_save_json(conn, script_path, json_path):
         return None
     finally:
         cursor.close()
+import os
+
+def get_base_dir(override=None):
+    if override and os.path.isdir(override):
+        return os.path.abspath(override)  # user-defined, valid directory
+    try:
+        return os.path.dirname(os.path.abspath(__file__))  # script directory
+    except NameError:
+        return os.getcwd()  # fallback for environments like Jupyter
 
 
 
@@ -65,7 +75,7 @@ def mariadb_connection(name, user_name, password_name, host_name, port_number,
         )
 
         if conn:
-            base_dir=os.path.dirname(os.path.abspath(__file__))
+            base_dir = get_base_dir()
             print(base_dir)
             if normalized_compliance == "mariadb106":
                 script_path = os.path.join(base_dir,"CIS_standard", "MariaDB_10_6_cis_query.sql")
@@ -109,7 +119,7 @@ if __name__ == "__main__":
     domain_name = ""
     db_access_method = "remote"
     
-    base_dir=os.path.dirname(os.path.abspath(__file__))
+    base_dir=get_base_dir()  # Get the base directory dynamically
     maria_db=os.path.join(base_dir,"CIS_standard","Queries","query_MariaDB_10_6.csv")
     sql_commands=os.path.join(base_dir,"CIS_standard","script.sql")
     linux_file=os.path.join(base_dir,"CIS_standard","linux_commands.sh")
