@@ -2,11 +2,11 @@ import os
 import subprocess
 import re
 import shutil
-from .database.oracle import generate_sql
-from .database.Maria import  connection_maria
-from .database.MSSQL import remote
+#from .Configuration_Audit.database.oracle import generate_sql
+from .Configuration_Audit.database.Maria import  connection_maria
+from .Configuration_Audit.database.MSSQL import remote
 import zipfile
-from .Configuration_Audit.database.oracle import generate_sql
+from .Configuration_Audit.database.oracle.CIS import generate_sql
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
@@ -38,12 +38,13 @@ def database_config_audit(scan_data):
     if normalized_compliance == "oracle":
         try:
             base_dir = os.path.dirname(os.path.abspath(__file__))
-            oracle_dir = os.path.join(base_dir,"Configuration_Audit","database","oracle")
+            oracle_dir = os.path.join(base_dir,"Configuration_Audit","database","oracle","CIS")
             csv_name = "data.csv"
             csv_path = os.path.join(oracle_dir, csv_name)
             sql_output = os.path.join(oracle_dir, "output.sql")
             result_csv=os.path.join(oracle_dir,"result.csv")
             json_output = os.path.join(oracle_dir, "output.json")
+            print(json_output)
 
             if not os.path.exists(csv_path):
                 print(f"[!] CSV input file not found: {csv_path}")
@@ -86,7 +87,7 @@ def database_config_audit(scan_data):
         try:
             print(f"[DEBUG] Running MariaDB audit for compliance: {normalized_compliance}")
             base_dir = os.path.dirname(os.path.abspath(__file__))
-            Maria_dir = os.path.join(base_dir,"database","Maria")
+            Maria_dir = os.path.join(base_dir,"Configuration_Audit","database","Maria")
 
             excluded_audit = scan_data.get("auditNames") or []
             user_name = scan_data.get("username")
@@ -126,7 +127,7 @@ def database_config_audit(scan_data):
         try:
             print(f"[DEBUG] Running MariaDB audit for compliance: {normalized_compliance}")
             base_dir = os.path.dirname(os.path.abspath(__file__))
-            Maria_dir = os.path.join(base_dir,"database","Maria")
+            Maria_dir = os.path.join(base_dir,"Configuration_Audit","database","Maria")
 
             excluded_audit = scan_data.get("auditNames") or []
             user_name = scan_data.get("username")
@@ -168,7 +169,7 @@ def database_config_audit(scan_data):
             print("[*] Running MSSQL audit")
             #assining the initial file paths
             base_dir = os.path.dirname(os.path.abspath(__file__))
-            mssql_dir = os.path.join(base_dir, "database", "MSSQL")
+            mssql_dir = os.path.join(base_dir, "Configuration_Audit", "database", "MSSQL")
             #getting the values from the scan_data
             excluded_audit = scan_data.get("auditNames") or []
             user_name = scan_data.get("username")
