@@ -76,7 +76,6 @@ def mariadb_connection(name, user_name, password_name, host_name, port_number,
 
         if conn:
             base_dir = get_base_dir()
-            print(base_dir)
             if normalized_compliance == "mariadb106":
                 script_path = os.path.join(base_dir,"CIS_standard", "MariaDB_10_6_cis_query.sql")
                 json_path = os.path.join(base_dir, "CIS_standard", "mariaDB_10_6_query_result.json")
