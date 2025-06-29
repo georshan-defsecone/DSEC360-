@@ -94,20 +94,20 @@ def mssql_connection(excluded_audit, user_name, password_name, host_name, port_n
     if db_access_method == "remoteAccess":
         name=excluded_audit
         if normalized_compliance == "microsoftsqlserver2019":
-            maria_db_csv_path=os.path.join(os.path.dirname(__file__), "CIS_standard", "Queries", "microsoft_sql_server_2019_query.csv")
-            sql_commands=os.path.join(os.path.dirname(__file__),"CIS_standard", "microsoft_sql_server_2019_cis_query.sql")
+            maria_db_csv_path=os.path.join(os.path.dirname(__file__), "cis", "Queries", "microsoft_sql_server_2019_query.csv")
+            sql_commands=os.path.join(os.path.dirname(__file__),"cis", "microsoft_sql_server_2019_cis_query.sql")
             generate_mssql_work(name,maria_db_csv_path,sql_commands)
         if normalized_compliance == "microsoftsqlserver2017":
-            maria_db_csv_path=os.path.join(os.path.dirname(__file__), "CIS_standard", "Queries", "microsoft_sql_server_2017_query.csv")
-            sql_commands=os.path.join(os.path.dirname(__file__),"CIS_standard", "microsoft_sql_server_2017_cis_query.sql")
+            maria_db_csv_path=os.path.join(os.path.dirname(__file__), "cis", "Queries", "microsoft_sql_server_2017_query.csv")
+            sql_commands=os.path.join(os.path.dirname(__file__),"cis", "microsoft_sql_server_2017_cis_query.sql")
             generate_mssql_work(name,maria_db_csv_path,sql_commands)
         if normalized_compliance == "microsoftsqlserver2016":
-            maria_db_csv_path=os.path.join(os.path.dirname(__file__), "CIS_standard", "Queries", "microsoft_sql_server_2016_query.csv")
-            sql_commands=os.path.join(os.path.dirname(__file__),"CIS_standard", "microsoft_sql_server_2016_cis_query.sql")
+            maria_db_csv_path=os.path.join(os.path.dirname(__file__), "cis", "Queries", "microsoft_sql_server_2016_query.csv")
+            sql_commands=os.path.join(os.path.dirname(__file__),"cis", "microsoft_sql_server_2016_cis_query.sql")
             generate_mssql_work(name,maria_db_csv_path,sql_commands)
         if normalized_compliance == "microsoftsqlserver2022":
-            maria_db_csv_path=os.path.join(os.path.dirname(__file__), "CIS_standard", "Queries", "microsoft_sql_server_2022_query.csv")
-            sql_commands=os.path.join(os.path.dirname(__file__),"CIS_standard", "microsoft_sql_server_2022_cis_query.sql")
+            maria_db_csv_path=os.path.join(os.path.dirname(__file__), "cis", "Queries", "microsoft_sql_server_2022_query.csv")
+            sql_commands=os.path.join(os.path.dirname(__file__),"cis", "microsoft_sql_server_2022_cis_query.sql")
             generate_mssql_work(name,maria_db_csv_path,sql_commands)
 
         conn = connect(
@@ -121,23 +121,23 @@ def mssql_connection(excluded_audit, user_name, password_name, host_name, port_n
         if conn:
             base_dir=os.path.dirname(os.path.abspath(__file__))
             if normalized_compliance == "microsoftsqlserver2019":
-                json_path= os.path.join(base_dir, "CIS_standard", "microsoft_sql_server_2019_query_result.json")
-                script_path= os.path.join(base_dir,"CIS_standard", "microsoft_sql_server_2019_cis_query.sql")
+                json_path= os.path.join(base_dir, "cis", "microsoft_sql_server_2019_query_result.json")
+                script_path= os.path.join(base_dir,"cis", "microsoft_sql_server_2019_cis_query.sql")
                 json_data=run_script_and_save_json(conn, script_path, json_path)
                 conn.close()
             if normalized_compliance == "microsoftsqlserver2017":
-                json_path= os.path.join(base_dir, "CIS_standard", "microsoft_sql_server_2017_query_result.json")
-                script_path= os.path.join(base_dir,"CIS_standard", "microsoft_sql_server_2017_cis_query.sql")
+                json_path= os.path.join(base_dir, "cis", "microsoft_sql_server_2017_query_result.json")
+                script_path= os.path.join(base_dir,"cis", "microsoft_sql_server_2017_cis_query.sql")
                 json_data=run_script_and_save_json(conn, script_path, json_path)
                 conn.close()
             if normalized_compliance == "microsoftsqlserver2016":       
-                json_path= os.path.join(base_dir, "CIS_standard", "microsoft_sql_server_2016_query_result.json")
-                script_path= os.path.join(base_dir,"CIS_standard", "microsoft_sql_server_2016_cis_query.sql")
+                json_path= os.path.join(base_dir, "cis", "microsoft_sql_server_2016_query_result.json")
+                script_path= os.path.join(base_dir,"cis", "microsoft_sql_server_2016_cis_query.sql")
                 json_data=run_script_and_save_json(conn, script_path, json_path)
                 conn.close()
             if normalized_compliance == "microsoftsqlserver2022":       
-                json_path= os.path.join(base_dir, "CIS_standard", "microsoft_sql_server_2022_query_result.json")
-                script_path= os.path.join(base_dir,"CIS_standard", "microsoft_sql_server_2022_cis_query.sql")
+                json_path= os.path.join(base_dir, "cis", "microsoft_sql_server_2022_query_result.json")
+                script_path= os.path.join(base_dir,"cis", "microsoft_sql_server_2022_cis_query.sql")
                 json_data=run_script_and_save_json(conn, script_path, json_path)
                 conn.close()
         print("Connection closed.")
@@ -147,42 +147,42 @@ def mssql_connection(excluded_audit, user_name, password_name, host_name, port_n
             # Add these file paths (or pass them from above)
             base_dir=os.path.dirname(os.path.abspath(__file__))
             if normalized_compliance == "microsoftsqlserver2019":
-                output_sql_path = os.path.join(os.path.dirname(__file__), "CIS_standard", "microsoft_sql_server_2019_query_result.json")
-                validate_csv_path = os.path.join(os.path.dirname(__file__), "CIS_standard","Result_Validators","microsoft_sql_server_2019_validator.csv")
-                output_csv_path = os.path.join(os.path.dirname(__file__), "CIS_standard", "microsoft_sql_server_2019_report.csv")
+                output_sql_path = os.path.join(os.path.dirname(__file__), "cis", "microsoft_sql_server_2019_query_result.json")
+                validate_csv_path = os.path.join(os.path.dirname(__file__), "cis","Result_Validators","microsoft_sql_server_2019_validator.csv")
+                output_csv_path = os.path.join(os.path.dirname(__file__), "cis", "microsoft_sql_server_2019_report.csv")
                 validate_mssql(output_sql_path,validate_csv_path,output_csv_path)
             if normalized_compliance == "microsoftsqlserver2017":
-                output_sql_path = os.path.join(os.path.dirname(__file__), "CIS_standard", "microsoft_sql_server_2017_query_result.json")
-                validate_csv_path = os.path.join(os.path.dirname(__file__), "CIS_standard","Result_Validators","microsoft_sql_server_2017_validator.csv")
-                output_csv_path = os.path.join(os.path.dirname(__file__), "CIS_standard", "microsoft_sql_server_2017_report.csv")
+                output_sql_path = os.path.join(os.path.dirname(__file__), "cis", "microsoft_sql_server_2017_query_result.json")
+                validate_csv_path = os.path.join(os.path.dirname(__file__), "cis","Result_Validators","microsoft_sql_server_2017_validator.csv")
+                output_csv_path = os.path.join(os.path.dirname(__file__), "cis", "microsoft_sql_server_2017_report.csv")
                 validate_mssql(output_sql_path,validate_csv_path,output_csv_path)
             if normalized_compliance == "microsoftsqlserver2016":       
-                output_sql_path = os.path.join(os.path.dirname(__file__), "CIS_standard", "microsoft_sql_server_2016_query_result.json")
-                validate_csv_path = os.path.join(os.path.dirname(__file__), "CIS_standard","Result_Validators","microsoft_sql_server_2016_validator.csv")
-                output_csv_path = os.path.join(os.path.dirname(__file__), "CIS_standard", "microsoft_sql_server_2016_report.csv")
+                output_sql_path = os.path.join(os.path.dirname(__file__), "cis", "microsoft_sql_server_2016_query_result.json")
+                validate_csv_path = os.path.join(os.path.dirname(__file__), "cis","Result_Validators","microsoft_sql_server_2016_validator.csv")
+                output_csv_path = os.path.join(os.path.dirname(__file__), "cis", "microsoft_sql_server_2016_report.csv")
                 validate_mssql(output_sql_path,validate_csv_path,output_csv_path)
             if normalized_compliance == "microsoftsqlserver2022":
-                output_sql_path = os.path.join(os.path.dirname(__file__), "CIS_standard", "microsoft_sql_server_2022_query_result.json")
-                validate_csv_path = os.path.join(os.path.dirname(__file__), "CIS_standard","Result_Validators","microsoft_sql_server_2022_validator.csv")
-                output_csv_path = os.path.join(os.path.dirname(__file__), "CIS_standard", "microsoft_sql_server_2022_report.csv")
+                output_sql_path = os.path.join(os.path.dirname(__file__), "cis", "microsoft_sql_server_2022_query_result.json")
+                validate_csv_path = os.path.join(os.path.dirname(__file__), "cis","Result_Validators","microsoft_sql_server_2022_validator.csv")
+                output_csv_path = os.path.join(os.path.dirname(__file__), "cis", "microsoft_sql_server_2022_report.csv")
                 validate_mssql(output_sql_path,validate_csv_path,output_csv_path)
 
     elif db_access_method == "agent":
         if normalized_compliance == "microsoftsqlserver2019":
-            maria_db_csv_path = os.path.join(os.path.dirname(__file__), "CIS_standard", "Queries", "microsoft_sql_server_2019_query.csv")
-            sql_commands = os.path.join(os.path.dirname(__file__),"CIS_standard", "microsoft_sql_server_2019_cis_query.sql")
+            maria_db_csv_path = os.path.join(os.path.dirname(__file__), "cis", "Queries", "microsoft_sql_server_2019_query.csv")
+            sql_commands = os.path.join(os.path.dirname(__file__),"cis", "microsoft_sql_server_2019_cis_query.sql")
             generate_mssql_work(excluded_audit,maria_db_csv_path,sql_commands)
         if normalized_compliance == "microsoftsqlserver2017":
-            maria_db_csv_path = os.path.join(os.path.dirname(__file__), "CIS_standard", "Queries", "microsoft_sql_server_2017_query.csv")
-            sql_commands = os.path.join(os.path.dirname(__file__),"CIS_standard", "microsoft_sql_server_2017_cis_query.sql")
+            maria_db_csv_path = os.path.join(os.path.dirname(__file__), "cis", "Queries", "microsoft_sql_server_2017_query.csv")
+            sql_commands = os.path.join(os.path.dirname(__file__),"cis", "microsoft_sql_server_2017_cis_query.sql")
             generate_mssql_work(excluded_audit,maria_db_csv_path,sql_commands)
         if normalized_compliance == "microsoftsqlserver2016":
-            maria_db_csv_path = os.path.join(os.path.dirname(__file__), "CIS_standard", "Queries", "microsoft_sql_server_2016_query.csv")
-            sql_commands = os.path.join(os.path.dirname(__file__),"CIS_standard", "microsoft_sql_server_2016_cis_query.sql")
+            maria_db_csv_path = os.path.join(os.path.dirname(__file__), "cis", "Queries", "microsoft_sql_server_2016_query.csv")
+            sql_commands = os.path.join(os.path.dirname(__file__),"cis", "microsoft_sql_server_2016_cis_query.sql")
             generate_mssql_work(excluded_audit,maria_db_csv_path,sql_commands)
         if normalized_compliance == "microsoftsqlserver2022":
-            maria_db_csv_path = os.path.join(os.path.dirname(__file__), "CIS_standard", "Queries", "microsoft_sql_server_2022_query.csv")
-            sql_commands = os.path.join(os.path.dirname(__file__),"CIS_standard", "microsoft_sql_server_2022_cis_query.sql")
+            maria_db_csv_path = os.path.join(os.path.dirname(__file__), "cis", "Queries", "microsoft_sql_server_2022_query.csv")
+            sql_commands = os.path.join(os.path.dirname(__file__),"cis", "microsoft_sql_server_2022_cis_query.sql")
             generate_mssql_work(excluded_audit,maria_db_csv_path,sql_commands)
             # Add local execution logic if needed
             # Add local execution logic if needed

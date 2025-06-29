@@ -141,7 +141,7 @@ def extract_db_queries(file_path):
 
     return queries
 
-def handle_multiple_query_rows(file_path):
+def handle_multiple_query_rows(file_path, excluded_names):
     """
     Combines 'query' and 'other_query' into one using UNION ALL if 'execution_target' is 'multiple_query'.
     Converts SHOW and SELECT @@ queries into SELECT form.
@@ -167,6 +167,9 @@ def handle_multiple_query_rows(file_path):
             continue
 
         name = row.get(col_map['name'], '').strip()
+        print(name)
+        if name in excluded_names:
+            continue
         query_1 = row.get(col_map['query'], '').strip().rstrip(';')
         query_2 = row.get(col_map['other_query'], '').strip().rstrip(';')
 
@@ -289,6 +292,7 @@ def write_queries_to_file(queries, output_file,excluded_names=None):
             # Convert SHOW queries to SELECT
             if query.strip().lower().startswith("show"):
                 query = convert_show_to_select(query)
+            print(check_name,excluded_names)
             if check_name in excluded_names:
                 continue
             query = query.rstrip(';')
@@ -326,7 +330,7 @@ def write_queries_to_file(queries, output_file,excluded_names=None):
             union_queries.append(subquery)
         sqlfile.write("\nUNION ALL\n".join(union_queries))
         sqlfile.write("\n) results;\n")
-def write_linux_script(linux_commands, db_and_terminal_commands, output_file, excluded_names=None):
+def write_linux_script(linux_commands, db_and_terminal_commands, output_file, excluded_names):
     """
     Generates a bash script that:
     - Reads input JSON file from $1
@@ -360,6 +364,7 @@ def write_linux_script(linux_commands, db_and_terminal_commands, output_file, ex
         for name, cmd in db_and_terminal_commands:
             safe_name = name.replace('"', '\\"')
             safe_cmd = cmd.replace('"', '\\"')
+            print(name, excluded_names)
             if name in excluded_names:
                 continue
             script.write(f'db_commands["{safe_name}"]="{safe_cmd}"\n')
@@ -377,6 +382,7 @@ def write_linux_script(linux_commands, db_and_terminal_commands, output_file, ex
         # Run static Linux commands (no placeholders)
         for name, cmd in linux_commands:
             escaped_name = name.replace('"', '\\"')
+            print(name)
             if name in excluded_names:
                 continue
             script.write(f'result=$( {cmd} 2>&1 | sed \'s/"/\\\\\\"/g\' )\n')
@@ -429,7 +435,7 @@ def generate_mariadb_work(excluded_audit_names,csv_path,sql_commands,linux_file)
 
 
     # Additional: handle multiple_query rows
-    multi_queries = handle_multiple_query_rows(csv_file)
+    multi_queries = handle_multiple_query_rows(csv_file, excluded_names=excluded_audit_names)
     queries.extend(multi_queries)
     excluded_names = excluded_audit_names
     print(excluded_names)
@@ -456,7 +462,7 @@ def generate_mariadb_work_remote(excluded_audit_names,csv_file,sql_file):
 
 
     # Additional: handle multiple_query rows
-    multi_queries = handle_multiple_query_rows(csv_file)
+    multi_queries = handle_multiple_query_rows(csv_file, excluded_names=excluded_audit_names)
     print(multi_queries)
     queries.extend(multi_queries)
     excluded_names = excluded_audit_names
