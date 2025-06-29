@@ -5,5 +5,5 @@ from . import views
 
 urlpatterns = [
     # Match dynamic folder paths like configurationaudit/database/oracle
-    re_path(r'^get-json/(?P<folder_path>[\w/-]+)/(?P<filename>[\w-]+)/$', views.get_json_file),
+    re_path(r'^get-json/(?P<folder_path>[\w/-]+)/(?P<filename>[\w.-]+)/$', views.get_json_file),
 ]
