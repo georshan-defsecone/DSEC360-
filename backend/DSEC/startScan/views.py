@@ -224,7 +224,7 @@ def windows_config_audit(scan_data):
 
     try:
         # Dynamically find the query CSV
-        queries_dir = os.path.join(base_dir,windows_dir, "Queries_Data")
+        queries_dir = os.path.join(base_dir,windows_dir,"CIS" , "Queries_Data")
         csv_name = (scan_data.get("complianceCategory") or "").strip() + ".csv"
         print(f"[DEBUG] Looking for CSV: {csv_name}")
         csv_path = os.path.join(queries_dir, csv_name)
@@ -233,7 +233,7 @@ def windows_config_audit(scan_data):
             print(f"[!] CSV file not found: {csv_path}")
             return None, None
 
-        validate_dir = os.path.join(base_dir,windows_dir, "Validate_Data")
+        validate_dir = os.path.join(base_dir,windows_dir,"CIS", "Validate_Data")
         validate_csv_name = (scan_data.get("complianceCategory") or "").strip() + "_Validate.csv"
         print(f"[DEBUG] Looking for validation CSV: {validate_csv_name}")
         if not validate_csv_name:
