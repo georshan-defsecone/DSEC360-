@@ -3,7 +3,7 @@ import subprocess
 import re
 import shutil
 from .Configuration_Audit.database.Maria import  connection_maria
-from .Configuration_Audit.database.MSSQL import remote
+from .Configuration_Audit.database.mssql import remote
 import zipfile
 from .Configuration_Audit.database.oracle.CIS import generate_sql
 from rest_framework.decorators import api_view, permission_classes
@@ -131,9 +131,9 @@ def database_config_audit(scan_data):
             print("[*] Running MSSQL audit")
             #assining the initial file paths
             base_dir = os.path.dirname(os.path.abspath(__file__))
-            mssql_dir = os.path.join(base_dir, "Configuration_Audit", "database", "MSSQL")
+            mssql_dir = os.path.join(base_dir, "Configuration_Audit", "database", "mssql")
             #getting the values from the scan_data
-            excluded_audit = scan_data.get("auditNames") or []
+            excluded_audit = scan_data.get("uncheckedComplianceItems") or []
             user_name = scan_data.get("username")
             password_name = scan_data.get("password")
             host_name = scan_data.get("target")
@@ -146,28 +146,28 @@ def database_config_audit(scan_data):
                 print("testing mssql connection for 2019")
                 remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
                 if db_access_method == "agent":
-                    path_for_sql=os.path.join(mssql_dir,"CIS_standard","microsoft_sql_server_2019_cis_query.sql")
+                    path_for_sql=os.path.join(mssql_dir,"cis","microsoft_sql_server_2019_cis_query.sql")
                     path_for_script= download_script(path_for_sql)
                     return path_for_script,None
                 
             elif normalized_compliance == "microsoftsqlserver2017":
                 remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
                 if db_access_method == "agent":
-                    path_for_sql=os.path.join(mssql_dir,"CIS_standard","microsoft_sql_server_2017_cis_query.sql")
+                    path_for_sql=os.path.join(mssql_dir,"cis","microsoft_sql_server_2017_cis_query.sql")
                     path_for_script= download_script(path_for_sql)
                     return path_for_script,None
 
             elif normalized_compliance == "microsoftsqlserver2016":
                 remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
                 if db_access_method == "agent":
-                    path_for_sql=os.path.join(mssql_dir,"CIS_standard","microsoft_sql_server_2016_cis_query.sql")
+                    path_for_sql=os.path.join(mssql_dir,"cis","microsoft_sql_server_2016_cis_query.sql")
                     path_for_script= download_script(path_for_sql)
                     return path_for_script,None
                 
             elif normalized_compliance == "microsoftsqlserver2022":
                 remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
                 if db_access_method == "agent":
-                    path_for_sql=os.path.join(mssql_dir,"CIS_standard","microsoft_sql_server_2022_cis_query.sql")
+                    path_for_sql=os.path.join(mssql_dir,"cis","microsoft_sql_server_2022_cis_query.sql")
                     path_for_script= download_script(path_for_sql)
                     return path_for_script,None
 

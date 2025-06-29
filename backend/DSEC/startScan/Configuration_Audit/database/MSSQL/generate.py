@@ -80,8 +80,7 @@ def generate_mssql_work(excluding_names, input_csv_path, output_sql_path):
         for row in reader:
             check_name = row.get('Name', '').strip()
             query = row.get('Query', '').strip()
-            print(check_name)
-            
+            print(check_name, excluding_names)
             if check_name in excluding_names:
                 continue
 

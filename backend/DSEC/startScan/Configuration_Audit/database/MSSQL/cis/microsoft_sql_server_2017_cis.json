@@ -1,0 +1,109 @@
+[{
+        "name": "1.1 Ensure Latest SQL Server Cumulative and Security Updates are Installed (Manual)",
+        "check": true
+    },
+    {
+        "name": "2.1 Ensure 'Ad Hoc Distributed Queries' Server Configuration Option is set to '0' (Automated)",
+        "check": true
+    },
+    {
+        "name": "2.2 Ensure 'CLR Enabled' Server Configuration Option is set to '0' (Automated)",
+        "check": true
+    },
+    {
+        "name": "2.3 Ensure 'Cross DB Ownership Chaining' Server Configuration Option is set to '0' (Automated)",
+        "check": true
+    },
+    {
+        "name": "2.4 Ensure 'Database Mail XPs' Server Configuration Option is set to '0' (Automated)",
+        "check": true
+    },
+    {
+        "name": "2.5 Ensure 'Ole Automation Procedures' Server Configuration Option is set to '0' (Automated)",
+        "check": true
+    },
+    {
+        "name": "2.6 Ensure 'Remote Access' Server Configuration Option is set to '0' (Automated)",
+        "check": true
+    },
+    {
+        "name": "2.7 Ensure 'Remote Admin Connections' Server Configuration Option is set to '0' (Automated)",
+        "check": true
+    },
+    {
+        "name": "2.8 Ensure 'Scan For Startup Procs' Server Configuration Option is set to '0' (Automated)",
+        "check": true
+    },
+    {
+        "name": "2.9 Ensure 'Trustworthy' Database Property is set to 'Off' (Automated)",
+        "check": true
+    },
+    {
+        "name": "2.11 Ensure SQL Server is configured to use non-standard ports (Automated)",
+        "check": true
+    },
+    {
+        "name": "2.12 Ensure 'Hide Instance' option is set to 'Yes' for Production SQL Server instances (Automated)",
+        "check": true
+    },
+    {
+        "name": "2.13 Ensure the 'sa' Login Account is set to 'Disabled' (Automated)",
+        "check": true
+    },
+    {
+        "name": "2.15 Ensure 'xp_cmdshell' Server Configuration Option is set to '0' (Automated)",
+        "check": true
+    },
+    {
+        "name": "2.16 Ensure 'AUTO_CLOSE' is set to 'OFF' on contained databases (Automated)",
+        "check": true
+    },
+    {
+        "name": "2.17 Ensure no login exists with the name 'sa' (Automated)",
+        "check": true
+    },
+    {
+        "name": "2.18 Ensure 'clr strict security' Server Configuration Option is set to '1' (Automated)",
+        "check": true
+    },
+    {
+        "name": "3.1 Ensure 'Server Authentication' Property is set to 'Windows Authentication Mode' (Automated)",
+        "check": true
+    },
+    {
+        "name": "3.4 Ensure SQL Authentication is not used in contained databases (Automated)",
+        "check": true
+    },
+    {
+        "name": "3.8 Ensure only the default permissions specified by Microsoft are granted to the public server role (Automated)",
+        "check": true
+    },
+    {
+        "name": "3.10 Ensure Windows local groups are not SQL Logins (Automated)",
+        "check": true
+    },
+    {
+        "name": "3.11 Ensure the public role in the msdb database is not granted access to SQL Agent proxies (Automated)",
+        "check": true
+    },
+    {
+        "name": "4.3 Ensure 'CHECK_POLICY' Option is set to 'ON' for All SQL Authenticated Logins (Automated)",
+        "check": true
+    },
+    {
+        "name": "5.1 Ensure 'Maximum number of error log files' is set to greater than or equal to '12' (Automated)",
+        "check": true
+    },
+    {
+        "name": "5.2 Ensure 'Default Trace Enabled' Server Configuration Option is set to '1' (Automated)",
+        "check": true
+    },
+    {
+        "name": "7.3 Ensure Database Backups are Encrypted (Automated)",
+        "check": true
+    },
+    {
+        "name": "7.5 Ensure Databases are Encrypted with TDE (Automated)",
+        "check": true
+    }  
+]
