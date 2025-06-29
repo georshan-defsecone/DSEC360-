@@ -2,7 +2,7 @@ import os
 import subprocess
 import re
 import shutil
-from .Configuration_Audit.database.maria import  connection_maria
+from .Configuration_Audit.database.maria import connection_maria
 from .Configuration_Audit.database.mssql import remote
 import zipfile
 from .Configuration_Audit.database.oracle.CIS import generate_sql
