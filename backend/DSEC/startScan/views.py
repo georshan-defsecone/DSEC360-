@@ -2,7 +2,6 @@ import os
 import subprocess
 import re
 import shutil
-#from .Configuration_Audit.database.oracle import generate_sql
 from .Configuration_Audit.database.Maria import  connection_maria
 from .Configuration_Audit.database.MSSQL import remote
 import zipfile
@@ -73,6 +72,7 @@ def database_config_audit(scan_data):
             elif audit_method == "agent":
                 print("[*] Using agent method.")
                 script_path= download_script(sql_output)
+                print(f"[+] Script downloaded to: {script_path}")
                 return script_path, json_output
             else:
                 print(f"[-] Unsupported audit method: {audit_method}")
@@ -214,6 +214,7 @@ def windows_config_audit(scan_data):
 
         script_file_name = f"Generate_Script_{selected_os}.ps1"
         generate_script_path = os.path.join(base_dir, windows_dir, "Output", script_file_name)
+        print(f"[DEBUG] PowerShell script will be generated at: {generate_script_path}")
 
         remote_script_path = "C:\\Windows\\Temp\\generate_script.ps1"
 
@@ -249,13 +250,8 @@ def windows_config_audit(scan_data):
             print(f"[+] PowerShell script generated at: {generate_script_path}")
             print("[*] Using agent method.")
             script_path = download_script(generate_script_path)
-            if not script_path:
-                print("[-] Failed to download script for agent method.")
-                return None, None
-            
-            # Return the script path and the expected output JSON path
-            return script_path, output_json_local_path 
-        
+            print(f"[+] Script downloaded to: {script_path}")
+            return script_path, output_json_local_path
         else:
             print("[*] Local agent mode is not yet implemented.")
             return None, None

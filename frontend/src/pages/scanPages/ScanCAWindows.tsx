@@ -313,7 +313,7 @@ setUserName(response1.data.username);
           scan_data: {
             scanType: "Configuration Audit",
             description: formData.description,
-            category: "database",
+            category: "windows",
             os: formData.OS,
             auditMethod: formData.auditMethod,
             target: formData.target,
@@ -354,7 +354,7 @@ setUserName(response1.data.username);
             scheduleTimezone: formData.scheduleTimezone,
             notification: formData.notification,
             notificationEmail: formData.notificationEmail,
-            uncheckedComplianceItems: uncheckedComplianceItems,
+            //uncheckedComplianceItems: uncheckedComplianceItems,
           },
         };
     
@@ -364,7 +364,7 @@ setUserName(response1.data.username);
           });
     
           const contentDisposition = response.headers["content-disposition"];
-          let filename = "script.sql";
+          let filename = "Microsoft_Windows_10_Stand-alone_v3.0.0_Audit_Script.ps1";
     
           if (contentDisposition) {
             const match = contentDisposition.match(/filename="?(.+)"?/);
@@ -1178,26 +1178,6 @@ setUserName(response1.data.username);
         <Card className="w-[70%] mt-10 ml-4 shadow-2xl">
           <CardContent className="w-full p-4 px-12">
             <div className="w-auto space-y-6">
-              {/* Progress indicator
-            <div className="flex justify-start gap-8 mb-8">
-              {[1, 2, 3, 4].map((step) => (
-                <div
-                  key={step}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center
-                                ${
-                                  page >= step
-                                    ? "bg-black text-white"
-                                    : "bg-gray-200"
-                                }`}
-                >
-                  {step}
-                </div>
-              ))}
-            </div>
-
-            {*/}
-
-                    
                 <form onSubmit={handleSubmit}>
                   {renderPage()}
 
@@ -1232,7 +1212,9 @@ setUserName(response1.data.username);
                                             </button>
                                         ) : formData.auditMethod === "agent" &&
                                           page === 4 ? (
-                                            <Button className="px-4 py-2 bg-black text-white h-10 rounded cursor-pointer"
+                                            <Button 
+                                            type="button"
+                                            className="px-4 py-2 bg-black text-white h-10 rounded cursor-pointer"
                                             onClick={downloadScript}>
                                                 Download script
                                             </Button>
