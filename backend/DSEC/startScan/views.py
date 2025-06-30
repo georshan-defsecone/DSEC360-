@@ -2,7 +2,7 @@ import os
 import subprocess
 import re
 import shutil
-from .database.oracle import generate_sql
+
 from .database.Maria import  connection_maria
 from .database.MSSQL import remote
 import zipfile
@@ -210,6 +210,64 @@ def database_config_audit(scan_data):
     else:
         print(f"[-] Unsupported compliance type: {normalized_compliance}")
         return None,None
+
+def linux_config_audit(scan_data):
+    print("[*] Entered linux_config_audit()")
+    from .Configuration_Audit.Linux.generate import ubuntu
+    import os
+
+    standard = scan_data.get("complianceSecurityStandard", "CIS").strip()
+    version = scan_data.get("complianceCategory", "").strip().replace(" ", "_")
+    method = scan_data.get("auditMethod", "remote").strip().lower()
+    excluded = scan_data.get("uncheckedComplianceItems", [])
+    
+    target = scan_data.get("target", "")
+    ip = target
+    port = 22  # default
+
+    if "/" in target:
+        try:
+            ip, port_str = target.split("/", 1)
+            port = int(port_str)
+        except ValueError:
+            port = 22  # fallback to default if port is invalid
+
+    ssh_info = {
+        "username": scan_data.get("username"),
+        "password": scan_data.get("password"),
+        "ip": ip,
+        "port": port,
+    }
+
+    try:
+        if method not in ("remote", "agent"):
+            print("[-] Unsupported audit method for Linux.")
+            return None, None
+
+        ubuntu(
+            standard=standard,
+            version=version,
+            exclude_audits=excluded,
+            method=method,
+            ssh_info=ssh_info if method == "remote" else None
+        )
+
+        # File names
+        script_path = f"./combined_{standard}_{version}.sh"
+        json_path = os.path.join(os.path.dirname(__file__), "results_" + standard + "_" + version + ".json")
+        json_path = os.path.abspath(json_path)
+        csv_path = os.path.join(os.path.dirname(__file__), "Configuration_Audit", "Linux", "results_" + standard + "_" + version + ".csv")
+
+        #  Only validate in remote mode
+        if method == "remote":
+            return csv_path, json_path if os.path.exists(json_path) else None
+
+        #  For agent mode, just return the script
+        return script_path, None
+
+    except Exception as e:
+        print(f"[!] Linux audit failed: {e}")
+        return None, None
 
 
 def windows_config_audit(scan_data):
