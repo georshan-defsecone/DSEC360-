@@ -108,13 +108,15 @@ def ubuntu(standard, version, exclude_audits=None, method="agent", ssh_info=None
 
         runner = f"""
 run_{func_name}() {{
+    local status # Added local declaration
+    local output # Added local declaration
     output=$({func_name} 2>&1)
     if echo "$output" | grep -q "\\*\\* ERROR \\*\\*"; then
-        status="ERROR"
+        status=$(echo "ERROR")
     elif echo "$output" | grep -q "\\*\\* PASS \\*\\*"; then
-        status="PASS"
+        status=$(echo "PASS")
     else
-        status="FAIL"
+        status=$(echo "FAIL")
     fi
 
     jq -n --arg audit_id "{audit_id}" --arg audit_name "{data['name']}" --arg status "$status" --arg output "$output" \\
@@ -129,9 +131,14 @@ run_{func_name}() {{
                 if x.replace('_', '.') not in exclude_audits
             ]
 
+            runner += "    declare -A executed_dependent_audits\n" # Declare associative array to track executed
+            
+            # --- DEBUG START ---
+            runner += f'    echo "DEBUG: Parent audit {audit_id} status is: $status"\n'
+            # --- DEBUG END ---
+
             if match_type in ("output_contains", "output_regex"):
-                runner += "    matched=false\n"
-                runner += "    executed_audits=\"\"\n"
+                runner += "    matched_case=false\n" # Renamed from 'matched' to avoid confusion
 
                 for case in condition.get("cases", []):
                     val = case["value"]
@@ -151,46 +158,59 @@ run_{func_name}() {{
                     for dep_id in run_list:
                         dep_func = audit_id_to_func_name(dep_id)
                         runner += f'        run_{dep_func}\n'
-                        runner += f'        executed_audits="$executed_audits {dep_id}"\n'
-
-                    runner += "        matched=true\n"
+                        runner += f'        executed_dependent_audits["{dep_id}"]=1\n' # Mark as executed
+                    runner += "        matched_case=true\n"
                     runner += "    fi\n"
 
                 default = condition.get("default", {})
                 
-                # Fixed logic: Check parent audit status to determine dependent audit status
-                runner += '    if [ "$matched" = false ]; then\n'
-                
-                # If parent audit failed, mark dependent audits as FAIL
-                runner += '        if [ "$status" = "FAIL" ] || [ "$status" = "ERROR" ]; then\n'
+                runner += f'    echo "DEBUG: Entering conditional block for {audit_id}. Current status: $status"\n' # Additional debug
+                # Handle dependent audits based on parent status and matched_case
+                runner += '    if [[ "$status" = "FAIL" ]] || [[ "$status" = "ERROR" ]]; then\n' # Changed to [[ ]]
+                runner += f'        echo "DEBUG: Inside FAIL/ERROR conditional for {audit_id}. Status being evaluated: $status"\n' # New precise debug
                 for dep_id in all_depended_ids:
                     if dep_id in exclude_audits:
                         continue
                     dep_name = audit_data.get(dep_id, {}).get("name", dep_id)
+                    runner += f'        if [[ -z "${{executed_dependent_audits["{dep_id}"]}}" ]]; then\n' # Changed to [[ ]]
                     runner += f'            jq -n --arg audit_id "{dep_id}" --arg audit_name "{dep_name}" \\\n'
                     runner += f'                --arg status "FAIL" --arg output "Skipped: prerequisite audit {audit_id} failed" \\\n'
                     runner += f'                \'{{"audit_id": $audit_id, "audit_name": $audit_name, "status": $status, "output": $output}}\' >> tmp_results.json\n'
-                
-                # If parent audit passed but no conditions matched, use default action
-                runner += '        else\n'
+                    runner += '        fi\n'
+                runner += '    else # Parent audit passed\n'
+                runner += f'        echo "DEBUG: Inside PASS conditional for {audit_id}. Status being evaluated: $status"\n' # New precise debug
+                runner += '        if [[ "$matched_case" = false ]]; then\n' # Changed to [[ ]]
                 if default.get("action") == "skip":
                     default_status = default.get("status", "PASS").upper()
                     for dep_id in all_depended_ids:
                         if dep_id in exclude_audits:
                             continue
                         dep_name = audit_data.get(dep_id, {}).get("name", dep_id)
+                        runner += f'            if [[ -z "${{executed_dependent_audits["{dep_id}"]}}" ]]; then\n' # Changed to [[ ]]
                         if default_status == "PASS":
                             reason = f"Skipped: not applicable due to {audit_id}"
                         else:
                             reason = f"Skipped: audit not applicable because {audit_id} conditions not met"
-                        runner += f'            jq -n --arg audit_id "{dep_id}" --arg audit_name "{dep_name}" \\\n'
-                        runner += f'                --arg status "{default_status}" --arg output "{reason}" \\\n'
-                        runner += f'                \'{{"audit_id": $audit_id, "audit_name": $audit_name, "status": $status, "output": $output}}\' >> tmp_results.json\n'
+                        runner += f'                jq -n --arg audit_id "{dep_id}" --arg audit_name "{dep_name}" \\\n'
+                        runner += f'                    --arg status "{default_status}" --arg output "{reason}" \\\n'
+                        runner += f'                    \'{{"audit_id": $audit_id, "audit_name": $audit_name, "status": $status, "output": $output}}\' >> tmp_results.json\n' # THIS IS THE CRITICAL FIX
+                        runner += '            fi\n'
                 else:
                     runner += f'            echo "Warning: No conditions matched for audit {audit_id} and no default action defined"\n'
-                
+                runner += '        else # A case matched when parent passed, now skip others that were not executed\n'
+                default_status = default.get("status", "PASS").upper() # Use default status for skipped, typically PASS
+                for dep_id in all_depended_ids:
+                    if dep_id in exclude_audits:
+                        continue
+                    dep_name = audit_data.get(dep_id, {}).get("name", dep_id)
+                    runner += f'            if [[ -z "${{executed_dependent_audits["{dep_id}"]}}" ]]; then\n' # Changed to [[ ]]
+                    reason = f"Skipped: not applicable as a different firewall was detected by {audit_id}"
+                    runner += f'                jq -n --arg audit_id "{dep_id}" --arg audit_name "{dep_name}" \\\n'
+                    runner += f'                    --arg status "{default_status}" --arg output "{reason}" \\\n'
+                    runner += f'                    \'{{"audit_id": $audit_id, "audit_name": $audit_name, "status": $status, "output": $output}}\' >> tmp_results.json\n' # THIS IS THE CRITICAL FIX
+                    runner += '            fi\n'
                 runner += '        fi\n'
-                runner += "    fi\n"
+                runner += '    fi\n'
                 
         runner += "}\n"
         runners.append(runner)
@@ -237,7 +257,7 @@ echo "Audit complete. Results saved to {result_file}"
         if not ssh_info or not all(k in ssh_info for k in ("username", "password", "ip", "port")):
             raise ValueError("Missing SSH info for remote execution")
         
-        from .remote import execute_remote
+        from remote import execute_remote
         execute_remote(
             script_name=output_file,
             username=ssh_info["username"],
@@ -269,7 +289,7 @@ echo "Audit complete. Results saved to {result_file}"
             print(f"  CSV:  {csv_path}")
             print(f"  Output_CSV: {output_csv_file}")
             
-            from .validate import validateResult
+            from validate import validateResult
             validateResult(json_path=json_path, csv_path=csv_path, output_csv_path=output_csv_file)
             
         except Exception as e:
