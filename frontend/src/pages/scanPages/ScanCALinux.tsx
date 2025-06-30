@@ -1,6 +1,8 @@
 import Sidebar from "@/components/Sidebar";
+import Papa from "papaparse"
 import axios from "axios";
 import Header from "@/components/Header";
+import { Label } from "@/components/ui/label";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { ElevatePrivilegeForm } from "@/components/ElevatePrivilegeForm";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,6 +30,12 @@ const ScanCALinux = () => {
   const [errors, setErrors] = useState("");
   const [userName, setUserName] = useState("");
   const [fileIPs, setFileIPs] = useState<string[]>([]);
+  const [selectedComplianceItems, setSelectedComplianceItems] = useState<
+    string[]
+  >([]);
+  const [uncheckedComplianceItems, setUncheckedComplianceItems] = useState<
+    string[]
+  >([]);
   const navigate = useNavigate();
 
   const formPages = ["●", "●", "●", "●", "●"];
@@ -85,7 +93,67 @@ const ScanCALinux = () => {
     scheduleTimezone: "",
     notification: "",
     notificationEmail: "",
+    auditNames: [],
   });
+
+  useEffect(() => {
+    if (formData.complianceCategory && formData.complianceSecurityStandard) {
+      loadAuditNames(
+        formData.complianceSecurityStandard,
+        formData.complianceCategory
+      );
+    }
+  }, [formData.complianceCategory, formData.complianceSecurityStandard]);
+
+  async function loadAuditNames(securityStandard, complianceCategory) {
+  const filename = `${complianceCategory}`.replace(/\s+/g, "_");
+  const folderPath = `Configuration_Audit/Linux/${securityStandard}`;
+
+  try {
+    const response = await api.get(`/get-csv/${folderPath}/${filename}/`);
+    const csvData = response.data;
+
+    // Parse CSV data using Papaparse
+    const parseResult = Papa.parse(csvData, {
+      header: true,
+      skipEmptyLines: true,
+      dynamicTyping: true,
+      delimiter: ",", // Adjust if your CSV uses a different delimiter
+      transform: (value, header) => {
+        // Trim whitespace from headers and values
+        if (typeof value === 'string') {
+          return value.trim();
+        }
+        return value;
+      }
+    });
+
+    if (parseResult.errors.length > 0) {
+      console.error("CSV parsing errors:", parseResult.errors);
+    }
+
+    const auditData = parseResult.data;
+
+    // Ensure auditData is an array before setting it
+    if (Array.isArray(auditData)) {
+      handleInputChange(auditData, "auditNames");
+
+      const initiallyChecked = auditData
+        .filter((item) => item.check)
+        .map((item) => item.audit_name);
+
+      setSelectedComplianceItems(initiallyChecked);
+    } else {
+      console.error("Expected auditData to be an array, got:", typeof auditData);
+      // Set empty array as fallback
+      handleInputChange([], "auditNames");
+    }
+  } catch (error) {
+    console.error("Error fetching compliance data:", error);
+    // Set empty array as fallback on error
+    handleInputChange([], "auditNames");
+  }
+}
 
   const validatePage1 = () => {
     return (
@@ -100,9 +168,9 @@ const ScanCALinux = () => {
   };
 
   const isValidPort = (port: string) => {
-    const p = parseInt(port as string, 10)
+    const p = parseInt(port as string, 10);
     return Number.isInteger(p) && p > 0 && p <= 65535;
-  }
+  };
 
   const isValidHostname = (input: string) => {
     const hostnameRegex = /^(?!:\/\/)([a-zA-Z0-9-_]+\.)+[a-zA-Z]{2,}$/;
@@ -137,19 +205,16 @@ const ScanCALinux = () => {
 
   const isValidTargetWithPort = (input: string) => {
     if (input.includes("/")) {
-    const [ip, port] = input.split("/");
-      return (
-        (isValidIPv4(ip) || isValidHostname(ip)) &&
-        isValidPort(port)
-      );
+      const [ip, port] = input.split("/");
+      return (isValidIPv4(ip) || isValidHostname(ip)) && isValidPort(port);
     }
     return (
-    isValidIPv4(input) ||
-    isValidCIDR(input) ||
-    isValidRange(input) ||
-    isValidHostname(input)
-  );
- }
+      isValidIPv4(input) ||
+      isValidCIDR(input) ||
+      isValidRange(input) ||
+      isValidHostname(input)
+    );
+  };
 
   const validateTargetIPInput = (input: string) => {
     const targets = input
@@ -302,6 +367,7 @@ const ScanCALinux = () => {
 
         complianceCategory: formData.complianceCategory,
         complianceSecurityStandard: formData.complianceSecurityStandard,
+        uncheckedComplianceItems: uncheckedComplianceItems,
 
         schedule: formData.schedule,
         scheduleFrequency: formData.scheduleFrequency,
@@ -367,15 +433,20 @@ const ScanCALinux = () => {
   }, []);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string,
+    e:
+      | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+      | string
+      | any[],
     field?: string
   ) => {
-    if (typeof e === "string" && field) {
+    if (field && (typeof e === "string" || Array.isArray(e))) {
+      // Handle direct value assignment (string or array)
       setFormData((prev) => ({
         ...prev,
         [field]: e,
       }));
     } else if (typeof e === "object" && "target" in e) {
+      // Handle input change events
       const { name, value } = e.target;
       setFormData((prev) => ({
         ...prev,
@@ -496,7 +567,9 @@ const ScanCALinux = () => {
         icon: <CheckCircle2 className="text-green-500" />,
       });
       setTimeout(() => {
-        navigate(`/scan/scanresult/${formData.projectName}/${formData.scanName}`);
+        navigate(
+          `/scan/scanresult/${formData.projectName}/${formData.scanName}`
+        );
       }, 2000);
       // Optionally reset form
       // setFormData(initialState);
@@ -908,51 +981,96 @@ const ScanCALinux = () => {
           .map((item) => item["Security Standards"]);
 
         return (
-          <div className="space-y-4">
-            {renderError()}
-            <h2 className="text-xl font-semibold">Compliance Information</h2>
+          <div className="flex gap-6">
+            <div className="w-[70%] space-y-4">
+              {renderError()}
+              <h2 className="text-xl font-semibold">Compliance Information</h2>
 
-            {/* Operating System Selection */}
-            <div className="flex items-center">
-              <p className="block w-70">Operating System:</p>
-              <Select
-                value={formData.complianceCategory}
-                onValueChange={(value) =>
-                  handleInputChange(value, "complianceCategory")
-                }
-              >
-                <SelectTrigger className="w-80">
-                  <SelectValue placeholder="Select Linux Distro" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Operating System Selection */}
+              <div className="flex items-center">
+                <p className="block w-70">Operating System:</p>
+                <Select
+                  value={formData.complianceCategory}
+                  onValueChange={(value) => {
+                    handleInputChange(value, "complianceCategory");
+                    setFormData((prev) => ({
+                      ...prev,
+                      complianceSecurityStandard: "",
+                      auditNames: [],
+                    }));
+                    setSelectedComplianceItems([]);
+                    setUncheckedComplianceItems([]);
+                  }}
+                >
+                  <SelectTrigger className="w-80">
+                    <SelectValue placeholder="Select Linux Distro" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {/* Security Standard Selection */}
+              <div className="flex items-center">
+                <p className="block w-70">Security Standard:</p>
+                <Select
+                  value={formData.complianceSecurityStandard}
+                  onValueChange={(value) =>
+                    handleInputChange(value, "complianceSecurityStandard")
+                  }
+                >
+                  <SelectTrigger className="w-80">
+                    <SelectValue placeholder="Select Security Standard" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {standards.map((standard) => (
+                      <SelectItem key={standard} value={standard}>
+                        {standard}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            {/* Security Standard Selection */}
-            <div className="flex items-center">
-              <p className="block w-70">Security Standard:</p>
-              <Select
-                value={formData.complianceSecurityStandard}
-                onValueChange={(value) =>
-                  handleInputChange(value, "complianceSecurityStandard")
-                }
-              >
-                <SelectTrigger className="w-80">
-                  <SelectValue placeholder="Select Security Standard" />
-                </SelectTrigger>
-                <SelectContent>
-                  {standards.map((standard) => (
-                    <SelectItem key={standard} value={standard}>
-                      {standard}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+
+            <div className="w-[30%] flex flex-col">
+              <div className="max-h-96 overflow-y-auto border-l pl-4 pr-2 space-y-3">
+                {formData.auditNames.length > 0 ? (
+                  formData.auditNames.map((item, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`compliance-${index}`}
+                        checked={selectedComplianceItems.includes(item.audit_name)}
+                        onCheckedChange={(checked) => {
+                          setSelectedComplianceItems((prev) =>
+                            checked
+                              ? [...prev, item.audit_name]
+                              : prev.filter((v) => v !== item.audit_name)
+                          );
+
+                          setUncheckedComplianceItems((prev) =>
+                            !checked
+                              ? [...prev, item.audit_name]
+                              : prev.filter((v) => v !== item.audit_name)
+                          );
+                        }}
+                      />
+                      <Label
+                        htmlFor={`compliance-${index}`}
+                        className="text-sm"
+                      >
+                        {item.audit_name}
+                      </Label>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500">No compliance data available.</p>
+                )}
+              </div>
             </div>
           </div>
         );
