@@ -257,7 +257,7 @@ echo "Audit complete. Results saved to {result_file}"
         if not ssh_info or not all(k in ssh_info for k in ("username", "password", "ip", "port")):
             raise ValueError("Missing SSH info for remote execution")
         
-        from remote import execute_remote
+        from .remote import execute_remote
         execute_remote(
             script_name=output_file,
             username=ssh_info["username"],
@@ -269,7 +269,7 @@ echo "Audit complete. Results saved to {result_file}"
 
         # Improved validation with error handling
         json_path = os.path.join(os.path.dirname(__file__), "results_CIS_Ubuntu_Linux_24.04.json")
-        csv_path = os.path.join(audit_dir, version + ".csv")
+        csv_path = os.path.join(BASE_DIR, standard, version + ".csv")
 
         output_csv_file = os.path.join(os.path.dirname(__file__), f"results_{standard}_{version}.csv")
         
@@ -289,7 +289,7 @@ echo "Audit complete. Results saved to {result_file}"
             print(f"  CSV:  {csv_path}")
             print(f"  Output_CSV: {output_csv_file}")
             
-            from validate import validateResult
+            from .validate import validateResult
             validateResult(json_path=json_path, csv_path=csv_path, output_csv_path=output_csv_file)
             
         except Exception as e:
