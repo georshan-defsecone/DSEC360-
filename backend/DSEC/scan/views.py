@@ -23,7 +23,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
-from startScan.views import database_config_audit, windows_config_audit
+from startScan.views import database_config_audit, windows_config_audit, linux_config_audit
 from startScan.views import download_script
 from django.http import FileResponse
 import json
@@ -388,10 +388,20 @@ def create_scan(request):
 
         
         scan_data = data.get("scan_data", {})
-        print(scan_data)
-        file_path, output_json_path = launch_scan(scan_data)
-        audit_method = scan_data.get("auditMethod", "").strip().lower()
+        try:
+            result = launch_scan(scan_data)
+            if result is None:
+                print("[!] launch_scan() returned None")
+                return Response({"error": "Scan execution failed"}, status=500)
 
+            file_path, output_json_path = result
+            print("[DEBUG] Returned file_path:", file_path)
+            print("[DEBUG] file exists:", os.path.exists(file_path))
+        except Exception as e:
+            print("[!] launch_scan() failed:", e)
+            return Response({"error": "Scan execution failed", "details": str(e)}, status=500)
+        category = scan_data.get("category", "").strip().lower()
+        audit_method = scan_data.get("auditMethod", "").strip().lower()
         scan_instance = Scan.objects.get(scan_id=data["scan_id"])
 
         # Save output.json content to scan_output field
@@ -405,7 +415,12 @@ def create_scan(request):
                     print("[!] Failed to decode output.json")
 
         if file_path and os.path.exists(file_path):
-            filename = os.path.basename(file_path)
+            # Determine filename based on audit type
+            if audit_method == "agent" and category == "linux":
+                version = scan_data.get("complianceCategory", "").strip().replace(" ", "_")
+                filename = f"{version}_audit_script.sh"
+            else:
+                filename = os.path.basename(file_path)
 
             if audit_method != "agent":
                 with open(file_path, "r", encoding="utf-8") as f:
@@ -441,14 +456,16 @@ import re
 
 def launch_scan(scan_data):
     print("[*] Entered launch_scan()")
-    
 
     # Normalize and extract values from scan_data
-    scan_type = (scan_data.get("scanType") or "").strip().lower().replace(" ", "").replace("_", "")
+    scan_type = (scan_data.get("scanType") or "").strip().lower().replace(" ", "_")
     os_name = (scan_data.get("os") or "").strip().lower()
     auth_type = (scan_data.get("auditMethod") or "").strip().lower()
     category=(scan_data.get("category")or"").strip().lower()
     compliance_name=(scan_data.get("complianceCategory")).strip().lower()
+    
+    print(f"[DEBUG] scan_type: {scan_type}, category: {category}")
+
 
     standard = scan_data.get("complianceSecurityStandard")
     # Remove all non-alphanumeric characters including underscores, then lowercase
@@ -464,13 +481,10 @@ def launch_scan(scan_data):
         if category=="windows":
             return windows_config_audit(scan_data)
 
-        if category=="linux":
-            return None,None
+        if category == "linux":
+            return linux_config_audit(scan_data)
 
         if category=="firewall":
             return None,None
 
 
-    
-
-           
