@@ -393,7 +393,7 @@ def format_key(name):
     return re.sub(r'\W+', '_', name).strip('_')
 
 def write_filtered_csv(rows, output_path, result_lookup, included_names):
-    fieldnames = ['cis.no', 'subject', 'Description', 'Current Setting', 'status', 'Remediation']
+    fieldnames = ['CIS.NO', 'Subject', 'Description', 'Current Setting', 'Status', 'Remediation']
 
     with open(output_path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -428,11 +428,11 @@ def write_filtered_csv(rows, output_path, result_lookup, included_names):
             remediation = row.get('Remediation', '') if result.strip().lower() == 'fail' else ''
 
             writer.writerow({
-                'cis.no': cis_no,
-                'subject': name_cleaned,
+                'CIS.NO': cis_no,
+                'Subject': name_cleaned,
                 'Description': row.get('Description', ''),
                 'Current Setting': current_setting,
-                'status': result,
+                'Status': result,
                 'Remediation': remediation
             })
 
