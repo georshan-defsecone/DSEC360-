@@ -19,16 +19,16 @@ import {
 import { toast, Toaster } from "sonner";
 import { CheckCircle2 } from "lucide-react";
 import FileUploader from "@/components/FileUploader";
-
+import { useNavigate } from "react-router-dom";
 import api from "../api";
 import { Checkbox } from "@/components/ui/checkbox";
-import { parse } from "path";
 
 const ScanCALinux = () => {
   const [complianceData, setComplianceData] = useState([]);
   const [errors, setErrors] = useState("");
   const [userName, setUserName] = useState("");
   const [fileIPs, setFileIPs] = useState<string[]>([]);
+  const navigate = useNavigate();
 
   const formPages = ["●", "●", "●", "●", "●"];
 
@@ -433,6 +433,7 @@ const ScanCALinux = () => {
 
   const handleSubmit = async () => {
     try {
+      const toastId = toast.info("Processing scan ...", { duration: Infinity });
       const payload = {
         project_name: formData.projectName,
         scan_name: formData.scanName,
@@ -489,12 +490,14 @@ const ScanCALinux = () => {
       };
 
       const response = await api.post("scans/create-scan/", payload); // Ensure "test/" maps to your backend view
-
+      toast.dismiss(toastId); // hide the processing toast
       console.log("Scan created:", response.data);
       toast.success("Scan created succesfully", {
         icon: <CheckCircle2 className="text-green-500" />,
       });
-
+      setTimeout(() => {
+        navigate(`/scan/scanresult/${formData.projectName}/${formData.scanName}`);
+      }, 2000);
       // Optionally reset form
       // setFormData(initialState);
     } catch (error) {
