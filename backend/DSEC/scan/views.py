@@ -461,7 +461,7 @@ def create_scan(request):
             "message": "Scan created successfully.",
             "scan": serializer.data
         }, status=status.HTTP_201_CREATED)
-
+    print("[!] Serializer Errors:", serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -512,7 +512,7 @@ def launch_scan(scan_data):
             return windows_config_audit(scan_data)
 
         if category == "linux":
-            return None, None
+            return linux_config_audit(scan_data)
 
         if category=="firewall":
             return None,None
