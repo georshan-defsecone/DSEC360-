@@ -1,3 +1,13 @@
+
+
+Skip to content
+Using Gmail with screen readers
+Conversations
+75% of 15 GB used
+Terms · Privacy · Programme Policies
+Last account activity: 0 minutes ago
+Details
+
 #!/usr/bin/env python3
 """
 Cross-platform project launcher for React + Django application
@@ -426,6 +436,43 @@ host    all             all             ::1/128                 md5
         import traceback
         traceback.print_exc()
         return False
+    
+def install_unix_odbc_drivers():
+    """Install UnixODBC libraries needed for pyodbc"""
+    print("Checking for libodbc...")
+
+    # Check if libodbc.so.2 exists
+    if os.path.exists("/usr/lib/x86_64-linux-gnu/libodbc.so.2") or shutil.which("isql"):
+        print("✅ libodbc / unixODBC already installed.")
+        return True
+
+    print("libodbc.so.2 not found. Installing unixODBC...")
+
+    if check_command_exists("apt"):
+        run_command("sudo apt install -y unixodbc unixodbc-dev")
+    elif check_command_exists("dnf"):
+        run_command("sudo dnf install -y unixODBC unixODBC-devel")
+    elif check_command_exists("pacman"):
+        run_command("sudo pacman -S --noconfirm unixodbc")
+    else:
+        print("⚠️  Could not determine package manager to install unixODBC. Please install it manually.")
+        return False
+
+    # Verify installation
+    if not os.path.exists("/usr/lib/x86_64-linux-gnu/libodbc.so.2"):
+        # Try to symlink if only .so.2.0.0 exists
+        try:
+            lib_actual = "/usr/lib/x86_64-linux-gnu/libodbc.so.2.0.0"
+            if os.path.exists(lib_actual):
+                run_command(f"sudo ln -s {lib_actual} /usr/lib/x86_64-linux-gnu/libodbc.so.2")
+                print("✅ Created symlink for libodbc.so.2")
+        except Exception as e:
+            print(f"❌ Failed to create symlink for libodbc.so.2: {e}")
+            return False
+
+    print("✅ unixODBC installation complete.")
+    return True
+
 
 def setup_postgresql_unix():
     """Setup PostgreSQL on Unix-like systems"""
@@ -965,6 +1012,10 @@ def main():
             print("\n--- Updating system packages ---")
             update_system_packages()
         
+        print("\n--- Installing ODBC libraries for pyodbc ---")
+        if not install_unix_odbc_drivers():
+            print("❌ Failed to install required ODBC drivers for pyodbc")
+            return
         # Step 1: Setup PostgreSQL
         print("\n--- Setting up PostgreSQL ---")
         if os_type == "windows":
