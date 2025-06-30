@@ -17,7 +17,7 @@ import pandas as pd
 import os
 from openpyxl.styles import Font, PatternFill,Alignment
 from openpyxl.utils import get_column_letter
-#from .Compromise_Assesment.Windows.make import generate_powershell_script
+from .Compromise_Assesment.Windows.make import generate_powershell_script
 
 from .Configuration_Audit.Windows.generate_PowerShell import generate_script
 from .Configuration_Audit.Windows.validate import validate_compliance
