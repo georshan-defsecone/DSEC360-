@@ -327,9 +327,9 @@ const ScanCALinux = () => {
     console.log("Downloading script with formData:", formData);
     const scanPayload = {
       project_name: formData.projectName,
-      scan_name: formData.scanName,
+      scanName: formData.scanName,
       scan_author: userName || "unknown",
-      scan_status: "Pending",
+      scan_status: "Pending", // Ensure this matches your backend's expected type (e.g., string, integer, or choice)
 
       scan_data: {
         scanType: "Configuration Audit",
@@ -386,7 +386,7 @@ const ScanCALinux = () => {
         "http://localhost:8000/api/scans/create-scan/",
         scanPayload,
         {
-          responseType: "blob",
+          responseType: "blob", // Keep this for file download when successful
           timeout: 60000,
         }
       );
@@ -411,9 +411,53 @@ const ScanCALinux = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error downloading script:", error);
-      alert("Failed to download the script.");
+      // --- Start of improved error handling ---
+      if (error.response) {
+        // Axios error with a response from the server
+        console.error("Backend error response:", error.response);
+
+        // Attempt to read the error message from the blob response
+        if (error.response.data instanceof Blob) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                try {
+                    const errorJson = JSON.parse(reader.result);
+                    console.error("Parsed backend error data:", errorJson);
+                    // Display a more specific error message to the user
+                    if (errorJson.error) {
+                        // For errors like {"error": "Scan with name 'X' already exists..."}
+                        alert(`Failed to download script: ${errorJson.error}`);
+                    } else {
+                        // For serializer errors like {"field_name": ["error message"]}
+                        const errorMessages = Object.entries(errorJson)
+                            .map(([field, messages]) => `${field}: ${messages.join(", ")}`)
+                            .join("\n");
+                        alert(`Failed to download script:\n${errorMessages}`);
+                    }
+                } catch (e) {
+                    console.error("Could not parse error response as JSON (it might not be JSON):", e);
+                    alert("Failed to download the script. An unknown error occurred. Check console for details.");
+                }
+            };
+            reader.readAsText(error.response.data);
+        } else {
+            // If the error data is not a blob (e.g., JSON directly, though unlikely with responseType: 'blob')
+            console.error("Backend error data (not a blob):", error.response.data);
+            alert("Failed to download the script. Check console for details.");
+        }
+      } else if (error.request) {
+        // The request was made but no response was received (e.g., network error)
+        console.error("No response received from server:", error.request);
+        alert("Failed to download the script. No response from the server. Check your network connection.");
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error("Error setting up the request:", error.message);
+        alert("Failed to download the script. Request setup error.");
+      }
+      // --- End of improved error handling ---
     }
   };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -507,7 +551,7 @@ const ScanCALinux = () => {
       const toastId = toast.info("Processing scan ...", { duration: Infinity });
       const payload = {
         project_name: formData.projectName,
-        scan_name: formData.scanName,
+        scanName: formData.scanName,
         scan_author: userName, // Replace with user context if needed
         scan_status: "Pending",
         scan_data: {
