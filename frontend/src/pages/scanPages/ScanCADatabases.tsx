@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
-
+import Papa from 'papaparse';
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -253,20 +253,37 @@ const ScanCADatabases = () => {
   const folderPath = `Configuration_audit/database/${flavour.toLowerCase()}/${securityStandard.toLowerCase()}`;
 
   try {
-    const response = await api.get(`/get-json/${folderPath}/${filename}/`);
-    const auditData = response.data;
+    const response = await api.get(`/get-csv/${folderPath}/${filename}/`, {
+      responseType: 'text',
+    });
+
+    const csvText = response.data;
+
+    // Parse with PapaParse
+    const result = Papa.parse(csvText, {
+      header: true,
+      skipEmptyLines: true,
+    });
+
+    const auditData = result.data.map((row) => ({
+      name: row.name?.trim(),
+      check: row.check?.trim().toLowerCase() === 'true',
+    }));
 
     handleInputChange(auditData, "auditNames");
 
     const initiallyChecked = auditData
-      .filter((item) => item.check)
-      .map((item) => item.name);
+      .filter(item => item.check)
+      .map(item => item.name);
 
     setSelectedComplianceItems(initiallyChecked);
   } catch (error) {
     console.error("Error fetching compliance data:", error);
   }
 }
+
+
+
 
 
 
