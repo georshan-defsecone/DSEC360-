@@ -7,16 +7,6 @@ SELECT '2_1_5_Point_in_Time_Recovery_Automated_' AS Name,
     SELECT JSON_ARRAYAGG(JSON_OBJECT('VARIABLE_NAME', VARIABLE_NAME, 'VARIABLE_VALUE', VARIABLE_VALUE, 'Note', Note)) FROM (SELECT VARIABLE_NAME, VARIABLE_VALUE, 'BINLOG - Log Expiration' as Note  FROM information_schema.global_variables where variable_name = 'binlog_expire_logs_seconds') t
   ) AS Result
 UNION ALL
-SELECT '2_9_Ensure_MariaDB_is_Bound_to_an_IP_Address_Automated_' AS Name,
-  (
-    SELECT JSON_ARRAYAGG(JSON_OBJECT('VARIABLE_NAME', VARIABLE_NAME, 'VARIABLE_VALUE', VARIABLE_VALUE)) FROM (SELECT VARIABLE_NAME, VARIABLE_VALUE FROM information_schema.global_variables WHERE VARIABLE_NAME = 'bind_address') t
-  ) AS Result
-UNION ALL
-SELECT '2_10_Limit_Accepted_Transport_Layer_Security_TLS_Versions_Automated_' AS Name,
-  (
-    SELECT JSON_ARRAYAGG(JSON_OBJECT('value', value)) FROM (select @@tls_version AS value) t
-  ) AS Result
-UNION ALL
 SELECT '2_11_Require_Client_Side_Certificates_X_509_Automated_' AS Name,
   (
     SELECT JSON_ARRAYAGG(JSON_OBJECT('user', user, 'host', host, 'ssl_type', ssl_type)) FROM (select user, host, ssl_type from mysql.user where user not in ('mysql', 'root', 'mariadb.sys')) t

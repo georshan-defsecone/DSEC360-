@@ -10,6 +10,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.http import HttpResponse
 from django.http import JsonResponse, Http404
 import json
 import pandas as pd
@@ -495,24 +496,21 @@ def convert_csv_to_excel(csv_file_path, excel_file_path=None):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def get_json_file(request, folder_path, filename):
-    """
-    Returns the content of a JSON file located in a dynamic folder structure.
-    """
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # Sanitize folder path to prevent directory traversal
-    safe_folder_path = os.path.normpath(folder_path).replace('..', '')
-    
-    json_dir = os.path.join(base_dir, safe_folder_path)
-    json_path = os.path.join(json_dir, f'{filename}.json')
+def get_csv_file(request, folder_path, filename):
+    import os
+    from django.http import HttpResponse
 
-    if not os.path.exists(json_path):
-        return Response({'error': 'File not found'}, status=404)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    safe_folder_path = os.path.normpath(folder_path).replace('..', '')
+    csv_dir = os.path.join(base_dir, safe_folder_path)
+    csv_path = os.path.join(csv_dir, f'{filename}.csv')
+
+    if not os.path.exists(csv_path):
+        return HttpResponse('File not found', status=404)
 
     try:
-        with open(json_path, 'r') as f:
-            data = json.load(f)
-        return Response(data)
-    except json.JSONDecodeError:
-        return Response({'error': 'Invalid JSON file'}, status=400)
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return HttpResponse(content, content_type='text/csv')
+    except Exception as e:
+        return HttpResponse(f'Error reading file: {str(e)}', status=500)
