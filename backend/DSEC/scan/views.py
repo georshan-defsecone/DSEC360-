@@ -23,7 +23,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
-from startScan.views import database_config_audit, windows_config_audit
+from startScan.views import database_config_audit, windows_compromise_assesment, windows_config_audit
 from startScan.views import download_script
 from django.http import FileResponse
 import json
@@ -441,36 +441,43 @@ import re
 
 def launch_scan(scan_data):
     print("[*] Entered launch_scan()")
-    
 
     # Normalize and extract values from scan_data
     scan_type = (scan_data.get("scanType") or "").strip().lower().replace(" ", "").replace("_", "")
+    print("[DEBUG] scan_type:", scan_type)
     os_name = (scan_data.get("os") or "").strip().lower()
+    print("[DEBUG] os_name:", os_name)
     auth_type = (scan_data.get("auditMethod") or "").strip().lower()
-    category=(scan_data.get("category")or"").strip().lower()
-    compliance_name=(scan_data.get("complianceCategory")).strip().lower()
+    print("[DEBUG] auth_type:", auth_type)
+    category = (scan_data.get("category") or "").strip().lower()
+    print("[DEBUG] category:", category)
 
-    standard = scan_data.get("complianceSecurityStandard")
-    # Remove all non-alphanumeric characters including underscores, then lowercase
-    normalized_compliance = re.sub(r'[\W_]+', '', compliance_name or "").lower()
-    print(scan_data)
-
+    print("[DEBUG] scan_data received:", scan_data)
 
     if scan_type == "configurationaudit":
-        if category=="database":
-           return database_config_audit(scan_data)
-           
+        compliance_name = (scan_data.get("complianceCategory") or "").strip().lower()
+        standard = scan_data.get("complianceSecurityStandard")
 
-        if category=="windows":
+        # Remove all non-alphanumeric characters including underscores, then lowercase
+        normalized_compliance = re.sub(r'[\W_]+', '', compliance_name or "").lower()
+
+        if category == "database":
+            return database_config_audit(scan_data)
+
+        if category == "windows":
             return windows_config_audit(scan_data)
 
-        if category=="linux":
-            return None,None
+        if category == "linux":
+            return None, None
 
-        if category=="firewall":
-            return None,None
+        if category == "firewall":
+            return None, None
 
+    elif scan_type == "compromiseassessment":
+        if category == "windows":
+            return windows_compromise_assesment(scan_data)
 
-    
+        if category == "linux":
+            return None, None
 
-           
+    return None, None  
