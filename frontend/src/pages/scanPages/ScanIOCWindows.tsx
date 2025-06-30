@@ -73,6 +73,95 @@ const ScanIOCWindows = () => {
         notificationEmail: "",
     });
 
+        const getUncheckedComplianceItems = () => {
+    return Object.keys(formData.IOCcontrols).filter(
+        (iocName) => !formData.IOCcontrols[iocName]
+    );
+};
+
+    const downloadScript = async () => {
+        const uncheckedComplianceItems = getUncheckedComplianceItems();
+    const scanPayload = {
+        project_name: formData.projectName,
+        scan_name: formData.scanName,
+        scan_author: userName || "unknown",
+        scan_status: "Pending",
+
+        scan_data: {
+            scanType: "Compromise Assessment",
+            description: formData.description,
+            category: "windows",
+            auditMethod: formData.auditMethod,
+            target: formData.target,
+            targetList: formData.targetList,
+            authMethod: formData.authMethod,
+            username: formData.username,
+            password: formData.password,
+            domain: formData.domain,
+            ntlmHash: formData.ntlmHash,
+            lmHash: formData.lmHash,
+            kdc: formData.kdc,
+            kdcPort: formData.kdcPort,
+            kdcTransport: formData.kdcTransport,
+            certificate: formData.certificate,
+            publicKey: formData.publicKey,
+
+            globalCredentials: {
+                neverSendCredentials: formData.globalCredentials.neverSendCredentials,
+                dontUseNTLMv1: formData.globalCredentials.dontUseNTLMv1,
+                startRemoteRegistryService: formData.globalCredentials.startRemoteRegistryService,
+                enableAdministrativeShares: formData.globalCredentials.enableAdministrativeShares,
+                startServerService: formData.globalCredentials.startServerService,
+            },
+
+            IOCcontrols: formData.IOCcontrols,
+
+            schedule: formData.schedule,
+            scheduleFrequency: formData.scheduleFrequency,
+            scheduleStartDate: formData.scheduleStartDate,
+            scheduleStartTime: formData.scheduleStartTime,
+            scheduleTimezone: formData.scheduleTimezone,
+            notification: formData.notification,
+            notificationEmail: formData.notificationEmail,
+
+            uncheckedComplianceItems: uncheckedComplianceItems, // If you have this available in the component
+        },
+    };
+
+    try {
+        const response = await api.post("/scans/create-scan/", scanPayload, {
+            responseType: "blob",
+        });
+
+        // Try to get the filename from the response headers
+        const contentDisposition = response.headers["content-disposition"];
+        let filename = "Microsoft_Windows_10_Stand-alone_v3.0.0_Audit_Script.ps1";
+
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?(.+)"?/);
+            if (match?.[1]) filename = match[1];
+        }
+
+        // Trigger the download
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        console.log("[+] Script downloaded successfully.");
+
+    } catch (error) {
+        console.error("Error downloading script:", error.response?.data || error.message);
+        alert("Failed to download the script.");
+    }
+};
+
+
+
     const validatePage1 = () => {
         return (
             formData.scanName.trim() !== "" &&
@@ -1115,7 +1204,7 @@ setUserName(response1.data.username);
                                             </button>
                                         ) : formData.auditMethod === "agent" &&
                                           page === 4 ? (
-                                            <Button className="px-4 py-2 bg-black text-white h-10 rounded cursor-pointer">
+                                            <Button type="button" className="px-4 py-2 bg-black text-white h-10 rounded cursor-pointer" onClick={downloadScript}>
                                                 Download script
                                             </Button>
                                         ) : (
