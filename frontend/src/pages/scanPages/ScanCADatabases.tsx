@@ -452,6 +452,7 @@ const ScanCADatabases = () => {
 
   const handleSubmit = async () => {
     try {
+      const toastId = toast.info("Processing scan ...", { duration: Infinity });
       const response = await api.post("/scans/create-scan/", {
         project_name: formData.projectName,
         scan_name: formData.scanName,
@@ -518,12 +519,14 @@ const ScanCADatabases = () => {
           uncheckedComplianceItems: uncheckedComplianceItems,
         },
       });
-
+      toast.dismiss(toastId); // hide the processing toast
       console.log("Scan created successfully:", response.data);
       toast.success("Scan created succesfully", {
         icon: <CheckCircle2 className="text-green-500" />,
       });
-      navigate(`/scan/scanresult/${formData.projectName}/${formData.scanName}`);
+      setTimeout(() => {
+        navigate(`/scan/scanresult/${formData.projectName}/${formData.scanName}`);
+      }, 2000);
 
       // Optionally reset form here
       // setFormData(initialFormData);
