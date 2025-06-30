@@ -125,11 +125,16 @@ def validate_mssql(json_path, csv_path, output_path):
     try:
         with open(csv_path, newline='', encoding="utf-8") as f:
             reader = csv.DictReader(f)
+            # Normalize field names
+            reader.fieldnames = [field.strip().lstrip('\ufeff') for field in reader.fieldnames]
             csv_data = list(reader)
     except UnicodeDecodeError:
         with open(csv_path, newline='', encoding="cp1252") as f:
             reader = csv.DictReader(f)
+            reader.fieldnames = [field.strip().lstrip('\ufeff') for field in reader.fieldnames]
             csv_data = list(reader)
+
+    # Clean up column names (handle BOM and strip)
 
     a_lookup = {}
     for item in json_data:
@@ -185,8 +190,8 @@ def validate_mssql(json_path, csv_path, output_path):
         df.at[idx, "CurrentSetting"] = setting
         df.at[idx, "Remediation"] = remediation
 
-    df.rename(columns={"Name": "Subject"}, inplace=True)
-    fieldnames = ["CIS.NO", "Subject", "Description", "CurrentSetting", "Result", "Remediation"]
+    df.rename(columns={"Name": "Subject","CurrentSetting":"Current Setting","Result":"Status"}, inplace=True)
+    fieldnames = ["CIS.NO", "Subject", "Description", "Current Setting", "Status", "Remediation"]
     for field in fieldnames:
         if field not in df.columns:
             df[field] = None
