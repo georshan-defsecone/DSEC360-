@@ -492,28 +492,6 @@ def convert_csv_to_excel(csv_file_path, excel_file_path=None):
 
 
 
-    
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def get_csv_file(request, folder_path, filename):
-    import os
-    from django.http import HttpResponse
-
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    safe_folder_path = os.path.normpath(folder_path).replace('..', '')
-    csv_dir = os.path.join(base_dir, safe_folder_path)
-    csv_path = os.path.join(csv_dir, f'{filename}.csv')
-
-    if not os.path.exists(csv_path):
-        return HttpResponse('File not found', status=404)
-
-    try:
-        with open(csv_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        return HttpResponse(content, content_type='text/csv')
-    except Exception as e:
-        return HttpResponse(f'Error reading file: {str(e)}', status=500)
 
 def windows_compromise_assesment(scan_data):
     print("[*] Entered windows_compromise_assesment()")
@@ -595,3 +573,25 @@ def windows_compromise_assesment(scan_data):
     except Exception as e:
             print(f"[!] Exception during Windows audit: {e}")
             return None, None
+    
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_csv_file(request, folder_path, filename):
+    import os
+    from django.http import HttpResponse
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    safe_folder_path = os.path.normpath(folder_path).replace('..', '')
+    csv_dir = os.path.join(base_dir, safe_folder_path)
+    csv_path = os.path.join(csv_dir, f'{filename}.csv')
+
+    if not os.path.exists(csv_path):
+        return HttpResponse('File not found', status=404)
+
+    try:
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return HttpResponse(content, content_type='text/csv')
+    except Exception as e:
+        return HttpResponse(f'Error reading file: {str(e)}', status=500)

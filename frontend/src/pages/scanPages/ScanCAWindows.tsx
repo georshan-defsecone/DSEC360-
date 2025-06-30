@@ -20,8 +20,11 @@ import api from "../api";
 import { toast, Toaster } from "sonner";
 import { CheckCircle2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import Papa from "papaparse";
+import { useNavigate } from "react-router-dom";
 
 const ScanCAWindows = () => {
+    const navigate = useNavigate();
     const [complianceData, setComplianceData] = useState([]);
     const [errors, setErrors] = useState<string | boolean>("");
 
@@ -31,6 +34,13 @@ const ScanCAWindows = () => {
     const [userName, setUserName] = useState("");
 
     const formPagesAgent = ["●", "●", "●", "●"];
+    const [selectedComplianceItems, setSelectedComplianceItems] = useState<
+    string[]
+  >([]);
+  const [uncheckedComplianceItems, setUncheckedComplianceItems] = useState<
+    string[]
+  >([]);
+
 
     const [page, setPage] = useState(1);
     const [fileIPs, setFileIPs] = useState<string[]>([]);
@@ -79,13 +89,9 @@ const ScanCAWindows = () => {
         scheduleTimezone: "",
         notification: "",
         notificationEmail: "",
+        auditNames: [],
     });
-    const [selectedComplianceItems, setSelectedComplianceItems] = useState<
-        string[]
-    >([]);
-    const [uncheckedComplianceItems, setUncheckedComplianceItems] = useState<
-        string[]
-    >([]);
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -127,19 +133,26 @@ const ScanCAWindows = () => {
             .replace(/\s+/g, "_");
 
         const folderPath = `Configuration_Audit/Windows/${securityStandard}`;
-        console.log(
-            `Loading audit names from: ${folderPath}/${filename}.json`
-        );
-        console.log('Category:', complianceCategory);
-        console.log('Security Standard:', securityStandard);
-        console.log('Constructed Filename:', filename);
-
 
         try {
-            const response = await api.get(`/get-json/${folderPath}/${filename}/`);
-            const auditData = response.data;
+            const response = await api.get(`/get-csv/${folderPath}/${filename}/`, {
+    responseType: 'text',
+});
+            const csvText = response.data;
 
-            setAuditNames(auditData);
+                const result = Papa.parse(csvText, {
+                  header: true,
+                  skipEmptyLines: true,
+                });
+
+            const auditData = result.data.map((row) => ({
+      name: row.audit_name?.trim(),
+      check: row.check?.trim().toLowerCase() === 'true',
+    }));
+
+
+            
+            handleInputChange(auditData, "auditNames");
 
 
             const initiallyChecked = auditData
@@ -274,22 +287,28 @@ const ScanCAWindows = () => {
     };
 
     const handleInputChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string,
-        field?: string
-    ) => {
-        if (typeof e === "string" && field) {
-            setFormData((prev) => ({
-                ...prev,
-                [field]: e,
-            }));
-        } else if (typeof e === "object" && "target" in e) {
-            const { name, value } = e.target;
-            setFormData((prev) => ({
-                ...prev,
-                [name]: value,
-            }));
-        }
-    };
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string | any[],
+    field?: string
+) => {
+    if (Array.isArray(e) && field) {
+        // Directly set array or complex data
+        setFormData((prev) => ({
+            ...prev,
+            [field]: e,
+        }));
+    } else if (typeof e === "string" && field) {
+        setFormData((prev) => ({
+            ...prev,
+            [field]: e,
+        }));
+    } else if (typeof e === "object" && "target" in e) {
+        const { name, value } = e.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    }
+};
 
     const handleNestedInputChange = (
         field: string,
@@ -356,6 +375,16 @@ const ScanCAWindows = () => {
         if (page > 1) setPage((prev) => prev - 1);
     };
     const downloadScript = async () => {
+        if (!formData.auditMethod) {
+        setErrors("Please select a network solution (audit method) before downloading the script.");
+        return;
+    }
+
+    if (!formData.complianceSecurityStandard) {
+        setErrors("Please select a security standard before downloading the script.");
+        return;
+    }
+    setErrors("");
         const scanPayload = {
             project_name: formData.projectName,
             scan_name: formData.scanName,
@@ -441,6 +470,7 @@ const ScanCAWindows = () => {
 
     const handleSubmit = async () => {
         try {
+            const toastId = toast.info("Processing scan ...", { duration: Infinity });
             const response = await api.post("scans/create-scan/", {
                 project_name: formData.projectName,
                 scan_name: formData.scanName,
@@ -479,10 +509,14 @@ const ScanCAWindows = () => {
                 },
             });
 
-            console.log("Scan created:", response.data);
-            toast.success("Scan created succesfully", {
-                icon: <CheckCircle2 className="text-green-500" />,
-            });
+           toast.dismiss(toastId); // hide the processing toast
+      console.log("Scan created successfully:", response.data);
+      toast.success("Scan created succesfully", {
+        icon: <CheckCircle2 className="text-green-500" />,
+      });
+      setTimeout(() => {
+        navigate(`/scan/scanresult/${formData.projectName}/${formData.scanName}`);
+      }, 2000);
 
             // Optionally reset your form here
             // setFormData({ ...initialState });
@@ -1052,8 +1086,8 @@ const ScanCAWindows = () => {
                         {/* Right 30%: Scrollable content with fixed height */}
                         <div className="w-[30%] flex flex-col">
                             <div className="max-h-96 overflow-y-auto border-l pl-4 pr-2 space-y-3">
-                                {auditNames?.length > 0 ? (
-                                    auditNames.map((item, index) => (
+                                {formData.auditNames?.length > 0 ? (
+                                    formData.auditNames.map((item, index) => (
                                         <div key={index} className="flex items-center space-x-2">
                                             <Checkbox
                                                 id={`compliance-${index}`}
