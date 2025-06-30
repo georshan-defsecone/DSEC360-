@@ -1,0 +1,80 @@
+audit_id: "2.1.18"
+audit_name: "Ensure web server services are not in use"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+# Function to check if package is installed
+check_package_installed() {
+    local pkg=$1
+    if dpkg-query -s "$pkg" &>/dev/null; then
+        echo "$pkg is installed"
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Function to check if any services are enabled
+check_services_enabled() {
+    local services=("$@")
+    if systemctl is-enabled "${services[@]}" 2>/dev/null | grep -q 'enabled'; then
+        echo "** FAIL ** One or more services are enabled: ${services[*]}"
+        return 1
+    fi
+    return 0
+}
+
+# Function to check if any services are active
+check_services_active() {
+    local services=("$@")
+    if systemctl is-active "${services[@]}" 2>/dev/null | grep -q '^active'; then
+        echo "** FAIL ** One or more services are active: ${services[*]}"
+        return 1
+    fi
+    return 0
+}
+
+main() {
+    local fail=0
+
+    # Check apache2 package and services
+    if check_package_installed apache2; then
+        # Package installed, check services
+        if ! check_services_enabled apache2.socket apache2.service nginx.service; then
+            fail=1
+        fi
+        if ! check_services_active apache2.socket apache2.service nginx.service; then
+            fail=1
+        fi
+    fi
+
+    # Check nginx package (again, services checked above if apache2 installed)
+    if check_package_installed nginx; then
+        # Package installed, check services
+        if ! check_services_enabled apache2.socket apache2.service nginx.service; then
+            fail=1
+        fi
+        if ! check_services_active apache2.socket apache2.service nginx.service; then
+            fail=1
+        fi
+    fi
+
+    # If neither apache2 nor nginx installed, nothing to check - pass
+    if ! check_package_installed apache2 && ! check_package_installed nginx; then
+        echo "** PASS ** apache2 and nginx are not installed"
+        exit 0
+    fi
+
+    if [ $fail -eq 0 ]; then
+        echo "** PASS ** apache2 and nginx packages are installed, but services are neither enabled nor active"
+        exit 0
+    else
+        exit 1
+    fi
+}
+
+main
+
+}
+"""

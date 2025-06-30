@@ -1,0 +1,16 @@
+audit_id: "2.2.1"
+audit_name: "Ensure NIS Client is not installed"
+audit_script: """
+{
+# Audit: Verify that the nis package is not installed
+
+if dpkg-query -s nis &>/dev/null; then
+    echo "** FAIL ** nis is installed"
+    exit 1
+else
+    echo "** PASS ** nis is not installed"
+    exit 0
+fi
+
+}
+"""

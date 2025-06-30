@@ -1,0 +1,30 @@
+audit_id: "5.3.2.4"
+audit_name: "Ensure pam_pwhistory module is enabled"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+file="/etc/pam.d/common-password"
+
+# Check for pam_pwhistory.so presence
+if grep -Pq '\bpam_pwhistory\.so\b' "$file"; then
+    :
+else
+    failures+=(" - pam_pwhistory.so not found in $file")
+fi
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - pam_pwhistory.so is present in $file"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

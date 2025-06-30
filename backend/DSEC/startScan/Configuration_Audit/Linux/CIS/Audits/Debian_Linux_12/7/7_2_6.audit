@@ -1,0 +1,22 @@
+audit_id: "7.2.6"
+audit_name: "Ensure no duplicate GIDs exist"
+audit_script: """
+{
+failures=()
+
+while read -r count gid; do
+    if [ "$count" -gt 1 ]; then
+        groups=$(awk -F: -v n="$gid" '($3 == n) { print $1 }' /etc/group | xargs)
+        failures+=(" - Duplicate GID: \"$gid\" Groups: \"$groups\"")
+    fi
+done < <(cut -d: -f3 /etc/group | sort -n | uniq -c)
+
+if [ ${#failures[@]} -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - No duplicate GIDs found in /etc/group"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+fi
+}
+"""

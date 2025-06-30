@@ -1,0 +1,16 @@
+audit_id: "6.1.2.1.1"
+audit_name: "Ensure systemd-journal-remote is installed"
+audit_script: """
+{
+if dpkg-query -s systemd-journal-remote &>/dev/null; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - systemd-journal-remote is installed"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    echo " - systemd-journal-remote is not installed"
+    echo "- End List"
+fi
+
+}
+"""

@@ -1,0 +1,21 @@
+audit_id: "2.4.1.1"
+audit_name: "Ensure cron daemon is enabled and active"
+audit_script: """
+{
+# Check if cron is enabled
+enabled_status=$(systemctl list-unit-files | awk '$1~/^crond?\\.service/{print $2}')
+if [ "$enabled_status" = "enabled" ]; then
+    echo "** PASS ** cron service is enabled"
+else
+    echo "** FAIL ** cron service is not enabled"
+fi
+
+# Check if cron is active
+active_status=$(systemctl list-units | awk '$1~/^crond?\\.service/{print $3}')
+if [ "$active_status" = "active" ]; then
+    echo "** PASS ** cron service is active"
+else
+    echo "** FAIL ** cron service is not active"
+fi
+}
+"""

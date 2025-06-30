@@ -1,0 +1,28 @@
+audit_id: "6.1.1.1"
+audit_name: "Ensure journald service is enabled and active"
+audit_script: """
+{
+failures=()
+
+# Check if systemd-journald is statically enabled
+if systemctl is-enabled systemd-journald.service 2>/dev/null | grep -qv '^static$'; then
+    failures+=(" - systemd-journald is not 'static' (unexpected enablement state)")
+fi
+
+# Check if systemd-journald is active
+if systemctl is-active systemd-journald.service 2>/dev/null | grep -qv '^active$'; then
+    failures+=(" - systemd-journald is not running (expected 'active')")
+fi
+
+# Output audit result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - systemd-journald is statically enabled and active"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+}
+"""

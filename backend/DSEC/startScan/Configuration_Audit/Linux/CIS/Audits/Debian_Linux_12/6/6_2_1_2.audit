@@ -1,0 +1,33 @@
+audit_id: "6.2.1.2"
+audit_name: "Ensure auditd service is enabled and active"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# Check if auditd is enabled
+if systemctl is-enabled auditd 2>/dev/null | grep -q '^enabled$'; then
+    echo " - auditd service is enabled"
+else
+    failures+=(" - auditd service is NOT enabled")
+fi
+
+# Check if auditd is active
+if systemctl is-active auditd 2>/dev/null | grep -q '^active$'; then
+    echo " - auditd service is active"
+else
+    failures+=(" - auditd service is NOT active")
+fi
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - auditd is enabled and active"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+fi
+
+}
+"""

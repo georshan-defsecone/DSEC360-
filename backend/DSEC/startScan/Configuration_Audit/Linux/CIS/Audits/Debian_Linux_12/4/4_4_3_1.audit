@@ -1,0 +1,46 @@
+audit_id: "4.4.3.1"
+audit_name: "Ensure ip6tables default deny firewall policy"
+audit_script: """
+{
+failures=()
+
+# Step 1: Check if IPv6 is disabled
+ipv6_disabled="no"
+
+# Kernel module check
+if grep -Pqs '^\h*0\b' /sys/module/ipv6/parameters/disable; then
+    ipv6_disabled="yes"
+fi
+
+# sysctl check
+if sysctl net.ipv6.conf.all.disable_ipv6 2>/dev/null | grep -Pqs '^\h*net\.ipv6\.conf\.all\.disable_ipv6\h*=\h*1\b' &&
+   sysctl net.ipv6.conf.default.disable_ipv6 2>/dev/null | grep -Pqs '^\h*net\.ipv6\.conf\.default\.disable_ipv6\h*=\h*1\b'; then
+    ipv6_disabled="yes"
+fi
+
+if [ "$ipv6_disabled" = "yes" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n - IPv6 is disabled on the system\n- End List"
+    exit 0
+fi
+
+# Step 2: If IPv6 is enabled, check ip6tables default policies
+input_policy=$(ip6tables -L | awk '/^Chain INPUT/ {print $4}')
+[[ "$input_policy" != "DROP" && "$input_policy" != "REJECT" ]] && failures+=(" - INPUT chain policy is $input_policy (expected DROP or REJECT)")
+
+forward_policy=$(ip6tables -L | awk '/^Chain FORWARD/ {print $4}')
+[[ "$forward_policy" != "DROP" && "$forward_policy" != "REJECT" ]] && failures+=(" - FORWARD chain policy is $forward_policy (expected DROP or REJECT)")
+
+output_policy=$(ip6tables -L | awk '/^Chain OUTPUT/ {print $4}')
+[[ "$output_policy" != "DROP" && "$output_policy" != "REJECT" ]] && failures+=(" - OUTPUT chain policy is $output_policy (expected DROP or REJECT)")
+
+# Report result
+if [ ${#failures[@]} -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n - ip6tables default policies are correctly set\n- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

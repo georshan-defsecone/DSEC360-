@@ -1,0 +1,23 @@
+audit_id: "2.1.2"
+audit_name: "Ensure avahi daemon services are not in use"
+audit_script: """
+{
+    if dpkg-query -s avahi-daemon &>/dev/null; then
+        echo "- avahi-daemon is installed"
+
+        if systemctl is-enabled avahi-daemon.socket avahi-daemon.service 2>/dev/null | grep -q '^enabled'; then
+            echo "** FAIL ** avahi-daemon.socket and avahi-daemon.service is enabled"
+            exit 1
+        fi
+
+        if systemctl is-active avahi-daemon.socket avahi-daemon.service 2>/dev/null | grep -q '^active'; then
+            echo "** FAIL ** avahi-daemon.socket and avahi-daemon.service is active"
+            exit 1
+        fi
+
+        echo "** PASS ** avahi-daemon is installed but service is neither enabled not active"
+    else
+        echo "** PASS ** avahi-daemon not installed"
+    fi
+}
+"""

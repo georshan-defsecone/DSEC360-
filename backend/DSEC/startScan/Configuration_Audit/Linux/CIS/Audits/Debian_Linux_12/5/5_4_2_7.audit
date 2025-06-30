@@ -1,0 +1,39 @@
+audit_id: "5.4.2.7"
+audit_name: "Ensure system accounts do not have a valid login shell"
+audit_script: """
+{
+    failures=()
+
+    # Generate a pattern of valid login shells
+    l_valid_shells="$(awk -F/ '$NF != "nologin" {print}' /etc/shells | sed -E 's,/,\\/,g' | paste -sd '|' -)"
+    l_valid_shells="^(${l_valid_shells})$"
+
+    # Get UID_MIN from /etc/login.defs
+    uid_min=$(awk '/^\s*UID_MIN/ {print $2}' /etc/login.defs)
+
+    # Audit system accounts
+    while IFS=: read -r user _ uid _ _ _ shell; do
+        if [[ "$user" =~ ^(root|halt|sync|shutdown|nfsnobody)$ ]]; then
+            continue
+        fi
+        if (( uid < uid_min || uid == 65534 )); then
+            if [[ "$shell" =~ $l_valid_shells ]]; then
+                failures+=(" - Service account \"$user\" has a valid login shell: $shell")
+            fi
+        fi
+    done < /etc/passwd
+
+    # Output result
+    if [ "${#failures[@]}" -eq 0 ]; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - No system accounts (except exempted ones) have login shells"
+        echo "- End List"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        echo " - Reason(s) for audit failure:"
+        printf '%s\n' "${failures[@]}"
+        echo "- End List"
+    fi
+}
+
+"""

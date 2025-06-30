@@ -1,0 +1,35 @@
+audit_id: "5.1.18"
+audit_name: "Ensure sshd MaxStartups is configured"
+audit_script: """
+{
+failures=()
+
+# Get the MaxStartups line from the global SSH config
+value=$(sudo sshd -T 2>/dev/null | awk '$1 ~ /^maxstartups$/ { print $2 }')
+
+# Split the value into parts and compare
+if [[ "$value" =~ ^([0-9]+):([0-9]+):([0-9]+)$ ]]; then
+    start=${BASH_REMATCH[1]}
+    rate=${BASH_REMATCH[2]}
+    full=${BASH_REMATCH[3]}
+
+    # Fail if any component is greater than the max allowed
+    if (( start > 10 || rate > 30 || full > 60 )); then
+        failures+=(" - MaxStartups is set to $value (must be ≤ 10:30:60)")
+    fi
+else
+    failures+=(" - MaxStartups is missing or not in expected format (n:r:f): '$value'")
+fi
+
+# Output results
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - MaxStartups is set to $value (≤ 10:30:60)"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+}
+"""

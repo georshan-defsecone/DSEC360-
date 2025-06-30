@@ -1,0 +1,40 @@
+audit_id: "5.3.3.1.3"
+audit_name: "Ensure password failed attempts lockout includes root account"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+faillock_conf="/etc/security/faillock.conf"
+pam_auth_file="/etc/pam.d/common-auth"
+
+# --- 1. Check presence of even_deny_root or root_unlock_time ---
+if grep -Pq '^\s*(even_deny_root|root_unlock_time\s*=\s*\d+)\b' "$faillock_conf"; then
+    :
+else
+    failures+=(" - Neither 'even_deny_root' nor 'root_unlock_time' found in $faillock_conf")
+fi
+
+# --- 2. Check if root_unlock_time in faillock.conf is valid (≥ 60 if set) ---
+if grep -Pq '^\s*root_unlock_time\s*=\s*([1-9]|[1-5][0-9])\b' "$faillock_conf"; then
+    failures+=(" - root_unlock_time in $faillock_conf is set to less than 60 seconds (must be ≥ 60)")
+fi
+
+# --- 3. Check pam_faillock.so lines in common-auth for root_unlock_time < 60 ---
+if grep -Pq '^\s*auth\s+[^#\n\r]+\s+pam_faillock\.so\s+[^#\n\r]*root_unlock_time\s*=\s*([1-9]|[1-5][0-9])\b' "$pam_auth_file"; then
+    failures+=(" - pam_faillock.so in $pam_auth_file sets root_unlock_time < 60 seconds (must be ≥ 60)")
+fi
+
+# --- Final Output ---
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - even_deny_root and/or root_unlock_time is correctly configured"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

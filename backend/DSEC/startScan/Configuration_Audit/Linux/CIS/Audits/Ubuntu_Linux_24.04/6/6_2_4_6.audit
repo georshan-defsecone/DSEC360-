@@ -1,0 +1,21 @@
+audit_id: "6.2.4.6"
+audit_name: "Ensure audit configuration files owner is configured"
+audit_script: """
+{
+failures=()
+
+while IFS= read -r -d $'\0' file; do
+    owner=$(stat -Lc '%U' "$file")
+    failures+=(" - File: \"$file\" is owned by \"$owner\" (should be owned by \"root\")")
+done < <(find /etc/audit/ -type f \( -name '*.conf' -o -name '*.rules' \) ! -user root -print0)
+
+if [ ${#failures[@]} -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - All audit configuration files are owned by user: root"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+fi
+
+}
+"""

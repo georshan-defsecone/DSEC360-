@@ -1,0 +1,56 @@
+audit_id: "5.1.16"
+audit_name: "Ensure sshd MaxAuthTries is configured"
+audit_script: """
+{
+failures=()
+users_failed=()
+
+# Detect Match blocks
+match_present=$(grep -iE '^match\s' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null)
+
+check_maxauthtries() {
+    local value="$1"
+    [[ "$value" =~ ^[0-9]+$ ]] && (( value <= 4 ))
+}
+
+if [ -z "$match_present" ]; then
+    # No Match blocks — check global setting
+    value=$(sudo sshd -T 2>/dev/null | grep -i '^maxauthtries' | awk '{print $2}')
+
+    if check_maxauthtries "$value"; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - MaxAuthTries is set to $value (≤ 4) globally"
+        echo "- End List"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        if [ -z "$value" ]; then
+            echo " - MaxAuthTries not found in SSH configuration"
+        else
+            echo " - MaxAuthTries is set to $value — must be ≤ 4"
+        fi
+        echo "- End List"
+    fi
+else
+    # Match blocks exist — validate per user
+    while IFS=: read -r username _ uid _ _ _ shell; do
+        if [[ "$uid" -ge 1000 && "$shell" != *nologin && "$shell" != *false ]]; then
+            value=$(sudo sshd -T -C user="$username" 2>/dev/null | grep -i '^maxauthtries' | awk '{print $2}')
+            if ! check_maxauthtries "$value"; then
+                users_failed+=("$username ($value)")
+            fi
+        fi
+    done < /etc/passwd
+
+    if [ "${#users_failed[@]}" -eq 0 ]; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - All users have MaxAuthTries set to 4 or less"
+        echo "- End List"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        echo " - The following users exceed MaxAuthTries > 4:"
+        printf '   %s\n' "${users_failed[@]}"
+        echo "- End List"
+    fi
+fi
+}
+"""

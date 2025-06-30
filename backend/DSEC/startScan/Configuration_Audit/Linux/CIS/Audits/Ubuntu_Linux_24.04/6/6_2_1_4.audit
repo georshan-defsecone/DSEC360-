@@ -1,0 +1,40 @@
+audit_id: "6.2.1.4"
+audit_name: "Ensure audit_backlog_limit is sufficient"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# Search for grub.cfg files under /boot
+grub_files=$(find /boot -type f -name 'grub.cfg' 2>/dev/null)
+
+if [ -z "$grub_files" ]; then
+    echo -e "\n- Audit Result:\n ** ERROR **"
+    echo " - No grub.cfg file found under /boot — audit cannot be completed."
+    echo "- End List"
+    exit 0
+fi
+
+# Extract linux lines and check for missing audit_backlog_limit=
+missing_lines=$(grep -Ph '^\h*linux' $grub_files 2>/dev/null | grep -Pv 'audit_backlog_limit=\d+\b')
+
+if [ -n "$missing_lines" ]; then
+    while IFS= read -r line; do
+        failures+=(" - Missing audit_backlog_limit= on line: $line")
+    done <<< "$missing_lines"
+fi
+
+# Output results
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - All kernel boot lines in grub.cfg have audit_backlog_limit set"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

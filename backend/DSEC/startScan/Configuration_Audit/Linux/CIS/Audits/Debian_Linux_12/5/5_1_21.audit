@@ -1,0 +1,22 @@
+audit_id: "5.1.21"
+audit_name: "Ensure sshd PermitUserEnvironment is disabled"
+audit_script: """
+{
+failures=()
+
+# Get PermitUserEnvironment setting
+config=$(sudo sshd -T 2>/dev/null | grep -i '^permituserenvironment')
+
+# Validate the setting
+if [[ "$config" =~ ^permituserenvironment[[:space:]]+no$ ]]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - PermitUserEnvironment is set to 'no' globally"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    echo " - PermitUserEnvironment is not set to 'no'"
+    [ -n "$config" ] && echo "   Actual value: $config" || echo "   Directive not found"
+    echo "- End List"
+fi
+}
+"""

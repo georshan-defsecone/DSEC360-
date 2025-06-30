@@ -1,0 +1,17 @@
+audit_id: "1.6.1"
+audit_name: "Ensure message of the day is configured properly"
+audit_script: """
+{
+# Extract OS ID for dynamic matching
+os_id=$(grep '^ID=' /etc/os-release | cut -d= -f2 | sed -e 's/\"//g')
+
+# Check for dynamic placeholders or OS ID in /etc/motd
+if grep -E -i '(\\\\v|\\\\r|\\\\m|\\\\s|'\"$os_id\"')' /etc/motd; then
+    echo "** FAIL ** /etc/motd contains dynamic placeholders or OS identifier"
+    grep -E -i '(\\\\v|\\\\r|\\\\m|\\\\s|'\"$os_id\"')' /etc/motd
+    exit 1
+fi
+
+echo "** PASS ** /etc/motd does not contain dynamic system information"
+}
+"""

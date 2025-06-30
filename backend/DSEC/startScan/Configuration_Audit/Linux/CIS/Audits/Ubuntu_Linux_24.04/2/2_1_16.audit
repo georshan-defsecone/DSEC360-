@@ -1,0 +1,24 @@
+audit_id: "2.1.16"
+audit_name: "Ensure tftp server services are not in use"
+audit_script: """
+{
+if dpkg-query -s tftpd-hpa &>/dev/null; then
+    echo "- tftpd-hpa is installed"
+
+    if systemctl is-enabled tftpd-hpa.service 2>/dev/null | grep -q '^enabled'; then
+        echo "** FAIL ** tftpd-hpa.service is enabled"
+        exit 1
+    fi
+
+    if systemctl is-active tftpd-hpa.service 2>/dev/null | grep -q '^active'; then
+        echo "** FAIL ** tftpd-hpa.service is active"
+        exit 1
+    fi
+
+    echo "** PASS ** tftpd-hpa is installed but service is neither enabled nor active"
+else
+    echo "** PASS ** tftpd-hpa is not installed"
+fi
+
+}
+"""

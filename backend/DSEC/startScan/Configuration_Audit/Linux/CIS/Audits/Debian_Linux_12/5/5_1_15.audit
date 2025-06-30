@@ -1,0 +1,30 @@
+audit_id: "5.1.15"
+audit_name: "Ensure sshd MACs are configured"
+audit_script: """
+{
+failures=()
+
+# Weak MACs as defined in the audit
+weak_macs_regex='macs\s+([^#\n\r]+,)?(hmac-md5|hmac-md5-96|hmac-ripemd160|hmac-sha1-96|umac-64@openssh\.com|hmac-md5-etm@openssh\.com|hmac-md5-96-etm@openssh\.com|hmac-ripemd160-etm@openssh\.com|hmac-sha1-96-etm@openssh\.com|umac-64-etm@openssh\.com|umac-128-etm@openssh\.com)\b'
+
+# Get MACs line from sshd -T
+macs_line=$(sudo sshd -T 2>/dev/null | grep -Pi '^macs\s+')
+
+# Check if weak MACs are found
+if echo "$macs_line" | grep -Piq "$weak_macs_regex"; then
+    failures+=(" - Weak MACs found in SSH configuration:")
+    failures+=("   $macs_line")
+fi
+
+# Output results
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - No weak MACs are configured"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+}
+"""

@@ -1,0 +1,55 @@
+audit_id: "7.2.9"
+audit_name: "Ensure local interactive user home directories are configured"
+audit_script: """
+{
+output_pass="" output_fail=""
+fail_missing_home="" fail_wrong_owner="" fail_wrong_mode=""
+mask="0027"
+max_mode=$(printf '%o' $(( 0777 & ~$mask )))
+
+# Build regex of valid login shells from /etc/shells (excluding nologin)
+valid_shells_regex="^($(awk -F/ '$NF != "nologin" {print}' /etc/shells | sed -rn '/^\//{s,/,\\/,g;p}' | paste -sd'|' -))$"
+
+# Build array of interactive users with home directories
+declare -a interactive_users
+while read -r user home; do
+    interactive_users+=("$user $home")
+done < <(awk -v pat="$valid_shells_regex" -F: '$NF ~ pat { print $1, $(NF-1) }' /etc/passwd)
+
+# Warn if extremely large number of users
+[ "${#interactive_users[@]}" -gt 10000 ] && echo -e "\n ** INFO **\n - ${#interactive_users[@]} interactive users found. This may take a while.\n"
+
+# Check each user's home directory
+for entry in "${interactive_users[@]}"; do
+    user="${entry%% *}"
+    home="${entry##* }"
+    
+    if [ -d "$home" ]; then
+        read -r owner mode < <(stat -Lc '%U %a' "$home")
+        
+        [[ "$owner" != "$user" ]] && fail_wrong_owner+="\n - User \"$user\" home \"$home\" is owned by \"$owner\""
+
+        if (( mode & mask )); then
+            fail_wrong_mode+="\n - User \"$user\" home \"$home\" is mode \"$mode\" (should be $max_mode or more restrictive)"
+        fi
+    else
+        fail_missing_home+="\n - User \"$user\" home directory \"$home\" does not exist"
+    fi
+done
+
+# Assemble result
+[[ -z "$fail_missing_home" ]] && output_pass+="\n - All home directories exist" || output_fail+="$fail_missing_home"
+[[ -z "$fail_wrong_owner" ]]  && output_pass+="\n - All users own their home directories" || output_fail+="$fail_wrong_owner"
+[[ -z "$fail_wrong_mode" ]]   && output_pass+="\n - All home directories are mode $max_mode or more restrictive" || output_fail+="$fail_wrong_mode"
+
+[[ -n "$output_pass" ]] && output_pass="\n - Checked interactive users:$output_pass"
+
+# Final output
+if [[ -z "$output_fail" ]]; then
+    echo -e "\n- Audit Result:\n ** PASS **$output_pass"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - * Reasons for audit failure *:$output_fail"
+    [[ -n "$output_pass" ]] && echo -e "\n - * Correctly configured *:$output_pass"
+fi
+}
+"""

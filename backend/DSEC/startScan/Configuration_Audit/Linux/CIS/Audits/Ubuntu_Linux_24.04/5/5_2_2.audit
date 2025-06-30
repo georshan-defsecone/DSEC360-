@@ -1,0 +1,30 @@
+audit_id: "5.2.2"
+audit_name: "Ensure sudo commands use pty"
+audit_script: """
+{
+failures=()
+
+# Check for presence of `Defaults use_pty`
+if grep -rPi -- '^\s*Defaults\s+([^#\n\r]+,\s*)?use_pty\b' /etc/sudoers* 2>/dev/null | grep -q 'use_pty'; then
+    :
+else
+    failures+=(" - Missing: Defaults use_pty")
+fi
+
+# Check that `Defaults !use_pty` is not set
+if grep -rPi -- '^\s*Defaults\s+([^#\n\r]+,\s*)?!use_pty\b' /etc/sudoers* 2>/dev/null | grep -q '!use_pty'; then
+    failures+=(" - Found: Defaults !use_pty — this disables pseudo-terminal enforcement")
+fi
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - sudo is configured to require a pseudo-terminal (use_pty)"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+}
+"""

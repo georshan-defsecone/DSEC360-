@@ -1,0 +1,14 @@
+audit_id: "4.2.1"
+audit_name: "Ensure ufw is installed"
+audit_script: """
+{
+output=""
+if dpkg-query -s ufw &>/dev/null; then
+  output=" - UFW package is installed"
+  printf '%s\n' "" "- Audit Result:" " ** PASS **" "$output" ""
+else
+  output=" - UFW package is not installed"
+  printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for audit failure:" "$output" ""
+fi
+}
+"""

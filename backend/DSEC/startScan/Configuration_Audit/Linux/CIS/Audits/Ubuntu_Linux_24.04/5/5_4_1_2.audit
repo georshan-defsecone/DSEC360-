@@ -1,0 +1,39 @@
+audit_id: "5.4.1.2"
+audit_name: "Ensure minimum password days is configured"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# 1. Check /etc/login.defs for PASS_MIN_DAYS > 0
+login_defs_min=$(grep -Pi '^\s*PASS_MIN_DAYS\s+\d+\b' /etc/login.defs | awk '{print $2}' | head -n1)
+
+if [ -z "$login_defs_min" ]; then
+    failures+=(" - PASS_MIN_DAYS is not set in /etc/login.defs")
+elif [ "$login_defs_min" -lt 1 ]; then
+    failures+=(" - PASS_MIN_DAYS is set to $login_defs_min in /etc/login.defs (must be > 0)")
+fi
+
+# 2. Check each real user in /etc/shadow for min days > 0
+while IFS=: read -r user pass _ min _; do
+    if [[ "$pass" =~ ^\$.*\$ ]]; then
+        if [ -z "$min" ] || [ "$min" -lt 1 ]; then
+            failures+=(" - User: $user has PASS_MIN_DAYS = ${min:-unset} (must be > 0)")
+        fi
+    fi
+done < /etc/shadow
+
+# Output results
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - PASS_MIN_DAYS is properly set in login.defs and for all valid users in /etc/shadow"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

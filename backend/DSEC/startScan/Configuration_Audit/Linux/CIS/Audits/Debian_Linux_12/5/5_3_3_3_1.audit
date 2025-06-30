@@ -1,0 +1,39 @@
+audit_id: "5.3.3.3.1"
+audit_name: "Ensure password history remember is configured"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+pam_file="/etc/pam.d/common-password"
+
+if [ ! -f "$pam_file" ]; then
+    failures+=(" - File $pam_file not found")
+else
+    # Extract remember=N value from pam_pwhistory.so line
+    remember_line=$(grep -Pi '^\s*password\s+[^#\n\r]+\s+pam_pwhistory\.so\s+[^#\n\r]*remember=\d+' "$pam_file")
+
+    if [ -n "$remember_line" ]; then
+        remember_value=$(echo "$remember_line" | grep -Po 'remember=\K\d+')
+        if [ "$remember_value" -lt 24 ]; then
+            failures+=(" - remember=$remember_value is set on pam_pwhistory.so (must be ≥ 24)")
+        fi
+    else
+        failures+=(" - pam_pwhistory.so line with remember=N not found in $pam_file")
+    fi
+fi
+
+# Final output
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - pam_pwhistory.so uses remember=$remember_value (≥ 24) in $pam_file"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

@@ -1,0 +1,46 @@
+audit_id: "6.2.3.18"
+audit_name: "Ensure successful and unsuccessful attempts to use the usermod command are collected"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+# Initialize array to store any failures
+failures=()
+
+# Define expected audit rule string
+expected_rule="-a always,exit -F path=/usr/sbin/usermod -F perm=x -F auid>=1000 -F auid!=unset -k usermod"
+
+# Get UID_MIN from login.defs
+UID_MIN=$(awk '/^\s*UID_MIN/ { print $2 }' /etc/login.defs)
+
+# Check on-disk rules
+ondisk=$(grep -P '^\s*-a\s+always,exit' /etc/audit/rules.d/*.rules 2>/dev/null |
+         grep -P '\s+-F\s+auid!=(unset|-1|4294967295)' |
+         grep -P "\s+-F\s+auid>=${UID_MIN}" |
+         grep -P '\s+-F\s+perm=x' |
+         grep -P '\s+-F\s+path=/usr/sbin/usermod' |
+         grep -P '\s+(-k\s+\S+|\s+key=\S+)')
+        
+# Check active running configuration
+runtime=$(auditctl -l 2>/dev/null |
+          grep -P '^\s*-a\s+always,exit' |
+          grep -P '\s+-F\s+auid!=(unset|-1|4294967295)' |
+          grep -P "\s+-F\s+auid>=${UID_MIN}" |
+          grep -P '\s+-F\s+perm=x' |
+          grep -P '\s+-F\s+path=/usr/sbin/usermod' |
+          grep -P '\s+(-k\s+\S+|\s+key=\S+)')
+
+# Evaluate results
+grep -Fq -- "$expected_rule" <<< "$ondisk" || failures+=(" - On-disk rule missing or incorrect: $expected_rule")
+grep -Fq -- "$expected_rule" <<< "$runtime" || failures+=(" - Active audit rule missing or incorrect: $expected_rule")
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - Auditing of /usr/sbin/usermod execution is correctly configured"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+fi
+}
+"""

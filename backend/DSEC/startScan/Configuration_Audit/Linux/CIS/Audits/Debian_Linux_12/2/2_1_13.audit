@@ -1,0 +1,23 @@
+audit_id: "2.1.13"
+audit_name: "Ensure rsync services are not in use"
+audit_script: """
+{
+if dpkg-query -s rsync &>/dev/null; then
+    echo "- rsync is installed"
+
+    if systemctl is-enabled rsync.service 2>/dev/null | grep -q '^enabled'; then
+        echo "** FAIL ** rsync.service is enabled"
+        exit 1
+    fi
+
+    if systemctl is-active rsync.service 2>/dev/null | grep -q '^active'; then
+        echo "** FAIL ** rsync.service is active"
+        exit 1
+    fi
+
+    echo "** PASS ** rsync is installed but rsync.service is neither enabled nor active"
+else
+    echo "** PASS ** rsync is not installed"
+fi
+}
+"""

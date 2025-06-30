@@ -1,0 +1,15 @@
+audit_id: "2.1.20"
+audit_name: "Ensure X window server services are not in use"
+audit_script: """
+{
+# Audit: Check if X Windows Server (xserver-common) is installed
+
+if dpkg-query -s xserver-common &>/dev/null; then
+    echo "** FAIL ** xserver-common is installed"
+    exit 1
+else
+    echo "** PASS ** xserver-common is not installed"
+    exit 0
+fi
+}
+"""

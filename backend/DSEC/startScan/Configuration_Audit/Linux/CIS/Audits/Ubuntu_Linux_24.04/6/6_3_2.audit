@@ -1,0 +1,48 @@
+audit_id: "6.3.2"
+audit_name: "Ensure filesystem integrity is regularly checked"
+audit_script: """
+{
+failures=()
+passes=()
+
+# Check unit-file state
+while IFS=$'\t' read -r unit state; do
+  case "$unit" in
+    dailyaidecheck.timer)
+      if [[ "$state" == "enabled" ]]; then
+        passes+=(" - dailyaidecheck.timer is enabled")
+      else
+        failures+=(" - dailyaidecheck.timer is not enabled (state: $state)")
+      fi
+      ;;
+    dailyaidecheck.service)
+      if [[ "$state" == "enabled" || "$state" == "static" ]]; then
+        passes+=(" - dailyaidecheck.service is $state")
+      else
+        failures+=(" - dailyaidecheck.service is not enabled/static (state: $state)")
+      fi
+      ;;
+  esac
+done < <(systemctl list-unit-files | awk '$1~/^dailyaidecheck\.(timer|service)$/ {print $1 "\t" $2}')
+
+# Check if the timer is active
+if systemctl is-active --quiet dailyaidecheck.timer; then
+  passes+=(" - dailyaidecheck.timer is active")
+else
+  failures+=(" - dailyaidecheck.timer is not active")
+fi
+
+# Final Output
+if [ ${#failures[@]} -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${passes[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${failures[@]}"
+  if [ ${#passes[@]} -gt 0 ]; then
+    echo -e "\n- Correctly configured:"
+    printf '%s\n' "${passes[@]}"
+  fi
+fi
+}
+"""

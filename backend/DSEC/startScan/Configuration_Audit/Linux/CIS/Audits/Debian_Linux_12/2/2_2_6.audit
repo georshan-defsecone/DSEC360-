@@ -1,0 +1,13 @@
+audit_id: "2.2.6"
+audit_name: "Ensure ftp client is not installed"
+audit_script: """
+{
+if dpkg-query -l | grep -E 'ftp|tnftp' &>/dev/null; then
+    echo "** FAIL ** ftp client is installed"
+    exit 1
+else
+    echo "** PASS ** ftp client is not installed"
+    exit 0
+fi
+}
+"""

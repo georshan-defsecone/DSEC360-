@@ -1,0 +1,31 @@
+audit_id: "5.3.2.1"
+audit_name: "Ensure pam_unix module is enabled"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+pam_files=(account session auth password)
+
+for file in "${pam_files[@]}"; do
+    path="/etc/pam.d/common-$file"
+    if grep -Pq '\bpam_unix\.so\b' "$path"; then
+        :
+    else
+        failures+=(" - Missing pam_unix.so in: $path")
+    fi
+done
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - pam_unix.so is present in all required PAM configuration files"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

@@ -1,0 +1,40 @@
+audit_id: "6.1.3.2"
+audit_name: "Ensure rsyslog service is enabled and active"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+{
+failures=()
+
+# Check if rsyslog is active (used for logging)
+if systemctl is-active --quiet rsyslog; then
+    # Check if rsyslog is enabled
+    if ! systemctl is-enabled rsyslog 2>/dev/null | grep -q '^enabled$'; then
+        failures+=(" - rsyslog.service is not enabled")
+    fi
+
+    # Check if rsyslog is active
+    if ! systemctl is-active rsyslog.service 2>/dev/null | grep -q '^active$'; then
+        failures+=(" - rsyslog.service is not active")
+    fi
+else
+    failures+=(" - rsyslog does not appear to be in use on the system")
+fi
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:"
+    echo " ** PASS **"
+    echo " - rsyslog is in use, and the service is enabled and active"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:"
+    echo " ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+}
+
+}
+"""

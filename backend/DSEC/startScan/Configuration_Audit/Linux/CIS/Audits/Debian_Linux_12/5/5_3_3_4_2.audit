@@ -1,0 +1,38 @@
+audit_id: "5.3.3.4.2"
+audit_name: "Ensure pam_unix does not include remember"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+pam_files=(
+    /etc/pam.d/common-password
+    /etc/pam.d/common-auth
+    /etc/pam.d/common-account
+    /etc/pam.d/common-session
+    /etc/pam.d/common-session-noninteractive
+)
+
+for file in "${pam_files[@]}"; do
+    [ -f "$file" ] || continue
+
+    # Check for pam_unix.so line with remember=N
+    if grep -Pqi '^\s*[^#\n\r]+\s+pam_unix\.so\b.*\bremember=\d+\b' "$file"; then
+        failures+=(" - pam_unix.so in $file uses remember= (should not)")
+    fi
+done
+
+# Final output
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - pam_unix.so does not use remember= in any monitored PAM file"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

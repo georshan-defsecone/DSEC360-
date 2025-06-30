@@ -1,0 +1,68 @@
+audit_id: "7.1.12"
+audit_name: "Ensure no files or directories without an owner and a group exist"
+audit_script: """
+{
+failures=()
+passes=()
+
+# Excluded paths
+excluded_paths=(
+  -path "/run/user/*" -o
+  -path "/proc/*" -o
+  -path "*/containerd/*" -o
+  -path "*/kubelet/pods/*" -o
+  -path "*/kubelet/plugins/*" -o
+  -path "/sys/fs/cgroup/memory/*" -o
+  -path "/var/*/private/*"
+)
+
+# Build exclusion expression for find
+exclude_expr=()
+for ((i=0; i<${#excluded_paths[@]}; i+=2)); do
+  exclude_expr+=( \( "${excluded_paths[@]:i:2}" \) -prune -o )
+done
+
+# Find all mount points to scan
+mount_points=$(findmnt -n -l -k -t ext4,xfs,btrfs -o TARGET | grep -vE '^/run/user/')
+
+# Collect unowned and ungrouped files
+nouser_files=()
+nogroup_files=()
+
+while IFS= read -r mount; do
+  while IFS= read -r -d $'\0' file; do
+    [ ! -e "$file" ] && continue
+    owner_group=$(stat -Lc '%U:%G' "$file")
+    IFS=: read -r user group <<< "$owner_group"
+    [[ "$user" == "UNKNOWN" ]] && nouser_files+=("$file")
+    [[ "$group" == "UNKNOWN" ]] && nogroup_files+=("$file")
+  done < <(find "$mount" -xdev "${exclude_expr[@]}" \( -type f -o -type d \) \( -nouser -o -nogroup \) -print0 2>/dev/null)
+done <<< "$mount_points"
+
+# Evaluate results
+if [ ${#nouser_files[@]} -eq 0 ]; then
+  passes+=(" - No unowned files or directories found on the local filesystem.")
+else
+  failures+=(" - Found ${#nouser_files[@]} unowned files/directories:\n$(printf '   %s\n' "${nouser_files[@]}")")
+fi
+
+if [ ${#nogroup_files[@]} -eq 0 ]; then
+  passes+=(" - No ungrouped files or directories found on the local filesystem.")
+else
+  failures+=(" - Found ${#nogroup_files[@]} ungrouped files/directories:\n$(printf '   %s\n' "${nogroup_files[@]}")")
+fi
+
+# Final Output
+if [ ${#failures[@]} -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${passes[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${failures[@]}"
+  [ ${#passes[@]} -gt 0 ] && {
+    echo -e "\n- Correctly Configured:"
+    printf '%s\n' "${passes[@]}"
+  }
+fi
+}
+"""

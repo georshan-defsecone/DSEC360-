@@ -1,0 +1,39 @@
+audit_id: "5.4.1.3"
+audit_name: "Ensure password expiration warning days is configured"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# 1. Check PASS_WARN_AGE in /etc/login.defs
+login_defs_warn=$(grep -Pi '^\s*PASS_WARN_AGE\s+\d+\b' /etc/login.defs | awk '{print $2}' | head -n1)
+
+if [ -z "$login_defs_warn" ]; then
+    failures+=(" - PASS_WARN_AGE is not set in /etc/login.defs")
+elif [ "$login_defs_warn" -lt 7 ]; then
+    failures+=(" - PASS_WARN_AGE is set to $login_defs_warn in /etc/login.defs (must be ≥ 7)")
+fi
+
+# 2. Check PASS_WARN_AGE for real users in /etc/shadow
+while IFS=: read -r user pass _ _ _ warn _; do
+    if [[ "$pass" =~ ^\$.*\$ ]]; then
+        if [ -z "$warn" ] || [ "$warn" -lt 7 ]; then
+            failures+=(" - User: $user has PASS_WARN_AGE = ${warn:-unset} (must be ≥ 7)")
+        fi
+    fi
+done < /etc/shadow
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - PASS_WARN_AGE is compliant in /etc/login.defs and /etc/shadow (≥ 7)"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

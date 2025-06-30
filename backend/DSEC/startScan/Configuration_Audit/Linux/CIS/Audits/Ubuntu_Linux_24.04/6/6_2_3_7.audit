@@ -1,0 +1,62 @@
+audit_id: "6.2.3.7"
+audit_name: "Ensure unsuccessful file access attempts are collected"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+UID_MIN=$(awk '/^\s*UID_MIN/ {print $2}' /etc/login.defs)
+
+# Required syscall rule fragments
+archs=("b64" "b32")
+exits=("-EACCES" "-EPERM")
+syscalls="creat|open|openat|truncate|ftruncate"
+
+# Check On-Disk Configuration
+for arch in "${archs[@]}"; do
+    for exit_code in "${exits[@]}"; do
+        found=$(awk "/^ *-a *always,exit/ \
+            && / -F *arch=${arch}/ \
+            && (/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) \
+            && / -F *auid>=${UID_MIN}/ \
+            && / -F *exit=${exit_code}/ \
+            && / -S/ && /(${syscalls})/ \
+            && (/ key= *[!-~]* *\$| -k *[!-~]* *\$)/" /etc/audit/rules.d/*.rules 2>/dev/null)
+        if [ -z "$found" ]; then
+            failures+=(" - On-disk rule missing: arch=${arch}, exit=${exit_code}")
+        fi
+    done
+done
+
+# Check Active Audit Rules
+if auditctl -s >/dev/null 2>&1; then
+    for arch in "${archs[@]}"; do
+        for exit_code in "${exits[@]}"; do
+            found=$(auditctl -l | awk "/^ *-a *always,exit/ \
+                && / -F *arch=${arch}/ \
+                && (/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) \
+                && / -F *auid>=${UID_MIN}/ \
+                && / -F *exit=${exit_code}/ \
+                && / -S/ && /(${syscalls})/ \
+                && (/ key= *[!-~]* *\$| -k *[!-~]* *\$)/")
+            if [ -z "$found" ]; then
+                failures+=(" - Active audit rule missing: arch=${arch}, exit=${exit_code}")
+            fi
+        done
+    done
+else
+    failures+=(" - Could not check active rules: auditctl not available or not running")
+fi
+
+# Final Output
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - All required audit rules for unsuccessful file accesses are present"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    echo " - Reason(s) for audit failure:"
+    printf '%s\n' "${failures[@]}"
+fi
+
+}
+"""

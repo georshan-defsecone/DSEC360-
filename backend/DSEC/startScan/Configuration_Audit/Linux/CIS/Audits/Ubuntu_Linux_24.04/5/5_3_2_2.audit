@@ -1,0 +1,40 @@
+audit_id: "5.3.2.2"
+audit_name: "Ensure pam_faillock module is enabled"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# File paths
+auth_file="/etc/pam.d/common-auth"
+account_file="/etc/pam.d/common-account"
+
+# Check pam_faillock.so preauth line
+if ! grep -Pq '^\s*auth\s+requisite\s+pam_faillock\.so\s+preauth\b' "$auth_file"; then
+    failures+=(" - Missing 'auth requisite pam_faillock.so preauth' in $auth_file")
+fi
+
+# Check pam_faillock.so authfail line
+if ! grep -Pq '^\s*auth\s+\[.*default=die.*\]\s+pam_faillock\.so\s+authfail\b' "$auth_file"; then
+    failures+=(" - Missing 'auth [default=die] pam_faillock.so authfail' in $auth_file")
+fi
+
+# Check pam_faillock.so in account
+if ! grep -Pq '^\s*account\s+required\s+pam_faillock\.so\b' "$account_file"; then
+    failures+=(" - Missing 'account required pam_faillock.so' in $account_file")
+fi
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - pam_faillock.so is properly configured in $auth_file and $account_file"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

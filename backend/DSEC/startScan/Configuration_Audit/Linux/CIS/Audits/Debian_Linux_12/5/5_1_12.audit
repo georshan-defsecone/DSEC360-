@@ -1,0 +1,30 @@
+audit_id: "5.1.12"
+audit_name: "Ensure sshd KexAlgorithms is configured"
+audit_script: """
+{
+failures=()
+
+# Define the weak KEX algorithms to check for
+weak_kex_regex='kexalgorithms\s+([^#\n\r]+,)?(diffie-hellman-group1-sha1|diffie-hellman-group14-sha1|diffie-hellman-group-exchange-sha1)\b'
+
+# Extract the KEX algorithms from sshd effective config
+kex_line=$(sudo sshd -T 2>/dev/null | grep -Pi '^kexalgorithms\s+')
+
+# Check for weak algorithms
+if echo "$kex_line" | grep -Piq "$weak_kex_regex"; then
+    failures+=(" - Weak Key Exchange algorithms found in SSH configuration:")
+    failures+=("   $kex_line")
+fi
+
+# Output results
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - No weak Key Exchange algorithms are configured"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+}
+"""

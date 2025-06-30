@@ -1,0 +1,34 @@
+audit_id: "5.3.1.1"
+audit_name: "Ensure latest version of pam is installed"
+audit_script: """
+{
+
+failures=()
+required_version="1.5.3-5"
+
+# Check if package is installed and get version
+pkg_info=$(dpkg-query -s libpam-runtime 2>/dev/null | grep -P '^(Status|Version)\b')
+
+status=$(echo "$pkg_info" | grep '^Status:' | awk '{print $4}')
+installed_version=$(echo "$pkg_info" | grep '^Version:' | awk '{print $2}')
+
+# Validate status
+if [ "$status" != "installed" ]; then
+    failures+=(" - libpam-runtime is not installed properly (Status: $status)")
+elif ! dpkg --compare-versions "$installed_version" ge "$required_version"; then
+    failures+=(" - Installed version is $installed_version, which is less than required $required_version")
+fi
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - libpam-runtime version is $installed_version (meets minimum required $required_version)"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

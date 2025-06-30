@@ -1,0 +1,71 @@
+audit_id: "5.1.5"
+audit_name: "Ensure sshd Banner is configured"
+audit_script: """
+{
+
+failures=()
+users_failed=()
+match_present=$(grep -iE '^match\s' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null)
+banner_regex='^banner\s+/\S+'
+
+# Get OS name for policy content check
+os_name=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+
+# Helper to validate banner line and file content
+validate_banner() {
+    local banner_line="$1"
+    local banner_file
+    banner_file=$(awk '{print $2}' <<< "$banner_line")
+
+    if [ ! -f "$banner_file" ]; then
+        failures+=(" - Banner file does not exist: $banner_file")
+        return 1
+    fi
+
+    if grep -Psiq -- '(\\v|\\r|\\m|\\s|\b'"$os_name"'\b)' "$banner_file"; then
+        failures+=(" - Banner file $banner_file contains disallowed escape codes or OS name ($os_name)")
+        return 1
+    fi
+
+    return 0
+}
+
+if [ -z "$match_present" ]; then
+    # No Match blocks — global check
+    banner_line=$(sudo sshd -T 2>/dev/null | grep -Pi "$banner_regex")
+
+    if [ -z "$banner_line" ]; then
+        failures+=(" - Global SSH banner is not set")
+    else
+        validate_banner "$banner_line" || true
+    fi
+else
+    # Match blocks present — check per user
+    while IFS=: read -r username _ uid _ _ _ shell; do
+        if [[ "$uid" -ge 1000 && "$shell" != *false && "$shell" != *nologin ]]; then
+            banner_line=$(sudo sshd -T -C user="$username" 2>/dev/null | grep -Pi "$banner_regex")
+            if [ -z "$banner_line" ]; then
+                users_failed+=("$username")
+            else
+                validate_banner "$banner_line" || users_failed+=("$username")
+            fi
+        fi
+    done < /etc/passwd
+fi
+
+# Result output
+if [ "${#failures[@]}" -eq 0 ] && [ "${#users_failed[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - SSH banner is set and conforms to policy"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    if [ "${#users_failed[@]}" -gt 0 ]; then
+        echo " - The following users do NOT have a compliant banner set:"
+        printf '   %s\n' "${users_failed[@]}"
+    fi
+    echo "- End List"
+fi
+}
+"""

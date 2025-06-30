@@ -1,0 +1,92 @@
+audit_id: "6.2.3.4"
+audit_name: "Ensure events that modify date and time information are collected"
+audit_script: """
+{
+failures=()
+
+# Expected rule patterns
+expected_rules=(
+  "-a always,exit -F arch=b64 -S adjtimex,settimeofday -k time-change"
+  "-a always,exit -F arch=b32 -S adjtimex,settimeofday -k time-change"
+  "-a always,exit -F arch=b64 -S clock_settime -F a0=0x0 -k time-change"
+  "-a always,exit -F arch=b32 -S clock_settime -F a0=0x0 -k time-change"
+  "-w /etc/localtime -p wa -k time-change"
+)
+
+# Normalize function: strips whitespace, sorts syscalls, strips fields for comparison
+normalize_rule() {
+  echo "$1" |
+    sed -E 's/\s+/ /g; s/-F key=/-k /; s/-F a0=0x0/-a0=0x0/' |
+    sed -E 's/-F arch=b32/-arch32/; s/-F arch=b64/-arch64/' |
+    sed -E 's/-k key=/-k /; s/-F key=/-k /' |
+    sed -E 's/-S ([^ ]+,[^ ]+)/-S \1/' |
+    sed -E 's/ -F / /g; s/ -a / /g' |
+    tr -s ' ' | tr '[:upper:]' '[:lower:]'
+}
+
+# Check rule list (file or live) against expected
+check_rules() {
+  local rule_source="$1"
+  local raw_lines
+
+  if [[ "$rule_source" == "disk" ]]; then
+    raw_lines=$(awk '
+      /^ *-a *always,exit/ && / -F *arch=b(32|64)/ && / -S/ &&
+      (/adjtimex/ || /settimeofday/ || /clock_settime/) &&
+      (/ key=| -k /)
+    ' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+    raw_lines+=$'\n'
+    raw_lines+=$(awk '
+      /^ *-w/ && /\/etc\/localtime/ && / +-p *wa/ && (/ key=| -k /)
+    ' /etc/audit/rules.d/*.rules 2>/dev/null)
+  else
+    raw_lines=$(auditctl -l 2>/dev/null | awk '
+      /^ *-a *always,exit/ && / -F *arch=b(32|64)/ && / -S/ &&
+      (/adjtimex/ || /settimeofday/ || /clock_settime/) &&
+      (/ key=| -k /)
+    ')
+
+    raw_lines+=$'\n'
+    raw_lines+=$(auditctl -l 2>/dev/null | awk '
+      /^ *-w/ && /\/etc\/localtime/ && / +-p *wa/ && (/ key=| -k /)
+    ')
+  fi
+
+  for expected in "${expected_rules[@]}"; do
+    found=0
+    norm_expected=$(normalize_rule "$expected")
+    while read -r rule; do
+      [[ -z "$rule" ]] && continue
+      norm_candidate=$(normalize_rule "$rule")
+      if [[ "$norm_candidate" == *"$norm_expected"* ]]; then
+        found=1
+        break
+      fi
+    done <<< "$raw_lines"
+
+    if [ "$found" -eq 0 ]; then
+      if [ "$rule_source" = "disk" ]; then
+        failures+=(" - On-disk rule missing or incorrect: $expected")
+      else
+        failures+=(" - Active audit rule missing or incorrect: $expected")
+      fi
+    fi
+  done
+}
+
+# Perform audit
+check_rules disk
+check_rules live
+
+# Report
+if [ "${#failures[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  echo " - All time-change audit rules are correctly configured."
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  echo " - Reason(s) for audit failure:"
+  printf '%s\n' "${failures[@]}"
+fi
+}
+"""

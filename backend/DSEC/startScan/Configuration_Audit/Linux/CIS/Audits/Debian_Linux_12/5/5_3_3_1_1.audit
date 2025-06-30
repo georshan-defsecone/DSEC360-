@@ -1,0 +1,39 @@
+audit_id: "5.3.3.1.1"
+audit_name: ""
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# -------- Check faillock.conf --------
+faillock_conf="/etc/security/faillock.conf"
+if [ -f "$faillock_conf" ]; then
+    if grep -Pq '^\s*deny\s*=\s*[1-5]\b' "$faillock_conf"; then
+        :
+    else
+        failures+=(" - 'deny' setting in $faillock_conf is missing or > 5")
+    fi
+else
+    failures+=(" - $faillock_conf not found")
+fi
+
+# -------- Check pam_faillock in common-auth --------
+pam_file="/etc/pam.d/common-auth"
+if grep -Pq '^\s*auth\s+(requisite|required|sufficient)\s+pam_faillock\.so\s+.*\bdeny\s*=\s*(0|[6-9]|[1-9][0-9]+)\b' "$pam_file"; then
+    failures+=(" - pam_faillock.so in $pam_file sets deny > 5, which violates policy")
+fi
+
+# -------- Output result --------
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - deny is set to 5 or fewer and complies with local policy"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

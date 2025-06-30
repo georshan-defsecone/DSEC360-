@@ -1,0 +1,38 @@
+audit_id: "5.3.3.4.1"
+audit_name: "Ensure pam_unix does not include nullok"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+pam_files=(
+    /etc/pam.d/common-password
+    /etc/pam.d/common-auth
+    /etc/pam.d/common-account
+    /etc/pam.d/common-session
+    /etc/pam.d/common-session-noninteractive
+)
+
+for file in "${pam_files[@]}"; do
+    [ -f "$file" ] || continue
+    if grep -Pqi '^\s*[^#\n\r]+\s+pam_unix\.so\b' "$file"; then
+        if grep -Pqi '^\s*[^#\n\r]+\s+pam_unix\.so\b.*\bnullok\b' "$file"; then
+            failures+=(" - nullok found in pam_unix.so line in $file")
+        fi
+    fi
+done
+
+# Result output
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - pam_unix.so does not include nullok in any common PAM file"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

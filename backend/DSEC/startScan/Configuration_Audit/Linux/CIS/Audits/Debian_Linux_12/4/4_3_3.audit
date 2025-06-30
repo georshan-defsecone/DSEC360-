@@ -1,0 +1,28 @@
+audit_id: "4.3.3"
+audit_name: "Ensure iptables are flushed with nftables"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# Check for non-header rules in iptables
+if iptables -L | awk 'NR>2 && $0 !~ /^Chain/ && NF' | grep -q .; then
+    failures+=(" - iptables has active rules")
+fi
+
+# Check for non-header rules in ip6tables
+if ip6tables -L | awk 'NR>2 && $0 !~ /^Chain/ && NF' | grep -q .; then
+    failures+=(" - ip6tables has active rules")
+fi
+
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n - Audit Passed -\n- No iptables or ip6tables rules found\n"
+else
+    echo -e "\n - Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

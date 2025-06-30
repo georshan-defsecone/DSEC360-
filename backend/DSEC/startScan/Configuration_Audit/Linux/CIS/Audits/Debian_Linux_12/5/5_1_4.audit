@@ -1,0 +1,59 @@
+audit_id: "5.1.4"
+audit_name: "Ensure sshd access is configured"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+users_failed=()
+
+# Check if Match blocks exist
+match_present=$(grep -iE '^match\s' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null)
+
+# Regex to match valid allow/deny directives
+policy_regex='^\s*(allow|deny)(users|groups)\s+\S+'
+
+# Function to validate a single sshd config line
+validate_policy_line() {
+    local config_output="$1"
+    echo "$config_output" | grep -Piq "$policy_regex"
+}
+
+if [ -z "$match_present" ]; then
+    # No Match blocks — global audit
+    output=$(sudo sshd -T 2>/dev/null | grep -Pi "$policy_regex")
+    if validate_policy_line "$output"; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - SSH access policy (AllowUsers/Groups or DenyUsers/Groups) is configured globally:"
+        echo "$output"
+        echo "- End List"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        echo " - No global AllowUsers, AllowGroups, DenyUsers, or DenyGroups configured in sshd_config"
+        echo "- End List"
+    fi
+else
+    # Match blocks present — audit per user
+    while IFS=: read -r username _ uid _ _ _ shell; do
+        if [[ "$uid" -ge 1000 && "$shell" != *false && "$shell" != *nologin ]]; then
+            user_output=$(sudo sshd -T -C user="$username" 2>/dev/null | grep -Pi "$policy_regex")
+            if ! validate_policy_line "$user_output"; then
+                users_failed+=("$username")
+            fi
+        fi
+    done < /etc/passwd
+
+    if [ "${#users_failed[@]}" -eq 0 ]; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - All SSH users have access controls defined via Allow/Deny Users/Groups"
+        echo "- End List"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        echo " - The following users do NOT have AllowUsers/Groups or DenyUsers/Groups settings applied via sshd -T:"
+        printf '   %s\n' "${users_failed[@]}"
+        echo "- End List"
+    fi
+fi
+
+}
+"""

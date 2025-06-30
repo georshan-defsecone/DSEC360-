@@ -1,0 +1,17 @@
+audit_id: "6.1.3.1"
+audit_name: "Ensure rsyslog is installed"
+audit_script: """
+{
+if dpkg-query -s rsyslog &>/dev/null; then
+    echo -e "\n- Audit Result:"
+    echo " ** PASS **"
+    echo " - rsyslog is installed"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:"
+    echo " ** FAIL **"
+    echo " - rsyslog is not installed"
+    echo "- End List"
+fi
+}
+"""

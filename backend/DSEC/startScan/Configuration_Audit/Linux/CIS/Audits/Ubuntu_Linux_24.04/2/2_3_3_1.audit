@@ -1,0 +1,63 @@
+audit_id: "2.3.3.1"
+audit_name: "Ensure chrony is configured with authorized timeserver"
+audit_script: """
+{
+    a_output=()
+    a_output2=()
+    a_config_files=("/etc/chrony/chrony.conf")
+
+    # Parameters to search
+    l_include='(confdir|sourcedir)'   # Include directives
+    l_parameter_name='(server|pool)'  # Allowed NTP config parameters
+    l_parameter_value='.+'
+
+    # Discover additional config files from confdir/sourcedir
+    while IFS= read -r l_conf_loc; do
+        l_dir=""
+        l_ext=""
+
+        if [ -d "$l_conf_loc" ]; then
+            l_dir="$l_conf_loc"
+            l_ext="*"
+        elif grep -Psq '/\*\.([^#/\n\r]+)?\h*$' <<< "$l_conf_loc" || [ -f "$(readlink -f "$l_conf_loc")" ]; then
+            l_dir="$(dirname "$l_conf_loc")"
+            l_ext="$(basename "$l_conf_loc")"
+        fi
+
+        if [[ -n "$l_dir" && -n "$l_ext" ]]; then
+            while IFS= read -r -d $'\0' l_file_name; do
+                [ -f "$(readlink -f "$l_file_name")" ] &&
+                    a_config_files+=("$(readlink -f "$l_file_name")")
+            done < <(find -L "$l_dir" -type f -name "$l_ext" -print0 2>/dev/null)
+        fi
+    done < <(awk '$1 ~ /^\s*'"$l_include"'$/ { print $2 }' "${a_config_files[@]}" 2>/dev/null)
+
+    # Look for matching parameter lines
+    for l_file in "${a_config_files[@]}"; do
+        l_parameter_line="$(grep -Psi '^\h*'"$l_parameter_name"'(\h+|\h*:\h*)'"$l_parameter_value"'\b' "$l_file")"
+
+        if [ -n "$l_parameter_line" ]; then
+            a_output+=(
+                " - Parameter: \"$(tr -d '()' <<< ${l_parameter_name//|/ or })\""
+                " Exists in the file: \"$l_file\" as:"
+                " $l_parameter_line"
+            )
+        fi
+    done
+
+    # If no matching parameters were found
+    if [ "${#a_output[@]}" -eq 0 ]; then
+        a_output2+=(
+            " - Parameter: \"$(tr -d '()' <<< ${l_parameter_name//|/ or })\""
+            " Does not exist in the chrony configuration"
+        )
+    fi
+
+    # Print audit result
+    if [ "${#a_output2[@]}" -eq 0 ]; then
+        printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}" ""
+    else
+        printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for audit failure:" "${a_output2[@]}"
+    fi
+}
+"""

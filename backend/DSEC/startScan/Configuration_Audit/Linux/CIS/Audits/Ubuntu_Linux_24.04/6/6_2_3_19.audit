@@ -1,0 +1,78 @@
+audit_id: "6.2.3.19"
+audit_name: "Ensure kernel module loading unloading and
+modification is collected (Automated)"
+audit_script: """
+{
+#!/usr/bin/env bash
+{
+failures=()
+UID_MIN=$(awk '/^\s*UID_MIN/ { print $2 }' /etc/login.defs)
+
+# --- On-Disk Configuration Checks ---
+expected_syscall="-a always,exit -F arch=b64 -S create_module,init_module,delete_module,query_module,finit_module -F auid>=1000 -F auid!=unset -k kernel_modules"
+expected_kmod_exec="-a always,exit -F path=/usr/bin/kmod -F perm=x -F auid>=1000 -F auid!=unset -k kernel_modules"
+
+ondisk_syscall=$(awk '
+    /^ *-a *always,exit/ &&
+    (/arch=b32/ || /arch=b64/) &&
+    (/ -F auid!=unset/ || / -F auid!=-1/ || / -F auid!=4294967295/) &&
+    / -S/ &&
+    (/init_module/ || /finit_module/ || /delete_module/ || /create_module/ || /query_module/) &&
+    / -k /
+' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+ondisk_kmod=$(awk -v uid_min="$UID_MIN" '
+    /^ *-a *always,exit/ &&
+    (/ -F auid!=unset/ || / -F auid!=-1/ || / -F auid!=4294967295/) &&
+    $0 ~ "-F auid>=" uid_min &&
+    / -F perm=x/ &&
+    / -F path=\/usr\/bin\/kmod/ &&
+    / -k /
+' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+grep -Fq -- "$expected_syscall" <<< "$ondisk_syscall" || failures+=(" - On-disk syscall rule missing or incorrect: $expected_syscall")
+grep -Fq -- "$expected_kmod_exec" <<< "$ondisk_kmod"   || failures+=(" - On-disk kmod rule missing or incorrect: $expected_kmod_exec")
+
+# --- Runtime Configuration Checks ---
+runtime_syscall=$(auditctl -l 2>/dev/null | awk '
+    /^ *-a *always,exit/ &&
+    (/arch=b32/ || /arch=b64/) &&
+    (/ -F auid!=unset/ || / -F auid!=-1/ || / -F auid!=4294967295/) &&
+    / -S/ &&
+    (/init_module/ || /finit_module/ || /delete_module/ || /create_module/ || /query_module/) &&
+    / -k /
+')
+
+runtime_kmod=$(auditctl -l 2>/dev/null | awk -v uid_min="$UID_MIN" '
+    /^ *-a *always,exit/ &&
+    (/ -F auid!=unset/ || / -F auid!=-1/ || / -F auid!=4294967295/) &&
+    $0 ~ "-F auid>=" uid_min &&
+    / -F perm=x/ &&
+    / -F path=\/usr\/bin\/kmod/ &&
+    / -k /
+')
+
+grep -Fq -- "$expected_syscall" <<< "$runtime_syscall" || failures+=(" - Active syscall rule missing or incorrect: $expected_syscall")
+grep -Fq -- "$expected_kmod_exec" <<< "$runtime_kmod"   || failures+=(" - Active kmod rule missing or incorrect: $expected_kmod_exec")
+
+# --- Symlink Audit for KMOD tools ---
+symlink_issues=()
+kmod_target=$(readlink -f /bin/kmod)
+for tool in /usr/sbin/lsmod /usr/sbin/rmmod /usr/sbin/insmod /usr/sbin/modinfo /usr/sbin/modprobe /usr/sbin/depmod; do
+    if [ "$(readlink -f "$tool")" != "$kmod_target" ]; then
+        symlink_issues+=(" - Symlink issue: \"$tool\" does not point to /bin/kmod")
+    fi
+done
+
+# --- Final Output ---
+if [ ${#failures[@]} -eq 0 ] && [ ${#symlink_issues[@]} -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - All kernel module syscall auditing and symlinks are properly configured"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}" "${symlink_issues[@]}"
+fi
+}
+
+}
+"""

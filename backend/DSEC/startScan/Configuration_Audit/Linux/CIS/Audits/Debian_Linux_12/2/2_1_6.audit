@@ -1,0 +1,27 @@
+audit_id: "2.1.6"
+audit_name: "Ensure ftp server services are not in use"
+audit_script: """
+{
+# Check if vsftpd package is installed
+if dpkg-query -s vsftpd &>/dev/null; then
+    echo "- vsftpd is installed"
+
+    # Check if vsftpd.service is enabled
+    if systemctl is-enabled vsftpd.service 2>/dev/null | grep -q '^enabled'; then
+        echo "** FAIL ** vsftpd.service is enabled"
+        exit 1
+    fi
+
+    # Check if vsftpd.service is active
+    if systemctl is-active vsftpd.service 2>/dev/null | grep -q '^active'; then
+        echo "** FAIL ** vsftpd.service is active"
+        exit 1
+    fi
+
+    echo "** PASS ** vsftpd is installed but service is neither enabled nor active"
+else
+    echo "** PASS ** vsftpd is not installed"
+fi
+
+}
+"""

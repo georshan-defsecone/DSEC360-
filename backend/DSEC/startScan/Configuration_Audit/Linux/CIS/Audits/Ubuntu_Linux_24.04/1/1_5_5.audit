@@ -1,0 +1,19 @@
+audit_id: "1.5.5"
+audit_name: "Ensure Automatic Error Reporting is not enabled"
+audit_script: """
+{
+# Check if apport is enabled in /etc/default/apport
+if dpkg-query -s apport &> /dev/null && grep -Psi -- '^\\h*enabled\\h*=\\h*[^0]\\b' /etc/default/apport; then
+    echo "** FAIL ** Apport is enabled in /etc/default/apport"
+    exit 1
+fi
+
+# Check if apport service is active
+if systemctl is-active apport.service | grep '^active' &> /dev/null; then
+    echo "** FAIL ** Apport service is active"
+    exit 1
+fi
+
+echo "** PASS ** Apport is disabled and inactive"
+}
+"""

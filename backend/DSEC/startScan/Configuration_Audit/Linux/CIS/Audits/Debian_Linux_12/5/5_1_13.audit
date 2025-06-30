@@ -1,0 +1,30 @@
+audit_id: "5.1.13"
+audit_name: "Ensure sshd LoginGraceTime is configured"
+audit_script: """
+{
+failures=()
+
+# Get the LoginGraceTime setting from the global sshd config
+value=$(sudo sshd -T 2>/dev/null | grep -i '^logingracetime' | awk '{print $2}')
+
+# If the setting is missing or not a number (or not in seconds), fail
+if [[ -z "$value" ]]; then
+    failures+=(" - LoginGraceTime is not set in global SSH configuration")
+elif [[ ! "$value" =~ ^[0-9]+$ ]]; then
+    failures+=(" - LoginGraceTime is not expressed in seconds: '$value'")
+elif (( value < 1 || value > 60 )); then
+    failures+=(" - LoginGraceTime is set to $value seconds — must be between 1 and 60")
+fi
+
+# Output results
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - LoginGraceTime is correctly set to ${value} seconds"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+}
+"""

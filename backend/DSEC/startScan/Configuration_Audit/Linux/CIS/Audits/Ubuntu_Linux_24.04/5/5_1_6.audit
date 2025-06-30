@@ -1,0 +1,36 @@
+audit_id: "5.1.6"
+audit_name: "Ensure sshd Ciphers are configured"
+audit_script: """
+{
+failures=()
+
+# Get ciphers line from sshd config
+ciphers_line=$(sudo sshd -T 2>/dev/null | grep -Pi '^ciphers\s+')
+
+# Define weak ciphers to detect
+weak_ciphers_regex='(3des|blowfish|cast128|aes(128|192|256)-cbc|arcfour(128|256)?|rijndael-cbc@lysator\.liu\.se)\b'
+
+# Check if weak ciphers are in use
+if echo "$ciphers_line" | grep -Piq "$weak_ciphers_regex"; then
+    failures+=(" - Weak cipher(s) found in sshd configuration:")
+    failures+=("   $ciphers_line")
+fi
+
+# Special case: check if chacha20-poly1305@openssh.com is present
+if echo "$ciphers_line" | grep -q 'chacha20-poly1305@openssh.com'; then
+    failures+=(" - chacha20-poly1305@openssh.com is in use — review CVE-2023-48795 and ensure patching is applied")
+fi
+
+# Result output
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - No weak SSH ciphers found in sshd_config"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

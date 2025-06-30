@@ -1,0 +1,103 @@
+audit_id: "1.1.1.10"
+audit_name: "Ensure unused filesystems kernel modules are not available"
+audit_script: """
+{
+    a_output=()
+    a_output2=()
+    a_modprope_config=()
+    a_excluded=()
+    a_available_modules=()
+    a_ignore=("xfs" "vfat" "ext2" "ext3" "ext4")
+    a_cve_exists=(
+        "afs" "ceph" "cifs" "exfat" "ext" "fat" "fscache" "fuse" "gfs2" 
+        "nfs_common" "nfsd" "smbfs_common"
+    )
+
+    f_module_chk() {
+        local l_out2=""
+        # Mark if module has known CVE
+        if grep -Pq -- "\b$l_mod_name\b" <<< "${a_cve_exists[*]}"; then
+            l_out2=" <- CVE exists!"
+        fi
+
+        # Check blacklist and install lines to verify module disabled status
+        if ! grep -Pq -- '\bblacklist\h+'"${l_mod_name}"'\b' <<< "${a_modprope_config[*]}"; then
+            a_output2+=(" - Kernel module: \"$l_mod_name\" is not fully disabled$l_out2")
+        elif ! grep -Pq -- '\binstall\h+'"${l_mod_name}"'\h+(\/usr)?\/bin\/(false|true)\b' <<< "${a_modprope_config[*]}"; then
+            a_output2+=(" - Kernel module: \"$l_mod_name\" is not fully disabled$l_out2")
+        fi
+
+        # Check if module is currently loaded
+        if lsmod | grep -q "$l_mod_name"; then
+            a_output2+=(" - Kernel module: \"$l_mod_name\" is loaded")
+        fi
+    }
+
+    # Collect available filesystem kernel modules directories (non-empty only)
+    while IFS= read -r -d $'\0' l_module_dir; do
+        a_available_modules+=("$(basename "$l_module_dir")")
+    done < <(find "$(readlink -f /lib/modules/$(uname -r)/kernel/fs)" -mindepth 1 -maxdepth 1 -type d ! -empty -print0)
+
+    # Check current mounts to exclude relevant modules and warn for CVEs
+    while IFS= read -r l_exclude; do
+        if grep -Pq -- "\b$l_exclude\b" <<< "${a_cve_exists[*]}"; then
+            a_output2+=(" - ** WARNING: kernel module: \"$l_exclude\" has a CVE and is currently mounted! **")
+        elif grep -Pq -- "\b$l_exclude\b" <<< "${a_available_modules[*]}"; then
+            a_output+=(" - Kernel module: \"$l_exclude\" is currently mounted - do NOT unload or disable")
+        fi
+        # Add to ignore list if not already there
+        if ! grep -Pq -- "\b$l_exclude\b" <<< "${a_ignore[*]}"; then
+            a_ignore+=("$l_exclude")
+        fi
+    done < <(findmnt -knD | awk '{print $2}' | sort -u)
+
+    # Get modprobe config blacklist/install entries
+    while IFS= read -r l_config; do
+        a_modprope_config+=("$l_config")
+    done < <(modprobe --showconfig | grep -P '^\h*(blacklist|install)')
+
+    # Check all available filesystem modules
+    for l_mod_name in "${a_available_modules[@]}"; do
+        # Normalize overlay modules by trimming trailing characters
+        [[ "$l_mod_name" =~ overlay ]] && l_mod_name="${l_mod_name::-2}"
+
+        if grep -Pq -- "\b$l_mod_name\b" <<< "${a_ignore[*]}"; then
+            a_excluded+=(" - Kernel module: \"$l_mod_name\"")
+        else
+            f_module_chk
+        fi
+    done
+
+    # After processing all modules and filling a_output2 and a_output arrays
+
+    # Check if any output line contains "not fully disabled" AND "<- CVE exists!"
+    l_fail=0
+    for line in "${a_output2[@]}"; do
+        if [[ "$line" == *"not fully disabled"* && "$line" == *"<- CVE exists!"* ]]; then
+            l_fail=1
+            break
+        fi
+    done
+
+    if (( l_fail == 1 )); then
+        printf '%s\n' "" "-- Audit Result: --" " ** FAIL **" "The following modules have CVE and are not fully disabled:" 
+        for line in "${a_output2[@]}"; do
+            # Print only lines with CVE not disabled message
+            if [[ "$line" == *"not fully disabled"* && "$line" == *"<- CVE exists!"* ]]; then
+                printf '%s\n' " $line"
+            fi
+        done
+        # Optionally, print the rest of the messages
+        printf '%s\n' "" "-- Other findings --"
+        for line in "${a_output2[@]}"; do
+            # Print lines without CVE not disabled (optional)
+            if ! [[ "$line" == *"not fully disabled"* && "$line" == *"<- CVE exists!"* ]]; then
+                printf '%s\n' " $line"
+            fi
+        done
+    else
+        printf '%s\n' "" "-- Audit Result: --" " ** PASS **"
+        [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "" "-- Correctly set: --" "${a_output[@]}"
+    fi
+}
+"""

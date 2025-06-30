@@ -1,0 +1,29 @@
+audit_id: "2.3.2.2"
+audit_name: "Ensure systemd-timesyncd is enabled and running"
+audit_script: """
+{
+    service="systemd-timesyncd.service"
+    enabled=$(systemctl is-enabled "$service" 2>/dev/null)
+    active=$(systemctl is-active "$service" 2>/dev/null)
+
+    echo "Checking $service..."
+
+    if [[ "$enabled" == "enabled" ]]; then
+        echo " - Service is enabled."
+    else
+        echo " - Service is NOT enabled."
+    fi
+
+    if [[ "$active" == "active" ]]; then
+        echo " - Service is active."
+    else
+        echo " - Service is NOT active."
+    fi
+
+    if [[ "$enabled" == "enabled" && "$active" == "active" ]]; then
+        echo -e "\nAudit Result:\n ** PASS **\n - systemd-timesyncd.service is enabled and active."
+    else
+        echo -e "\nAudit Result:\n ** FAIL **\n - systemd-timesyncd.service is not properly enabled and/or active."
+    fi
+}
+"""

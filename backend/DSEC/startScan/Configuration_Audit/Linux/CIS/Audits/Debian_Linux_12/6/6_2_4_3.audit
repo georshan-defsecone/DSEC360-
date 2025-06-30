@@ -1,0 +1,42 @@
+audit_id: "6.2.4.3"
+audit_name: "Ensure audit log files group owner is configured"
+audit_script: """
+{
+failures=()
+audit_conf="/etc/audit/auditd.conf"
+
+# --- Check log_group value ---
+if grep -Piqs '^\s*log_group\s*=\s*\S+' "$audit_conf"; then
+    if ! grep -Piqs '^\s*log_group\s*=\s*(adm|root)\b' "$audit_conf"; then
+        failures+=(" - Invalid log_group value in \"$audit_conf\" (should be 'adm' or 'root')")
+    fi
+else
+    failures+=(" - log_group is not set in \"$audit_conf\"")
+fi
+
+# --- Check audit log directory group ownership ---
+if [ -f "$audit_conf" ]; then
+    log_dir="$(dirname "$(awk -F= '/^\s*log_file/ {print $2}' "$audit_conf" | xargs)")"
+    if [ -d "$log_dir" ]; then
+        while IFS= read -r -d '' f; do
+            failures+=(" - File: \"$f\" is not group-owned by 'adm' or 'root'")
+        done < <(find -L "$log_dir" -not -path "$log_dir/lost+found" -type f \
+                 \( ! -group root -a ! -group adm \) -print0)
+    else
+        failures+=(" - Log directory \"$log_dir\" does not exist")
+    fi
+else
+    failures+=(" - \"$audit_conf\" not found")
+fi
+
+# --- Output result ---
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - log_group is correctly set and all log files are group-owned by adm or root"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+fi
+}
+
+"""
