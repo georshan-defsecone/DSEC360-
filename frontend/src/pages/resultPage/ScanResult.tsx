@@ -60,7 +60,7 @@ const ScanResult = () => {
 
         data.forEach((row) => {
           const status = row["Result"]?.toLowerCase().trim();
-          const name = row["Name"]?.trim();
+          const name = row["Subject"]?.trim() || row["Name"]?.trim();
 
           if (status === "pass") pass++;
           else if (status === "fail") fail++;
