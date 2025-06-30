@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import api from "../api";
+import Papa from "papaparse";
 import { useEffect, useState } from "react";
 import {
   BarChart,
@@ -16,10 +17,18 @@ import { Card } from "@/components/ui/card"; // Adjust path based on your setup
 import { CheckCircle, XCircle } from "lucide-react"; // Icons for pass/fail
 
 const ScanResult = () => {
-  const { projectName, scanName } = useParams<{ projectName: string; scanName: string }>();
+  const { projectName, scanName } = useParams<{
+    projectName: string;
+    scanName: string;
+  }>();
 
-  const [summary, setSummary] = useState<{ pass: number; fail: number }>({ pass: 0, fail: 0 });
-  const [auditItems, setAuditItems] = useState<{ name: string; status: string }[]>([]);
+  const [summary, setSummary] = useState<{ pass: number; fail: number }>({
+    pass: 0,
+    fail: 0,
+  });
+  const [auditItems, setAuditItems] = useState<
+    { name: string; status: string }[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -37,21 +46,25 @@ const ScanResult = () => {
           { responseType: "blob" }
         );
         const text = await response.data.text();
-        const rows = text.trim().split("\n").map((row) => row.split(","));
 
-        const headers = rows[0];
-        const statusIndex = headers.indexOf("status");
-        const nameIndex = headers.indexOf("audit_name");
+        const parsed = Papa.parse(text, {
+          header: true,
+          skipEmptyLines: true,
+        });
+
+        const data = parsed.data as any[];
 
         let pass = 0;
         let fail = 0;
         const audits: { name: string; status: string }[] = [];
 
-        rows.slice(1).forEach((row) => {
-          const status = row[statusIndex]?.toLowerCase().trim();
-          const name = row[nameIndex]?.trim();
+        data.forEach((row) => {
+          const status = row["Result"]?.toLowerCase().trim();
+          const name = row["Name"]?.trim();
+
           if (status === "pass") pass++;
           else if (status === "fail") fail++;
+
           if (name) {
             audits.push({ name, status });
           }
@@ -72,7 +85,9 @@ const ScanResult = () => {
     <div className="flex h-screen text-black pt-24">
       <Sidebar settings={false} scanSettings={false} homeSettings={true} />
       <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
-        <Header title={`Result: ${projectName ?? "Unknown"} - ${scanName ?? ""}`} />
+        <Header
+          title={`Result: ${projectName ?? "Unknown"} - ${scanName ?? ""}`}
+        />
 
         {loading ? (
           <p>Loading...</p>
@@ -83,10 +98,12 @@ const ScanResult = () => {
             {/* Left side: Bar Chart */}
             <div className="w-1/3 h-80 ">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={[
-                  { name: "Passed", count: summary.pass },
-                  { name: "Failed", count: summary.fail },
-                ]}>
+                <BarChart
+                  data={[
+                    { name: "Passed", count: summary.pass },
+                    { name: "Failed", count: summary.fail },
+                  ]}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis allowDecimals={false} />
@@ -103,7 +120,10 @@ const ScanResult = () => {
                 <div className="max-h-80 overflow-y-auto pr-2 space-y-3">
                   {auditItems.length > 0 ? (
                     auditItems.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between">
+                      <div
+                        key={index}
+                        className="flex items-center justify-between"
+                      >
                         <span className="text-sm">{item.name}</span>
                         {item.status === "pass" ? (
                           <CheckCircle className="text-green-500 w-5 h-5" />
