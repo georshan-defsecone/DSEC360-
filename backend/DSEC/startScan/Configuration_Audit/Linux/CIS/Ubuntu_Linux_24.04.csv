@@ -1,5 +1,5 @@
-"audit_id","audit_description","audit_remediation"
-"1.1.1.1","The cramfs filesystem type is a compressed read-only Linux filesystem embedded in small footprint systems. A cramfs image can be used without having to first decompress the image.","
+audit_id,audit_name,audit_description,audit_remediation,check
+1.1.1.1,Ensure cramfs kernel module is not available,The cramfs filesystem type is a compressed read-only Linux filesystem embedded in small footprint systems. A cramfs image can be used without having to first decompress the image.,"
 Run the following script to unload and disable the cramfs module:
 - IF - the cramfs kernel module is available in ANY installed kernel:
 • Create a file ending in .conf with install cramfs /bin/false in the
@@ -60,8 +60,8 @@ printf '%s\n' """" "" - No changes needed""
 printf '%s\n' """" "" - remediation of kernel module: \""$l_mod_name\""
 complete"" """"
 }
-"
-"1.1.1.2","The freevxfs filesystem type is a free version of the Veritas type filesystem. This is the
+",True
+1.1.1.2,Ensure freevxfs kernel module is not available,"The freevxfs filesystem type is a free version of the Veritas type filesystem. This is the
 primary filesystem type for HP-UX operating systems.","
 Run the following script to unload and disable the freevxfs module:
 - IF - the freevxfs kernel module is available in ANY installed kernel:
@@ -123,8 +123,8 @@ printf '%s\n' """" "" - No changes needed""
 printf '%s\n' """" "" - remediation of kernel module: \""$l_mod_name\""
 complete"" """"
 }
-"
-"1.1.1.3","The hfs filesystem type is a hierarchical filesystem that allows you to mount Mac OS
+",True
+1.1.1.3,Ensure hfs kernel module is not available,"The hfs filesystem type is a hierarchical filesystem that allows you to mount Mac OS
 filesystems.","
 Run the following script to unload and disable the hfs module:
 - IF - the hfs kernel module is available in ANY installed kernel:
@@ -186,8 +186,8 @@ printf '%s\n' """" "" - No changes needed""
 printf '%s\n' """" "" - remediation of kernel module: \""$l_mod_name\""
 complete"" """"
 }
-"
-"1.1.1.4","The hfsplus filesystem type is a hierarchical filesystem designed to replace hfs that
+",True
+1.1.1.4,Ensure hfsplus kernel module is not available,"The hfsplus filesystem type is a hierarchical filesystem designed to replace hfs that
 allows you to mount Mac OS filesystems.","
 Run the following script to unload and disable the hfsplus module:
 - IF - the hfsplus kernel module is available in ANY installed kernel:
@@ -249,8 +249,8 @@ printf '%s\n' """" "" - No changes needed""
 printf '%s\n' """" "" - remediation of kernel module: \""$l_mod_name\""
 complete"" """"
 }
-"
-"1.1.1.5","The jffs2 (journaling flash filesystem 2) filesystem type is a log-structured filesystem
+",True
+1.1.1.5,Ensure jffs2 kernel module is not available,"The jffs2 (journaling flash filesystem 2) filesystem type is a log-structured filesystem
 used in flash memory devices.","
 Run the following script to unload and disable the jffs2 module:
 - IF - the jffs2 kernel module is available in ANY installed kernel:
@@ -312,8 +312,8 @@ printf '%s\n' """" "" - No changes needed""
 printf '%s\n' """" "" - remediation of kernel module: \""$l_mod_name\""
 complete"" """"
 }
-"
-"1.1.1.6","overlayfs is a Linux filesystem that layers multiple filesystems to create a single
+",True
+1.1.1.6,Ensure overlayfs kernel module is not available,"overlayfs is a Linux filesystem that layers multiple filesystems to create a single
 unified view which allows a user to ""merge"" several mount points into a unified
 filesystem.","
 Run the following script to unload and disable the overlayfs module:
@@ -376,8 +376,8 @@ printf '%s\n' """" "" - No changes needed""
 printf '%s\n' """" "" - remediation of kernel module: \""$l_mod_name\""
 complete"" """"
 }
-"
-"1.1.1.7","The squashfs filesystem type is a compressed read-only Linux filesystem embedded in
+",True
+1.1.1.7,Ensure squashfs kernel module is not available,"The squashfs filesystem type is a compressed read-only Linux filesystem embedded in
 small footprint systems. A squashfs image can be used without having to first
 decompress the image.","
 Run the following script to unload and disable the udf module:
@@ -440,8 +440,8 @@ printf '%s\n' """" "" - No changes needed""
 printf '%s\n' """" "" - remediation of kernel module: \""$l_mod_name\""
 complete"" """"
 }
-"
-"1.1.1.8","The udf filesystem type is the universal disk format used to implement ISO/IEC 13346
+",True
+1.1.1.8,Ensure udf kernel module is not available,"The udf filesystem type is the universal disk format used to implement ISO/IEC 13346
 and ECMA-167 specifications. This is an open vendor filesystem type for data storage
 on a broad range of media. This filesystem type is necessary to support writing DVDs
 and newer optical disc formats.","
@@ -506,8 +506,8 @@ printf '%s\n' """" "" - No changes needed""
 printf '%s\n' """" "" - remediation of kernel module: \""$l_mod_name\""
 complete"" """"
 }
-"
-"1.1.1.9","
+",True
+1.1.1.9,Ensure usb-storage kernel module is not available,"
 USB storage provides a means to transfer and store files ensuring persistence and
 availability of the files independent of network connection status. Its popularity and utility
 has led to USB-based malware being a simple and common means for network
@@ -575,8 +575,8 @@ printf '%s\n' """" "" - No changes needed""
 printf '%s\n' """" "" - remediation of kernel module: \""$l_mod_name\""
 complete"" """"
 }
-"
-"1.1.1.10","
+",True
+1.1.1.10,Ensure unused filesystems kernel modules are not available,"
 Filesystem kernel modules are pieces of code that can be dynamically loaded into the
 Linux kernel to extend its filesystem capabilities, or so-called base kernel, of an
 operating system. Filesystem kernel modules are typically used to add support for new
@@ -660,8 +660,8 @@ printf '%s\n' """" "" - No changes needed""
 printf '%s\n' """" "" - remediation of kernel module: \""$l_mod_name\""
 complete"" """"
 }
-"
-"1.1.2.1.1","
+",True
+1.1.2.1.1,Ensure /tmp is a separate partition,"
 The /tmp directory is a world-writable directory used for temporary storage by all users
 and some applications.
 - IF - an entry for /tmp exists in /etc/fstab it will take precedence over entries in
@@ -702,8 +702,8 @@ Note: the size=2G is an example of setting a specific size for tmpfs.
 Example of using a volume or disk with specific mount options. The source location of
 the volume or disk will vary depending on your environment:
 <device> /tmp <fstype> defaults,nodev,nosuid,noexec 0 0
-"
-"1.1.2.1.2","
+",True
+1.1.2.1.2,Ensure nodev option set on /tmp partition,"
 The nodev mount option specifies that the filesystem cannot contain special devices.
 ","
 - IF - a separate partition exists for /tmp.
@@ -713,8 +713,8 @@ Example:
 <device> /tmp <fstype> defaults,rw,nosuid,nodev,noexec,relatime 0 0
 Run the following command to remount /tmp with the configured options:
 # mount -o remount /tmp
-"
-"1.1.2.1.3","
+",True
+1.1.2.1.3,Ensure nosuid option set on /tmp partition,"
 The nosuid mount option specifies that the filesystem cannot contain setuid files.
 ","
 - IF - a separate partition exists for /tmp.
@@ -724,8 +724,8 @@ Example:
 <device> /tmp <fstype> defaults,rw,nosuid,nodev,noexec,relatime 0 0
 Run the following command to remount /tmp with the configured options:
 # mount -o remount /tmp
-"
-"1.1.2.1.4","
+",True
+1.1.2.1.4,Ensure noexec option set on /tmp partition,"
 The noexec mount option specifies that the filesystem cannot contain executable
 binaries.
 ","
@@ -736,8 +736,8 @@ Example:
 <device> /tmp <fstype> defaults,rw,nosuid,nodev,noexec,relatime 0 0
 Run the following command to remount /tmp with the configured options:
 # mount -o remount /tmp
-"
-"1.1.2.2.1","
+",True
+1.1.2.2.1,Ensure /dev/shm is a separate partition,"
 The /dev/shm directory is a world-writable directory that can function as shared
 memory that facilitates inter process communication (IPC).
 ","
@@ -746,8 +746,8 @@ modify /etc/fstab.
 Example:
 tmpfs /dev/shm tmpfs
 defaults,rw,nosuid,nodev,noexec,relatime,size=2G 0 0
-"
-"1.1.2.2.2","
+",True
+1.1.2.2.2,Ensure nodev option set on /dev/shm partition,"
 The nodev mount option specifies that the filesystem cannot contain special devices.
 ","
 - IF - a separate partition exists for /dev/shm.
@@ -759,8 +759,8 @@ Run the following command to remount /dev/shm with the configured options:
 # mount -o remount /dev/shm
 Note: It is recommended to use tmpfs as the device/filesystem type as /dev/shm is
 used as shared memory space by applications.
-"
-"1.1.2.2.3","
+",True
+1.1.2.2.3,Ensure nosuid option set on /dev/shm partition,"
 The nosuid mount option specifies that the filesystem cannot contain setuid files.
 ","
  IF - a separate partition exists for /dev/shm.
@@ -772,8 +772,8 @@ Run the following command to remount /dev/shm with the configured options:
 # mount -o remount /dev/shm
 Note: It is recommended to use tmpfs as the device/filesystem type as /dev/shm is
 used as shared memory space by applications.
-"
-"1.1.2.2.4","
+",True
+1.1.2.2.4,Ensure noexec option set on /dev/shm partition,"
 The noexec mount option specifies that the filesystem cannot contain executable
 binaries.
 ","
@@ -786,16 +786,16 @@ Run the following command to remount /dev/shm with the configured options:
 # mount -o remount /dev/shm
 Note: It is recommended to use tmpfs as the device/filesystem type as /dev/shm is
 used as shared memory space by applications.
-"
-"1.1.2.3.1","
+",True
+1.1.2.3.1,Ensure separate partition exists for /home,"
 The /home directory is used to support disk storage needs of local users.
 ","
 For new installations, during installation create a custom partition setup and specify a
 separate partition for /home.
 For systems that were previously installed, create a new partition and configure
 /etc/fstab as appropriate.
-"
-"1.1.2.3.2","
+",True
+1.1.2.3.2,Ensure nodev option set on /home partition,"
 The nodev mount option specifies that the filesystem cannot contain special devices.
 ","
 - IF - a separate partition exists for /home.
@@ -805,8 +805,8 @@ Example:
 <device> /home <fstype> defaults,rw,nosuid,nodev,noexec,relatime 0 0
 Run the following command to remount /home with the configured options:
 # mount -o remount /home
-"
-"1.1.2.3.3","
+",True
+1.1.2.3.3,Ensure nosuid option set on /home partition,"
 The nosuid mount option specifies that the filesystem cannot contain setuid files.
 ","
 - IF - a separate partition exists for /home.
@@ -816,8 +816,8 @@ Example:
 <device> /home <fstype> defaults,rw,nosuid,nodev,noexec,relatime 0 0
 Run the following command to remount /home with the configured options:
 # mount -o remount /home
-"
-"1.1.2.4.1","
+",True
+1.1.2.4.1,Ensure separate partition exists for /var,"
 The /var directory is used by daemons and other system services to temporarily store
 dynamic data. Some directories created by these processes may be world-writable.
 ","
@@ -825,8 +825,8 @@ For new installations, during installation create a custom partition setup and s
 separate partition for /var.
 For systems that were previously installed, create a new partition and configure
 /etc/fstab as appropriate.
-"
-"1.1.2.4.2","
+",True
+1.1.2.4.2,Ensure nodev option set on /var partition,"
 The nodev mount option specifies that the filesystem cannot contain special devices.
 ","
 - IF - a separate partition exists for /var.
@@ -836,8 +836,8 @@ Example:
 <device> /var <fstype> defaults,rw,nosuid,nodev,noexec,relatime 0 0
 Run the following command to remount /var with the configured options:
 # mount -o remount /var
-"
-"1.1.2.4.3","
+",True
+1.1.2.4.3,Ensure nosuid option set on /var partition,"
 The nosuid mount option specifies that the filesystem cannot contain setuid files
 ","
 - IF - a separate partition exists for /var.
@@ -847,8 +847,8 @@ Example:
 <device> /var <fstype> defaults,rw,nosuid,nodev,noexec,relatime 0 0
 Run the following command to remount /var with the configured options:
 # mount -o remount /var
-"
-"1.1.2.5.1","
+",True
+1.1.2.5.1,Ensure separate partition exists for /var/tmp,"
 The /var/tmp directory is a world-writable directory used for temporary storage by all
 users and some applications. Temporary files residing in /var/tmp are to be preserved
 between reboots.
@@ -857,8 +857,8 @@ For new installations, during installation create a custom partition setup and s
 separate partition for /var/tmp.
 For systems that were previously installed, create a new partition and configure
 /etc/fstab as appropriate.
-"
-"1.1.2.5.2","
+",True
+1.1.2.5.2,Ensure nodev option set on /var/tmp partition,"
 The nodev mount option specifies that the filesystem cannot contain special devices.
 ","
  IF - a separate partition exists for /var/tmp.
@@ -869,8 +869,8 @@ Example:
 0
 Run the following command to remount /var/tmp with the configured options:
 # mount -o remount /var/tmp
-"
-"1.1.2.5.3","
+",True
+1.1.2.5.3,Ensure nosuid option set on /var/tmp partition,"
 The nosuid mount option specifies that the filesystem cannot contain setuid files.
 ","
 - IF - a separate partition exists for /var/tmp.
@@ -881,8 +881,8 @@ Example:
 0
 Run the following command to remount /var/tmp with the configured options:
 # mount -o remount /var/tmp
-"
-"1.1.2.5.4","
+",True
+1.1.2.5.4,Ensure noexec option set on /var/tmp partition,"
 The noexec mount option specifies that the filesystem cannot contain executable
 binaries.
 ","
@@ -894,16 +894,16 @@ Example:
 0
 Run the following command to remount /var/tmp with the configured options:
 # mount -o remount /var/tmp
-"
-"1.1.2.6.1","
+",True
+1.1.2.6.1,Ensure separate partition exists for /var/log,"
 The /var/log directory is used by system services to store log data.
 ","
 For new installations, during installation create a custom partition setup and specify a
 separate partition for /var/log .
 For systems that were previously installed, create a new partition and configure
 /etc/fstab as appropriate.
-"
-"1.1.2.6.2","
+",True
+1.1.2.6.2,Ensure nodev option set on /var/log partition,"
 The nodev mount option specifies that the filesystem cannot contain special devices.
 ","
 - IF - a separate partition exists for /var/log.
@@ -914,8 +914,8 @@ Example:
 0
 Run the following command to remount /var/log with the configured options:
 # mount -o remount /var/log
-"
-"1.1.2.6.3","
+",True
+1.1.2.6.3,Ensure nosuid option set on /var/log partition,"
 The nosuid mount option specifies that the filesystem cannot contain setuid files.
 ","
 - IF - a separate partition exists for /var/log.
@@ -926,8 +926,8 @@ Example:
 0
 Run the following command to remount /var/log with the configured options:
 # mount -o remount /var/log
-"
-"1.1.2.6.4","
+",True
+1.1.2.6.4,Ensure noexec option set on /var/log partition,"
 The noexec mount option specifies that the filesystem cannot contain executable
 binaries.
 ","
@@ -939,16 +939,16 @@ Example:
 0
 Run the following command to remount /var/log with the configured options:
 # mount -o remount /var/log
-"
-"1.1.2.7.1","
+",True
+1.1.2.7.1,Ensure separate partition exists for /var/log/audit,"
 The auditing daemon, auditd, stores log data in the /var/log/audit directory.
 ","
 For new installations, during installation create a custom partition setup and specify a
 separate partition for /var/log/audit.
 For systems that were previously installed, create a new partition and configure
 /etc/fstab as appropriate.
-"
-"1.1.2.7.2","
+",True
+1.1.2.7.2,Ensure noexec option set on /var/log/audit partition,"
 The nodev mount option specifies that the filesystem cannot contain special devices.
 ","
 - IF - a separate partition exists for /var/log/audit.
@@ -959,8 +959,8 @@ Example:
 defaults,rw,nosuid,nodev,noexec,relatime 0 0
 Run the following command to remount /var/log/audit with the configured options:
 # mount -o remount /var/log/audit
-"
-"1.1.2.7.3","
+",True
+1.1.2.7.3,,"
 The nosuid mount option specifies that the filesystem cannot contain setuid files.
 ","
 - IF - a separate partition exists for /var/log/audit.
@@ -971,8 +971,8 @@ Example:
 defaults,rw,nosuid,nodev,noexec,relatime 0 0
 Run the following command to remount /var/log/audit with the configured options:
 # mount -o remount /var/log/audit
-"
-"1.1.2.7.4","
+",True
+1.1.2.7.4,,"
 The noexec mount option specifies that the filesystem cannot contain executable
 binaries.
 ","
@@ -984,14 +984,14 @@ Example:
 defaults,rw,nosuid,nodev,noexec,relatime 0 0
 Run the following command to remount /var/log/audit with the configured options:
 # mount -o remount /var/log/audit
-"
-"1.3.1.1","
+",True
+1.3.1.1,Ensure AppArmor is installed,"
 AppArmor provides Mandatory Access Controls.
 ","
 Install AppArmor.
 # apt install apparmor apparmor-utils
-"
-"1.3.1.2","
+",True
+1.3.1.2,Ensure AppArmor is enabled in the bootloader configuration,"
 Configure AppArmor to be enabled at boot time and verify that it has not been
 overwritten by the bootloader boot parameters.
 Note: This recommendation is designed around the grub bootloader, if LILO or another
@@ -1002,8 +1002,8 @@ parameters to the GRUB_CMDLINE_LINUX= line
 GRUB_CMDLINE_LINUX=""apparmor=1 security=apparmor""
 Run the following command to update the grub2 configuration:
 # update-grub
-"
-"1.3.1.3","
+",True
+1.3.1.3,Ensure all AppArmor profiles are in enforce or complain mode,"
 AppArmor profiles define what resources applications are able to access.
 ","
 Run the following command to set all profiles to enforce mode:
@@ -1013,16 +1013,16 @@ Run the following command to set all profiles to complain mode:
 # aa-complain /etc/apparmor.d/*
 Note: Any unconfined processes may need to have a profile created or activated for
 them and then be restarted.
-"
-"1.3.1.4","
+",True
+1.3.1.4,Ensure all AppArmor profiles are in enforce mode,"
 AppArmor profiles define what resources applications are able to access
 ","
 Run the following command to set all profiles to enforce mode:
 # aa-enforce /etc/apparmor.d/*
 Note: Any unconfined processes may need to have a profile created or activated for
 them and then be restarted
-"
-"1.4.1","
+",True
+1.4.1,Ensure bootloader password is set,"
 Setting the boot loader password will require that anyone rebooting the system must
 enter a password before being able to set command line boot parameters.
 ","
@@ -1050,8 +1050,8 @@ This recommendation is designed around the grub bootloader, if LILO or another
 bootloader is in use in your environment enact equivalent settings.
 Replace /boot/grub/grub.cfg with the appropriate grub configuration file for your
 environment.
-"
-"1.4.2","
+",True
+1.4.2,Ensure access to bootloader config is configured,"
 The grub configuration file contains information on boot settings and passwords for
 unlocking boot options.
 ","
@@ -1060,8 +1060,8 @@ Run the following commands to set permissions on your grub configuration:
 # chmod u-x,go-rwx /boot/grub/grub.cfg
 Default Value:
 Access: (0644/-rw-r--r--) Uid: ( 0/ root) Gid: ( 0/ root)
-"
-"1.5.1","
+",True
+1.5.1,Ensure address space layout randomization is enabled,"
 Address space layout randomization (ASLR) is an exploit mitigation technique which
 randomly arranges the address space of key data areas of a process.
 ","
@@ -1077,8 +1077,8 @@ Note: If these settings appear in a canonically later file, or later in the same
 settings will be overwritten
 Default Value:
 kernel.randomize_va_space = 2
-"
-"1.5.2","
+",True
+1.5.2,Ensure ptrace_scope is restricted,"
 The ptrace() system call provides a means by which one process (the ""tracer"") may
 observe and control the execution of another process (the ""tracee""), and examine and
 change the tracee's memory and registers.
@@ -1118,8 +1118,8 @@ setting will be overwritten
 Page 174
 Default Value:
 kernel.yama.ptrace_scope = 0
-"
-"1.5.3","
+",True
+1.5.3,Ensure core dumps are restricted,"
 A core dump is the memory of an executable program. It is generally used to determine
 why a program aborted. It can also be used to glean confidential information from a core
 file. The system provides the ability to set a soft limit for core dumps, but this can be
@@ -1143,8 +1143,8 @@ Storage=none
 ProcessSizeMax=0
 Run the command:
 systemctl daemon-reload
-"
-"1.5.4","
+",True
+1.5.4,Ensure prelink is not installed,"
 prelink is a program that modifies ELF shared libraries and ELF dynamically linked
 binaries in such a way that the time needed for the dynamic linker to perform relocations
 at startup significantly decreases.
@@ -1153,8 +1153,8 @@ Run the following command to restore binaries to normal:
 # prelink -ua
 Uninstall prelink using the appropriate package manager or manual installation:
 # apt purge prelink
-"
-"1.5.5","
+",True
+1.5.5,Ensure Automatic Error Reporting is not enabled,"
 The Apport Error Reporting Service automatically generates crash reports for
 debugging.
 ","
@@ -1168,8 +1168,8 @@ Run the following command to remove the apport package:
 # apt purge apport
 Default Value:
 enabled=1
-"
-"1.6.1","
+",True
+1.6.1,Ensure message of the day is configured properly,"
 The contents of the /etc/motd file are displayed to users after login and function as a
 message of the day for authenticated users.
 Unix-based systems have typically displayed information about the OS release and
@@ -1185,8 +1185,8 @@ remove any instances of \m , \r , \s , \v or references to the OS platform
 - IF - the motd is not used, this file can be removed.
 Run the following command to remove the motd file:
 # rm /etc/motd
-"
-"1.6.2","
+",True
+1.6.2,Ensure local login warning banner is configured properly,"
 The contents of the /etc/issue file are displayed to users prior to login for local
 terminals.
 Unix-based systems have typically displayed information about the OS release and
@@ -1201,8 +1201,8 @@ remove any instances of \m , \r , \s , \v or references to the OS platform
 Example:
 # echo ""Authorized users only. All activity may be monitored and reported."" >
 /etc/issue
-"
-"1.6.3","
+",True
+1.6.3,Ensure remote login warning banner is configured properly,"
 The contents of the /etc/issue.net file are displayed to users prior to login for remote
 connections from configured services.
 Unix-based systems have typically displayed information about the OS release and
@@ -1217,8 +1217,8 @@ remove any instances of \m , \r , \s , \v or references to the OS platform
 Example:
 # echo ""Authorized users only. All activity may be monitored and reported."" >
 /etc/issue.net
-"
-"1.6.4","
+",True
+1.6.4,Ensure access to /etc/motd is configured,"
 The contents of the /etc/motd file are displayed to users after login and function as a
 message of the day for authenticated users.
 ","
@@ -1228,8 +1228,8 @@ Run the following commands to set mode, owner, and group on /etc/motd:
 - OR -
 Run the following command to remove the /etc/motd file:
 # rm /etc/motd
-"
-"1.6.5","
+",True
+1.6.5,Ensure access to /etc/issue is configured,"
 The contents of the /etc/issue file are displayed to users prior to login for local
 terminals.
 ","
@@ -1238,8 +1238,8 @@ Run the following commands to set mode, owner, and group on /etc/issue:
 # chmod u-x,go-wx $(readlink -e /etc/issue)
 Default Value:
 Access: (0644/-rw-r--r--) Uid: ( 0/ root) Gid: ( 0/ root)
-"
-"1.6.6","
+",True
+1.6.6,Ensure access to /etc/issue.net is configured,"
 The contents of the /etc/issue.net file are displayed to users prior to login for remote
 connections from configured services.
 ","
@@ -1248,16 +1248,16 @@ Run the following commands to set mode, owner, and group on /etc/issue.net:
 # chmod u-x,go-wx $(readlink -e /etc/issue.net)
 Default Value:
 Access: (0644/-rw-r--r--) Uid: ( 0/ root) Gid: ( 0/ root)
-"
-"1.7.1","
+",True
+1.7.1,Ensure GDM login banner is configured,"
 The GNOME Display Manager (GDM) is a program that manages graphical display
 servers and handles graphical user logins.
 ","
 Run the following commands to uninstall gdm3 and remove unused dependencies:
 # apt purge gdm3
 # apt autoremove gdm3
-"
-"1.7.2","
+",True
+1.7.2,Ensure GDM login banner is configured,"
 GDM is the GNOME Display Manager which handles graphical login for GNOME based
 systems.
 ","
@@ -1293,8 +1293,8 @@ longer stretches of text and enters two column mode.
 • The banner message cannot be read from an external file.
 Default Value:
 disabled
-"
-"1.7.3","
+",True
+1.7.3,Ensure GDM disable-user-list option is enabled,"
 GDM is the GNOME Display Manager which handles graphical login for GNOME based
 systems.
 The disable-user-list option controls if a list of users is displayed on the login
@@ -1326,8 +1326,8 @@ Note: When the user profile is created or changed, the user will need to log out
 in again before the changes will be applied.
 Default Value:
 false
-"
-"1.7.4","
+",True
+1.7.4,Ensure GDM screen locks when the user is idle,"
 GNOME Desktop Manager can make the screen lock automatically whenever the user
 is idle for some amount of time.
 ","
@@ -1363,8 +1363,8 @@ Note: You must include the uint32 along with the integer key values as shown.
 4. Run the following command to update the system databases:
 # dconf update
 5. Users must log out and back in again before the system-wide settings take effect.
-"
-"1.7.5","
+",True
+1.7.5,Ensure GDM screen locks cannot be overridden,"
 GNOME Desktop Manager can lock down specific settings by using the lockdown mode
 in dconf to prevent users from changing specific settings.
 To lock down a dconf key or subpath, create a locks subdirectory in the keyfile directory.
@@ -1381,8 +1381,8 @@ keyfiles, you may add any number of files to this directory.
 Note:
 • A user profile must exist in order to apply locks.
 • Users must log out and back in again before the system-wide settings take effect.
-"
-"1.7.6","
+",True
+1.7.6,Ensure GDM automatic mounting of removable media is disabled,"
 By default GNOME automatically mounts removable media when inserted as a
 convenience to the user.
 ","
@@ -1404,8 +1404,8 @@ automount-open=false
 2. After creating the file, apply the changes using below command :
 # dconf update
 Note: Users must log out and back in again before the system-wide settings take effect.
-"
-"1.7.7","
+",True
+1.7.7,Ensure GDM disabling automatic mounting of removable media is not overridden,"
 By default GNOME automatically mounts removable media when inserted as a
 convenience to the user.
 By using the lockdown mode in dconf, you can prevent users from changing specific
@@ -1424,8 +1424,8 @@ automount-open=false
 Note:
 • A user profile must exist in order to apply locks.
 • Users must log out and back in again before the system-wide settings take effect.
-"
-"1.7.8","
+",True
+1.7.8,Ensure GDM autorun-never is enabled,"
 The autorun-never setting allows the GNOME Desktop Display Manager to disable
 autorun through GDM.
 ","
@@ -1447,8 +1447,8 @@ autorun-never=true
 Note: Users must log out and back in again before the system-wide settings take effect.
 Default Value:
 false
-"
-"1.7.9","
+",True
+1.7.9,Ensure GDM autorun-never is not overridden,"
 The autorun-never setting allows the GNOME Desktop Display Manager to disable
 autorun through GDM.
 By using the lockdown mode in dconf, you can prevent users from changing specific
@@ -1466,8 +1466,8 @@ autorun-never=true
 Note:
 • A user profile must exist in order to apply locks.
 • Users must log out and back in again before the system-wide settings take effect.
-"
-"1.7.10","
+",True
+1.7.10,Ensure XDMCP is not enabled,"
 X Display Manager Control Protocol (XDMCP) is designed to provide authenticated
 access to display management services for remote displays
 ","
@@ -1498,8 +1498,8 @@ Example file:
 #Enable=true
 Default Value:
 false (This is denoted by no Enabled= entry in the [xdmcp] block
-"
-"2.1.1","
+",True
+2.1.1,Ensure autofs services are not in use,"
 autofs allows automatic mounting of devices, typically including CD/DVDs and USB
 drives.
 ","
@@ -1512,8 +1512,8 @@ package:
 Run the following commands to stop and mask autofs.service:
 # systemctl stop autofs.service
 # systemctl mask autofs.service
-"
-"2.1.2","
+",True
+2.1.2,Ensure avahi daemon services are not in use,"
 Avahi is a free zeroconf implementation, including a system for multicast DNS/DNS-SD
 service discovery. Avahi allows programs to publish and discover services and hosts
 running on a local network with no specific configuration. For example, a user can plug
@@ -1530,8 +1530,8 @@ Run the following commands to stop and mask the avahi-daemon.socket and avahi-
 daemon.service:
 # systemctl stop avahi-daemon.socket avahi-daemon.service
 # systemctl mask avahi-daemon.socket avahi-daemon.service
-"
-"2.1.3","
+",True
+2.1.3,Ensure dhcp server services are not in use,"
 The Dynamic Host Configuration Protocol (DHCP) is a service that allows machines to
 be dynamically assigned IP addresses. There are two versions of the DHCP protocol
 DHCPv4 and DHCPv6. At startup the server may be started for one or the other via the -4
@@ -1547,8 +1547,8 @@ Run the following commands to stop and mask isc-dhcp-server.service and isc-
 dhcp-server6.service:
 # systemctl stop isc-dhcp-server.service isc-dhcp-server6.service
 # systemctl mask isc-dhcp-server isc-dhcp-server6.service
-"
-"2.1.4","
+",True
+2.1.4,Ensure dns server services are not in use,"
 The Domain Name System (DNS) is a hierarchical naming system that maps names to
 IP addresses for computers, services and other resources connected to a network.
 Note: bind9 is the package and bind.service is the alias for named.service.
@@ -1561,8 +1561,8 @@ Run the following commands to stop named.service and remove the bind9 package:
 Run the following commands to stop and mask bind9.service:
 # systemctl stop named.service
 # systemctl mask named.service
-"
-"2.1.5","
+",True
+2.1.5,Ensure dnsmasq services are not in use,"
 dnsmasq is a lightweight tool that provides DNS caching, DNS forwarding and DHCP
 (Dynamic Host Configuration Protocol) services.
 ","
@@ -1574,8 +1574,8 @@ Run the following commands to stop dnsmasq.service and remove dnsmasq package:
 Run the following commands to stop and mask the dnsmasq.service:
 # systemctl stop dnsmasq.service
 # systemctl mask dnsmasq.service
-"
-"2.1.6","
+",True
+2.1.6,Ensure ftp server services are not in use,"
 The File Transfer Protocol (FTP) provides networked computers with the ability to
 transfer files. vsftpd is the Very Secure File Transfer Protocol Daemon.
 ","
@@ -1591,8 +1591,8 @@ Run the following commands to stop and mask the vsftpd.service:
 Note: Other ftp server packages may exist. If not required and authorized by local site
 policy, they should also be removed. If the package is required for a dependency, the
 service should be stopped and masked.
-"
-"2.1.7","
+",True
+2.1.7,Ensure ldap server services are not in use,"
 The Lightweight Directory Access Protocol (LDAP) was introduced as a replacement for
 NIS/YP. It is a service that provides a method for looking up information from a central
 database.
@@ -1605,8 +1605,8 @@ Run the following commands to stop slapd.service and remove the slapd package:
 Run the following commands to stop and mask slapd.service:
 # systemctl stop slapd.service
 # systemctl mask slapd.service
-"
-"2.1.8","
+",True
+2.1.8,,"
 dovecot-imapd and dovecot-pop3d are an open source IMAP and POP3 server for
 Linux based systems.
 ","
@@ -1621,8 +1621,8 @@ Run the following commands to stop and mask dovecot.socket and
 dovecot.service:
 # systemctl stop dovecot.socket dovecot.service
 # systemctl mask dovecot.socket dovecot.service
-"
-"2.1.9","
+",True
+2.1.9,Ensure network file system services are not in use,"
 The Network File System (NFS) is one of the first and most widely distributed file
 systems in the UNIX environment. It provides the ability for systems to mount file
 systems of other servers through the network.
@@ -1636,8 +1636,8 @@ server package:
 Run the following commands to stop and mask the nfs-server.service:
 # systemctl stop nfs-server.service
 # systemctl mask nfs-server.service
-"
-"2.1.10","
+",True
+2.1.10,Ensure nis server services are not in use,"
 The Network Information Service (NIS) (formally known as Yellow Pages) is a client-
 server directory service protocol for distributing system configuration files. The NIS
 server is a collection of programs that allow for the distribution of configuration files. The
@@ -1652,8 +1652,8 @@ Run the following commands to stop ypserv.service and remove ypserv package:
 Run the following commands to stop and mask ypserv.service:
 # systemctl stop ypserv.service
 # systemctl mask ypserv.service
-"
-"2.1.11","
+",True
+2.1.11,Ensure print server services are not in use,"
 The Common Unix Print System (CUPS) provides the ability to print to both local and
 network printers. A system running CUPS can also accept print jobs from remote
 systems and print them to local printers. It also provides a web based remote
@@ -1668,8 +1668,8 @@ cups package:
 Run the following commands to stop and mask the cups.socket and cups.service:
 # systemctl stop cups.socket cups.service
 # systemctl mask cups.socket cups.service
-"
-"2.1.12","
+",True
+2.1.12,Ensure rpcbind services are not in use,"
 The rpcbind utility maps RPC services to the ports on which they listen. RPC
 processes notify rpcbind when they start, registering the ports they are listening on and
 the RPC program numbers they expect to serve. The client system then contacts
@@ -1691,8 +1691,8 @@ Run the following commands to stop and mask the rpcbind.socket and
 rpcbind.service:
 # systemctl stop rpcbind.socket rpcbind.service
 # systemctl mask rpcbind.socket rpcbind.service
-"
-"2.1.13","
+",True
+2.1.13,Ensure rsync services are not in use,"
 The rsync service can be used to synchronize files between systems over network
 links.
 ","
@@ -1704,8 +1704,8 @@ Run the following commands to stop rsync.service, and remove the rsync package:
 Run the following commands to stop and mask rsync.service:
 # systemctl stop rsync.service
 # systemctl mask rsync.service
-"
-"2.1.14","
+",True
+2.1.14,,"
 The Samba daemon allows system administrators to configure their Linux systems to
 share file systems and directories with Windows desktops. Samba will advertise the file
 systems and directories via the Server Message Block (SMB) protocol. Windows
@@ -1720,8 +1720,8 @@ Run the following commands to stop smbd.service and remove samba package:
 Run the following commands to stop and mask the smbd.service:
 # systemctl stop smbd.service
 # systemctl mask smbd.service
-"
-"2.1.15","
+",True
+2.1.15,Ensure snmp services are not in use,"
 Simple Network Management Protocol (SNMP) is a widely used protocol for monitoring
 the health and welfare of network equipment, computer equipment and devices like
 UPSs.
@@ -1740,8 +1740,8 @@ Run the following commands to stop snmpd.service and remove the snmpd package:
 Run the following commands to stop and mask the snmpd.service:
 # systemctl stop snmpd.service
 # systemctl mask snmpd.service
-"
-"2.1.16","
+",True
+2.1.16,Ensure tftp server services are not in use,"
 Trivial File Transfer Protocol (TFTP) is a simple protocol for exchanging files between
 two TCP/IP machines. TFTP servers allow connections from a TFTP Client for sending
 and receiving files.
@@ -1755,8 +1755,8 @@ package:
 Run the following commands to stop and mask tftpd-hpa.service:
 # systemctl stop tftpd-hpa.service
 # systemctl mask tftpd-hpa.service
-"
-"2.1.17","
+",True
+2.1.17,Ensure web proxy server services are not in use,"
 Squid is a standard proxy server used in many distributions and environments.
 ","
 Run the following commands to stop squid.service and remove the squid package:
@@ -1766,8 +1766,8 @@ Run the following commands to stop squid.service and remove the squid package:
 Run the following commands to stop and mask the squid.service:
 # systemctl stop squid.service
 # systemctl mask squid.service
-"
-"2.1.18","
+",True
+2.1.18,Ensure web server services are not in use,"
 Web servers provide the ability to host web site content.
 ","
 Run the following commands to stop httpd.socket, httpd.service, and
@@ -1783,8 +1783,8 @@ and nginx.service:
 Note: Other web server packages may exist. If not required and authorized by local site
 policy, they should also be removed. If the package is required for a dependency, the
 service and socket should be stopped and masked.
-"
-"2.1.19","
+",True
+2.1.19,Ensure xinetd services are not in use,"
 The eXtended InterNET Daemon (xinetd) is an open source super daemon that
 replaced the original inetd daemon. The xinetd daemon listens for well known
 services and dispatches the appropriate daemon to properly respond to service
@@ -1799,8 +1799,8 @@ package:
 Run the following commands to stop and mask the xinetd.service:
 # systemctl stop xinetd.service
 # systemctl mask xinetd.service
-"
-"2.1.20","
+",True
+2.1.20,Ensure X window server services are not in use,"
 The X Window System provides a Graphical User Interface (GUI) where users can have
 multiple windows in which to run programs and various add on. The X Windows system
 is typically used on workstations where users login, but not on servers where users
@@ -1810,8 +1810,8 @@ typically do not login.
 by local site policy:
 Run the following command to remove the X Windows Server package:
 # apt purge xserver-common
-"
-"2.1.21","
+",True
+2.1.21,Ensure mail transfer agent is configured for local-only mode,"
 Mail Transfer Agents (MTA), such as sendmail and Postfix, are used to listen for
 incoming mail and transfer the messages to the appropriate user or mail server. If the
 system is not intended to be a mail server, it is recommended that the MTA be
@@ -1822,8 +1822,8 @@ section. If the line already exists, change it to look like the line below:
 inet_interfaces = loopback-only
 Run the following command to restart postfix:
 # systemctl restart postfix
-"
-"2.2.1","
+",True
+2.2.1,Ensure NIS Client is not installed,"
 The Network Information Service (NIS), formerly known as Yellow Pages, is a client-
 server directory service protocol used to distribute system configuration files. The NIS
 client was used to bind a machine to an NIS server and receive the distributed
@@ -1831,38 +1831,38 @@ configuration files.
 ","
 Uninstall nis:
 # apt purge nis
-"
-"2.2.2","
+",True
+2.2.2,Ensure rsh client is not installed,"
 The rsh-client package contains the client commands for the rsh services.
 ","
 Uninstall rsh:
 # apt purge rsh-client
-"
-"2.2.3","
+",True
+2.2.3,Ensure talk client is not installed,"
 The talk software makes it possible for users to send and receive messages across
 systems through a terminal session. The talk client, which allows initialization of talk
 sessions, is installed by default.
 ","
 Uninstall talk:
 # apt purge talk
-"
-"2.2.4","
+",True
+2.2.4,Ensure telnet client is not installed,"
 The inetutils-telnet package contains the telnet client, which allows users to start
 connections to other systems via the telnet protocol.
 ","
 Run the following commands to uninstall telnet & inetutils-telnet:
 # apt purge telnet
 # apt purge inetutils-telnet
-"
-"2.2.5","
+",True
+2.2.5,Ensure ldap client is not installed,"
 The Lightweight Directory Access Protocol (LDAP) was introduced as a replacement for
 NIS/YP. It is a service that provides a method for looking up information from a central
 database.
 ","
 Uninstall ldap-utils:
 # apt purge ldap-utils
-"
-"2.2.6","
+",True
+2.2.6,Ensure ftp client is not installed,"
 tnftp an enhanced FTP client, is the user interface to the Internet standard File
 Transfer Protocol. The program allows a user to transfer files to and from a remote
 network site.
@@ -1870,8 +1870,8 @@ network site.
 Run the following commands to uninstall tnftp & ftp:
 # apt purge ftp
 # apt purge tnftp
-"
-"2.3.1.1","
+",True
+2.3.1.1,Ensure a single time synchronization daemon is in use,"
 System time should be synchronized between all systems in an environment. This is
 typically done by establishing an authoritative time server or set of servers and having
 all systems synchronize their clocks to them.
@@ -1906,8 +1906,8 @@ Run the following command to remove the chrony package:
 Note:
 • Subsection: Configure systemd-timesyncd should be followed
 • Subsection: Configure chrony should be skipped
-"
-"2.3.2.1","
+",True
+2.3.2.1,Ensure systemd-timesyncd configured with authorized timeserver,"
 NTP=
 • A space-separated list of NTP server host names or IP addresses. During
 runtime this list is combined with any per-interface NTP servers acquired from
@@ -1955,8 +1955,8 @@ Run to following command to update the parameters in the service:
 Default Value:
 #NTP=
 #FallbackNTP=
-"
-"2.3.2.2","
+",True
+2.3.2.2,Ensure systemd-timesyncd is enabled and running,"
 systemd-timesyncd is a daemon that has been added for synchronizing the system
 clock across the network.
 ","
@@ -1969,8 +1969,8 @@ Run the following command to enable and start systemd-timesyncd.service:
 If another time synchronization service is in use on the system, run the following
 command to stop and mask systemd-timesyncd:
 # systemctl --now mask systemd-timesyncd.service
-"
-"2.3.3.1","
+",True
+2.3.3.1,Ensure chrony is configured with authorized timeserver,"
 • server
 o The server directive specifies an NTP server which can be used as a time
 source. The client-server relationship is strictly hierarchical: a client might
@@ -2015,8 +2015,8 @@ chronyc reload sources &>/dev/null
 }
 Run the following command to reload the chronyd config:
 # systemctl reload-or-restart chronyd
-"
-"2.3.3.2","
+",True
+2.3.3.2,Ensure chrony is running as user _chrony,"
 The chrony package is installed with a dedicated user account _chrony. This account
 is granted the access required by the chronyd service.
 ","
@@ -2030,8 +2030,8 @@ command to remove chrony from the system:
 # apt autoremove chrony
 Default Value:
 user _chrony
-"
-"2.3.3.3","
+",True
+2.3.3.3,Ensure chrony is enabled and running,"
 chrony is a daemon for synchronizing the system clock across the network
 ","
 - IF - chrony is in use on the system, run the following commands:
@@ -2044,8 +2044,8 @@ If another time synchronization service is in use on the system, run the followi
 command to remove chrony:
 # apt purge chrony
 # apt autoremove chrony
-"
-"2.4.1.1","
+",True
+2.4.1.1,Ensure cron daemon is enabled and active,"
 The cron daemon is used to execute batch jobs on the system.
 ","
 - IF - cron is installed on the system:
@@ -2054,8 +2054,8 @@ Run the following commands to unmask, enable, and start cron:
 '$1~/^crond?\.service/{print $1}')""
 # systemctl --now enable ""$(systemctl list-unit-files | awk
 '$1~/^crond?\.service/{print $1}')""
-"
-"2.4.1.2","
+",True
+2.4.1.2,Ensure permissions on /etc/crontab are configured,"
 The /etc/crontab file is used by cron to control its own jobs. The commands in this
 item make sure that root is the user and group owner of the file and that only the owner
 can access the file.
@@ -2066,8 +2066,8 @@ Run the following commands to set ownership and permissions on /etc/crontab:
 # chmod og-rwx /etc/crontab
 Default Value:
 Access: (644/-rw-r--r--) Uid: ( 0/ root) Gid: ( 0/ root)
-"
-"2.4.1.3","
+",True
+2.4.1.3,Ensure permissions on /etc/cron.hourly are configured,"
 This directory contains system cron jobs that need to run on an hourly basis. The files
 in this directory cannot be manipulated by the crontab command, but are instead
 edited by system administrators using a text editor. The commands below restrict
@@ -2081,8 +2081,8 @@ Run the following commands to set ownership and permissions on the
 # chmod og-rwx /etc/cron.hourly/
 Default Value:
 Access: (755/drwxr-xr-x) Uid: ( 0/ root) Gid: ( 0/ root)
-"
-"2.4.1.4","
+",True
+2.4.1.4,Ensure permissions on /etc/cron.daily are configured,"
 The /etc/cron.daily directory contains system cron jobs that need to run on a daily
 basis. The files in this directory cannot be manipulated by the crontab command, but
 are instead edited by system administrators using a text editor. The commands below
@@ -2096,8 +2096,8 @@ Run the following commands to set ownership and permissions on the
 # chmod og-rwx /etc/cron.daily/
 Default Value:
 Access: (755/drwxr-xr-x) Uid: ( 0/ root) Gid: ( 0/ root)
-"
-"2.4.1.5","
+",True
+2.4.1.5,Ensure permissions on /etc/cron.weekly are configured,"
 The /etc/cron.weekly directory contains system cron jobs that need to run on a
 weekly basis. The files in this directory cannot be manipulated by the crontab
 command but are instead edited by system administrators using a text editor. The
@@ -2111,8 +2111,8 @@ Run the following commands to set ownership and permissions on the
 # chmod og-rwx /etc/cron.weekly/
 Default Value:
 Access: (755/drwxr-xr-x) Uid: ( 0/ root) Gid: ( 0/ root)
-"
-"2.4.1.6","
+",True
+2.4.1.6,Ensure permissions on /etc/cron.monthly are configured,"
 The /etc/cron.monthly directory contains system cron jobs that need to run on a
 monthly basis. The files in this directory cannot be manipulated by the crontab
 command but are instead edited by system administrators using a text editor. The
@@ -2126,8 +2126,8 @@ Run the following commands to set ownership and permissions on the
 # chmod og-rwx /etc/cron.monthly/
 Default Value:
 Access: (755/drwxr-xr-x) Uid: ( 0/ root) Gid: ( 0/ root)
-"
-"2.4.1.7","
+",True
+2.4.1.7,Ensure permissions on /etc/cron.d are configured,"
 The /etc/cron.d directory contains system cron jobs that need to run in a similar
 manner to the hourly, daily weekly and monthly jobs from /etc/crontab, but require
 more granular control as to when they run. The files in this directory cannot be
@@ -2142,8 +2142,8 @@ directory:
 # chmod og-rwx /etc/cron.d/
 Default Value:
 Access: (755/drwxr-xr-x) Uid: ( 0/ root) Gid: ( 0/ root)
-"
-"2.4.1.8","
+",True
+2.4.1.8,Ensure crontab is restricted to authorized users,"
 crontab is the program used to install, deinstall, or list the tables used to drive the cron
 daemon. Each user can have their own crontab, and though these are files in
 /var/spool/cron/crontabs, they are not intended to be edited directly.
@@ -2211,8 +2211,8 @@ crontab is not set as the owner of cron.allow, then cron will deny access to all
 and you will see an error similar to:
 You (<USERNAME>) are not allowed to use this program (crontab)
 See crontab(1) for more information
-"
-"2.4.2.1","
+",True
+2.4.2.1,,"
 at allows fairly complex time specifications, extending the POSIX.2 standard. It accepts
 times of the form HH:MM to run a job at a specific time of day. (If that time is already
 past, the next day is assumed.) You may also specify midnight, noon, or teatime (4pm)
@@ -2254,8 +2254,8 @@ chmod u-x,g-wx,o-rwx /etc/at.allow
 [ -e ""/etc/at.deny"" ] && chown root:""$l_group"" /etc/at.deny
 [ -e ""/etc/at.deny"" ] && chmod u-x,g-wx,o-rwx /etc/at.deny
 }
-"
-"3.1.1","
+",True
+3.1.1,,"
 Internet Protocol Version 6 (IPv6) is the most recent version of Internet Protocol (IP). It's
 designed to supply IP addressing and additional security to support the predicted
 growth of connected devices. IPv6 is based on 128-bit addressing and can support 340
@@ -2270,8 +2270,8 @@ Features of IPv6
 Enable or disable IPv6 in accordance with system requirements and local site policy
 Default Value:
 IPv6 is enabled
-"
-"3.1.2","
+",True
+3.1.2,Ensure bluetooth services are not in use,"
 Wireless networking is used when wired networks are unavailable.
 ","
 Run the following script to disable any wireless interfaces:
@@ -2303,8 +2303,8 @@ module_fix
 done
 fi
 }
-"
-"3.1.3","
+",True
+3.1.3,,"
 Bluetooth is a short-range wireless technology standard that is used for exchanging
 data between devices over short distances. It employs UHF radio waves in the ISM
 bands, from 2.402 GHz to 2.48 GHz. It is mainly used as an alternative to wire
@@ -2320,8 +2320,8 @@ Run the following commands to stop and mask bluetooth.service:
 # systemctl stop bluetooth.service
 # systemctl mask bluetooth.service
 Note: A reboot may be required
-"
-"3.2.1","
+",True
+3.2.1,Ensure dccp kernel module is not available,"
 The Datagram Congestion Control Protocol (DCCP) is a transport layer protocol that
 supports streaming media and telephony. DCCP provides a way to gain access to
 congestion control, without having to do it at the application layer, but does not provide
@@ -2388,8 +2388,8 @@ printf '%s\n' """" "" - No changes needed""
 printf '%s\n' """" "" - remediation of kernel module: \""$l_mod_name\""
 complete"" """"
 }
-"
-"3.2.2","
+",True
+3.2.2,Ensure tipc kernel module is not available,"
 The Transparent Inter-Process Communication (TIPC) protocol is designed to provide
 communication between cluster nodes.
 ","
@@ -2454,8 +2454,8 @@ printf '%s\n' """" "" - No changes needed""
 printf '%s\n' """" "" - remediation of kernel module: \""$l_mod_name\""
 complete"" """"
 }
-"
-"3.2.3","
+",True
+3.2.3,Ensure rds kernel module is not available,"
 The Reliable Datagram Sockets (RDS) protocol is a transport layer protocol designed to
 provide low-latency, high-bandwidth communications between cluster nodes. It was
 developed by the Oracle Corporation.
@@ -2521,8 +2521,8 @@ printf '%s\n' """" "" - No changes needed""
 printf '%s\n' """" "" - remediation of kernel module: \""$l_mod_name\""
 complete"" """"
 }
-"
-"3.2.4","
+",True
+3.2.4,Ensure sctp kernel module is not available,"
 The Stream Control Transmission Protocol (SCTP) is a transport layer protocol used to
 support message oriented communication, with several streams of messages in one
 connection. It serves a similar function as TCP and UDP, incorporating features of both.
@@ -2590,8 +2590,8 @@ printf '%s\n' """" "" - No changes needed""
 printf '%s\n' """" "" - remediation of kernel module: \""$l_mod_name\""
 complete"" """"
 }
-"
-"3.3.1","
+",True
+3.3.1,Ensure ip forwarding is disabled,"
 The net.ipv4.ip_forward and net.ipv6.conf.all.forwarding flags are used to
 tell the system whether it can forward packets or not.
 ","
@@ -2625,8 +2625,8 @@ settings will be overwritten
 Default Value:
 net.ipv4.ip_forward = 0
 net.ipv6.conf.all.forwarding = 0
-"
-"3.3.2","
+",True
+3.3.2,Ensure packet redirect sending is disabled,"
 ICMP Redirects are used to send routing information to other hosts. As a host itself
 does not act as a router (in a host only configuration), there is no need to send
 redirects.
@@ -2651,8 +2651,8 @@ settings will be overwritten
 Default Value:
 net.ipv4.conf.all.send_redirects = 1
 net.ipv4.conf.default.send_redirects = 1
-"
-"3.3.3","
+",True
+3.3.3,Ensure bogus icmp responses are ignored,"
 Setting net.ipv4.icmp_ignore_bogus_error_responses to 1 prevents the kernel
 from logging bogus responses (RFC-1122 non-compliant) from broadcast reframes,
 keeping file systems from filling up with useless log messages.
@@ -2673,8 +2673,8 @@ Note: If these settings appear in a canonically later file, or later in the same
 settings will be overwritten
 Default Value:
 net.ipv4.icmp_ignore_bogus_error_responses = 1
-"
-"3.3.4","
+",True
+3.3.4,Ensure broadcast icmp requests are ignored,"
 Setting net.ipv4.icmp_echo_ignore_broadcasts to 1 will cause the system to
 ignore all ICMP echo and timestamp requests to broadcast and multicast addresses.
 ","
@@ -2694,8 +2694,8 @@ Note: If these settings appear in a canonically later file, or later in the same
 settings will be overwritten
 Default Value:
 net.ipv4.icmp_echo_ignore_broadcasts = 1
-"
-"3.3.5","
+",True
+3.3.5,Ensure icmp redirects are not accepted,"
 ICMP redirect messages are packets that convey routing information and tell your host
 (acting as a router) to send packets via an alternate path. It is a way of allowing an
 outside routing device to update your system routing tables.
@@ -2739,8 +2739,8 @@ net.ipv4.conf.all.accept_redirects = 1
 net.ipv4.conf.default.accept_redirects = 1
 net.ipv6.conf.all.accept_redirects = 1
 net.ipv6.conf.default.accept_redirects = 1
-"
-"3.3.6","
+",True
+3.3.6,Ensure secure icmp redirects are not accepted,"
 Secure ICMP redirects are the same as ICMP redirects, except they come from
 gateways listed on the default gateway list. It is assumed that these gateways are
 known to your system, and that they are likely to be secure.
@@ -2765,8 +2765,8 @@ settings will be overwritten
 Default Value:
 net.ipv4.conf.all.secure_redirects = 1
 net.ipv4.conf.default.secure_redirects = 1
-"
-"3.3.7","
+",True
+3.3.7,Ensure reverse path filtering is enabled,"
 Setting net.ipv4.conf.all.rp_filter and net.ipv4.conf.default.rp_filter to
 1 forces the Linux kernel to utilize reverse path filtering on a received packet to
 determine if the packet was valid. Essentially, with reverse path filtering, if the return
@@ -2792,8 +2792,8 @@ settings will be overwritten
 Default Value:
 net.ipv4.conf.all.rp_filter = 2
 net.ipv4.conf.default.rp_filter = 1
-"
-"3.3.8","
+",True
+3.3.8,Ensure source routed packets are not accepted,"
 In networking, source routing allows a sender to partially or fully specify the route
 packets take through a network. In contrast, non-source routed packets travel a path
 determined by routers in the network. In some cases, systems may not be routable or
@@ -2839,8 +2839,8 @@ net.ipv4.conf.all.accept_source_route = 0
 net.ipv4.conf.default.accept_source_route = 0
 net.ipv6.conf.all.accept_source_route = 0
 net.ipv6.conf.default.accept_source_route = 0
-"
-"3.3.9","
+",True
+3.3.9,Ensure suspicious packets are logged,"
 When enabled, this feature logs packets with un-routable source addresses to the
 kernel log.
 ","
@@ -2864,8 +2864,8 @@ settings will be overwritten
 Default Value:
 net.ipv4.conf.all.log_martians = 0
 net.ipv4.conf.default.log_martians = 0
-"
-"3.3.10","
+",True
+3.3.10,Ensure tcp syn cookies is enabled,"
 When tcp_syncookies is set, the kernel will handle TCP SYN packets normally until
 the half-open connection queue is full, at which time, the SYN cookie functionality kicks
 in. SYN cookies work by not using the SYN queue at all. Instead, the kernel simply
@@ -2892,8 +2892,8 @@ Note: If these settings appear in a canonically later file, or later in the same
 settings will be overwritten
 Default Value:
 net.ipv4.tcp_syncookies = 1
-"
-"3.3.11","
+",True
+3.3.11,Ensure ipv6 router advertisements are not accepted,"
 Routers periodically multicast Router Advertisement messages to announce their
 availability and convey information to neighboring nodes that enable them to be
 automatically configured on the network.
@@ -2920,8 +2920,8 @@ settings will be overwritten
 Default Value:
 net.ipv6.conf.all.accept_ra = 1
 net.ipv6.conf.default.accept_ra = 1
-"
-"4.1.1","
+",True
+4.1.1,Ensure a single firewall configuration utility is in use,"
 In Linux security, employing a single, effective firewall configuration utility ensures that
 only legitimate traffic gets processed, reducing the system’s exposure to potential
 threats. The choice between ufw, nftables, and iptables depends on organizational
@@ -2940,22 +2940,22 @@ used, it contains a script to
 simplify this process.
 3. Return to this recommendation to ensure a single firewall configuration utility is in
 use
-"
-"4.2.1","
+",True
+4.2.1,Ensure ufw is installed,"
 The Uncomplicated Firewall (ufw) is a frontend for iptables and is particularly well-suited
 for host-based firewalls. ufw provides a framework for managing netfilter, as well as a
 command-line interface for manipulating the firewall
 ","
 Run the following command to install Uncomplicated Firewall (UFW):
 # apt install ufw
-"
-"4.2.2","
+",True
+4.2.2,Ensure iptables-persistent is not installed with ufw,"
 The iptables-persistent is a boot-time loader for netfilter rules, iptables plugin.
 ","
 Run the following command to remove the iptables-persistent package:
 # apt purge iptables-persistent
-"
-"4.2.3","
+",True
+4.2.3,Ensure ufw service is enabled,"
 UncomplicatedFirewall (ufw) is a frontend for iptables. ufw provides a framework for
 managing netfilter, as well as a command-line and available graphical user interface for
 manipulating the firewall.
@@ -2979,8 +2979,8 @@ Run the following command to enable and start the ufw daemon:
 active
 Run the following command to enable ufw:
 # ufw enable
-"
-"4.2.4","
+",True
+4.2.4,Ensure ufw loopback traffic is configured,"
 Configure the loopback interface to accept traffic. Configure all other interfaces to deny
 traffic to the loopback network (127.0.0.0/8 for IPv4 and ::1/128 for IPv6).
 ","
@@ -2991,8 +2991,8 @@ Run the following commands to configure all other interfaces to deny traffic to 
 loopback network:
 # ufw deny in from 127.0.0.0/8
 # ufw deny in from ::1
-"
-"4.2.5","
+",True
+4.2.5,,"
 Configure the firewall rules for new outbound connections.
 Note:
 • Changing firewall settings while connected over network can result in being
@@ -3003,8 +3003,8 @@ of associated established connections, so no rules for the latter kind are requi
 Configure ufw in accordance with site policy. The following commands will implement a
 policy to allow all outbound connections on all interfaces:
 # ufw allow out on all
-"
-"4.2.6","
+",True
+4.2.6,Ensure ufw firewall rules exist for all open ports,"
 Services and ports can be accepted or explicitly rejected.
 ","
 For each port identified in the audit which does not have a firewall rule, evaluate the
@@ -3017,8 +3017,8 @@ Note: Examples create rules for from any, to any. More specific rules should be
 concentered when allowing inbound traffic e.g only traffic from this network.
 Example to allow traffic on port 443 using the tcp protocol from the 192.168.1.0 network:
 ufw allow from 192.168.1.0/24 to any proto tcp port 443
-"
-"4.2.7","
+",True
+4.2.7,Ensure ufw default deny firewall policy,"
 A default deny policy on connections ensures that any unconfigured network usage will
 be rejected.
 Note: Any port or protocol without a explicit allow before the default deny will be
@@ -3028,8 +3028,8 @@ Run the following commands to implement a default deny policy:
 # ufw default deny incoming
 # ufw default deny outgoing
 # ufw default deny routed
-"
-"4.3.1","
+",True
+4.3.1,Ensure nftables is installed,"
 nftables provides a new in-kernel packet classification framework that is based on a
 network-specific Virtual Machine (VM) and a new nft userspace command line tool.
 nftables reuses the existing Netfilter subsystems such as the existing hook
@@ -3038,8 +3038,8 @@ subsystem.
 ","
 Run the following command to install nftables:
 # apt install nftables
-"
-"4.3.2","
+",True
+4.3.2,Ensure ufw is uninstalled or disabled with nftables,"
 Uncomplicated Firewall (UFW) is a program for managing a netfilter firewall designed to
 be easy to use.
 ","
@@ -3053,8 +3053,8 @@ Run the following commands to disable ufw and mask ufw.service:
 # systemctl mask ufw.service
 Note: ufw disable needs to be run before systemctl mask ufw.service in order to
 correctly disable UFW
-"
-"4.3.3","
+",True
+4.3.3,Ensure iptables are flushed with nftables,"
 nftables is a replacement for iptables, ip6tables, ebtables and arptables.
 ","
 Run the following commands to flush iptables:
@@ -3062,8 +3062,8 @@ For iptables:
 # iptables -F
 For ip6tables:
 # ip6tables -F
-"
-"4.3.4","
+",True
+4.3.4,Ensure a nftables table exists,"
 Tables hold chains. Each table only has one address family and only applies to packets
 of this family. Tables can have one of five families.
 ","
@@ -3071,8 +3071,8 @@ Run the following command to create a table in nftables
 # nft create table inet <table name>
 Example:
 # nft create table inet filter
-"
-"4.3.5","
+",True
+4.3.5,Ensure nftables base chains exist,"
 Chains are containers for rules. They exist in two kinds, base chains and regular chains.
 A base chain is an entry point for packets from the networking stack, a regular chain
 may be used as jump target and is used for better rule organization.
@@ -3086,8 +3086,23 @@ Example:
 \; }
 # nft create chain inet filter output { type filter hook output priority 0 \;
 }
-"
-"4.3.6","
+",True
+4.3.5,Ensure nftables base chains exist,"
+Chains are containers for rules. They exist in two kinds, base chains and regular chains.
+A base chain is an entry point for packets from the networking stack, a regular chain
+may be used as jump target and is used for better rule organization.
+","
+Run the following command to create the base chains:
+# nft create chain inet <table name> <base chain name> { type filter hook
+<(input|forward|output)> priority 0 \; }
+Example:
+# nft create chain inet filter input { type filter hook input priority 0 \; }
+# nft create chain inet filter forward { type filter hook forward priority 0
+\; }
+# nft create chain inet filter output { type filter hook output priority 0 \;
+}
+",True
+4.3.6,Ensure nftables loopback traffic is configured,"
 Configure the loopback interface to accept traffic. Configure all other interfaces to deny
 traffic to the loopback network
 ","
@@ -3097,8 +3112,8 @@ Run the following commands to implement the loopback rules:
 - IF - IPv6 is enabled on the system:
 Run the following command to implement the IPv6 loopback rule:
 # nft add rule inet filter input ip6 saddr ::1 counter drop
-"
-"4.3.7","
+",True
+4.3.7,,"
 Configure the firewall rules for new outbound, and established connections
 ","
 Configure nftables in accordance with site policy. The following commands will
@@ -3109,8 +3124,8 @@ implement a policy to allow all outbound connections and all established connect
 new,related,established accept
 # nft add rule inet filter output ip protocol udp ct state
 new,related,established accept
-"
-"4.3.8","
+",True
+4.3.8,Ensure nftables default deny firewall policy,"
 Base chain policy is the default verdict that will be applied to packets reaching the end
 of the chain.
 ","
@@ -3123,15 +3138,15 @@ Example:
 # nft chain inet filter output { policy drop \; }
 Default Value:
 accept
-"
-"4.3.9","
+",True
+4.3.9,Ensure nftables service is enabled,"
 The nftables service allows for the loading of nftables rulesets during boot, or starting on
 the nftables service
 ","
 Run the following command to enable the nftables service:
 # systemctl enable nftables
-"
-"4.3.10","
+",True
+4.3.10,,"
 nftables is a subsystem of the Linux kernel providing filtering and classification of
 network packets/datagrams/frames.
 The nftables service reads the /etc/nftables.conf file for a nftables file or files to
@@ -3149,8 +3164,8 @@ Example:
 # vi /etc/nftables.conf
 Add the line:
 include ""/etc/nftables.rules""
-"
-"4.4.1.1","
+",True
+4.4.1.1,Ensure iptables packages are installed,"
 iptables is a utility program that allows a system administrator to configure the tables
 provided by the Linux kernel firewall, implemented as different Netfilter modules, and
 the chains and rules it stores. Different kernel modules and programs are used for
@@ -3159,8 +3174,8 @@ ebtables to Ethernet frames.
 ","
 Run the following command to install iptables and iptables-persistent
 # apt install iptables iptables-persistent
-"
-"4.4.1.2","
+",True
+4.4.1.2,Ensure nftables is not in use with iptables,"
 nftables is a subsystem of the Linux kernel providing filtering and classification of
 network packets/datagrams/frames and is the successor to iptables.
 ","
@@ -3170,8 +3185,8 @@ Run the following command to remove nftables:
 Run the following commands to stop and mask nftables.service:
 # systemctl stop nftables.service
 # systemctl mask nftables.service
-"
-"4.4.1.3","
+",True
+4.4.1.3,Ensure ufw is not in use with iptables,"
 Uncomplicated Firewall (UFW) is a program for managing a netfilter firewall designed to
 be easy to use.
 • Uses a command-line interface consisting of a small number of simple
@@ -3187,8 +3202,8 @@ Run the following commands to disable ufw, and stop and mask ufw.service:
 # systemctl mask ufw.service
 Note: ufw disable needs to be run before systemctl mask ufw.service in order to
 correctly disable UFW
-"
-"4.4.2.1","
+",True
+4.4.2.1,Ensure iptables default deny firewall policy,"
 A default deny all policy on connections ensures that any unconfigured network usage
 will be rejected
 ","
@@ -3196,8 +3211,8 @@ Run the following commands to implement a default DROP policy:
 # iptables -P INPUT DROP
 # iptables -P OUTPUT DROP
 # iptables -P FORWARD DROP
-"
-"4.4.2.2","
+",True
+4.4.2.2,Ensure iptables loopback traffic is configured,"
 Configure the loopback interface to accept traffic. Configure all other interfaces to deny
 traffic to the loopback network (127.0.0.0/8).
 ","
@@ -3205,8 +3220,8 @@ Run the following commands to implement the loopback rules:
 # iptables -A INPUT -i lo -j ACCEPT
 # iptables -A OUTPUT -o lo -j ACCEPT
 # iptables -A INPUT -s 127.0.0.0/8 -j DROP
-"
-"4.4.2.3","
+",True
+4.4.2.3,,"
 Configure the firewall rules for new outbound, and established connections.
 Note:
 • Changing firewall settings while connected over network can result in being
@@ -3220,8 +3235,8 @@ implement a policy to allow all outbound connections and all established connect
 # iptables -A OUTPUT -p udp -m state --state NEW,ESTABLISHED -j ACCEPT
 # iptables -A INPUT -p tcp -m state --state ESTABLISHED -j ACCEPT
 # iptables -A INPUT -p udp -m state --state ESTABLISHED -j ACCEPT
-"
-"4.4.2.4","
+",True
+4.4.2.4,,"
 Any ports that have been opened on non-loopback addresses need firewall rules to
 govern traffic.
 Notes:
@@ -3236,8 +3251,8 @@ For each port identified in the audit which does not have a firewall rule establ
 proper rule for accepting inbound connections:
 # iptables -A INPUT -p <protocol> --dport <port> -m state --state NEW -j
 ACCEPT
-"
-"4.4.3.1","
+",True
+4.4.3.1,Ensure ip6tables default deny firewall policy,"
 A default deny all policy on connections ensures that any unconfigured network usage
 will be rejected.
 Note:
@@ -3251,8 +3266,8 @@ Run the following commands to implement a default DROP policy:
 # ip6tables -P INPUT DROP
 # ip6tables -P OUTPUT DROP
 # ip6tables -P FORWARD DROP
-"
-"4.4.3.2","
+",True
+4.4.3.2,Ensure ip6tables loopback traffic is configured,"
 Configure the loopback interface to accept traffic. Configure all other interfaces to deny
 traffic to the loopback network (::1).
 Note:
@@ -3265,8 +3280,8 @@ Run the following commands to implement the loopback rules:
 # ip6tables -A INPUT -i lo -j ACCEPT
 # ip6tables -A OUTPUT -o lo -j ACCEPT
 # ip6tables -A INPUT -s ::1 -j DROP
-"
-"4.4.3.3","
+",True
+4.4.3.3,,"
 Configure the firewall rules for new outbound, and established IPv6 connections.
 Note:
 • Changing firewall settings while connected over network can result in being
@@ -3280,8 +3295,8 @@ implement a policy to allow all outbound connections and all established connect
 # ip6tables -A OUTPUT -p udp -m state --state NEW,ESTABLISHED -j ACCEPT
 # ip6tables -A INPUT -p tcp -m state --state ESTABLISHED -j ACCEPT
 # ip6tables -A INPUT -p udp -m state --state ESTABLISHED -j ACCEPT
-"
-"4.4.3.4","
+",True
+4.4.3.4,,"
 Any ports that have been opened on non-loopback addresses need firewall rules to
 govern traffic.
 Notes:
@@ -3296,8 +3311,8 @@ For each port identified in the audit which does not have a firewall rule establ
 proper rule for accepting inbound connections:
 # ip6tables -A INPUT -p <protocol> --dport <port> -m state --state NEW -j
 ACCEPT
-"
-"5.1.1","
+",True
+5.1.1,Ensure permissions on /etc/ssh/sshd_config are configured,"
 The file /etc/ssh/sshd_config, and files ending in .conf in the
 /etc/ssh/sshd_config.d directory, contain configuration specifications for sshd.
 ","
@@ -3316,8 +3331,8 @@ done < <(find /etc/ssh/sshd_config.d -type f -print0 2>/dev/null)
 }
 - IF - other locations are listed in an Include statement, *.conf files in these locations
 access should also be modified.
-"
-"5.1.2","
+",True
+5.1.2,Ensure permissions on SSH private host key files are configured,"
 An SSH private key is one of two files used in SSH public key authentication. In this
 authentication method, the possession of the private key is proof of identity. Only a
 private key that corresponds to a public key will be able to authenticate successfully.
@@ -3381,8 +3396,8 @@ printf '%s\n' """" "" - Remediation results:"" ""${a_output2[@]}"" """"
 fi
 }
 
-"
-"5.1.3","
+",True
+5.1.3,Ensure permissions on SSH public host key files are configured,"
 An SSH public key is one of two files used in SSH public key authentication. In this
 authentication method, a public key is a key that can be used for verifying digital
 signatures generated using a corresponding private key. Only a public key that
@@ -3435,8 +3450,8 @@ fi
 }
 Default Value:
 644 0/root 0/root
-"
-"5.1.4","
+",True
+5.1.4,Ensure sshd access is configured,"
 There are several options available to limit which users and group can access the
 system via SSH. It is recommended that at least one of the following options be
 leveraged:
@@ -3484,8 +3499,8 @@ potentially add a user or group and forget to add it to the deny list.
 Page 536
 Default Value:
 None
-"
-"5.1.5","
+",True
+5.1.5,Ensure sshd Banner is configured,"
 The Banner parameter specifies a file whose contents must be sent to the remote user
 before authentication is permitted. By default, no banner is displayed.
 ","
@@ -3501,8 +3516,8 @@ the OS platform
 Example:
 # printf '%s\n' ""Authorized users only. All activity may be monitored and
 reported."" > ""$(sshd -T | awk '$1 == ""banner"" {print $2}')""
-"
-"5.1.6","
+",True
+5.1.6,Ensure sshd Ciphers are configured,"
 This variable limits the ciphers that SSH can use during communication.
 Notes:
 • Some organizations may have stricter requirements for approved ciphers.
@@ -3528,8 +3543,8 @@ created in a file in Include location.
 Default Value:
 Ciphers chacha20-poly1305@openssh.com,aes128-ctr,aes192-ctr,aes256-ctr,aes128-
 gcm@openssh.com,aes256-gcm@openssh.com
-"
-"5.1.7","
+",True
+5.1.7,Ensure sshd ClientAliveInterval and ClientAliveCountMax are configured,"
 Note: To clarify, the two settings described below are only meant for idle connections
 from a protocol perspective and are not meant to check if the user is active or not. An
 idle user does not mean an idle connection. SSH does not and never had, intentionally,
@@ -3569,8 +3584,8 @@ Page 545
 Default Value:
 ClientAliveInterval 0
 ClientAliveCountMax 3
-"
-"5.1.9","
+",True
+5.1.9,Ensure sshd GSSAPIAuthentication is disabled,"
 The GSSAPIAuthentication parameter specifies whether user authentication based on
 GSSAPI is allowed.
 ","
@@ -3580,8 +3595,8 @@ GSSAPIAuthentication no
 Note: First occurrence of an option takes precedence, Match set statements
 withstanding. If Include locations are enabled, used, and order of precedence is
 understood in your environment, the entry may be created in a file in Include location.
-"
-"5.1.10","
+",True
+5.1.10,Ensure sshd HostbasedAuthentication is disabled,"
 The HostbasedAuthentication parameter specifies if authentication is allowed
 through trusted hosts via the user of .rhosts, or /etc/hosts.equiv, along with
 successful public key client host authentication.
@@ -3594,8 +3609,8 @@ withstanding. If Include locations are enabled, used, and order of precedence is
 understood in your environment, the entry may be created in a file in Include location.
 Default Value:
 HostbasedAuthentication no
-"
-"5.1.11","
+",True
+5.1.11,Ensure sshd IgnoreRhosts is enabled,"
 The IgnoreRhosts parameter specifies that .rhosts and .shosts files will not be used
 in RhostsRSAAuthentication or HostbasedAuthentication.
 ","
@@ -3607,8 +3622,8 @@ withstanding. If Include locations are enabled, used, and order of precedence is
 understood in your environment, the entry may be created in a file in Include location.
 Default Value:
 IgnoreRhosts yes
-"
-"5.1.12","
+",True
+5.1.12,Ensure sshd KexAlgorithms is configured,"
 Key exchange is any method in cryptography by which cryptographic keys are
 exchanged between two parties, allowing use of a cryptographic algorithm. If the sender
 and receiver wish to exchange encrypted messages, each must be equipped to encrypt
@@ -3628,8 +3643,8 @@ KexAlgorithms sntrup761x25519-sha512@openssh.com,curve25519-
 sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-
 sha2-nistp521,diffie-hellman-group-exchange-sha256,diffie-hellman-group16-
 sha512,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256
-"
-"5.1.13","
+",True
+5.1.13,Ensure sshd LoginGraceTime is configured,"
 The LoginGraceTime parameter specifies the time allowed for successful
 authentication to the SSH server. The longer the Grace period is the more open
 unauthenticated connections can exist. Like other session controls in this session the
@@ -3644,8 +3659,8 @@ used, and order of precedence is understood in your environment, the entry may b
 created in a file in Include location.
 Default Value:
 LoginGraceTime 120
-"
-"5.1.14","
+",True
+5.1.14,Ensure sshd LogLevel is configured,"
 SSH provides several logging levels with varying amounts of verbosity. The DEBUG
 options are specifically not recommended other than strictly for debugging SSH
 communications. These levels provide so much data that it is difficult to identify
@@ -3661,8 +3676,8 @@ withstanding. If Include locations are enabled, used, and order of precedence is
 understood in your environment, the entry may be created in a file in Include location.
 Default Value:
 LogLevel INFO
-"
-"5.1.15","
+",True
+5.1.15,Ensure sshd MACs are configured,"
 This variable limits the types of MAC algorithms that SSH can use during
 communication.
 ","
@@ -3685,8 +3700,8 @@ MACs umac-64-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-256-
 etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha1-
 etm@openssh.com,umac-64@openssh.com,umac-128@openssh.com,hmac-sha2-
 256,hmac-sha2-512,hmac-sha1
-"
-"5.1.16","
+",True
+5.1.16,Ensure sshd MaxAuthTries is configured,"
 The MaxAuthTries parameter specifies the maximum number of authentication
 attempts permitted per connection. When the login failure count reaches half the
 number, error messages will be written to the syslog file detailing the login failure.
@@ -3700,8 +3715,8 @@ understood in your environment, the entry may be created in a file in Include lo
 Page 566
 Default Value:
 MaxAuthTries 6
-"
-"5.1.17","
+",True
+5.1.17,Ensure sshd MaxSessions is configured,"
 The MaxSessions parameter specifies the maximum number of open sessions
 permitted from a given connection.
 ","
@@ -3713,8 +3728,8 @@ withstanding. If Include locations are enabled, used, and order of precedence is
 understood in your environment, the entry may be created in a file in Include location.
 Default Value:
 MaxSessions 10
-"
-"5.1.18","
+",True
+5.1.18,Ensure sshd MaxStartups is configured,"
 The MaxStartups parameter specifies the maximum number of concurrent
 unauthenticated connections to the SSH daemon.
 ","
@@ -3726,8 +3741,8 @@ used, and order of precedence is understood in your environment, the entry may b
 created in a file in Include location.
 Default Value:
 MaxStartups 10:30:100
-"
-"5.1.19","
+",True
+5.1.19,Ensure sshd PermitEmptyPasswords is disabled,"
 The PermitEmptyPasswords parameter specifies if the SSH server allows login to
 accounts with empty password strings.
 ","
@@ -3740,8 +3755,8 @@ understood in your environment, the entry may be created in a file in Include lo
 Page 572
 Default Value:
 PermitEmptyPasswords no
-"
-"5.1.20","
+",True
+5.1.20,Ensure sshd PermitRootLogin is disabled,"
 The PermitRootLogin parameter specifies if the root user can log in using SSH. The
 default is prohibit-password.
 ","
@@ -3754,8 +3769,8 @@ understood in your environment, the entry may be created in a file in Include lo
 Page 574
 Default Value:
 PermitRootLogin without-password
-"
-"5.1.21","
+",True
+5.1.21,Ensure sshd PermitUserEnvironment is disabled,"
 The PermitUserEnvironment option allows users to present environment options to
 the SSH daemon.
 ","
@@ -3767,8 +3782,8 @@ used, and order of precedence is understood in your environment, the entry may b
 created in a file in Include location.
 Default Value:
 PermitUserEnvironment no
-"
-"5.1.22","
+",True
+5.1.22,Ensure sshd UsePAM is enabled,"
 The UsePAM directive enables the Pluggable Authentication Module (PAM) interface. If
 set to yes this will enable PAM authentication using
 ChallengeResponseAuthentication and PasswordAuthentication directives in
@@ -3782,8 +3797,8 @@ used, and order of precedence is understood in your environment, the entry may b
 created in a file in Include location.
 Default Value:
 UsePAM yes
-"
-"5.2.1","
+",True
+5.2.1,Ensure sudo is installed,"
 sudo allows a permitted user to execute a command as the superuser or another user,
 as specified by the security policy. The invoking user's real (not effective) user ID is
 used to determine the user name with which to query the security policy.
@@ -3792,8 +3807,8 @@ First determine if LDAP functionality is required. If so, then install sudo-ldap
 install sudo.
 Example:
 # apt install sudo
-"
-"5.2.2","
+",True
+5.2.2,Ensure sudo commands use pty,"
 sudo can be configured to run only from a pseudo terminal (pseudo-pty).
 ","
 Edit the file /etc/sudoers with visudo or a file in /etc/sudoers.d/ with visudo -f
@@ -3812,8 +3827,8 @@ be parsed before /etc/sudoers.d/10_second.
 /etc/sudoers.d/10_second.
 • Using a consistent number of leading zeroes in the file names can be used to
 avoid such problems.
-"
-"5.2.3","
+",True
+5.2.3,Ensure sudo log file exists,"
 sudo can use a custom log file.
 ","
 Edit the file /etc/sudoers or a file in /etc/sudoers.d/ with visudo or visudo -f
@@ -3831,16 +3846,16 @@ be parsed before /etc/sudoers.d/10_second.
 /etc/sudoers.d/10_second.
 • Using a consistent number of leading zeroes in the file names can be used to
 avoid such problems.
-"
-"5.2.4","
+",True
+5.2.4,Ensure users must provide password for privilege escalation,"
 The operating system must be configured so that users must provide a password for
 privilege escalation.
 ","
 Based on the outcome of the audit procedure, use visudo -f <PATH TO FILE> to edit
 the relevant sudoers file.
 Remove any line with occurrences of NOPASSWD tags in the file.
-"
-"5.2.5","
+",True
+5.2.5,Ensure re-authentication for privilege escalation is not disabled globally,"
 The operating system must be configured so that users must re-authenticate for
 privilege escalation.
 ","
@@ -3849,8 +3864,8 @@ escalation.
 Based on the outcome of the audit procedure, use visudo -f <PATH TO FILE> to edit
 the relevant sudoers file.
 Remove any occurrences of !authenticate tags in the file(s).
-"
-"5.2.6","
+",True
+5.2.6,Ensure sudo authentication timeout is configured correctly,"
 sudo caches used credentials for a default of 15 minutes. This is for ease of use when
 there are multiple administrative tasks to perform. The timeout can be modified to suit
 local security policies.
@@ -3864,8 +3879,8 @@ env_reset. See the following two examples:
 Defaults env_reset, timestamp_timeout=15
 Defaults timestamp_timeout=15
 Defaults env_reset
-"
-"5.2.7","
+",True
+5.2.7,,"
 The su command allows a user to run a command or shell as another user. The
 program has been superseded by sudo, which allows for more granular control over
 privileged access. Normally, the su command can be executed by any user. By
@@ -3879,22 +3894,22 @@ Example:
 # groupadd sugroup
 Add the following line to the /etc/pam.d/su file, specifying the empty group:
 auth required pam_wheel.so use_uid group=sugroup
-"
-"5.3.1.1","
+",True
+5.3.1.1,Ensure latest version of pam is installed,"
 Updated versions of PAM include additional functionality
 ","
 - IF - the version of libpam-runtime on the system is less than version 1.5.3-5:
 Run the following command to update to the latest version of PAM:
 # apt upgrade libpam-runtime
-"
-"5.3.1.2","
+",True
+5.3.1.2,Ensure libpam-modules is installed,"
 Pluggable Authentication Modules for PAM
 ","
 - IF - the version of libpam-modules on the system is less than version 1.5.3-5:
 Run the following command to update to the latest version of PAM:
 # apt upgrade libpam-modules
-"
-"5.3.1.3","
+",True
+5.3.1.3,Ensure libpam-pwquality is installed,"
 libpwquality provides common functions for password quality checking and scoring
 them based on their apparent randomness. The library also provides a function for
 generating random passwords with good pronounceability.
@@ -3904,8 +3919,8 @@ pam_cracklib module and the module is backwards compatible with its options.
 ","
 Run the following command to install libpam-pwquality:
 # apt install libpam-pwquality
-"
-"5.3.2.1","
+",True
+5.3.2.1,Ensure pam_unix module is enabled,"
 pam_unix is the standard Unix authentication module. It uses standard calls from the
 system's libraries to retrieve and set account information as well as authentication.
 Usually this is obtained from the /etc/passwd and if shadow is enabled, the
@@ -3927,8 +3942,8 @@ Run the following command to enable the pam_unix module:
 Note: If a site specific custom profile is being used in your environment to configure
 PAM that includes the configuration for the pam_faillock module, enable that module
 instead
-"
-"5.3.2.2","
+",True
+5.3.2.2,Ensure pam_faillock module is enabled,"
 The pam_faillock.so module maintains a list of failed authentication attempts per
 user during a specified interval and locks the account in case there were more than the
 configured number of consecutive failed authentications (this is defined by the deny
@@ -3989,8 +4004,8 @@ command
 • If a site specific custom profile is being used in your environment to configure
 PAM that includes the configuration for the pam_faillock module, enable that
 module instead
-"
-"5.3.2.3","
+",True
+5.3.2.3,Ensure pam_pwquality module is enabled,"
 The pam_pwquality.so module performs password quality checking. This module can
 be plugged into the password stack of a given service to provide strength-checking for
 passwords. The code was originally based on pam_cracklib module and the module is
@@ -4047,8 +4062,8 @@ command
 • If a site specific custom profile is being used in your environment to configure
 PAM that includes the configuration for the pam_pwquality module, enable that
 module instead
-"
-"5.3.2.4","
+",True
+5.3.2.4,Ensure pam_pwhistory module is enabled,"
 The pam_pwhistory.so module saves the last passwords for each user in order to
 force password change history and keep the user from alternating between the same
 password too frequently.
@@ -4098,8 +4113,8 @@ command
 • If a site specific custom profile is being used in your environment to configure
 PAM that includes the configuration for the pam_pwhistory module, enable that
 module instead
-"
-"5.3.3.1.1","
+",True
+5.3.3.1.1,,"
 The deny=<n> option will deny access if the number of consecutive authentication
 failures for this user during the recent interval exceeds. 
 ","
@@ -4119,8 +4134,8 @@ If a user has been locked out because they have reached the maximum consecutive
 failure count defined by deny= in the pam_faillock.so module, the user can be
 unlocked by issuing the command faillock --user <USERNAME> --reset. This
 command sets the failed count to 0, effectively unlocking the user
-"
-"5.3.3.1.2","
+",True
+5.3.3.1.2,Ensure password unlock time is configured,"
 unlock_time=<n> - The access will be re-enabled after seconds after the lock out. The
 value 0 has the same meaning as value never - the access will not be re-enabled
 without resetting the faillock entries by the faillock(8) command.
@@ -4145,8 +4160,8 @@ Edit any returned files and remove the unlock_time=<N> argument from the
 pam_faillock.so line(s):
 Default Value:
 unlock_time = 600
-"
-"5.3.3.1.3","
+",True
+5.3.3.1.3,Ensure password failed attempts lockout includes root account,"
 even_deny_root - Root account can become locked as well as regular accounts
 root_unlock_time=n - This option implies even_deny_root option. Allow access after n
 seconds to root account after the account is locked. In case the option is not specified
@@ -4165,8 +4180,8 @@ Edit any returned files and remove the even_deny_root and root_unlock_time
 arguments from the pam_faillock.so line(s):
 Default Value:
 disabled
-"
-"5.3.3.2.1","
+",True
+5.3.3.2.1,Ensure password number of changed characters is configured,"
 The pwquality difok option sets the number of characters in a password that must not
 be present in the old password.
 ","
@@ -4188,8 +4203,8 @@ Edit any returned files and remove the difok argument from the pam_pwquality.so
 line(s):
 Default Value:
 difok = 1
-"
-"5.3.3.2.2","
+",True
+5.3.3.2.2,Ensure minimum password length is configured,"
 The minimum password length setting determines the lowers number of characters that
 make up a password for a user account. There are many different theories about how to
 determine the best password length for an organization, but perhaps ""passphrase"" is a
@@ -4217,8 +4232,8 @@ Edit any returned files and remove the minlen argument from the pam_pwquality.so
 line(s):
 Default Value:
 minlen = 8
-"
-"5.3.3.2.3","
+",True
+5.3.3.2.3,,"
 Password complexity can be set through:
 • minclass - The minimum number of classes of characters required in a new
 password. (digits, uppercase, lowercase, others). e.g. minclass = 4 requires
@@ -4281,8 +4296,8 @@ dcredit = 0
 ucredit = 0
 ocredit = 0
 lcredit = 0
-"
-"5.3.3.2.4","
+",True
+5.3.3.2.4,Ensure password same consecutive characters is configured,"
 The pwquality maxrepeat option sets the maximum number of allowed same
 consecutive characters in a new password.
 ","
@@ -4305,8 +4320,8 @@ Edit any returned files and remove the maxrepeat argument from the
 pam_pwquality.so line(s):
 Default Value:
 maxrepeat = 0
-"
-"5.3.3.2.5","
+",True
+5.3.3.2.5,Ensure password maximum sequential characters is configured,"
 The pwquality maxsequence option sets the maximum length of monotonic character
 sequences in the new password. Examples of such sequence are 12345 or fedcb. The
 check is disabled if the value is 0.
@@ -4333,8 +4348,8 @@ Edit any returned files and remove the maxsequence argument from the
 pam_pwquality.so line(s):
 Default Value:
 maxsequence = 0
-"
-"5.3.3.2.6","
+",True
+5.3.3.2.6,Ensure password dictionary check is enabled,"
 The pwquality dictcheck option sets whether to check for the words from the
 cracklib dictionary.
 ","
@@ -4352,8 +4367,8 @@ pam_pwquality.so line(s)
 Page 647
 Default Value:
 dictcheck = 1
-"
-"5.3.3.2.7","
+",True
+5.3.3.2.7,Ensure password quality checking is enforced,"
 The pam_pwquality module can be configured to either reject a password if it fails the
 checks, or only print a warning.
 This is configured by setting the enforcing=<N> argument. If nonzero, a password will
@@ -4375,8 +4390,8 @@ Example:
 /etc/security/pwquality.conf.d/*.conf
 Default Value:
 enforcing=1
-"
-"5.3.3.2.8","
+",True
+5.3.3.2.8,Ensure password quality is enforced for the root user,"
 If the pwquality enforce_for_root option is enabled, the module will return error on
 failed check even if the user changing the password is root.
 This option is off by default which means that just the message about the failed check is
@@ -4396,8 +4411,8 @@ pwroot.conf
 }
 Default Value:
 disabled
-"
-"5.3.3.3.1","
+",True
+5.3.3.3.1,Ensure password history remember is configured,"
 The /etc/security/opasswd file stores the users' old passwords and can be checked
 to ensure that users are not recycling recent passwords. The number of passwords
 remembered is set via the remember argument value in set for the pam_pwhistory
@@ -4421,8 +4436,8 @@ Run the following command to update the files in the /etc/pam.d/ directory:
 # pam-auth-update --enable <MODIFIED_PROFILE_NAME>
 Example:
 # pam-auth-update --enable pwhistory
-"
-"5.3.3.3.2","
+",True
+5.3.3.3.2,Ensure password history is enforced for the root user,"
 If the pwhistory enforce_for_root option is enabled, the module will enforce
 password history for the root user as well
 ","
@@ -4445,8 +4460,8 @@ Example:
 # pam-auth-update --enable pwhistory
 Default Value:
 disabled
-"
-"5.3.3.3.3","
+",True
+5.3.3.3.3,Ensure pam_pwhistory includes use_authtok,"
 use_authtok - When password changing enforce the module to set the new password
 to the one provided by a previously stacked password module
 ","
@@ -4467,8 +4482,8 @@ Run the following command to update the files in the /etc/pam.d/ directory:
 # pam-auth-update --enable <MODIFIED_PROFILE_NAME>
 Example:
 # pam-auth-update --enable pwhistory
-"
-"5.3.3.4.1","
+",True
+5.3.3.4.1,Ensure pam_unix does not include nullok,"
 The nullok argument overrides the default action of pam_unix.so to not permit the
 user access to a service if their official password is blank.
 ","
@@ -4510,8 +4525,8 @@ Example:
 Note: If custom files are being used, the corresponding files in /etc/pam.d/ would
 need to be edited directly, and the pam-auth-update --enable
 <EDITED_PROFILE_NAME> command skipped
-"
-"5.3.3.4.2","
+",True
+5.3.3.4.2,Ensure pam_unix does not include remember,"
 The remember=n argument saves the last n passwords for each user in
 /etc/security/opasswd in order to force password change history and keep the user
 from alternating between the same password too frequently. The MD5 password hash
@@ -4538,8 +4553,8 @@ Example:
 Note: If custom files are being used, the corresponding files in /etc/pam.d/ would
 need to be edited directly, and the pam-auth-update --enable
 <EDITED_PROFILE_NAME> command skipped
-"
-"5.3.3.4.3","
+",True
+5.3.3.4.3,Ensure pam_unix includes a strong password hashing algorithm,"
 A cryptographic hash function converts an arbitrary-length input into a fixed length
 output. Password hashing performs a one-way transformation of a password, turning
 the password into another string, called the hashed password.
@@ -4600,8 +4615,8 @@ Page 671
 # pam-auth-update --enable <MODIFIED_PROFILE_NAME>
 Example:
 # pam-auth-update --enable unix
-"
-"5.3.3.4.4","
+",True
+5.3.3.4.4,Ensure pam_unix includes use_authtok,"
 use_authtok - When password changing enforce the module to set the new password
 to the one provided by a previously stacked password module.
 ","
@@ -4643,8 +4658,8 @@ Run the following command to update the files in the /etc/pam.d/ directory:
 # pam-auth-update --enable <MODIFIED_PROFILE_NAME>
 Example:
 # pam-auth-update --enable unix
-"
-"5.4.1.1","
+",True
+5.4.1.1,Ensure password expiration is configured,"
 The PASS_MAX_DAYS parameter in /etc/login.defs allows an administrator to force
 passwords to expire once they reach a defined age.
 PASS_MAX_DAYS <N> - The maximum number of days a password may be used. If the
@@ -4671,8 +4686,8 @@ password. One possible solution is to populate the last change date field throug
 command like: chage -d ""$(date +%Y-%m-%d)"" root
 Default Value:
 PASS_MAX_DAYS 99999
-"
-"5.4.1.2","
+",True
+5.4.1.2,Ensure minimum password days is configured,"
 PASS_MIN_DAYS <N> - The minimum number of days allowed between password
 changes. Any password changes attempted sooner than this will be rejected. If not
 specified, 0 will be assumed (which disables the restriction).
@@ -4689,8 +4704,8 @@ Example:
 /etc/shadow
 Default Value:
 PASS_MIN_DAYS 0
-"
-"5.4.1.3","
+",True
+5.4.1.3,Ensure password expiration warning days is configured,"
 The PASS_WARN_AGE parameter in /etc/login.defs allows an administrator to notify
 users that their password will expire in a defined number of days.
 PASS_WARN_AGE <N> - The number of days warning given before a password expires. A
@@ -4709,8 +4724,8 @@ Example:
 /etc/shadow
 Default Value:
 PASS_WARN_AGE 7
-"
-"5.4.1.4","
+",True
+5.4.1.4,Ensure strong password hashing algorithm is configured,"
 A cryptographic hash function converts an arbitrary-length input into a fixed length
 output. Password hashing performs a one-way transformation of a password, turning
 the password into another string, called the hashed password.
@@ -4738,8 +4753,8 @@ updated to use the stronger hashing algorithm.
 /etc/login.defs and the PAM configuration
 Default Value:
 ENCRYPT_METHOD SHA512
-"
-"5.4.1.5","
+",True
+5.4.1.5,Ensure inactive password lock is configured,"
 User accounts that have been inactive for over a given period of time can be
 automatically disabled.
 INACTIVE - Defines the number of days after the password exceeded its maximum age
@@ -4761,22 +4776,22 @@ Example:
 "" $1)}' /etc/shadow
 Default Value:
 INACTIVE=-1
-"
-"5.4.1.6","
+",True
+5.4.1.6,Ensure all users last password change date is in the past,"
 All users should have a password change date in the past.
 ","
 nvestigate any users with a password change date in the future and correct them.
 Locking the account, expiring the password, or resetting the password manually may be
 appropriate.
-"
-"5.4.2.1","
+",True
+5.4.2.1,Ensure root is the only UID 0 account,"
 Any account with UID 0 has superuser privileges on the system.
 ","
 Run the following command to change the root account UID to 0:
 # usermod -u 0 root
 Modify any users other than root with UID 0 and assign them a new UID.
-"
-"5.4.2.2","
+",True
+5.4.2.2,Ensure root is the only GID 0 account,"
 The usermod command can be used to specify which group the root account belongs
 to. This affects permissions of files that are created by the root account.
 ","
@@ -4786,8 +4801,8 @@ Run the following command to set the root group's GID to 0:
 # groupmod -g 0 root
 Remove any users other than the root user with GID 0 or assign them a new GID if
 appropriate
-"
-"5.4.2.3","
+",True
+5.4.2.3,Ensure group root is the only GID 0 group,"
 The groupmod command can be used to specify which group the root group belongs
 to. This affects permissions of files that are group owned by the root group.
 ","
@@ -4795,8 +4810,8 @@ Run the following command to set the root group's GID to 0:
 # groupmod -g 0 root
 Remove any groups other than the root group with GID 0 or assign them a new GID if
 appropriate.
-"
-"5.4.2.4","
+",True
+5.4.2.4,Ensure root account access is controlled,"
 There are a number of methods to access the root account directly. Without a password
 set any user would be able to gain access and thus control over the entire system.
 ","
@@ -4805,8 +4820,8 @@ Run the following command to set a password for the root user:
 - OR -
 Run the following command to lock the root user account:
 # usermod -L root
-"
-"5.4.2.5","
+",True
+5.4.2.5,Ensure root path integrity,"
 The root user can execute any command on the system and could be fooled into
 executing programs unintentionally if the PATH is not set correctly.
 ","
@@ -4817,8 +4832,8 @@ Correct or justify any:
 • Current working directory (.)
 • Non root owned directories
 • Directories that less restrictive than mode 0755
-"
-"5.4.2.6","
+",True
+5.4.2.6,Ensure root user umask is configured,"
 The user file-creation mode mask (umask) is used to determine the file permission for
 newly created directories and files. In Linux, the default permissions for any newly
 created directory is 0777 (rwxrwxrwx), and for any newly created file it is 0666 (rw-rw-
@@ -4851,8 +4866,8 @@ Edit /root/.bash_profile and /root/.bashrc and remove, comment out, or update
 any line with umask to be 0027 or more restrictive.
 Default Value:
 System default umask
-"
-"5.4.2.7","
+",True
+5.4.2.7,Ensure system accounts do not have a valid login shell,"
 There are a number of accounts provided with most distributions that are used to
 manage applications and are not intended to provide an interactive shell. Furthermore,
 a user may add special accounts that are not intended to provide an interactive shell.
@@ -4870,8 +4885,8 @@ awk -v pat=""$l_valid_shells"" -F:
 '/^\s*UID_MIN/{print $2}' /etc/login.defs)""' || $3 == 65534) && $(NF) ~ pat)
 {system (""usermod -s '""$(command -v nologin)""' "" $1)}' /etc/passwd
 }
-"
-"5.4.2.8","
+",True
+5.4.2.8,Ensure accounts without a valid login shell are locked,"
 There are a number of accounts provided with most distributions that are used to
 manage applications and are not intended to provide an interactive shell. Furthermore,
 a user may add special accounts that are not intended to provide an interactive shell.
@@ -4889,8 +4904,8 @@ passwd -S ""$l_user"" | awk '$2 !~ /^L/ {system (""usermod -L "" $1)}'
 done < <(awk -v pat=""$l_valid_shells"" -F: '($1 != ""root"" && $(NF) !~ pat)
 {print $1}' /etc/passwd)
 }
-"
-"5.4.3.1","
+",True
+5.4.3.1,Ensure nologin is not listed in /etc/shells,"
 /etc/shells is a text file which contains the full pathnames of valid login shells. This
 file is consulted by chsh and available to be queried by other programs.
 Be aware that there are programs which consult this file to find out if a user is a normal
@@ -4898,8 +4913,8 @@ user; for example, FTP daemons traditionally disallow access to users with shell
 included in this file.
 ","
 Edit /etc/shells and remove any lines that include nologin
-"
-"5.4.3.2","
+",True
+5.4.3.2,Ensure default user shell timeout is configured,"
 TMOUT is an environmental setting that determines the timeout of a shell in seconds.
 • TMOUT=n - Sets the shell timeout to n seconds. A setting of TMOUT=0 disables
 timeout.
@@ -4940,8 +4955,8 @@ The audit and remediation in this recommendation apply to bash and shell. If oth
 shells are supported on the system, it is recommended that their configuration files also
 are checked. Other methods of setting a timeout exist for other shells not covered here.
 Ensure that the timeout conforms to your local policy.
-"
-"5.4.3.3","
+",True
+5.4.3.3,Ensure default user umask is configured,"
 The user file-creation mode mask (umask) is used to determine the file permission for
 newly created directories and files. In Linux, the default permissions for any newly
 created directory is 0777 (rwxrwxrwx), and for any newly created file it is 0666 (rw-rw-
@@ -5067,24 +5082,24 @@ being overridden by another setting. Refer to the PAM_UMASK(8) man page for
 more information
 Default Value:
 UMASK 022
-"
-"6.1.1.1","
+",True
+6.1.1.1,Ensure journald service is enabled and active,"
 Ensure that the systemd-journald service is enabled to allow capturing of logging
 events.
 ","
 Run the following commands to unmask and start systemd-journald.service
 # systemctl unmask systemd-journald.service
 # systemctl start systemd-journald.service
-"
-"6.1.1.2","
+",True
+6.1.1.2,,"
 Journald will create logfiles that do not already exist on the system. This setting controls
 what permissions will be applied to these newly created files.
 ","
 If the default configuration is not appropriate for the site specific requirements, copy
 /usr/lib/tmpfiles.d/systemd.conf to /etc/tmpfiles.d/systemd.conf and
 modify as required. Recommended mode for logfiles is 0640 or more restrictive.
-"
-"6.1.1.3","
+",True
+6.1.1.3,,"
 ournald includes the capability of rotating log files regularly to avoid filling up the
 system with logs or making the logs unmanageably large. The file
 /etc/systemd/journald.conf is the configuration file used to specify how logs
@@ -5124,8 +5139,8 @@ setting will be overwritten
 accounted for when configuring these settings
 Run to following command to update the parameters in the service:
 # systemctl reload-or-restart systemd-journald
-"
-"6.1.1.4","
+",True
+6.1.1.4,Ensure only one logging system is in use,"
 Best practices recommend that a single centralized logging system be used for log
 management, choose a single service either rsyslog - OR - journald to be used as a
 single centralized logging system.
@@ -5135,16 +5150,16 @@ single centralized logging system.
 3. Configure only ONE either journald - OR - rsyslog and complete the
 recommendations in that subsection
 4. Return to this recommendation to ensure only one logging system is in use
-"
-"6.1.2.1.1","
+",True
+6.1.2.1.1,Ensure systemd-journal-remote is installed,"
 ournald systemd-journal-remote supports the ability to send log events it gathers to
 a remote log host or to receive messages from remote hosts, thus enabling centralized
 log management.
 ","
 Run the following command to install systemd-journal-remote:
 # apt install systemd-journal-remote
-"
-"6.1.2.1.2","
+",True
+6.1.2.1.2,,"
 Journald systemd-journal-upload supports the ability to send log events it gathers to
 a remote log host.
 ","
@@ -5177,16 +5192,16 @@ fi
 }
 Run the following command to update the parameters in the service:
 # systemctl reload-or-restart systemd-journal-upload
-"
-"6.1.2.1.3","
+",True
+6.1.2.1.3,Ensure systemd-journal-upload is enabled and active,"
 Journald systemd-journal-upload supports the ability to send log events it gathers to
 a remote log host.
 ","
 Run the following commands to unmask, enable and start systemd-journal-upload:
 # systemctl unmask systemd-journal-upload.service
 # systemctl --now enable systemd-journal-upload.service
-"
-"6.1.2.1.4","
+",True
+6.1.2.1.4,Ensure systemd-journal-remote service is not in use,"
 Journald systemd-journal-remote supports the ability to receive messages from
 remote hosts, thus acting as a log server. Clients should not receive data from other
 hosts.
@@ -5200,8 +5215,8 @@ Run the following commands to stop and mask systemd-journal-remote.socket and
 systemd-journal-remote.service:
 # systemctl stop systemd-journal-remote.socket systemd-journal-remote.service
 # systemctl mask systemd-journal-remote.socket systemd-journal-remote.service
-"
-"6.1.2.2","
+",True
+6.1.2.2,Ensure journald ForwardToSyslog is disabled,"
 Data from journald should be kept in the confines of the service and not forwarded to
 other services.
 ","
@@ -5233,8 +5248,8 @@ Run to following command to update the parameters in the service:
 # systemctl reload-or-restart systemd-journald
 Default Value:
 ForwardToSyslog=no
-"
-"6.1.2.3","
+",True
+6.1.2.3,Ensure journald Compress is configured,"
 The journald system includes the capability of compressing overly large files to avoid
 filling up the system with logs or making the logs unmanageably large.
 ","
@@ -5266,8 +5281,8 @@ Run to following command to update the parameters in the service:
 # systemctl reload-or-restart systemd-journald
 Default Value:
 Compress=yes
-"
-"6.1.2.4","
+",True
+6.1.2.4,Ensure journald Storage is configured,"
 Data from journald may be stored in volatile memory or persisted locally on the server.
 Logs in memory will be lost upon a system reboot. By persisting logs to local disk on the
 server they are protected from loss due to a reboot.
@@ -5300,8 +5315,8 @@ Run to following command to update the parameters in the service:
 # systemctl reload-or-restart systemd-journald
 Default Value:
 Storage=persistent
-"
-"6.1.3.1","
+",True
+6.1.3.1,Ensure rsyslog is installed,"
 The rsyslog software is recommended in environments where journald does not
 meet operation requirements.
 ","
@@ -5309,8 +5324,8 @@ Run the following command to install rsyslog:
 # apt install rsyslog
 Default Value:
 Installed
-"
-"6.1.3.2","
+",True
+6.1.3.2,Ensure rsyslog service is enabled and active,"
 Once the rsyslog package is installed, ensure that the service is enabled.
 ","
 - IF - rsyslog is being used for logging on the system:
@@ -5318,8 +5333,8 @@ Run the following commands to unmask, enable, and start rsyslog.service:
 # systemctl unmask rsyslog.service
 # systemctl enable rsyslog.service
 # systemctl start rsyslog.service
-"
-"6.1.3.3","
+",True
+6.1.3.3,Ensure journald is configured to send logs to rsyslog,"
 Data from systemd-journald may be stored in volatile memory or persisted locally on
 the server. Utilities exist to accept remote export of systemd-journald logs, however,
 use of the rsyslog service provides a consistent means of log collection and export.
@@ -5351,8 +5366,8 @@ setting will be overwritten
 Run to following command to update the parameters in the service:
 Restart systemd-journald.service:
 # systemctl reload-or-restart systemd-journald.service
-"
-"6.1.3.4","
+",True
+6.1.3.4,Ensure rsyslog log file creation mode is configured,"
 rsyslog will create logfiles that do not already exist on the system.
 The global() configuration object umask, available in rsyslog 8.26.0+, sets the
 rsyslogd process’ umask. If not specified, the system-provided default is used. The
@@ -5380,8 +5395,8 @@ printf '%s\n' """" ""\$FileCreateMode 0640"" >> /etc/rsyslog.d/60-rsyslog.conf
 }
 Reload the service:
 # systemctl reload-or-restart rsyslog
-"
-"6.1.3.5","
+",True
+6.1.3.5,,"
 The rsyslog and configuration files specifies rules for logging and which files are to be
 used to log certain classes of messages.
 ","
@@ -5406,8 +5421,8 @@ local6,local7.* -/var/log/localmessages
 Run the following command to reload the rsyslogd configuration:
 Page 779
 # systemctl reload-or-restart rsyslog
-"
-"6.1.3.6","
+",True
+6.1.3.6,,"
 rsyslog supports the ability to send log events it gathers to a remote log host or to
 receive messages from remote hosts, thus enabling centralized log management.
 ","
@@ -5427,8 +5442,8 @@ printf '%s\n' """" ""${a_parameters[@]}"" >> /etc/rsyslog.d/60-rsyslog.conf
 Run the following command to reload rsyslog.service:
 Page 783
 # systemctl reload-or-restart rsyslog.service
-"
-"6.1.3.7","
+",True
+6.1.3.7,Ensure rsyslog is not configured to receive logs from a remote client,"
 rsyslog supports the ability to receive messages from remote hosts, thus acting as a
 log server. Clients should not receive data from other hosts.
 ","
@@ -5443,8 +5458,8 @@ $ModLoad imtcp
 $InputTCPServerRun
 Reload the service:
 # systemctl reload-or-restart rsyslog
-"
-"6.1.3.8","
+",True
+6.1.3.8,,"
 The system includes the capability of rotating log files regularly to avoid filling up the
 system with logs or making the logs unmanageably large. The file
 /etc/logrotate.d/rsyslog is the configuration file used to rotate log files created by
@@ -5452,8 +5467,8 @@ rsyslog.
 ","
 Edit /etc/logrotate.conf, or the appropriate configuration file provided by the script
 in the Audit Procedure, as necessary to ensure logs are rotated according to site policy.
-"
-"6.1.4.1","
+",True
+6.1.4.1,Ensure access to all logfiles has been configured,"
 Log files contain information from many services on the the local system, or in the event
 of a centralized log server, others systems logs as well.
 In general log files are found in /var/log/, although application can be configured to
@@ -5554,23 +5569,23 @@ Note: You may also need to change the configuration for your logging software or
 services for any logs that had incorrect permissions.
 If there are services that log to other locations, ensure that those log files have the
 appropriate permissions.
-"
-"6.2.1.1","
+",True
+6.2.1.1,Ensure auditd packages are installed,"
 auditd is the userspace component to the Linux Auditing System. It's responsible for
 writing audit records to the disk
 ","
 Run the following command to Install auditd and audispd-plugins
 # apt install auditd audispd-plugins
-"
-"6.2.1.2","
+",True
+6.2.1.2,Ensure auditd service is enabled and active,"
 Turn on the auditd daemon to record system events.
 ","
 Run the following commands to unmask, enable and start auditd:
 # systemctl unmask auditd
 # systemctl enable auditd
 # systemctl start auditd
-"
-"6.2.1.3","
+",True
+6.2.1.3,Ensure auditing for processes that start prior to auditd is enabled,"
 Configure grub2 so that processes that are capable of being audited can be audited
 even if they start up prior to auditd startup.
 ","
@@ -5579,8 +5594,8 @@ Example:
 GRUB_CMDLINE_LINUX=""audit=1""
 Run the following command to update the grub2 configuration:
 # update-grub
-"
-"6.2.1.4","
+",True
+6.2.1.4,Ensure audit_backlog_limit is sufficient,"
 In the kernel-level audit subsystem, a socket buffer queue is used to hold audit events.
 Whenever a new audit event is received, it is logged and prepared to be added to this
 queue.
@@ -5597,8 +5612,8 @@ Run the following command to update the grub2 configuration:
 # update-grub
 Default Value:
 if audit_backlog_limit is not set, the system defaults to audit_backlog_limit=64
-"
-"6.2.2.1","
+",True
+6.2.2.1,Ensure audit log storage size is configured,"
 Configure the maximum size of the audit log file. Once the log reaches the maximum
 size, it will be rotated and a new log file will be started.
 ","
@@ -5607,15 +5622,15 @@ policy:
 max_log_file = <MB>
 Default Value:
 max_log_file = 8
-"
-"6.2.2.2","
+",True
+6.2.2.2,Ensure audit logs are not automatically deleted,"
 The max_log_file_action setting determines how to handle the audit log file reaching
 the max file size. A value of keep_logs will rotate the logs but never delete old logs.
 ","
 Set the following parameter in /etc/audit/auditd.conf:
 max_log_file_action = keep_logs
-"
-"6.2.2.3","
+",True
+6.2.2.3,Ensure system is disabled when audit logs are full,"
 The auditd daemon can be configured to halt the system or put the system in single
 user mode, if no free space is available or an error is detected on the partition that holds
 the audit log files.
@@ -5651,8 +5666,8 @@ disk_error_action = <syslog|single|halt>
 Example:
 disk_full_action = halt
 disk_error_action = halt
-"
-"6.2.2.4","
+",True
+6.2.2.4,Ensure system warns when audit logs are low on space,"
 The auditd daemon can be configured to halt the system, put the system in single user
 mode or send a warning message, if the partition that holds the audit log files is low on
 space.
@@ -5716,8 +5731,8 @@ logging once its completed its action
 • suspend, the audit daemon will stop writing records to the disk
 • single, the audit daemon will put the computer system in single user mode
 • halt, the audit daemon will shut down the system
-"
-"6.2.3.1","
+",True
+6.2.3.1,Ensure changes to system administration scope is collected,"
 Monitor scope changes for system administrators. If the system has been properly
 configured to force system administrators to log in as themselves first and then use the
 sudo command to execute privileged commands, it is possible to monitor changes in
@@ -5737,8 +5752,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.2","
+",True
+6.2.3.2,Ensure actions as another user are always logged,"
 sudo provides users with temporary elevated privileges to perform operations, either as
 the superuser or another user.
 ","
@@ -5758,8 +5773,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.3","
+",True
+6.2.3.3,Ensure events that modify the sudo log file are collected,"
 Monitor the sudo log file. If the system has been properly configured to disable the use
 of the su command and force all administrators to have to log in first and then use sudo
 to execute privileged commands, then all administrator commands will be logged to
@@ -5785,8 +5800,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.4","
+",True
+6.2.3.4,Ensure events that modify date and time information are collected,"
 Capture events where the system date and/or time has been modified. The parameters
 in this section are set to determine if the;
 • adjtimex - tune kernel clock
@@ -5814,8 +5829,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.5","
+",True
+6.2.3.5,Ensure events that modify the system's network environment are collected,"
 Record changes to network environment files or system calls. The below parameters
 monitors the following system calls, and write an audit event on system call exit:
 • sethostname - set the systems host name
@@ -5848,8 +5863,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.6","
+",True
+6.2.3.6,Ensure use of privileged commands are collected,"
 Monitor privileged programs, those that have the setuid and/or setgid bit set on
 execution, to determine if unprivileged users are running these commands.
 ","
@@ -5883,8 +5898,8 @@ required to load rules\n""; fi
 Special mount points
 If there are any special mount points that are not visible by default from just scanning /,
 change the PARTITION variable to the appropriate partition and re-run the remediation.
-"
-"6.2.3.7","
+",True
+6.2.3.7,Ensure unsuccessful file access attempts are collected,"
 Monitor for unsuccessful attempts to access files. The following parameters are
 associated with system calls that control files:
 • creation - creat
@@ -5921,8 +5936,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.8","
+",True
+6.2.3.8,Ensure events that modify user/group information are collected,"
 Record events affecting the modification of user or group information, including that of
 passwords and old passwords if in use.
 • /etc/group - system groups
@@ -5959,8 +5974,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.9","
+",True
+6.2.3.9,Ensure discretionary access control permission modification events are collected,"
 Monitor changes to file permissions, attributes, ownership and group. The parameters in
 this section track changes for system calls that affect file permissions and attributes.
 The following commands and system calls effect the permissions, ownership and
@@ -6012,8 +6027,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.10","
+",True
+6.2.3.10,Ensure successful file system mounts are collected,"
 Monitor the use of the mount system call. The mount (and umount ) system call controls
 the mounting and unmounting of file systems. The parameters below configure the
 system to create an audit record when the mount system call is used by a non-
@@ -6039,8 +6054,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.11","
+",True
+6.2.3.11,Ensure session initiation information is collected,"
 Monitor session initiation events. The parameters in this section track changes to the
 files associated with session events.
 • /var/run/utmp - tracks all currently logged in users.
@@ -6062,8 +6077,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.12","
+",True
+6.2.3.12,Ensure login and logout events are collected,"
 Monitor login and logout events. The parameters below track changes to files
 associated with login/logout events.
 • /var/log/lastlog - maintain records of the last time a user successfully logged
@@ -6083,8 +6098,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.13","
+",True
+6.2.3.13,Ensure file deletion events by users are collected,"
 Monitor the use of system calls associated with the deletion or renaming of files and file
 attributes. This configuration statement sets up monitoring for:
 • unlink - remove a file
@@ -6113,8 +6128,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.14","
+",True
+6.2.3.14,Ensure events that modify the system's Mandatory Access Controls are collected,"
 Monitor AppArmor, an implementation of mandatory access controls. The parameters
 below monitor any write access (potential additional, deletion or modification of files in
 the directory) or attribute changes to the /etc/apparmor/ and /etc/apparmor.d/
@@ -6135,8 +6150,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.15","
+",True
+6.2.3.15,Ensure successful and unsuccessful attempts to use the chcon command are collected,"
 The operating system must generate audit records for successful/unsuccessful uses of
 the chcon command.
 ","
@@ -6159,8 +6174,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.16","
+",True
+6.2.3.16,Ensure successful and unsuccessful attempts to use the setfacl command are collected,"
 The operating system must generate audit records for successful/unsuccessful uses of
 the setfacl command
 ","
@@ -6183,8 +6198,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.17","
+",True
+6.2.3.17,Ensure successful and unsuccessful attempts to use the chacl command are collected,"
 The operating system must generate audit records for successful/unsuccessful uses of
 the chacl command.
 chacl is an IRIX-compatibility command, and is maintained for those users who are
@@ -6209,8 +6224,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.18","
+",True
+6.2.3.18,Ensure successful and unsuccessful attempts to use the usermod command are collected,"
 The operating system must generate audit records for successful/unsuccessful uses of
 the usermod command.
 ","
@@ -6233,8 +6248,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.19","
+",True
+6.2.3.19,6.2.3.19,"
 Monitor the loading and unloading of kernel modules. All the loading / listing /
 dependency checking of modules is done by kmod via symbolic links.
 The following system calls control loading and unloading of modules:
@@ -6270,8 +6285,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.20","
+",True
+6.2.3.20,6.2.3.20,"
 Set system audit so that audit rules cannot be modified with auditctl . Setting the flag
 ""-e 2"" forces audit to be put in immutable mode. Audit changes can only be made on
 system reboot.
@@ -6288,8 +6303,8 @@ Merge and load the rules into active configuration:
 Check if reboot is required.
 # if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then printf ""Reboot
 required to load rules\n""; fi
-"
-"6.2.3.21","
+",True
+6.2.3.21,,"
 The Audit system have both on disk and running configuration. It is possible for these
 configuration settings to differ.
 Note: Due to the limitations of augenrules and auditctl, it is not absolutely
@@ -6303,8 +6318,8 @@ merge and load all rules:
 Check if reboot is required.
 if [[ $(auditctl -s | grep ""enabled"") =~ ""2"" ]]; then echo ""Reboot required
 to load rules""; fi
-"
-"6.2.4.1","
+",True
+6.2.4.1,Ensure audit log files mode is configured,"
 Audit log files contain information about the system and system activity.
 ","
 Run the following command to remove more permissive mode than 0640 from audit log
@@ -6312,8 +6327,8 @@ files:
 # [ -f /etc/audit/auditd.conf ] && find ""$(dirname $(awk -F ""=""
 '/^\s*log_file/ {print $2}' /etc/audit/auditd.conf | xargs))"" -type f -perm
 /0137 -exec chmod u-x,g-wx,o-rwx {} +
-"
-"6.2.4.2","
+",True
+6.2.4.2,Ensure audit log files owner is configured,"
 Audit log files contain information about the system and system activity.
 ","
 Run the following command to configure the audit log files to be owned by the root
@@ -6321,8 +6336,8 @@ user:
 # [ -f /etc/audit/auditd.conf ] && find ""$(dirname $(awk -F ""=""
 '/^\s*log_file/ {print $2}' /etc/audit/auditd.conf | xargs))"" -type f ! -user
 root -exec chown root {} +
-"
-"6.2.4.3","
+",True
+6.2.4.3,Ensure audit log files group owner is configured,"
 Audit log files contain information about the system and system activity.
 ","
 Run the following command to configure the audit log files to be group owned by adm:
@@ -6335,8 +6350,8 @@ file to log_group = adm:
 /etc/audit/auditd.conf
 Run the following command to restart the audit daemon to reload the configuration file:
 # systemctl restart auditd
-"
-"6.2.4.4","
+",True
+6.2.4.4,Ensure the audit log file directory mode is configured,"
 The audit log directory contains audit log files.
 ","
 Run the following command to configure the audit log directory to have a mode of
@@ -6345,30 +6360,30 @@ Run the following command to configure the audit log directory to have a mode of
 /etc/audit/auditd.conf | xargs)"")""
 Default Value:
 750
-"
-"6.2.4.5","
+",True
+6.2.4.5,Ensure audit configuration files mode is configured,"
 Audit configuration files control auditd and what events are audited.
 ","
 Run the following command to remove more permissive mode than 0640 from the audit
 configuration files:
 # find /etc/audit/ -type f \( -name '*.conf' -o -name '*.rules' \) -exec
 chmod u-x,g-wx,o-rwx {} +
-"
-"6.2.4.6","
+",True
+6.2.4.6,Ensure audit configuration files owner is configured,"
 Audit configuration files control auditd and what events are audited.
 ","
 Run the following command to change ownership to root user:
 # find /etc/audit/ -type f \( -name '*.conf' -o -name '*.rules' \) ! -user
 root -exec chown root {} +
-"
-"6.2.4.7","
+",True
+6.2.4.7,Ensure audit configuration files group owner is configured,"
 Audit configuration files control auditd and what events are audited.
 ","
 Run the following command to change group to root:
 # find /etc/audit/ -type f \( -name '*.conf' -o -name '*.rules' \) ! -group
 root -exec chgrp root {} +
-"
-"6.2.4.8","
+",True
+6.2.4.8,Ensure audit tools mode is configured,"
 Audit tools include, but are not limited to, vendor-provided and open source audit tools
 needed to successfully view and manipulate audit information system activity and
 records. Audit tools include custom queries and report generators.
@@ -6376,8 +6391,8 @@ records. Audit tools include custom queries and report generators.
 Run the following command to remove more permissive mode from the audit tools:
 # chmod go-w /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace
 /sbin/auditd /sbin/augenrules
-"
-"6.2.4.9","
+",True
+6.2.4.9,Ensure audit tools owner is configured,"
 Audit tools include, but are not limited to, vendor-provided and open source audit tools
 needed to successfully view and manipulate audit information system activity and
 records. Audit tools include custom queries and report generators.
@@ -6385,8 +6400,8 @@ records. Audit tools include custom queries and report generators.
 Run the following command to change the owner of the audit tools to the root user:
 # chown root /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace
 /sbin/auditd /sbin/augenrules
-"
-"6.2.4.10","
+",True
+6.2.4.10,Ensure audit tools group owner is configured,"
 Audit tools include, but are not limited to, vendor-provided and open source audit tools
 needed to successfully view and manipulate audit information system activity and
 records. Audit tools include custom queries and report generators.
@@ -6394,8 +6409,8 @@ records. Audit tools include custom queries and report generators.
 Run the following command to change group ownership to the groop root:
 # chgrp root /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace
 /sbin/auditd /sbin/augenrules
-"
-"6.3.1","
+",True
+6.3.1,Ensure AIDE is installed,"
 AIDE takes a snapshot of filesystem state including modification times, permissions,
 and file hashes which can then be used to compare against the current state of the
 filesystem to detect modifications to the system.
@@ -6407,8 +6422,8 @@ for options.
 Run the following commands to initialize AIDE:
 # aideinit
 # mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
-"
-"6.3.2","
+",True
+6.3.2,Ensure filesystem integrity is regularly checked,"
 Periodic checking of the filesystem integrity is needed to detect changes to the
 filesystem.
 ","
@@ -6417,8 +6432,8 @@ dailyaidecheck.service:
 # systemctl unmask dailyaidecheck.timer dailyaidecheck.service
 Run the following command to enable and start dailyaidecheck.timer:
 # systemctl --now enable dailyaidecheck.timer
-"
-"6.3.3","
+",True
+6.3.3,Ensure cryptographic mechanisms are used to protect the integrity of audit tools,"
 Audit tools include, but are not limited to, vendor-provided and open source audit tools
 needed to successfully view and manipulate audit information system activity and
 records. Audit tools include custom queries and report generators.
@@ -6488,8 +6503,8 @@ user or root
 • They must not be group or world-writable
 Example:
 @@x_include /etc/aide.conf.d ^[a-zA-Z0-9_-]+$
-"
-"7.1.1","
+",True
+7.1.1,Ensure permissions on /etc/passwd are configured,"
 The /etc/passwd file contains user account information that is used by many system
 utilities and therefore must be readable for these utilities to operate.
 ","
@@ -6499,8 +6514,8 @@ on /etc/passwd:
 # chown root:root /etc/passwd
 Default Value:
 Access: (0644/-rw-r--r--) Uid: ( 0/ root) Gid: ( 0/ root)
-"
-"7.1.2","
+",True
+7.1.2,Ensure permissions on /etc/passwd- are configured,"
 The /etc/passwd- file contains backup user account information.
 ","
 Run the following commands to remove excess permissions, set owner, and set group
@@ -6509,8 +6524,8 @@ on /etc/passwd-:
 # chown root:root /etc/passwd-
 Default Value:
 Access: (0644/-rw-r--r--) Uid: ( 0/ root) Gid: { 0/ root)
-"
-"7.1.3","
+",True
+7.1.3,Ensure permissions on /etc/group are configured,"
 The /etc/group file contains a list of all the valid groups defined in the system. The
 command below allows read/write access for root and read access for everyone else.
 ","
@@ -6520,8 +6535,8 @@ on /etc/group:
 # chown root:root /etc/group
 Default Value:
 Access: (0644/-rw-r--r--) Uid: ( 0/ root) Gid: ( 0/ root)
-"
-"7.1.4","
+",True
+7.1.4,Ensure permissions on /etc/group- are configured,"
 The /etc/group- file contains a backup list of all the valid groups defined in the
 system.
 ","
@@ -6531,8 +6546,8 @@ on /etc/group-:
 # chown root:root /etc/group-
 Default Value:
 Access: (0644/-rw-r--r--) Uid: ( 0/ root) Gid: ( 0/ root)
-"
-"7.1.5","
+",True
+7.1.5,Ensure permissions on /etc/shadow are configured,"
 The /etc/shadow file is used to store the information about user accounts that is critical
 to the security of those accounts, such as the hashed password and other security
 information.
@@ -6546,8 +6561,8 @@ Run the following command to remove excess permissions form /etc/shadow:
 # chmod u-x,g-wx,o-rwx /etc/shadow
 Default Value:
 Access: (0640/-rw-r-----) Uid: ( 0/ root) Gid: ( 42/ shadow)
-"
-"7.1.6","
+",True
+7.1.6,Ensure permissions on /etc/shadow- are configured,"
 The /etc/shadow- file is used to store backup information about user accounts that is
 critical to the security of those accounts, such as the hashed password and other
 security information.
@@ -6561,8 +6576,8 @@ Run the following command to remove excess permissions form /etc/shadow-:
 # chmod u-x,g-wx,o-rwx /etc/shadow-
 Default Value:
 Access: (0640/-rw-r-----) Uid: ( 0/ root) Gid: ( 42/ shadow)
-"
-"7.1.7","
+",True
+7.1.7,Ensure permissions on /etc/gshadow are configured,"
 The /etc/gshadow file is used to store the information about groups that is critical to
 the security of those accounts, such as the hashed password and other security
 information.
@@ -6576,8 +6591,8 @@ Run the following command to remove excess permissions form /etc/gshadow:
 # chmod u-x,g-wx,o-rwx /etc/gshadow
 Default Value:
 Access: (0640/-rw-r-----) Uid: ( 0/ root) Gid: ( 42/ shadow)
-"
-"7.1.8","
+",True
+7.1.8,Ensure permissions on /etc/gshadow- are configured,"
 The /etc/gshadow- file is used to store backup information about groups that is critical
 to the security of those accounts, such as the hashed password and other security
 information.
@@ -6591,8 +6606,8 @@ Run the following command to remove excess permissions form /etc/gshadow-:
 # chmod u-x,g-wx,o-rwx /etc/gshadow-
 Default Value:
 Access: (0640/-rw-r-----) Uid: ( 0/ root) Gid: ( 42/ shadow)
-"
-"7.1.9","
+",True
+7.1.9,Ensure permissions on /etc/shells are configured,"
 /etc/shells is a text file which contains the full pathnames of valid login shells. This
 file is consulted by chsh and available to be queried by other programs.
 ","
@@ -6602,8 +6617,8 @@ on /etc/shells:
 # chown root:root /etc/shells
 Default Value:
 Access: (0644/-rw-r--r--) Uid: ( 0/ root) Gid: ( 0/ root)
-"
-"7.1.10","
+",True
+7.1.10,Ensure permissions on /etc/security/opasswd are configured,"
 /etc/security/opasswd and it's backup /etc/security/opasswd.old hold user's
 previous passwords if pam_unix or pam_pwhistory is in use on the system
 ","
@@ -6617,8 +6632,8 @@ on /etc/security/opasswd and /etc/security/opasswd.old is they exist:
 /etc/security/opasswd.old
 Default Value:
 /etc/security/opasswd Access: (0600/-rw-------) Uid: ( 0/ root) Gid: ( 0/ root)
-"
-"7.1.11","
+",True
+7.1.11,Ensure world writable files and directories are secured,"
 World writable files are the least secure. Data in world-writable files can be modified and
 compromised by any user on the system. World writable files may also indicate an
 incorrectly written script or program that could potentially be the cause of a larger
@@ -6669,15 +6684,15 @@ done < <(findmnt -Dkerno fstype,target | awk '($1 !~
 /^\s*(nfs|proc|smb|vfat|iso9660|efivarfs|selinuxfs)/ && $2 !~
 /^(\/run\/user\/|\/tmp|\/var\/tmp)/){print $2}')
 }
-"
-"7.1.12","
+",True
+7.1.12,Ensure no files or directories without an owner and a group exist,"
 Administrators may delete users or groups from the system and neglect to remove all
 files and/or directories owned by those users or groups.
 ","
 Remove or set ownership and group ownership of these files and/or directories to an
 active user on the system as appropriate.
-"
-"7.1.13","
+",True
+7.1.13,,"
 The owner of a file can set the file's permissions to run with the owner's or group's
 permissions, even if the user running the program is not the owner or a member of the
 group. The most common reason for a SUID or SGID program is to enable users to
@@ -6686,8 +6701,8 @@ perform functions (such as changing their password) that require root privileges
 Ensure that no rogue SUID or SGID programs have been introduced into the system.
 Review the files returned by the action in the Audit section and confirm the integrity of
 these binaries.
-"
-"7.2.1","
+",True
+7.2.1,Ensure accounts in /etc/passwd use shadowed passwords,"
 Local accounts can uses shadowed passwords. With shadowed passwords, The
 passwords are saved in shadow password file, /etc/shadow, encrypted by a salted
 one-way hash. Accounts with a shadowed password have an x in the second field in
@@ -6698,8 +6713,8 @@ passwords in /etc/passwd to /etc/shadow:
 # pwconv
 Investigate to determine if the account is logged in and what it is being used for, to
 determine if it needs to be forced off.
-"
-"7.2.2","
+",True
+7.2.2,Ensure /etc/shadow password fields are not empty,"
 An account with an empty password field means that anybody may log in as that user
 without providing a password.
 ","
@@ -6709,15 +6724,15 @@ password:
 # passwd -l <username>
 Also, check to see if the account is logged in and investigate what it is being used for to
 determine if it needs to be forced off.
-"
-"7.2.3","
+",True
+7.2.3,Ensure all groups in /etc/passwd exist in /etc/group,"
 Over time, system administration errors and changes can lead to groups being defined
 in /etc/passwd but not in /etc/group .
 ","
 Analyze the output of the Audit step above and perform the appropriate action to correct
 any discrepancies found.
-"
-"7.2.4","
+",True
+7.2.4,Ensure shadow group is empty,"
 The shadow group allows system programs which require access the ability to read the
 /etc/shadow file. No users should be assigned to the shadow group.
 ","
@@ -6725,32 +6740,32 @@ Run the following command to remove all users from the shadow group
 # sed -ri 's/(^shadow:[^:]*:[^:]*:)([^:]+$)/\1/' /etc/group
 Change the primary group of any users with shadow as their primary group.
 # usermod -g <primary group> <user>
-"
-"7.2.5","
+",True
+7.2.5,Ensure no duplicate UIDs exist,"
 Although the useradd program will not let you create a duplicate User ID (UID), it is
 possible for an administrator to manually edit the /etc/passwd file and change the UID
 field.
 ","
 Based on the results of the audit script, establish unique UIDs and review all files owned
 by the shared UIDs to determine which UID they are supposed to belong to.
-"
-"7.2.6","
+",True
+7.2.6,Ensure no duplicate GIDs exist,"
 Although the groupadd program will not let you create a duplicate Group ID (GID), it is
 possible for an administrator to manually edit the /etc/group file and change the GID
 field.
 ","
 Based on the results of the audit script, establish unique GIDs and review all files
 owned by the shared GID to determine which group they are supposed to belong to.
-"
-"7.2.7","
+",True
+7.2.7,Ensure no duplicate user names exist,"
 Although the useradd program will not let you create a duplicate user name, it is
 possible for an administrator to manually edit the /etc/passwd file and change the user
 name.
 ","
 Based on the results of the audit script, establish unique user names for the users. File
 ownerships will automatically reflect the change as long as the users have unique UIDs.
-"
-"7.2.8","
+",True
+7.2.8,Ensure no duplicate group names exist,"
 Although the groupadd program will not let you create a duplicate group name, it is
 possible for an administrator to manually edit the /etc/group file and change the group
 name.
@@ -6758,8 +6773,8 @@ name.
 Based on the results of the audit script, establish unique names for the user groups. File
 group ownerships will automatically reflect the change as long as the groups have
 unique GIDs.
-"
-"7.2.9","
+",True
+7.2.9,Ensure local interactive user home directories are configured,"
 The user home directory is space defined for the particular user to set local environment
 variables and to store personal files. While the system administrator can establish
 secure permissions for users' home directories, the users can easily override these.
@@ -6822,8 +6837,8 @@ else
 echo -e ""\n$l_output2""
 fi
 }
-"
-"7.2.10","
+",True
+7.2.10,Ensure local interactive user dot files access is configured,"
 While the system administrator can establish secure permissions for users' ""dot"" files,
 the users can easily override these.
 • .forward file specifies an email address to forward the user's mail to.
@@ -6927,4 +6942,4 @@ done <<< ""$(printf '%s\n' ""${a_user_and_home[@]}"")""
 ""${a_output3[@]}"" """"
 [ ""${#a_output2[@]}"" -gt 0 ] && printf '%s\n' """" ""${a_output2[@]}""
 }
-"
+",True
