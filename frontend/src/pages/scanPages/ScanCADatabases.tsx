@@ -371,6 +371,16 @@ const ScanCADatabases = () => {
   };
 
   const downloadScript = async () => {
+    if (!formData.auditMethod) {
+        setErrors("Please select a network solution (audit method) before downloading the script.");
+        return;
+    }
+
+    if (!formData.complianceSecurityStandard) {
+        setErrors("Please select a security standard before downloading the script.");
+        return;
+    }
+    setErrors("");
     const scanPayload = {
       project_name: formData.projectName,
       scan_name: formData.scanName,

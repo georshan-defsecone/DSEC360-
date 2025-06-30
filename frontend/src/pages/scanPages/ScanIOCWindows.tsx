@@ -73,7 +73,7 @@ const ScanIOCWindows = () => {
         notificationEmail: "",
     });
 
-    const getUncheckedComplianceItems = () => {
+        const getUncheckedComplianceItems = () => {
     return Object.keys(formData.IOCcontrols).filter(
         (iocName) => !formData.IOCcontrols[iocName]
     );
@@ -159,6 +159,7 @@ const ScanIOCWindows = () => {
         alert("Failed to download the script.");
     }
 };
+
 
 
     const validatePage1 = () => {
