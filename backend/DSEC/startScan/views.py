@@ -5,7 +5,7 @@ import shutil
 from .Configuration_Audit.database.maria import connection_maria
 from .Configuration_Audit.database.mssql import remote
 import zipfile
-from .Configuration_Audit.database.oracle.CIS import generate_sql
+from .Configuration_Audit.database.ORACLE import generate_sql
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
@@ -17,7 +17,7 @@ import pandas as pd
 import os
 from openpyxl.styles import Font, PatternFill,Alignment
 from openpyxl.utils import get_column_letter
-from .Compromise_Assesment.Windows.make import generate_powershell_script
+#from .Compromise_Assesment.Windows.make import generate_powershell_script
 
 from .Configuration_Audit.Windows.generate_PowerShell import generate_script
 from .Configuration_Audit.Windows.validate import validate_compliance
@@ -38,9 +38,10 @@ def database_config_audit(scan_data):
     if normalized_compliance == "oracle":
         try:
             base_dir = os.path.dirname(os.path.abspath(__file__))
-            oracle_dir = os.path.join(base_dir,"Configuration_Audit","database","oracle","CIS")
+            oracle_dir = os.path.join(base_dir,"Configuration_Audit","database","oracle","CIS","Queries")
             csv_name = "data.csv"
             csv_path = os.path.join(oracle_dir, csv_name)
+            
             sql_output = os.path.join(oracle_dir, "output.sql")
             result_csv=os.path.join(oracle_dir,"result.csv")
             json_output = os.path.join(oracle_dir, "output.json")

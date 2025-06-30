@@ -86,6 +86,7 @@ def mariadb_connection(excluded_audit, user_name, password_name, host_name, port
     if db_access_method == "remoteAccess":
         
         generate_mariadb_work_remote(name,maria_db_csv_path,sql_commands)
+        port_number=int(port_number) if port_number else 3306  
 
         conn = connect(
             user=user_name,
