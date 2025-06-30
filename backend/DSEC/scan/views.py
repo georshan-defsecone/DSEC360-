@@ -473,7 +473,7 @@ def launch_scan(scan_data):
     print(scan_data)
 
 
-    if scan_type == "configurationaudit":
+    if scan_type == "configuration_audit":
         if category=="database":
            return database_config_audit(scan_data)
            
