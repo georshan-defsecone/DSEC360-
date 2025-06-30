@@ -29,7 +29,8 @@ def check_manual_condition(setting_str, result_from_a):
 
         def safe_quote(val):
             if isinstance(val, str):
-                return f"'{val.strip('\'\"')}'"
+                stripped = val.strip('\'"')
+                return f"'{stripped}'"
             return str(val)
 
         for token in tokens:
