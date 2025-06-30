@@ -310,7 +310,7 @@ def windows_config_audit(scan_data):
             target_ip = scan_data.get("target")
             
             # Generate PowerShell Script
-            generate_script(csv_path, generate_script_path, output_json_remote_path, excluded_queries)
+            generate_script(csv_path, generate_script_path, output_json_remote_path, excluded_queries,audit_method)
             print(f"[+] PowerShell script generated at: {generate_script_path}")
             
             final_json_path = run_remote_audit(username, password, target_ip, generate_script_path, output_json_local_path)
@@ -329,7 +329,7 @@ def windows_config_audit(scan_data):
         
         elif audit_method == "agent":
             # Generate PowerShell Script for agent method
-            generate_script(csv_path, generate_script_path, output_json_local_path, excluded_queries)
+            generate_script(csv_path, generate_script_path, None, excluded_queries,audit_method)
             print(f"[+] PowerShell script generated at: {generate_script_path}")
             print("[*] Using agent method.")
             script_path = download_script(generate_script_path)
