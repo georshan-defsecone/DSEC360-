@@ -365,9 +365,13 @@ def create_scan(request):
 
     project_name = data.get("project_name")
     scan_author = data.get("scan_author", "unknown")
+    scan_name = data.get("scanName")  # Assuming this key from frontend
 
     if not project_name:
         return Response({"error": "project_name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not scan_name:
+        return Response({"error": "scanName is required."}, status=status.HTTP_400_BAD_REQUEST)
 
     project, created = Project.objects.get_or_create(
         project_name=project_name,
@@ -378,16 +382,24 @@ def create_scan(request):
         }
     )
 
+    # ✅ Check if a scan with the same name already exists in the project
+    if Scan.objects.filter(scan_name=scan_name, project=project, trash=False).exists():
+        return Response(
+            {"error": f"Scan with name '{scan_name}' already exists in project '{project_name}'."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
     data["project"] = project.pk
     data["scan_id"] = str(uuid.uuid4())
+    data["scan_name"] = scan_name  # map frontend key to model field
     data.pop("project_name", None)
+    data.pop("scanName", None)
 
     serializer = ScanSerializer(data=data)
 
     if serializer.is_valid():
         serializer.save()
 
-        
         scan_data = data.get("scan_data", {})
         try:
             result = launch_scan(scan_data)
@@ -401,6 +413,7 @@ def create_scan(request):
         except Exception as e:
             print("[!] launch_scan() failed:", e)
             return Response({"error": "Scan execution failed", "details": str(e)}, status=500)
+
         category = scan_data.get("category", "").strip().lower()
         audit_method = scan_data.get("auditMethod", "").strip().lower()
         scan_instance = Scan.objects.get(scan_id=data["scan_id"])
@@ -435,15 +448,14 @@ def create_scan(request):
 
             else:
                 mime_type, _ = mimetypes.guess_type(file_path)
-                mime_type = mime_type or "application/octet-stream"  # Fallback
+                mime_type = mime_type or "application/octet-stream"
 
                 return FileResponse(
-                 open(file_path, "rb"),
-                 as_attachment=True,
-                 filename=filename,
-                 content_type=mime_type
+                    open(file_path, "rb"),
+                    as_attachment=True,
+                    filename=filename,
+                    content_type=mime_type
                 )
-
 
         return Response({
             "message": "Scan created successfully.",
@@ -451,6 +463,7 @@ def create_scan(request):
         }, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 import re
