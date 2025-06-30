@@ -41,7 +41,7 @@ const ScanCALinux = () => {
     projectName: "",
     description: "",
     os: "Linux", // Default to Linux for this scan type
-    scanType: "configurationaudit",
+    scanType: "Configuration Audit",
     // Target Details
     auditMethod: "",
     target: "",
@@ -267,7 +267,7 @@ const ScanCALinux = () => {
       scan_status: "Pending",
 
       scan_data: {
-        scanType: "ConfigurationAudit",
+        scanType: "Configuration Audit",
         description: formData.description,
         category: "linux",
         os: formData.os,
@@ -439,7 +439,7 @@ const ScanCALinux = () => {
         scan_author: userName, // Replace with user context if needed
         scan_status: "Pending",
         scan_data: {
-          scanType: "configurationaudit",
+          scanType: "Configuration Audit",
           description: formData.description,
           category: "linux",
 
