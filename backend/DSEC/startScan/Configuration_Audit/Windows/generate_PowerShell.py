@@ -1,7 +1,15 @@
 import csv
 import os
 
-def generate_script(input_csv_path, output_script_path, output_json_path, excluded_queries):
+def generate_script(input_csv_path, output_script_path, output_json_path, excluded_queries,audit_method):
+    if audit_method == "remoteaccess" and output_json_path:
+    
+        output_path_ps = f'$outputFullPath = [System.IO.Path]::GetFullPath("{output_json_path}")'
+    else:
+    
+        output_path_ps = '$outputFullPath = Join-Path -Path $PSScriptRoot -ChildPath "output.json"'
+
+
     ps_entries = []
 
     with open(input_csv_path, mode='r', encoding='utf-8') as f:
@@ -173,7 +181,7 @@ function Get-AuditPolicySetting {
 
 # Auto-generated PowerShell script
 
-$outputJsonPath = "{os.path.basename(output_json_path)}"
+{output_path_ps}
 $seceditExportPath = "C:\\\\secpol.cfg"
 $currentUserSid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
 
@@ -205,7 +213,7 @@ foreach ($item in $queries) {{
 $json = $results | ConvertTo-Json -Depth 5
 $json = $json -replace '\\u0027', "'"
 
-$outputFullPath = [System.IO.Path]::GetFullPath("{output_json_path}")
+
 [System.IO.File]::WriteAllText($outputFullPath, $json, [System.Text.Encoding]::UTF8)
 
 Write-Host "Output successfully written to: $outputFullPath"
