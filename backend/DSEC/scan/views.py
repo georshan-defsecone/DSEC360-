@@ -361,12 +361,14 @@ def get_scan_result_view(request, project_name, scan_name):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def create_scan(request):
+    print("entered create scan")
     data = request.data.copy()
+    print(data)
 
     project_name = data.get("project_name")
     scan_author = data.get("scan_author", "unknown")
-    scan_name = data.get("scanName")  # Assuming this key from frontend
-
+    scan_name = data.get("scan_name")  
+   
     if not project_name:
         return Response({"error": "project_name is required."}, status=status.HTTP_400_BAD_REQUEST)
 

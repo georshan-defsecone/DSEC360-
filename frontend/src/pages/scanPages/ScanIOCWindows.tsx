@@ -135,7 +135,7 @@ const ScanIOCWindows = () => {
 
         // Try to get the filename from the response headers
         const contentDisposition = response.headers["content-disposition"];
-        let filename = "Microsoft_Windows_10_Stand-alone_v3.0.0_Audit_Script.ps1";
+        let filename = "IOC_Script.ps1";
 
         if (contentDisposition) {
             const match = contentDisposition.match(/filename="?(.+)"?/);
