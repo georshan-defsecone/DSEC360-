@@ -1,0 +1,30 @@
+audit_id: "5.4.1.4"
+audit_name: "Ensure strong password hashing algorithm is configured"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# Check ENCRYPT_METHOD in login.defs
+method=$(grep -Pi '^\s*ENCRYPT_METHOD\s+\S+' /etc/login.defs | awk '{print toupper($2)}' | head -n1)
+
+if [ -z "$method" ]; then
+    failures+=(" - ENCRYPT_METHOD not set in /etc/login.defs")
+elif [[ "$method" != "SHA512" && "$method" != "YESCRYPT" ]]; then
+    failures+=(" - ENCRYPT_METHOD is set to \"$method\" (must be SHA512 or YESCRYPT)")
+fi
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - ENCRYPT_METHOD is set to $method (strong hash)"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

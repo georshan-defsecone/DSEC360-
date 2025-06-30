@@ -1,0 +1,13 @@
+audit_id: "2.2.2"
+audit_name: "Ensure rsh client is not installed"
+audit_script: """
+{
+if dpkg-query -s rsh-client &>/dev/null; then
+    echo "** FAIL ** rsh-client is installed"
+    exit 1
+else
+    echo "** PASS ** rsh-client is not installed"
+    exit 0
+fi
+}
+"""

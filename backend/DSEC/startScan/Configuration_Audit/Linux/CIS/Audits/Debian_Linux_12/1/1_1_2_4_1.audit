@@ -1,0 +1,15 @@
+audit_id: "1.1.2.4.1"
+audit_name: "Ensure separate partition exists for /var"
+audit_script: """
+{
+output=$(findmnt -kn /var)
+
+if [[ -n "$output" ]]; then
+    echo "** PASS ** /var is mounted as a separate filesystem"
+    return 0
+else
+    echo "** FAIL **/var is not mounted separately"
+    return 1
+fi
+}
+"""

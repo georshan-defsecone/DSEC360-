@@ -1,0 +1,52 @@
+audit_id: "5.2.4"
+audit_name: "Ensure users must provide password for privilege escalation"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+skipped=false
+
+# --- Check if password authentication is in use ---
+
+# SSH: is password authentication enabled?
+ssh_pw_auth=$(sudo sshd -T 2>/dev/null | grep -i '^passwordauthentication' | awk '{print tolower($2)}')
+
+# SSH: is PAM enabled?
+ssh_usepam=$(sudo sshd -T 2>/dev/null | grep -i '^usepam' | awk '{print tolower($2)}')
+
+# Any users with valid password hashes?
+users_with_passwords=$(awk -F: '($2 !~ /^[!*]/) { print $1 }' /etc/shadow)
+
+# If all show passwords are NOT used
+if [[ "$ssh_pw_auth" = "no" && "$ssh_usepam" = "no" && -z "$users_with_passwords" ]]; then
+    skipped=true
+fi
+
+# --- If password auth is in use, check for NOPASSWD usage ---
+if [ "$skipped" = false ]; then
+    mapfile -t nopasswd_lines < <(grep -r "^[^#].*NOPASSWD" /etc/sudoers* 2>/dev/null)
+
+    if [ "${#nopasswd_lines[@]}" -gt 0 ]; then
+        failures+=(" - Found NOPASSWD entries in sudoers configuration:")
+        failures+=("${nopasswd_lines[@]}")
+    fi
+fi
+
+# --- Output results ---
+if [ "$skipped" = true ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - Skipped: Password authentication is not used on this system"
+    echo "- End List"
+elif [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - sudo requires a password for privilege escalation"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

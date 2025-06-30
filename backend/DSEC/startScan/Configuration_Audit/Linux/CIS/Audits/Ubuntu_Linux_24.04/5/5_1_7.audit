@@ -1,0 +1,60 @@
+audit_id: "5.1.7"
+audit_name: "Ensure sshd ClientAliveInterval and ClientAliveCountMax are configured"
+audit_script: """
+{
+failures=()
+users_failed=()
+
+match_present=$(grep -iE '^match\s' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null)
+
+check_alive_settings() {
+    local config_output="$1"
+    local interval count
+
+    interval=$(awk '/^clientaliveinterval/ {print $2}' <<< "$config_output")
+    count=$(awk '/^clientalivecountmax/ {print $2}' <<< "$config_output")
+
+    # Must both exist and be > 0
+    if [[ -z "$interval" || -z "$count" || "$interval" -le 0 || "$count" -le 0 ]]; then
+        return 1
+    fi
+    return 0
+}
+
+if [ -z "$match_present" ]; then
+    config=$(sudo sshd -T 2>/dev/null | grep -Pi '^(clientaliveinterval|clientalivecountmax)')
+    if check_alive_settings "$config"; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - ClientAliveInterval and ClientAliveCountMax are correctly set:"
+        echo "$config"
+        echo "- End List"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        echo " - One or both values are missing or set to 0:"
+        echo "$config"
+        echo "- End List"
+    fi
+else
+    # Match blocks — check per user
+    while IFS=: read -r username _ uid _ _ _ shell; do
+        if [[ "$uid" -ge 1000 && "$shell" != *false && "$shell" != *nologin ]]; then
+            config=$(sudo sshd -T -C user="$username" 2>/dev/null | grep -Pi '^(clientaliveinterval|clientalivecountmax)')
+            if ! check_alive_settings "$config"; then
+                users_failed+=("$username")
+            fi
+        fi
+    done < /etc/passwd
+
+    if [ "${#users_failed[@]}" -eq 0 ]; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - All users have ClientAliveInterval and ClientAliveCountMax > 0"
+        echo "- End List"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        echo " - The following users do NOT have valid ClientAlive settings:"
+        printf '   %s\n' "${users_failed[@]}"
+        echo "- End List"
+    fi
+fi
+}
+"""

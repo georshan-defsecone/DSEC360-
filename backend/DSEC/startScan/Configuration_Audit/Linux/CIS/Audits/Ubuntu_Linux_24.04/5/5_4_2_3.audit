@@ -1,0 +1,28 @@
+audit_id: "5.4.2.3"
+audit_name: "Ensure group root is the only GID 0 group"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# Scan /etc/group for GID 0 entries
+while IFS=: read -r groupname _ gid _; do
+    if [ "$gid" -eq 0 ] && [ "$groupname" != "root" ]; then
+        failures+=(" - Group \"$groupname\" has GID 0 (only 'root' should have GID 0)")
+    fi
+done < /etc/group
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - Only the 'root' group is assigned GID 0"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

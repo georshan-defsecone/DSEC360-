@@ -1,0 +1,35 @@
+audit_id: "4.2.7"
+audit_name: "Ensure ufw default deny firewall policy"
+audit_script: """
+{
+output="$(ufw status verbose | grep '^Default:')"
+expected_values=("deny" "reject" "disabled")
+failures=()
+
+# Extract policy values
+incoming="$(awk -F '[(),]' '{print $2}' <<< "$output" | xargs)"
+outgoing="$(awk -F '[(),]' '{print $3}' <<< "$output" | xargs)"
+routed="$(awk -F '[(),]' '{print $4}' <<< "$output" | xargs)"
+
+check_policy() {
+    local direction="$1"
+    local value="$2"
+    if [[ ! " ${expected_values[*]} " =~ " $value " ]]; then
+        failures+=(" - Default policy for $direction is '$value', expected: deny/reject/disabled")
+    fi
+}
+
+check_policy "incoming" "$incoming"
+check_policy "outgoing" "$outgoing"
+check_policy "routed" "$routed"
+
+if [[ ${#failures[@]} -eq 0 ]]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo "- Default policies are correctly set: $output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+fi
+
+}
+"""

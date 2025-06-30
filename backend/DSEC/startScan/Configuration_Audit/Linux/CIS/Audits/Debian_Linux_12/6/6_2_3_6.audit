@@ -1,0 +1,36 @@
+audit_id: "6.2.3.6"
+audit_name: "Ensure use of privileged commands are collected"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+# CIS-compliant audit: check for setuid/setgid binaries being audited
+
+failures=()
+
+# Get all local mount points that are NOT mounted with noexec or nosuid
+mount_points=$(findmnt -n -l -k -it "$(awk '/nodev/ {print $2}' /proc/filesystems | paste -sd,)" \
+  | grep -Pv 'noexec|nosuid' | awk '{print $1}')
+
+# Check each privileged file (setuid/setgid) in those partitions
+for part in $mount_points; do
+  while IFS= read -r -d '' privileged_file; do
+    # Check if it's listed in any rule file
+    if ! grep -qr -- "$privileged_file" /etc/audit/rules.d; then
+      failures+=(" - On-disk audit rule missing for: $privileged_file")
+    fi
+  done < <(find "$part" -xdev -perm /6000 -type f -print0 2>/dev/null)
+done
+
+# Output audit resultdc
+if [ "${#failures[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  echo " - All setuid/setgid files are covered by on-disk audit rules"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  echo " - Reason(s) for audit failure:"
+  printf '%s\n' "${failures[@]}"
+fi
+
+}
+"""

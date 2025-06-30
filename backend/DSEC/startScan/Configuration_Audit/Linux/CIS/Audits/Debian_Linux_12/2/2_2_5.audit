@@ -1,0 +1,13 @@
+audit_id: "2.2.5"
+audit_name: "Ensure ldap client is not installed"
+audit_script: """
+{
+if dpkg-query -s ldap-utls &>/dev/null; then
+    echo "** FAIL ** ldap-utls is installed"
+    exit 1
+else
+    echo "** PASS ** ldap-utls is not installed"
+    exit 0
+fi
+}
+"""

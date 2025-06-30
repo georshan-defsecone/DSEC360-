@@ -1,0 +1,15 @@
+audit_id: "5.2.1"
+audit_name: "Ensure sudo is installed"
+audit_script: """
+{
+if dpkg-query -s sudo &>/dev/null; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - sudo is installed"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    echo " - sudo is NOT installed"
+    echo "- End List"
+fi
+}
+"""

@@ -1,0 +1,26 @@
+audit_id: "2.1.10"
+audit_name: "Ensure nis server services are not in use"
+audit_script: """
+{
+# Check if ypserv package is installed
+if dpkg-query -s ypserv &>/dev/null; then
+    echo "- ypserv is installed"
+
+    # Check if ypserv.service is enabled
+    if systemctl is-enabled ypserv.service 2>/dev/null | grep -q '^enabled'; then
+        echo "** FAIL ** ypserv.service is enabled"
+        exit 1
+    fi
+
+    # Check if ypserv.service is active
+    if systemctl is-active ypserv.service 2>/dev/null | grep -q '^active'; then
+        echo "** FAIL ** ypserv.service is active"
+        exit 1
+    fi
+
+    echo "** PASS ** ypserv is installed but service is neither enabled nor active"
+else
+    echo "** PASS ** ypserv is not installed"
+fi
+}
+"""

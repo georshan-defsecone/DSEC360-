@@ -1,0 +1,16 @@
+audit_id: "1.6.3"
+audit_name: "Ensure remote login warning banner is configured properly"
+audit_script: """
+{
+# Run grep and fail if any output is returned
+cmd_output=$(grep -E -i "(\\\\v|\\\\r|\\\\m|\\\\s|$(grep '^ID=' /etc/os-release | cut -d= -f2 | sed -e 's/\\"//g'))" /etc/issue.net)
+
+if [ -n "$cmd_output" ]; then
+    echo "** FAIL ** /etc/issue.net contains disallowed dynamic system information"
+    echo "$cmd_output"
+    exit 1
+fi
+
+echo "** PASS ** /etc/issue.net contains no dynamic system information"
+}
+"""

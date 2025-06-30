@@ -1,0 +1,57 @@
+audit_id: "5.1.17"
+audit_name: "Ensure sshd MaxSessions is configured"
+audit_script: """
+{
+failures=()
+users_failed=()
+
+# Check for insecure hardcoded values in config files
+bad_config_lines=$(grep -Psi -- '^\h*MaxSessions\h+\"?(1[1-9]|[2-9][0-9]|[1-9][0-9]{2,})\b' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null)
+
+if [ -n "$bad_config_lines" ]; then
+    failures+=(" - MaxSessions is set to > 10 in one or more config files:")
+    failures+=("$bad_config_lines")
+fi
+
+# Check if Match blocks are present
+match_present=$(grep -iE '^match\s' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null)
+
+check_maxsessions() {
+    local value="$1"
+    [[ "$value" =~ ^[0-9]+$ ]] && (( value <= 10 ))
+}
+
+if [ -z "$match_present" ]; then
+    # Global config check
+    value=$(sudo sshd -T 2>/dev/null | grep -i '^maxsessions' | awk '{print $2}')
+    if ! check_maxsessions "$value"; then
+        failures+=(" - Global MaxSessions is set to $value (must be ≤ 10)")
+    fi
+else
+    # Per-user check if Match blocks exist
+    while IFS=: read -r username _ uid _ _ _ shell; do
+        if [[ "$uid" -ge 1000 && "$shell" != *nologin && "$shell" != *false ]]; then
+            value=$(sudo sshd -T -C user="$username" 2>/dev/null | grep -i '^maxsessions' | awk '{print $2}')
+            if ! check_maxsessions "$value"; then
+                users_failed+=("$username ($value)")
+            fi
+        fi
+    done < /etc/passwd
+fi
+
+# Output
+if [ "${#failures[@]}" -eq 0 ] && [ "${#users_failed[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - MaxSessions is properly set (≤ 10) in all applicable configurations"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    [ "${#failures[@]}" -gt 0 ] && printf '%s\n' "${failures[@]}"
+    if [ "${#users_failed[@]}" -gt 0 ]; then
+        echo " - The following users have MaxSessions set > 10:"
+        printf '   %s\n' "${users_failed[@]}"
+    fi
+    echo "- End List"
+fi
+}
+"""

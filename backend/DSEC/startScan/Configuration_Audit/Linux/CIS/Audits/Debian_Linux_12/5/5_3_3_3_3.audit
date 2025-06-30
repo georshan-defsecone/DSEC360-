@@ -1,0 +1,31 @@
+audit_id: "5.3.3.3.3"
+audit_name: "Ensure pam_pwhistory includes use_authtok"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+pam_file="/etc/pam.d/common-password"
+
+if [ -f "$pam_file" ]; then
+    if grep -Psiq '^\s*password\s+[^#\n\r]+\s+pam_pwhistory\.so\s+[^#\n\r]*\buse_authtok\b' "$pam_file"; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - use_authtok is present on pam_pwhistory.so line"
+        echo "- End List"
+    else
+        failures+=(" - pam_pwhistory.so line does not include use_authtok in $pam_file")
+    fi
+else
+    failures+=(" - $pam_file not found")
+fi
+
+# Report failures
+if [ "${#failures[@]}" -gt 0 ]; then
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

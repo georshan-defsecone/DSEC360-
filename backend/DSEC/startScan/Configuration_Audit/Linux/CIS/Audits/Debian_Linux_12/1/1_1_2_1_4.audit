@@ -1,0 +1,20 @@
+audit_id: "1.1.2.1.4"
+audit_name: "Ensure noexec option set on /tmp partition"
+audit_script: """
+{
+mount_info=$(findmnt -kn /tmp)
+
+if [[ -z "$mount_info" ]]; then
+    echo "** FAIL ** /tmp is not a separate mount — this audit is not applicable"
+    return 0
+fi
+
+if echo "$mount_info" | grep -qw noexec; then
+    echo "** PASS ** /tmp is mounted separately with noexec option"
+    return 0
+else
+    echo "** FAIL ** /tmp is mounted separately but missing noexec option"
+    return 1
+fi
+}
+"""

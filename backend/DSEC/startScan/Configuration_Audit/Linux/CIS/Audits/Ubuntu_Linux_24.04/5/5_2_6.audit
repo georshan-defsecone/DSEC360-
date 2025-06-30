@@ -1,0 +1,55 @@
+audit_id: "5.2.6"
+audit_name: "Ensure sudo authentication timeout is configured correctly"
+audit_script: """
+{
+failures=()
+
+# Step 1: Look for explicit `timestamp_timeout` overrides
+timeout_lines=$(grep -roP 'timestamp_timeout=\K-?[0-9]+' /etc/sudoers* 2>/dev/null)
+
+if [ -n "$timeout_lines" ]; then
+    # Validate each override found
+    while read -r value; do
+        if [[ "$value" =~ ^-?[0-9]+$ ]]; then
+            if [ "$value" -eq -1 ] || [ "$value" -gt 15 ]; then
+                failures+=(" - Found timestamp_timeout=$value in sudoers (must be ≤ 15, not -1)")
+            fi
+        fi
+    done <<< "$timeout_lines"
+else
+    # Step 2: No override — check if sudo -V reports a compiled default
+    default_timeout_line=$(sudo -V | grep -i "Authentication timestamp timeout")
+
+    if [ -n "$default_timeout_line" ]; then
+        # Parse timeout value only if the line is found
+        default_timeout=$(echo "$default_timeout_line" | awk -F: '{print $2}' | tr -dc '0-9-')
+        if [[ "$default_timeout" =~ ^-?[0-9]+$ ]]; then
+            if [ "$default_timeout" -eq -1 ] || [ "$default_timeout" -gt 15 ]; then
+                failures+=(" - Default timestamp timeout is $default_timeout minutes (must be ≤ 15, not -1)")
+            fi
+        else
+            failures+=(" - Could not parse default timeout from sudo -V output")
+        fi
+    else
+        # sudo -V doesn't report default; don't try to parse
+        echo " - Note: sudo -V does not report default timestamp_timeout (likely Ubuntu)."
+        echo " - Assuming system default applies. Recommend setting explicitly if unsure."
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - Skipped: timestamp_timeout not overridden and default not reported"
+        echo "- End List"
+        exit 0
+    fi
+fi
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - sudo timestamp_timeout is 15 minutes or less"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+}
+"""

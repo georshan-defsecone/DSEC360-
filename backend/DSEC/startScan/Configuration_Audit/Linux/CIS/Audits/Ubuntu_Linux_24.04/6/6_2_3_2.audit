@@ -1,0 +1,66 @@
+audit_id: "6.2.3.2"
+audit_name: "Ensure actions as another user are always logged"
+audit_script: """
+{
+failures=()
+
+expected_rules=(
+  "-a always,exit -F arch=b64 -C euid!=uid -F auid!=unset -S execve -k user_emulation"
+  "-a always,exit -F arch=b32 -C euid!=uid -F auid!=unset -S execve -k user_emulation"
+)
+
+# Normalize input lines for safe string matching
+normalize() {
+  sed -E 's/[[:space:]]+/ /g; s/^ //; s/ $//'
+}
+
+# Capture on-disk rules
+ondisk_rules=$(awk '
+  /^ *-a *always,exit/ &&
+  / -F *arch=b(32|64)/ &&
+  (/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) &&
+  (/ -C *euid!=uid/ || / -C *uid!=euid/) &&
+  / -S *execve/ &&
+  (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)
+' /etc/audit/rules.d/*.rules 2>/dev/null | normalize)
+
+# Capture active rules
+active_rules=$(auditctl -l 2>/dev/null | awk '
+  /^ *-a *always,exit/ &&
+  / -F *arch=b(32|64)/ &&
+  (/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) &&
+  (/ -C *euid!=uid/ || / -C *uid!=euid/) &&
+  / -S *execve/ &&
+  (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)
+' | normalize)
+
+# Helper to match expected rules
+contains() {
+  grep -Fqx -- "$1"
+}
+
+# Validate on-disk
+for rule in "${expected_rules[@]}"; do
+  if ! contains "$rule" <<< "$ondisk_rules"; then
+    failures+=(" - On-disk rule missing or incorrect: $rule")
+  fi
+done
+
+# Validate active
+for rule in "${expected_rules[@]}"; do
+  if ! contains "$rule" <<< "$active_rules"; then
+    failures+=(" - Active audit rule missing or incorrect: $rule")
+  fi
+done
+
+# Output
+if [ "${#failures[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  echo " - All expected user_emulation audit rules are present"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  echo " - Reason(s) for audit failure:"
+  printf '%s\n' "${failures[@]}"
+fi
+}
+"""

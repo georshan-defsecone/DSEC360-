@@ -1,0 +1,41 @@
+audit_id: "6.2.3.14"
+audit_name: "Ensure events that modify the system's Mandatory Access Controls are collected"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+expected_rules=(
+  "-w /etc/apparmor/ -p wa -k MAC-policy"
+  "-w /etc/apparmor.d/ -p wa -k MAC-policy"
+)
+
+# On-disk rules check
+ondisk=$(grep -hP '^\s*-w\s+/etc/apparmor(\.d)?/' /etc/audit/rules.d/*.rules 2>/dev/null |
+         grep -P '\s+-p\s*wa' |
+         grep -P '\s+(-k\s+\S+|\s+key=\S+)')
+
+# Running config rules check
+runtime=$(auditctl -l 2>/dev/null |
+          grep -P '^\s*-w\s+/etc/apparmor(\.d)?/' |
+          grep -P '\s+-p\s*wa' |
+          grep -P '\s+(-k\s+\S+|\s+key=\S+)')
+
+# Compare expected rules
+for rule in "${expected_rules[@]}"; do
+  grep -Fq -- "$rule" <<< "$ondisk" || failures+=(" - On-disk rule missing or incorrect: $rule")
+  grep -Fq -- "$rule" <<< "$runtime" || failures+=(" - Active audit rule missing or incorrect: $rule")
+done
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  echo " - AppArmor audit rules are correctly configured"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${failures[@]}"
+fi
+
+}
+"""

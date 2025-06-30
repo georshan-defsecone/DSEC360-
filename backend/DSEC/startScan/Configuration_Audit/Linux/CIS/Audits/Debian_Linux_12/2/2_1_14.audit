@@ -1,0 +1,18 @@
+audit_id: "2.1.4"
+audit_name: "Ensure samba file server services are not in use"
+audit_script: """
+{
+if dpkg-query -s samba &>/dev/null; then
+    echo "- samba is installed"
+
+    if systemctl is-enabled smbd.service 2>/dev/null | grep -q '^enabled'; then
+        echo "** FAIL ** smbd.service is enabled"
+        exit 1
+    fi
+
+    echo "** PASS ** samba is installed but smbd.service is not enabled"
+else
+    echo "** PASS ** samba is not installed"
+fi
+}
+"""

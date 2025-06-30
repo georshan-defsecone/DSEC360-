@@ -1,0 +1,53 @@
+audit_id: "6.1.3.7"
+audit_name: "Ensure rsyslog is not configured to receive logs from a remote client"
+audit_script: """
+{
+a_output2=()
+l_analyze_cmd="$(readlink -f /bin/systemd-analyze)"
+l_include='\$IncludeConfig'
+a_config_files=("rsyslog.conf")
+
+# Step 1: Locate the IncludeConfig directive
+while IFS= read -r l_file; do
+    l_conf_loc="$(awk '$1 ~ /^\s*'"$l_include"'$/ {print $2}' "$(tr -d '# ' <<< "$l_file")" | tail -n 1)"
+    [ -n "$l_conf_loc" ] && break
+done < <($l_analyze_cmd cat-config "${a_config_files[@]}" | tac | grep -Pio '^\h*#\h*/[^#\n\r\h]+\.conf\b')
+
+# Step 2: Resolve included path into config file paths
+if [ -d "$l_conf_loc" ]; then
+    l_dir="$l_conf_loc"
+    l_ext="*"
+elif grep -Psq '/\*\.([^#/\n\r]+)?\h*$' <<< "$l_conf_loc" || [ -f "$(readlink -f "$l_conf_loc")" ]; then
+    l_dir="$(dirname "$l_conf_loc")"
+    l_ext="$(basename "$l_conf_loc")"
+fi
+
+# Step 3: Append resolved config files to scan list
+while read -r -d $'\0' l_file_name; do
+    [ -f "$(readlink -f "$l_file_name")" ] && a_config_files+=("$(readlink -f "$l_file_name")")
+done < <(find -L "$l_dir" -type f -name "$l_ext" -print0 2>/dev/null)
+
+# Step 4: Check for both obsolete and advanced TCP input declarations
+for l_logfile in "${a_config_files[@]}"; do
+    for pattern in \
+        '^\h*module\(load="?imtcp"?\)' \
+        '^\h*input\(type="?imtcp"?\b'; do
+
+        if l_match=$(grep -Psi -- "$pattern" "$l_logfile"); then
+            a_output2+=(
+                "- Entry to accept incoming logs found:"
+                " \"$l_match\""
+                " in: \"$l_logfile\""
+            )
+        fi
+    done
+done
+
+# Step 5: Output result
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" " - No entries to accept incoming logs found"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for audit failure:" "${a_output2[@]}"
+fi
+}
+"""

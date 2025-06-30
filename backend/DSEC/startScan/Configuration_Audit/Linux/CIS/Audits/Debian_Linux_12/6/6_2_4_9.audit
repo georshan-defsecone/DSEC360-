@@ -1,0 +1,41 @@
+audit_id: "6.2.4.9"
+audit_name: "Ensure audit tools owner is configured"
+audit_script: """
+{
+failures=()
+passes=()
+audit_tools=(
+  "/sbin/auditctl"
+  "/sbin/aureport"
+  "/sbin/ausearch"
+  "/sbin/autrace"
+  "/sbin/auditd"
+  "/sbin/augenrules"
+)
+
+for tool in "${audit_tools[@]}"; do
+  if [ -e "$tool" ]; then
+    owner=$(stat -Lc '%U' "$tool")
+    if [[ "$owner" != "root" ]]; then
+      failures+=(" - $tool is owned by \"$owner\" (should be owned by \"root\")")
+    else
+      passes+=(" - $tool is correctly owned by root")
+    fi
+  else
+    failures+=(" - $tool does not exist")
+  fi
+done
+
+if [ ${#failures[@]} -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${passes[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${failures[@]}"
+  if [ ${#passes[@]} -gt 0 ]; then
+    echo -e "\n- Correctly configured:"
+    printf '%s\n' "${passes[@]}"
+  fi
+fi
+}
+"""

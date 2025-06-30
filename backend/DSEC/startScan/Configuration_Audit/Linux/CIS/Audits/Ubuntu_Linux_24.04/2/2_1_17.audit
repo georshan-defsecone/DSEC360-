@@ -1,0 +1,20 @@
+audit_id: "2.1.17"
+audit_name: "Ensure web proxy server services are not in use"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+if dpkg-query -s squid &>/dev/null; then
+    echo "- squid is installed"
+
+    if systemctl is-enabled squid.service 2>/dev/null | grep -q '^enabled'; then
+        echo "** FAIL ** squid.service is enabled"
+        exit 1
+    fi
+
+    echo "** PASS ** squid is installed but squid.service is not enabled"
+else
+    echo "** PASS ** squid is not installed"
+fi
+}
+"""

@@ -1,0 +1,20 @@
+audit_id: "6.2.4.7"
+audit_name: "Ensure audit configuration files group owner is configured"
+audit_script: """
+{
+failures=()
+
+while IFS= read -r -d $'\0' file; do
+    group=$(stat -Lc '%G' "$file")
+    failures+=(" - File: \"$file\" is group-owned by \"$group\" (should be group-owned by \"root\")")
+done < <(find /etc/audit/ -type f \( -name '*.conf' -o -name '*.rules' \) ! -group root -print0)
+
+if [ ${#failures[@]} -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - All audit configuration files are group-owned by: root"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+fi
+}
+"""

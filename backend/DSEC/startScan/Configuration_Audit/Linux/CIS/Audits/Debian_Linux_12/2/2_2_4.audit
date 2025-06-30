@@ -1,0 +1,13 @@
+audit_id: "2.2.4"
+audit_name: "Ensure telnet client is not installed"
+audit_script: """
+{
+if dpkg-query -l | grep -E 'telnet|inetutils-telnet' &>/dev/null; then
+    echo "** FAIL ** telnet client is installed"
+    exit 1
+else
+    echo "** PASS ** telnet client is not installed"
+    exit 0
+fi
+}
+"""

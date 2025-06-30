@@ -1,0 +1,39 @@
+audit_id: "5.4.1.1"
+audit_name: "Ensure password expiration is configured"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# 1. Check PASS_MAX_DAYS in /etc/login.defs
+login_defs_value=$(grep -Pi '^\s*PASS_MAX_DAYS\s+\d+\b' /etc/login.defs | awk '{print $2}' | head -n1)
+
+if [[ -z "$login_defs_value" ]]; then
+    failures+=(" - PASS_MAX_DAYS not set in /etc/login.defs")
+elif [[ "$login_defs_value" -gt 365 ]]; then
+    failures+=(" - PASS_MAX_DAYS is set to $login_defs_value in /etc/login.defs (must be ≤ 365)")
+fi
+
+# 2. Check shadow file password max age for real users
+while IFS=: read -r user pass _ _ max _; do
+    if [[ "$pass" =~ ^\$.*\$ ]]; then
+        if [[ -z "$max" || "$max" -gt 365 || "$max" -lt 1 ]]; then
+            failures+=(" - User: $user has PASS_MAX_DAYS set to '$max' (must be 1–365)")
+        fi
+    fi
+done < /etc/shadow
+
+# Result output
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - PASS_MAX_DAYS in /etc/login.defs and /etc/shadow is compliant (1–365)"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

@@ -1,0 +1,26 @@
+audit_id: "4.4.1.2"
+audit_name: "Ensure nftables is not in use with iptables"
+audit_script: """
+{
+
+# Check if nftables is installed
+if dpkg-query -s nftables &>/dev/null; then
+    # If installed, check that it is both disabled and inactive
+    is_enabled=$(systemctl is-enabled nftables.service 2>/dev/null)
+    is_active=$(systemctl is-active nftables.service 2>/dev/null)
+
+    if [[ "$is_enabled" == "enabled" || "$is_active" == "active" ]]; then
+        echo -e "\n - Audit Result:\n ** FAIL **"
+        echo " - nftables is installed and either enabled or active"
+        echo "- End List"
+    else
+        echo -e "\n - Audit Result:\n ** PASS **"
+        echo " - nftables is installed but not enabled or active"
+    fi
+else
+    echo -e "\n - Audit Result:\n ** PASS **"
+    echo " - nftables is not installed"
+fi
+
+}
+"""

@@ -1,0 +1,39 @@
+audit_id: "5.3.3.2.6"
+audit_name: "Ensure password dictionary check is enabled"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# --- 1. Check pwquality config files for dictcheck=0 ---
+config_files=(/etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf)
+
+for file in "${config_files[@]}"; do
+    [ -f "$file" ] || continue
+    if grep -Psiq '^\s*dictcheck\s*=\s*0\b' "$file"; then
+        failures+=(" - dictcheck=0 found in $file (dictionary check disabled)")
+    fi
+done
+
+# --- 2. Check pam_pwquality.so in common-password for dictcheck=0 ---
+pam_file="/etc/pam.d/common-password"
+if [ -f "$pam_file" ]; then
+    if grep -Psiq '^\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so\s+[^#\n\r]*\bdictcheck\s*=\s*0\b' "$pam_file"; then
+        failures+=(" - pam_pwquality.so in $pam_file sets dictcheck=0 (dictionary check disabled)")
+    fi
+fi
+
+# --- Final Output ---
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - dictcheck is enabled (not set to 0 anywhere)"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

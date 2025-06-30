@@ -1,0 +1,40 @@
+audit_id: "5.3.3.1.2"
+audit_name: "Ensure password unlock time is configured"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# -------- Check /etc/security/faillock.conf --------
+faillock_conf="/etc/security/faillock.conf"
+
+if [ -f "$faillock_conf" ]; then
+    if grep -Pq '^\s*unlock_time\s*=\s*(0|9[0-9][0-9]|[1-9][0-9]{3,})\b' "$faillock_conf"; then
+        :
+    else
+        failures+=(" - 'unlock_time' in $faillock_conf is missing or set to a value less than 900 (unless 0)")
+    fi
+else
+    failures+=(" - $faillock_conf not found")
+fi
+
+# -------- Check pam_faillock.so lines in common-auth --------
+pam_file="/etc/pam.d/common-auth"
+if grep -Pq '^\s*auth\s+(requisite|required|sufficient)\s+pam_faillock\.so\s+.*\bunlock_time\s*=\s*([1-9]|[1-9][0-9]|[1-8][0-9][0-9])\b' "$pam_file"; then
+    failures+=(" - pam_faillock.so in $pam_file sets unlock_time < 900 (and not 0)")
+fi
+
+# -------- Output result --------
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - unlock_time is 0 or ≥ 900 seconds in all applicable configurations"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

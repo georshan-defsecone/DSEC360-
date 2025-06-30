@@ -1,0 +1,43 @@
+audit_id: "5.4.3.2"
+audit_name: "Ensure default user shell timeout is configured"
+audit_script: """
+{
+    failures=()
+    valid_tmout_file=""
+    invalid_tmout_line=""
+
+    # Default global bashrc path (optional, may not exist)
+    [ -f /etc/bashrc ] && BRC="/etc/bashrc"
+
+    # Files to scan
+    files=(/etc/profile /etc/profile.d/*.sh)
+    [ -n "$BRC" ] && files+=("$BRC")
+
+    # Step 1: Look for a secure TMOUT definition (<=900), readonly, and exported
+    for f in "${files[@]}"; do
+        [ -f "$f" ] || continue
+
+        grep -Pq '^\s*([^#]+\s+)?TMOUT=(900|[1-8][0-9][0-9]|[1-9][0-9]?|[1-9])\b' "$f" || continue
+        grep -Pq '^\s*([^#]+;\s*)?readonly\s+TMOUT(\s*;|\s*$)' "$f" || continue
+        grep -Pq '^\s*([^#]+;\s*)?export\s+TMOUT(\s*;|\s*$)' "$f" || continue
+
+        valid_tmout_file="$f"
+        break
+    done
+
+    # Step 2: Look for insecure TMOUT values (too long or zero)
+    invalid_tmout_line=$(grep -PHs '^\s*[^#]*TMOUT=(0+|9[0-9][1-9]|9[1-9][0-9]|[1-9][0-9]{3,})\b' "${files[@]}" 2>/dev/null)
+
+    # Step 3: Report findings
+    if [ -n "$valid_tmout_file" ] && [ -z "$invalid_tmout_line" ]; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - TMOUT is securely configured in: \"$valid_tmout_file\""
+        echo "- End List"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        [ -z "$valid_tmout_file" ] && echo " - TMOUT is not securely set (or not marked readonly/exported)"
+        [ -n "$invalid_tmout_line" ] && echo -e " - TMOUT is insecurely configured in:\n$invalid_tmout_line"
+        echo "- End List"
+    fi
+}
+"""

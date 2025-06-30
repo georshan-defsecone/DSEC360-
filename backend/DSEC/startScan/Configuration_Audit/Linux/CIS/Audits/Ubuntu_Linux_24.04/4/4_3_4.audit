@@ -1,0 +1,23 @@
+audit_id: "4.3.4"
+audit_name: "Ensure a nftables table exists"
+audit_script: """
+{
+failures=()
+
+nft_tables="$(nft list tables 2>/dev/null)"
+
+if grep -qE '^\s*table\s+\S+\s+\S+' <<< "$nft_tables"; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - Found nftables table(s):"
+    echo "$nft_tables"
+else
+    failures+=(" - No nftables tables found")
+fi
+
+if [ ${#failures[@]} -ne 0 ]; then
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+fi
+
+}
+"""

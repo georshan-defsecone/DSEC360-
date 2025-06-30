@@ -1,0 +1,62 @@
+audit_id: "2.1.21"
+audit_name: "Ensure mail transfer agent is configured for local-only mode"
+audit_script: """
+{
+# Audit: Verify MTA is not listening on any non-loopback address
+
+a_output=()
+a_output2=()
+a_port_list=("25" "465" "587")
+
+# Check if these ports are listening on non-loopback interfaces
+for l_port_number in "${a_port_list[@]}"; do
+    if ss -plntu | grep -P -- ":$l_port_number\b" | grep -Pvq '\s+(127\.0\.0\.1|\[?::1\]?):'"$l_port_number"'\b'; then
+        a_output2+=("- Port \"$l_port_number\" is listening on a non-loopback network interface")
+    else
+        a_output+=("- Port \"$l_port_number\" is not listening on a non-loopback network interface")
+    fi
+done
+
+# Detect MTA and check configured interfaces
+l_interfaces=""
+
+if command -v postconf &>/dev/null; then
+    l_interfaces="$(postconf -n inet_interfaces | awk '{print $2}')"
+elif command -v exim &>/dev/null; then
+    l_interfaces="$(exim -bP local_interfaces | awk '{print $2}')"
+elif command -v sendmail &>/dev/null; then
+    l_interfaces="$(grep -i "O DaemonPortOptions=" /etc/mail/sendmail.cf | grep -oP '(?<=Addr=)[^, ]+')"
+fi
+
+# Evaluate MTA binding
+if [ -n "$l_interfaces" ]; then
+    if grep -Pqi '\ball\b' <<< "$l_interfaces"; then
+        a_output2+=("- MTA is bound to all network interfaces")
+    elif ! grep -Pqi '(inet_interfaces\s*=\s*)?(127\.0\.0\.1|::1|loopback-only)' <<< "$l_interfaces"; then
+        a_output2+=("- MTA is bound to a network interface: \"$l_interfaces\"")
+    else
+        a_output+=("- MTA is not bound to a non-loopback network interface: \"$l_interfaces\"")
+    fi
+else
+    a_output+=("- MTA not detected or in use")
+fi
+
+# Display audit results
+echo ""
+echo "- Audit Result:"
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    echo " ** PASS **"
+    printf '%s\n' "${a_output[@]}"
+else
+    echo " ** FAIL **"
+    echo " * Reasons for audit failure *"
+    printf '%s\n' "${a_output2[@]}"
+    if [ "${#a_output[@]}" -gt 0 ]; then
+        echo ""
+        echo "- Correctly set:"
+        printf '%s\n' "${a_output[@]}"
+    fi
+fi
+    
+}
+"""

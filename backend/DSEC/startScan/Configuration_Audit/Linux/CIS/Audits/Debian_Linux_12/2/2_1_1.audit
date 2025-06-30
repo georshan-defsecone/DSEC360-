@@ -1,0 +1,27 @@
+audit_id: "2.1.1"
+audit_name: "Ensure autofs services are not in use"
+audit_script: """
+{
+    # Check if autofs package is installed
+    if dpkg-query -s autofs &>/dev/null; then
+        echo "- autofs is installed"
+
+        # Check if autofs.service is enabled
+        if systemctl is-enabled autofs.service 2>/dev/null | grep -q '^enabled'; then
+            echo "** FAIL ** autofs.service is enabled"
+            exit 1
+        fi
+
+        # Check if autofs.service is active
+        if systemctl is-active autofs.service 2>/dev/null | grep -q '^active'; then
+            echo "** FAIL ** autofs.service is active"
+            exit 1
+        fi
+
+        echo "** PASS ** autofs is installed but the service is neither enabled nor active"
+    else
+        echo "** PASS ** autofs is not installed"
+    fi
+}
+
+"""

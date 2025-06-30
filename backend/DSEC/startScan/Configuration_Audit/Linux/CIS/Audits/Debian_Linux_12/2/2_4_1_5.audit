@@ -1,0 +1,24 @@
+audit_id: "2.4.1.5"
+audit_name: "Ensure permissions on /etc/cron.weekly are configured"
+audit_script: """
+{
+dir='/etc/cron.weekly/'
+
+if [ ! -d "$dir" ]; then
+    echo "** FAIL **: $dir does not exist"
+    exit 1
+fi
+
+stat_output=$(stat -Lc 'Access: (%a/%A) Uid: (%u/%U) Gid: (%g/%G)' "$dir")
+perm=$(echo "$stat_output" | awk '{print $2}' | cut -d'(' -f2 | cut -d'/' -f1)
+uid=$(echo "$stat_output" | awk '{print $4}' | cut -d'(' -f2)
+gid=$(echo "$stat_output" | awk '{print $6}' | cut -d'(' -f2)
+
+status="** PASS **"
+[[ "$perm" != "700" ]] && status="** FAIL **"
+[[ "$uid" != "0" ]] && status="** FAIL **"
+[[ "$gid" != "0" ]] && status="** FAIL **"
+
+echo "$status: $stat_output"
+}
+"""

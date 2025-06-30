@@ -1,0 +1,53 @@
+audit_id: "5.1.19"
+audit_name: "Ensure sshd PermitEmptyPasswords is disabled"
+audit_script: """
+{
+failures=()
+users_failed=()
+
+# Check if Match blocks are present
+match_present=$(grep -iE '^match\s' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null)
+
+# Function to validate the setting
+check_permit_empty_pw() {
+    local val="$1"
+    [[ "$val" =~ ^permitemptypasswords[[:space:]]+no$ ]]
+}
+
+if [ -z "$match_present" ]; then
+    # No Match blocks — check global config
+    config=$(sudo sshd -T 2>/dev/null | grep -i '^permitemptypasswords')
+    if check_permit_empty_pw "$config"; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - PermitEmptyPasswords is set to 'no' globally"
+        echo "- End List"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        echo " - PermitEmptyPasswords is not set to 'no'"
+        [ -n "$config" ] && echo "   Actual value: $config" || echo "   Directive not found"
+        echo "- End List"
+    fi
+else
+    # Match blocks present — check each real user
+    while IFS=: read -r username _ uid _ _ _ shell; do
+        if [[ "$uid" -ge 1000 && "$shell" != *nologin && "$shell" != *false ]]; then
+            config=$(sudo sshd -T -C user="$username" 2>/dev/null | grep -i '^permitemptypasswords')
+            if ! check_permit_empty_pw "$config"; then
+                users_failed+=("$username")
+            fi
+        fi
+    done < /etc/passwd
+
+    if [ "${#users_failed[@]}" -eq 0 ]; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - All users have PermitEmptyPasswords set to 'no'"
+        echo "- End List"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        echo " - The following users do NOT have PermitEmptyPasswords set to 'no':"
+        printf '   %s\n' "${users_failed[@]}"
+        echo "- End List"
+    fi
+fi
+}
+"""

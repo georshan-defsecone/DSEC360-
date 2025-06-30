@@ -1,0 +1,33 @@
+audit_id: "2.1.19"
+audit_name: "Ensure xinetd services are not in use"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+# Audit for xinetd package and service
+
+# Check if xinetd is installed
+if dpkg-query -s xinetd &>/dev/null; then
+    echo "- xinetd is installed"
+
+    # Check if the service is enabled
+    if systemctl is-enabled xinetd.service 2>/dev/null | grep -q 'enabled'; then
+        echo "** FAIL ** xinetd.service is enabled"
+        exit 1
+    fi
+
+    # Check if the service is active
+    if systemctl is-active xinetd.service 2>/dev/null | grep -q '^active'; then
+        echo "** FAIL ** xinetd.service is active"
+        exit 1
+    fi
+
+    echo "** PASS ** xinetd is installed but service is neither enabled nor active"
+    exit 0
+else
+    echo "** PASS ** xinetd is not installed"
+    exit 0
+fi
+
+}
+"""

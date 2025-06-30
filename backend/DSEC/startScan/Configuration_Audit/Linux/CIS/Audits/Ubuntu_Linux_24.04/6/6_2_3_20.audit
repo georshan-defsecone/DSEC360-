@@ -1,0 +1,19 @@
+audit_id: "6.2.3.20"
+audit_script: "Ensure the audit configuration is immutable (Automated)"
+audit_script: """
+{
+failures=()
+
+expected="-e 2"
+actual=$(grep -Ph -- '^\h*-e\h+2\b' /etc/audit/rules.d/*.rules 2>/dev/null | tail -1)
+
+if [ "$actual" = "$expected" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - Immutable audit flag is correctly set: $actual"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    echo " - Immutable audit flag is missing or incorrect. Expected: \"$expected\", Found: \"${actual:-None}\""
+fi
+}
+
+"""

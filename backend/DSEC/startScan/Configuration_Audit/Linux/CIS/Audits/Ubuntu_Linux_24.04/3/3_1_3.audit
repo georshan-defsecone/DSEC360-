@@ -1,0 +1,24 @@
+audit_id: "3.1.2"
+audit_name: "Ensure bluetooth services are not in use"
+audit_script: """
+{
+# Check if bluez package is installed
+if dpkg-query -s bluez &>/dev/null; then
+    # bluez is installed — check if bluetooth.service is disabled and inactive
+    is_enabled=$(systemctl is-enabled bluetooth.service 2>/dev/null)
+    is_active=$(systemctl is-active bluetooth.service 2>/dev/null)
+
+    if [[ "$is_enabled" == "enabled" || "$is_active" == "active" ]]; then
+        echo "** FAIL **: bluez is installed and bluetooth.service is $is_enabled/$is_active"
+        exit 1
+    fi
+else
+    # bluez is not installed — that's OK
+    echo "** PASS **: bluez package is not installed"
+    exit 0
+fi
+
+echo "** PASS **: bluez is installed but bluetooth.service is disabled and inactive"
+
+}
+"""

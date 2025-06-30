@@ -1,0 +1,43 @@
+audit_id: "7.1.5"
+audit_name: "Ensure permissions on /etc/shadow are configured"
+audit_script: """
+{
+failures=()
+
+# Target file
+target_file="/etc/shadow"
+
+# Check existence
+if [ ! -e "$target_file" ]; then
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    echo " - File \"$target_file\" does not exist."
+    exit 1
+fi
+
+# Gather metadata
+read -r mode perms uid user gid group <<< "$(stat -Lc '%a %A %u %U %g %G' "$target_file")"
+
+# Check file permissions
+if (( mode > 644 )); then
+    failures+=(" - Incorrect permissions: $mode ($perms), should be 644 or more restrictive")
+fi
+
+# Check ownership
+if [[ "$uid" -ne 0 || "$user" != "root" ]]; then
+    failures+=(" - Incorrect owner: UID=$uid ($user), should be root")
+fi
+
+if [[ "$gid" -ne 0 || "$group" != "root" ]]; then
+    failures+=(" - Incorrect group: GID=$gid ($group), should be root")
+fi
+
+# Output result
+if [ ${#failures[@]} -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - $target_file is securely configured (mode: $mode, owner: $user, group: $group)"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+fi
+}
+"""

@@ -1,0 +1,37 @@
+audit_id: "1.6.4"
+audit_name: "Ensure access to /etc/motd is configured"
+audit_script: """
+{
+# If /etc/motd doesn't exist, that's acceptable (PASS)
+[ ! -e /etc/motd ] && {
+    echo "** PASS ** /etc/motd does not exist"
+    exit 0
+}
+
+# Get permission, UID, and GID info
+output=$(stat -Lc 'Access: (%#a/%A) Uid: (%u/%U) Gid: (%g/%G)' /etc/motd 2>/dev/null)
+
+# Extract numeric permission, UID, and GID
+perm=$(stat -Lc '%a' /etc/motd)
+uid=$(stat -Lc '%u' /etc/motd)
+gid=$(stat -Lc '%g' /etc/motd)
+
+# Check if permissions are 644 or more restrictive
+if [ "$perm" -gt 644 ]; then
+    echo "** FAIL ** /etc/motd has permissions that are too permissive: $perm"
+    echo "$output"
+    exit 1
+fi
+
+# Check ownership
+if [ "$uid" -ne 0 ] || [ "$gid" -ne 0 ]; then
+    echo "** FAIL ** /etc/motd is not owned by root:root"
+    echo "$output"
+    exit 1
+fi
+
+# All checks passed
+echo "** PASS ** /etc/motd has correct permissions and ownership"
+echo "$output"
+}
+"""

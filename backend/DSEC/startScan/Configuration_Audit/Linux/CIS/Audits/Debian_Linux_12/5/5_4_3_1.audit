@@ -1,0 +1,23 @@
+audit_id: "5.4.3.1"
+audit_name: "Ensure nologin is not listed in /etc/shells"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+    failures=()
+
+    if grep -Ps '^\h*([^#\n\r]+)?/nologin\b' /etc/shells > /dev/null; then
+        failures+=(" - /etc/shells contains /nologin, which should not be listed as a valid shell")
+    fi
+
+    if [ "${#failures[@]}" -eq 0 ]; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - /etc/shells does not include /nologin"
+        echo "- End List"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        printf '%s\n' "${failures[@]}"
+        echo "- End List"
+    fi
+}
+"""

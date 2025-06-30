@@ -1,0 +1,20 @@
+audit_id: "1.1.2.2.2"
+audit_name: "Ensure nodev option set on /dev/shm partition"
+audit_script: """
+{
+mount_info=$(findmnt -kn /dev/shm)
+
+if [[ -z "$mount_info" ]]; then
+    echo "** FAIL ** /dev/shm is not a separate mount — this audit is not applicable"
+    return 0
+fi
+
+if echo "$mount_info" | grep -qw nodev; then
+    echo "** PASS ** /dev/shm is mounted separately with nodev option"
+    return 0
+else
+    echo "** FAIL ** /dev/shm is mounted separately but missing nodev option"
+    return 1
+fi   
+}
+"""

@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import api from "../api";
+import Papa from "papaparse";
 import { useEffect, useState } from "react";
 import {
   BarChart,
@@ -16,10 +17,18 @@ import { Card } from "@/components/ui/card";
 import { CheckCircle, XCircle } from "lucide-react";
 
 const ScanResult = () => {
-  const { projectName, scanName } = useParams<{ projectName: string; scanName: string }>();
+  const { projectName, scanName } = useParams<{
+    projectName: string;
+    scanName: string;
+  }>();
 
-  const [summary, setSummary] = useState<{ pass: number; fail: number }>({ pass: 0, fail: 0 });
-  const [auditItems, setAuditItems] = useState<{ name: string; status: string }[]>([]);
+  const [summary, setSummary] = useState<{ pass: number; fail: number }>({
+    pass: 0,
+    fail: 0,
+  });
+  const [auditItems, setAuditItems] = useState<
+    { name: string; status: string }[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -38,45 +47,28 @@ const ScanResult = () => {
         );
 
         const text = await response.data.text();
-        const rows = text.trim().split("\n").map((row) => row.split(","));
 
-        if (rows.length < 2) {
-          setError("Scan result is empty or invalid.");
-          return;
-        }
+        const parsed = Papa.parse(text, {
+          header: true,
+          skipEmptyLines: true,
+        });
 
-        // Normalize headers
-        const headers = rows[0].map((h) => h.trim().toLowerCase());
-
-        const headerMap = Object.fromEntries(headers.map((h, i) => [h, i]));
-
-        const statusIndex = headerMap["status"];
-        const cisIndex = headerMap["cis.no"];
-        const subjectIndex = headerMap["subject"];
-
-        if (
-          statusIndex === undefined ||
-          cisIndex === undefined ||
-          subjectIndex === undefined
-        ) {
-          setError("CSV headers are missing required fields: 'status', 'cis.no', or 'subject'.");
-          return;
-        }
+        const data = parsed.data as any[];
 
         let pass = 0;
         let fail = 0;
         const audits: { name: string; status: string }[] = [];
 
-        rows.slice(1).forEach((row) => {
-          const status = row[statusIndex]?.toLowerCase().trim();
-          const cis = row[cisIndex]?.trim();
-          const subject = row[subjectIndex]?.trim();
-          const name = cis && subject ? `${cis} - ${subject}` : subject || cis || "Unnamed";
+        data.forEach((row) => {
+          const status = row["Result"]?.toLowerCase().trim();
+          const name = row["Subject"]?.trim() || row["Name"]?.trim();
 
           if (status === "pass") pass++;
           else if (status === "fail") fail++;
 
-          audits.push({ name, status });
+          if (name) {
+            audits.push({ name, status });
+          }
         });
 
         setSummary({ pass, fail });
@@ -94,7 +86,9 @@ const ScanResult = () => {
     <div className="flex h-screen text-black pt-24">
       <Sidebar settings={false} scanSettings={false} homeSettings={true} />
       <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
-        <Header title={`Result: ${projectName ?? "Unknown"} - ${scanName ?? ""}`} />
+        <Header
+          title={`Result: ${projectName ?? "Unknown"} - ${scanName ?? ""}`}
+        />
 
         {loading ? (
           <p>Loading...</p>
@@ -127,7 +121,10 @@ const ScanResult = () => {
                 <div className="max-h-80 overflow-y-auto pr-2 space-y-3">
                   {auditItems.length > 0 ? (
                     auditItems.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between">
+                      <div
+                        key={index}
+                        className="flex items-center justify-between"
+                      >
                         <span className="text-sm">{item.name}</span>
                         {item.status === "pass" ? (
                           <CheckCircle className="text-green-500 w-5 h-5" />

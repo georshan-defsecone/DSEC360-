@@ -1,0 +1,31 @@
+audit_id: "4.3.2"
+audit_name: "Ensure ufw is uninstalled or disabled with nftables"
+audit_script: """
+{
+failures=()
+
+# Check if UFW is installed
+if dpkg-query -s ufw &>/dev/null; then
+    # If installed, check if it is inactive and masked
+    ufw_status="$(ufw status 2>/dev/null)"
+    service_status="$(systemctl is-enabled ufw.service 2>/dev/null)"
+
+    if ! grep -q "^Status: inactive" <<< "$ufw_status"; then
+        failures+=(" - UFW is installed and not inactive (status: $ufw_status)")
+    fi
+
+    if [ "$service_status" != "masked" ]; then
+        failures+=(" - ufw.service is not masked (status: $service_status)")
+    fi
+else
+    echo "- UFW is not installed"
+fi
+
+if [ ${#failures[@]} -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+fi
+}
+"""

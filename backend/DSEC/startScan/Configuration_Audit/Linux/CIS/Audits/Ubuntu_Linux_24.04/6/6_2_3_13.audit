@@ -1,0 +1,50 @@
+audit_id: "6.2.3.13"
+audit_name: "Ensure file deletion events by users are collected"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# Get UID_MIN from login.defs
+UID_MIN=$(awk '/^\s*UID_MIN/ { print $2 }' /etc/login.defs)
+
+expected_rules=(
+  "-a always,exit -F arch=b64 -S unlink,unlinkat,rename,renameat -F auid>=${UID_MIN} -F auid!=unset -k delete"
+  "-a always,exit -F arch=b32 -S unlink,unlinkat,rename,renameat -F auid>=${UID_MIN} -F auid!=unset -k delete"
+)
+
+# Get on-disk audit rules
+ondisk=$(grep -P '^\s*-a\s+always,exit' /etc/audit/rules.d/*.rules 2>/dev/null |
+         grep -P '\s+-F\s+arch=b(32|64)' |
+         grep -P '\s+-F\s+auid!=(unset|-1|4294967295)' |
+         grep -P "\s+-F\s+auid>=${UID_MIN}" |
+         grep -P '\s+-S\s+.*(unlink|unlinkat|rename|renameat)' |
+         grep -P '\s+(-k\s+\S+|\s+key=\S+)')
+
+# Get runtime audit rules
+runtime=$(auditctl -l 2>/dev/null |
+          grep -P '^\s*-a\s+always,exit' |
+          grep -P '\s+-F\s+arch=b(32|64)' |
+          grep -P '\s+-F\s+auid!=(unset|-1|4294967295)' |
+          grep -P "\s+-F\s+auid>=${UID_MIN}" |
+          grep -P '\s+-S\s+.*(unlink|unlinkat|rename|renameat)' |
+          grep -P '\s+(-k\s+\S+|\s+key=\S+)')
+
+# Compare expected rules with actual output
+for rule in "${expected_rules[@]}"; do
+  grep -Fq -- "$rule" <<< "$ondisk" || failures+=(" - On-disk rule missing or incorrect: $rule")
+  grep -Fq -- "$rule" <<< "$runtime" || failures+=(" - Active audit rule missing or incorrect: $rule")
+done
+
+# Output results
+if [ "${#failures[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  echo " - File deletion syscalls are properly audited"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${failures[@]}"
+fi
+
+}
+"""
