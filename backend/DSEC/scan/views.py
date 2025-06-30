@@ -24,6 +24,7 @@ from .serializers import MyTokenObtainPairSerializer
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
 from startScan.views import database_config_audit, windows_config_audit, linux_config_audit
+from startScan.views import windows_compromise_assesment
 from startScan.views import download_script
 from django.http import FileResponse
 import json
@@ -364,9 +365,13 @@ def create_scan(request):
 
     project_name = data.get("project_name")
     scan_author = data.get("scan_author", "unknown")
+    scan_name = data.get("scanName")  # Assuming this key from frontend
 
     if not project_name:
         return Response({"error": "project_name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not scan_name:
+        return Response({"error": "scanName is required."}, status=status.HTTP_400_BAD_REQUEST)
 
     project, created = Project.objects.get_or_create(
         project_name=project_name,
@@ -377,16 +382,24 @@ def create_scan(request):
         }
     )
 
+    # ✅ Check if a scan with the same name already exists in the project
+    if Scan.objects.filter(scan_name=scan_name, project=project, trash=False).exists():
+        return Response(
+            {"error": f"Scan with name '{scan_name}' already exists in project '{project_name}'."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
     data["project"] = project.pk
     data["scan_id"] = str(uuid.uuid4())
+    data["scan_name"] = scan_name  # map frontend key to model field
     data.pop("project_name", None)
+    data.pop("scanName", None)
 
     serializer = ScanSerializer(data=data)
 
     if serializer.is_valid():
         serializer.save()
 
-        
         scan_data = data.get("scan_data", {})
         try:
             result = launch_scan(scan_data)
@@ -400,6 +413,7 @@ def create_scan(request):
         except Exception as e:
             print("[!] launch_scan() failed:", e)
             return Response({"error": "Scan execution failed", "details": str(e)}, status=500)
+
         category = scan_data.get("category", "").strip().lower()
         audit_method = scan_data.get("auditMethod", "").strip().lower()
         scan_instance = Scan.objects.get(scan_id=data["scan_id"])
@@ -434,15 +448,14 @@ def create_scan(request):
 
             else:
                 mime_type, _ = mimetypes.guess_type(file_path)
-                mime_type = mime_type or "application/octet-stream"  # Fallback
+                mime_type = mime_type or "application/octet-stream"
 
                 return FileResponse(
-                 open(file_path, "rb"),
-                 as_attachment=True,
-                 filename=filename,
-                 content_type=mime_type
+                    open(file_path, "rb"),
+                    as_attachment=True,
+                    filename=filename,
+                    content_type=mime_type
                 )
-
 
         return Response({
             "message": "Scan created successfully.",
@@ -452,39 +465,68 @@ def create_scan(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 import re
 
 def launch_scan(scan_data):
     print("[*] Entered launch_scan()")
+    
 
     # Normalize and extract values from scan_data
-    scan_type = (scan_data.get("scanType") or "").strip().lower().replace(" ", "_")
+    scan_type = (scan_data.get("scanType") or "").strip().lower().replace(" ", "").replace("_", "")
+    print("[DEBUG] scan_type:", scan_type)
+
     os_name = (scan_data.get("os") or "").strip().lower()
+    print("[DEBUG] os_name:", os_name)
+
     auth_type = (scan_data.get("auditMethod") or "").strip().lower()
     category=(scan_data.get("category")or"").strip().lower()
-    compliance_name=(scan_data.get("complianceCategory")).strip().lower()
-    
-    print(f"[DEBUG] scan_type: {scan_type}, category: {category}")
-
+    compliance_name=(scan_data.get("complianceCategory") or "").strip().lower()
 
     standard = scan_data.get("complianceSecurityStandard")
     # Remove all non-alphanumeric characters including underscores, then lowercase
     normalized_compliance = re.sub(r'[\W_]+', '', compliance_name or "").lower()
     print(scan_data)
+    print("[DEBUG] auth_type:", auth_type)
+    category = (scan_data.get("category") or "").strip().lower()
+    print("[DEBUG] category:", category)
+
+    audit_method = (scan_data.get("auditMethod") or "").strip().lower()
 
 
-    if scan_type == "configuration_audit":
+    compliance_name = (scan_data.get("complianceCategory") or "").strip().lower()
+    standard = scan_data.get("complianceSecurityStandard")
+
+    # Remove all non-alphanumeric characters including underscores, then lowercase
+    normalized_compliance = re.sub(r'[\W_]+', '', compliance_name or "").lower()
+    print("[DEBUG] scan_data received:", scan_data)
+
+    if scan_type == "configurationaudit":
+
         if category=="database":
            return database_config_audit(scan_data)
            
 
         if category=="windows":
+            
             return windows_config_audit(scan_data)
 
         if category == "linux":
-            return linux_config_audit(scan_data)
+            return None, None
 
         if category=="firewall":
             return None,None
+        
+        if category == "firewall":
+            return None, None
 
+    elif scan_type == "compromiseassessment":
+        if category == "windows":
+            return windows_compromise_assesment(scan_data)
 
+    
+        if category == "linux":
+            return None, None
+
+           
+    return None, None  

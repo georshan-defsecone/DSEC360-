@@ -2137,7 +2137,7 @@ loopback network:
 # ufw deny in from 127.0.0.0/8
 # ufw deny in from ::1"
 4.2.6,Ensure ufw firewall rules exist for all open ports,Services and ports can be accepted or explicitly rejected.,"- The following port(s) don't have a rule in UFW:
-  - 39716
+  - 32986
   - 53
   - 5353
 - End List",FAIL,"For each port identified in the audit which does not have a firewall rule, evaluate the
@@ -3371,47 +3371,11 @@ same test on that location.","- Reason(s) for audit failure:
 
  o Mode: ""0644"" should be ""640"" or more restrictive
 
- - File: ""/var/log/sysstat/sa15"" is:
-
- o Mode: ""0644"" should be ""640"" or more restrictive
-
- - File: ""/var/log/sysstat/sa14"" is:
-
- o Mode: ""0644"" should be ""640"" or more restrictive
-
- - File: ""/var/log/sysstat/sa19"" is:
-
- o Mode: ""0644"" should be ""640"" or more restrictive
-
- - File: ""/var/log/sysstat/sa05"" is:
-
- o Mode: ""0644"" should be ""640"" or more restrictive
-
- - File: ""/var/log/sysstat/sa17"" is:
-
- o Mode: ""0644"" should be ""640"" or more restrictive
-
- - File: ""/var/log/sysstat/sa20"" is:
-
- o Mode: ""0644"" should be ""640"" or more restrictive
-
- - File: ""/var/log/sysstat/sa11"" is:
-
- o Mode: ""0644"" should be ""640"" or more restrictive
-
- - File: ""/var/log/sysstat/sa13"" is:
-
- o Mode: ""0644"" should be ""640"" or more restrictive
-
- - File: ""/var/log/sysstat/sa12"" is:
-
- o Mode: ""0644"" should be ""640"" or more restrictive
-
  - File: ""/var/log/sysstat/sa26"" is:
 
  o Mode: ""0644"" should be ""640"" or more restrictive
 
- - File: ""/var/log/sysstat/sa18"" is:
+ - File: ""/var/log/sysstat/sa30"" is:
 
  o Mode: ""0644"" should be ""640"" or more restrictive
 
@@ -3419,27 +3383,15 @@ same test on that location.","- Reason(s) for audit failure:
 
  o Mode: ""0644"" should be ""640"" or more restrictive
 
- - File: ""/var/log/sysstat/sa28"" is:
-
- o Mode: ""0644"" should be ""640"" or more restrictive
-
  - File: ""/var/log/sysstat/sa23"" is:
 
  o Mode: ""0644"" should be ""640"" or more restrictive
 
- - File: ""/var/log/sysstat/sa16"" is:
+ - File: ""/var/log/sysstat/sar29"" is:
 
  o Mode: ""0644"" should be ""640"" or more restrictive
 
  - File: ""/var/log/sysstat/sa29"" is:
-
- o Mode: ""0644"" should be ""640"" or more restrictive
-
- - File: ""/var/log/sysstat/sa21"" is:
-
- o Mode: ""0644"" should be ""640"" or more restrictive
-
- - File: ""/var/log/sysstat/sa10"" is:
 
  o Mode: ""0644"" should be ""640"" or more restrictive
 

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
-
+import Papa from 'papaparse';
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -250,23 +250,40 @@ const ScanCADatabases = () => {
     .toLowerCase()
     .replace(/\s+/g, "_");
 
-  const folderPath = `Configuration_audit/database/${flavour.toLowerCase()}/${securityStandard.toLowerCase()}`;
+  const folderPath = `Configuration_audit/database/${flavour.toLowerCase()}/${securityStandard.toLowerCase()}/Queries`;
 
   try {
-    const response = await api.get(`/get-json/${folderPath}/${filename}/`);
-    const auditData = response.data;
+    const response = await api.get(`/get-csv/${folderPath}/${filename}/`, {
+      responseType: 'text',
+    });
+
+    const csvText = response.data;
+
+    // Parse with PapaParse
+    const result = Papa.parse(csvText, {
+      header: true,
+      skipEmptyLines: true,
+    });
+
+    const auditData = result.data.map((row) => ({
+      name: row.name?.trim(),
+      check: row.check?.trim().toLowerCase() === 'true',
+    }));
 
     handleInputChange(auditData, "auditNames");
 
     const initiallyChecked = auditData
-      .filter((item) => item.check)
-      .map((item) => item.name);
+      .filter(item => item.check)
+      .map(item => item.name);
 
     setSelectedComplianceItems(initiallyChecked);
   } catch (error) {
     console.error("Error fetching compliance data:", error);
   }
 }
+
+
+
 
 
 
@@ -354,6 +371,16 @@ const ScanCADatabases = () => {
   };
 
   const downloadScript = async () => {
+    if (!formData.auditMethod) {
+        setErrors("Please select a network solution (audit method) before downloading the script.");
+        return;
+    }
+
+    if (!formData.complianceSecurityStandard) {
+        setErrors("Please select a security standard before downloading the script.");
+        return;
+    }
+    setErrors("");
     const scanPayload = {
       project_name: formData.projectName,
       scan_name: formData.scanName,

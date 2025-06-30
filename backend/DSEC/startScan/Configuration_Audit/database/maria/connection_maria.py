@@ -1,5 +1,4 @@
 import sys
-import mariadb
 import json
 import os
 import re
@@ -7,10 +6,12 @@ from .generate import generate_mariadb_work_remote
 from .generate import generate_mariadb_work
 from .validate import validate_maria_db
 
+import pymysql
+
 def connect(user, password, host, port, database, domain=None):
     try:
         full_user = f"{domain}\\{user}" if domain else user
-        conn = mariadb.connect(
+        conn = pymysql.connect(
             user=full_user,
             password=password,
             host=host,
@@ -18,11 +19,12 @@ def connect(user, password, host, port, database, domain=None):
             database=database,
             autocommit=True
         )
-        print("✅ Connected to MariaDB as", full_user)
+        print("✅ Connected to MariaDB via PyMySQL as", full_user)
         return conn
-    except mariadb.Error as e:
+    except pymysql.MySQLError as e:
         print(f"❌ Connection Error: {e}")
         return None
+
 
 def run_script_and_save_json(conn, script_path, json_path):
     print(f"Running script: {script_path}")
@@ -84,6 +86,7 @@ def mariadb_connection(excluded_audit, user_name, password_name, host_name, port
     if db_access_method == "remoteAccess":
         
         generate_mariadb_work_remote(name,maria_db_csv_path,sql_commands)
+        port_number=int(port_number) if port_number else 3306  
 
         conn = connect(
             user=user_name,

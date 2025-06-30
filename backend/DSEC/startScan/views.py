@@ -5,18 +5,19 @@ import shutil
 from .Configuration_Audit.database.maria import connection_maria
 from .Configuration_Audit.database.mssql import remote
 import zipfile
-from .Configuration_Audit.database.oracle.CIS import generate_sql
+from .Configuration_Audit.database.ORACLE import generate_sql
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.http import HttpResponse
 from django.http import JsonResponse, Http404
 import json
 import pandas as pd
 import os
 from openpyxl.styles import Font, PatternFill,Alignment
 from openpyxl.utils import get_column_letter
-
+#from .Compromise_Assesment.Windows.make import generate_powershell_script
 
 from .Configuration_Audit.Windows.generate_PowerShell import generate_script
 from .Configuration_Audit.Windows.validate import validate_compliance
@@ -37,9 +38,10 @@ def database_config_audit(scan_data):
     if normalized_compliance == "oracle":
         try:
             base_dir = os.path.dirname(os.path.abspath(__file__))
-            oracle_dir = os.path.join(base_dir,"Configuration_Audit","database","oracle","CIS")
+            oracle_dir = os.path.join(base_dir,"Configuration_Audit","database","oracle","CIS","Queries")
             csv_name = "data.csv"
             csv_path = os.path.join(oracle_dir, csv_name)
+            
             sql_output = os.path.join(oracle_dir, "output.sql")
             result_csv=os.path.join(oracle_dir,"result.csv")
             json_output = os.path.join(oracle_dir, "output.json")
@@ -160,7 +162,7 @@ def database_config_audit(scan_data):
                     return path_for_script,None
                 if db_access_method == "remoteAccess":
                     path_for_json=os.path.join(mssql_dir,"cis","microsoft_sql_server_2019_query_result.json")
-                    path_for_csv=os.path.join(mssql_dir,"cis","microsoft_sql_server_2019_report.csv")
+                    path_for_csv=os.path.join(mssql_dir,"cis","microsoft_sql_server_2019_report_final.csv")
                     return path_for_csv,path_for_json
             elif normalized_compliance == "microsoftsqlserver2017":
                 remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
@@ -170,7 +172,7 @@ def database_config_audit(scan_data):
                     return path_for_script,None
                 if db_access_method == "remoteAccess":
                     path_for_json=os.path.join(mssql_dir,"cis","microsoft_sql_server_2017_query_result.json")
-                    path_for_csv=os.path.join(mssql_dir,"cis","microsoft_sql_server_2017_report.csv")
+                    path_for_csv=os.path.join(mssql_dir,"cis","microsoft_sql_server_2017_report_final.csv")
                     return path_for_csv,path_for_json
 
             elif normalized_compliance == "microsoftsqlserver2016":
@@ -181,7 +183,7 @@ def database_config_audit(scan_data):
                     return path_for_script,None
                 if db_access_method == "remoteAccess":
                     path_for_json=os.path.join(mssql_dir,"cis","microsoft_sql_server_2016_query_result.json")
-                    path_for_csv=os.path.join(mssql_dir,"cis","microsoft_sql_server_2016_report.csv")
+                    path_for_csv=os.path.join(mssql_dir,"cis","microsoft_sql_server_2016_report_final.csv")
                     return path_for_csv,path_for_json
 
             elif normalized_compliance == "microsoftsqlserver2022":
@@ -192,7 +194,7 @@ def database_config_audit(scan_data):
                     return path_for_script,None
                 if db_access_method == "remoteAccess":
                     path_for_json=os.path.join(mssql_dir,"cis","microsoft_sql_server_2022_query_result.json")
-                    path_for_csv=os.path.join(mssql_dir,"cis","microsoft_sql_server_2022_report.csv")
+                    path_for_csv=os.path.join(mssql_dir,"cis","microsoft_sql_server_2022_report_final.csv")
                     return path_for_csv,path_for_json
 
         except Exception as e:
@@ -491,28 +493,106 @@ def convert_csv_to_excel(csv_file_path, excel_file_path=None):
 
 
 
+
+def windows_compromise_assesment(scan_data):
+    print("[*] Entered windows_compromise_assesment()")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    windows_dir = os.path.join(base_dir,"Compromise_Assesment","Windows")
+    audit_method = (scan_data.get("auditMethod")).strip().lower()
+    
+    try:
+        # Dynamically find the query CSV
+        command_dir = os.path.join(base_dir,windows_dir, "Command_Data")
+        command_file = "command.xlsx"
+        print(f"[DEBUG] Looking for CSV: {command_file}")
+        xlsx_path = os.path.join(command_dir, command_file)
+        # Check if file exists
+        if not os.path.exists(xlsx_path):
+            print(f"[!] CSV file not found: {xlsx_path}")
+            return None, None
+
+        validate_dir = os.path.join(base_dir,windows_dir,"Validate_Data")
+        validate_py_name = "validate.py"
+        print(f"[DEBUG] Looking for validation CSV: {validate_py_name}")
+        if not validate_py_name:
+            print("[!] Validation py name is empty.")
+            return None, None
+        validate_csv_path = os.path.join(validate_dir, validate_py_name)
+        
+
+
+        # output_json_remote_path = f"C:\\Windows\\Temp\\{os.path.basename(csv_path).replace('.csv', '_output.json')}"
+        output_json_local_path = os.path.join(base_dir,windows_dir, "Output", os.path.basename(xlsx_path).replace('.xlsx', '_output.json'))
+
+        script_file_name = f"Generate_Script_IOC.ps1"
+        generate_script_path = os.path.join(base_dir, windows_dir, "Output", script_file_name)
+        print(f"[DEBUG] PowerShell script will be generated at: {generate_script_path}")
+
+        # remote_script_path = "C:\\Windows\\Temp\\generate_script.ps1"
+
+        excluded_controls = scan_data.get("uncheckedComplianceItems", [])
+        
+
+
+        if audit_method == "remoteaccess":
+            username = scan_data.get("username")
+            password = scan_data.get("password")
+            target_ip = scan_data.get("target")
+            
+            # Generate PowerShell Script
+            # generate_powershell_script( xlsx_path, generate_script_path, validate_csv_path)
+            # print(f"[+] PowerShell script generated at: {generate_script_path}")
+            
+            # final_json_path = run_remote_audit(username, password, target_ip, generate_script_path, output_json_local_path)
+            # print("[*] Remote audit completed.")
+
+            # secpol_file_path = "C:\\secpol.cfg"
+            # cleanup_remote_files(username, password, target_ip, remote_script_path, output_json_remote_path, secpol_file_path)
+
+            # json_base_name = os.path.splitext(os.path.basename(final_json_path))[0]
+            # output_validation_csv_path = os.path.join(base_dir,windows_dir, f"Output/{json_base_name}_validation_result.csv")
+
+            # validate_compliance(final_json_path, validate_csv_path, output_validation_csv_path)
+            # print("[*] Validation completed successfully.")
+
+            # return final_json_path, output_validation_csv_path
+        
+        elif audit_method == "agent":
+            # Generate PowerShell Script for agent method
+            generate_powershell_script(xlsx_path, generate_script_path, excluded_controls)
+            print(f"[+] PowerShell script generated at: {generate_script_path}")
+            print("[*] Using agent method.")
+            script_path = download_script(generate_script_path)
+            print(f"[+] Script downloaded to: {script_path}")
+            return script_path, output_json_local_path
+        else:
+            print("[*] Local agent mode is not yet implemented.")
+            return None, None
+        
+         
+        
+    except Exception as e:
+            print(f"[!] Exception during Windows audit: {e}")
+            return None, None
     
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def get_json_file(request, folder_path, filename):
-    """
-    Returns the content of a JSON file located in a dynamic folder structure.
-    """
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # Sanitize folder path to prevent directory traversal
-    safe_folder_path = os.path.normpath(folder_path).replace('..', '')
-    
-    json_dir = os.path.join(base_dir, safe_folder_path)
-    json_path = os.path.join(json_dir, f'{filename}.json')
+def get_csv_file(request, folder_path, filename):
+    import os
+    from django.http import HttpResponse
 
-    if not os.path.exists(json_path):
-        return Response({'error': 'File not found'}, status=404)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    safe_folder_path = os.path.normpath(folder_path).replace('..', '')
+    csv_dir = os.path.join(base_dir, safe_folder_path)
+    csv_path = os.path.join(csv_dir, f'{filename}.csv')
+
+    if not os.path.exists(csv_path):
+        return HttpResponse('File not found', status=404)
 
     try:
-        with open(json_path, 'r') as f:
-            data = json.load(f)
-        return Response(data)
-    except json.JSONDecodeError:
-        return Response({'error': 'Invalid JSON file'}, status=400)
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return HttpResponse(content, content_type='text/csv')
+    except Exception as e:
+        return HttpResponse(f'Error reading file: {str(e)}', status=500)

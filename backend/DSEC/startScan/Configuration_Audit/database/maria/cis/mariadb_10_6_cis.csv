@@ -1,0 +1,36 @@
+﻿name,Query,Execution_Target ,linux_command,other_query,check
+1.2 Use Dedicated Least Privileged Account for MariaDB Daemon/Service (Automated),,linux_terminal,"ps -ef | egrep ""^mysql.*$"" ",,TRUE
+1.3 Disable MariaDB Command History (Automated),,linux_terminal,"[ -L /root/.mysql_history ] && [ ""$(readlink /root/.mysql_history)"" = ""/dev/null"" ] && echo ""PASS"" || echo ""FAIL""",,TRUE
+1.4 Verify That the MYSQL_PWD Environment Variable is Not in Use (Automated),,linux_terminal,grep MYSQL_PWD /proc/*/environ ,,TRUE
+1.5 Ensure Interactive Login is Disabled (Automated) ,,linux_terminal,"getent passwd mysql | egrep ""^.*[\/bin\/false|\/sbin\/nologin]$"" ",,TRUE
+1.6 Verify That 'MYSQL_PWD' is Not Set in Users' Profiles (Automated),,linux_terminal,"grep MYSQL_PWD /home/*/.{bashrc,profile,bash_profile}  ",,TRUE
+2.1.5 Point-in-Time Recovery (Automated),"SELECT VARIABLE_NAME, VARIABLE_VALUE, 'BINLOG - Log Expiration' as Note  FROM information_schema.global_variables where variable_name = 'binlog_expire_logs_seconds';",db_query,,,TRUE
+2.9 Ensure MariaDB is Bound to an IP Address (Automated),"SELECT VARIABLE_NAME, VARIABLE_VALUE FROM information_schema.global_variables WHERE VARIABLE_NAME = 'bind_address'; ",db_query,,,TRUE
+2.10 Limit Accepted Transport Layer Security (TLS) Versions (Automated),select @@tls_version;,db_query,,,TRUE
+2.11 Require Client-Side Certificates (X.509) (Automated),"select user, host, ssl_type from mysql.user where user not in ('mysql', 'root', 'mariadb.sys');",db_query,,,TRUE
+2.12 Ensure Only Approved Ciphers are Used (Automated) ,"SELECT VARIABLE_NAME, VARIABLE_VALUE FROM information_schema.global_variables WHERE VARIABLE_NAME = 'ssl_cipher';",db_query,,,TRUE
+3.1 Ensure 'datadir' Has Appropriate Permissions (Automated),show variables where variable_name = 'datadir';,db_and_terminal,"sudo ls -ld {{DATADIR}} | grep ""drwxr-x---.*mysql.*mysql"" ",,TRUE
+3.2 Ensure 'log_bin_basename' Files Have Appropriate Permissions (Automated),show variables like 'log_bin_basename';,db_and_terminal,ls -l {{LOG_BIN_BASENAME}}.* | grep -v '^-rw-rw----.*mysql.*mysql',,TRUE
+3.3 Ensure 'log_error' Has Appropriate Permissions (Automated) ,show variables like 'log_error'; ,db_and_terminal,ls -l {{LOG_ERROR}} | grep '^-rw-------.*mysql.*mysql.*$',,TRUE
+3.4 Ensure 'slow_query_log' Has Appropriate Permissions (Automated),show variables like 'slow_query_log'; ,db_and_terminal,ls -l {{SLOW_QUERY_LOG_FILE}}  | grep -Pv '^-rw-rw----\s+.*mysql\s+mysql',,TRUE
+3.5 Ensure 'relay_log_basename' Files Have Appropriate Permissions (Automated),show variables like 'relay_log_basename';,db_and_terminal, ls -l  {{RELAY_LOG_BASENAME}}.* | grep -v '^-rw-rw----.*mysql.*mysql',,TRUE
+3.8 Ensure Plugin Directory Has Appropriate Permissions (Automated),show variables where variable_name = 'plugin_dir'; ,db_and_terminal,"ls -ld {{PLUGIN_DIR}} | grep ""dr-xr-x---\|dr-xr-xr--"" | grep ""plugin""",,TRUE
+4.3 Ensure 'allow-suspicious-udfs' is Set to 'OFF' (Automated),,linux_terminal,my_print_defaults mysqld | grep allow-suspicious-udfs ,,TRUE
+4.4 Harden Usage for 'local_infile' on MariaDB Clients (Automated),SHOW VARIABLES LIKE 'version';,multiple_query,,SHOW VARIABLES WHERE Variable_name = 'local_infile'; ,TRUE
+4.6 Ensure Symbolic Links are Disabled (Automated),SHOW variables LIKE 'have_symlink';,db_query,,,TRUE
+4.7 Ensure the 'secure_file_priv' is Configured Correctly (Automated),SHOW GLOBAL VARIABLES WHERE Variable_name = 'secure_file_priv';,db_query,,,TRUE
+4.8 Ensure 'sql_mode' Contains 'STRICT_ALL_TABLES' (Automated),SHOW VARIABLES LIKE 'sql_mode';,db_query,,,TRUE
+4.9 Enable data-at-rest encryption in MariaDB (Automated),"SELECT VARIABLE_NAME, VARIABLE_VALUE FROM information_schema.global_variables where variable_name like '%ENCRYPT%' ;",multiple_query,,"SELECT SPACE,NAME FROM INFORMATION_SCHEMA.INNODB_TABLESPACES_ENCRYPTION;",TRUE
+6.1 Ensure 'log_error' is configured correctly (Automated),SHOW variables LIKE 'log_error';,db_query,,,TRUE
+6.2 Ensure Log Files are Stored on a Non-System Partition (Automated),SELECT @@global.log_bin_basename;,db_query,,,TRUE
+6.3 Ensure 'log_warnings' is Set to '2' (Automated),SHOW GLOBAL VARIABLES LIKE 'log_warnings';,db_query,,,TRUE
+6.4 Ensure Audit Logging Is Enabled (Automated),SHOW VARIABLES LIKE '%audit%' ;,db_query,,,TRUE
+6.5 Ensure the Audit Plugin Can't be Unloaded (Automated),SELECT LOAD_OPTION FROM information_schema.plugins WHERE PLUGIN_NAME='SERVER_AUDIT';,db_query,,,TRUE
+6.6 Ensure Binary and Relay Logs are Encrypted (Automated),"SELECT VARIABLE_NAME, VARIABLE_VALUE, 'BINLOG - At Rest Encryption' as Note FROM information_schema.global_variables where variable_name like '%ENCRYPT_LOG%';",db_query,,,TRUE
+7.1 Disable use of the mysql_old_password plugin (Automated),SHOW VARIABLES WHERE Variable_name = 'old_passwords';,multiple_query,,SHOW VARIABLES WHERE Variable_name = 'secure_auth';,TRUE
+7.3 Ensure strong authentication is utilized for all accounts (Automated),"SELECT User,host FROM mysql.user WHERE (plugin IN('mysql_native_password', 'mysql_old_password','') AND NOT (User = 'root' AND authentication_string = 'invalid') AND NOT (User = 'mysql' and authentication_string = 'invalid'));",db_query,,,TRUE
+7.4 Ensure Password Complexity Policies are in Place (Automated),"SELECT PLUGIN_NAME, PLUGIN_STATUS FROM information_schema.plugins WHERE PLUGIN_NAME IN ('simple_password_check', 'cracklib_password_check');",multiple_query,,SHOW VARIABLES LIKE '%pass%'; ,TRUE
+7.5 Ensure No Users Have Wildcard Hostnames (Automated),"SELECT user, host FROM mysql.user WHERE host = '%';",db_query,,,TRUE
+7.6 Ensure No Anonymous Accounts Exist (Automated),"SELECT user,host FROM mysql.user WHERE user = '';",db_query,,,TRUE
+8.1 Ensure 'require_secure_transport' is Set to 'ON' and 'have_ssl' is Set to 'YES' (Automated),SHOW VARIABLES WHERE Variable_name = 'require_secure_transport';,multiple_query,,SHOW variables WHERE variable_name = 'have_ssl';,TRUE
+"8.2 Ensure 'ssl_type' is Set to 'ANY', 'X509', or 'SPECIFIED' for All Remote Users (Automated)","SELECT user, host, ssl_type FROM mysql.user WHERE NOT HOST IN ('::1', '127.0.0.1', 'localhost');",db_query,,,TRUE
