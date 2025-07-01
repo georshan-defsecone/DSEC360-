@@ -426,6 +426,43 @@ host    all             all             ::1/128                 md5
         import traceback
         traceback.print_exc()
         return False
+    
+def install_unix_odbc_drivers():
+    """Install UnixODBC libraries needed for pyodbc"""
+    print("Checking for libodbc...")
+
+    # Check if libodbc.so.2 exists
+    if os.path.exists("/usr/lib/x86_64-linux-gnu/libodbc.so.2") or shutil.which("isql"):
+        print("✅ libodbc / unixODBC already installed.")
+        return True
+
+    print("libodbc.so.2 not found. Installing unixODBC...")
+
+    if check_command_exists("apt"):
+        run_command("sudo apt install -y unixodbc unixodbc-dev")
+    elif check_command_exists("dnf"):
+        run_command("sudo dnf install -y unixODBC unixODBC-devel")
+    elif check_command_exists("pacman"):
+        run_command("sudo pacman -S --noconfirm unixodbc")
+    else:
+        print("⚠️  Could not determine package manager to install unixODBC. Please install it manually.")
+        return False
+
+    # Verify installation
+    if not os.path.exists("/usr/lib/x86_64-linux-gnu/libodbc.so.2"):
+        # Try to symlink if only .so.2.0.0 exists
+        try:
+            lib_actual = "/usr/lib/x86_64-linux-gnu/libodbc.so.2.0.0"
+            if os.path.exists(lib_actual):
+                run_command(f"sudo ln -s {lib_actual} /usr/lib/x86_64-linux-gnu/libodbc.so.2")
+                print("✅ Created symlink for libodbc.so.2")
+        except Exception as e:
+            print(f"❌ Failed to create symlink for libodbc.so.2: {e}")
+            return False
+
+    print("✅ unixODBC installation complete.")
+    return True
+
 
 def setup_postgresql_unix():
     """Setup PostgreSQL on Unix-like systems"""
@@ -528,6 +565,51 @@ def setup_postgresql_unix():
         print("⚠️  PostgreSQL setup completed but connection test failed.")
         print("You may need to configure pg_hba.conf for password authentication manually.")
         return True  # Continue anyway as the setup might still work
+
+def create_django_superuser(python_path):
+    """Create Django superuser non-interactively using shell script"""
+    print("Creating Django superuser...")
+
+    django_path = find_django_project()
+    if not django_path:
+        print("Django project directory with manage.py not found!")
+        return False
+
+    os.chdir(django_path)
+    
+    username = "admin"
+    email = "admin@example.com"
+    password = "admin"
+
+    script = f"""
+import os
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+if not User.objects.filter(username="{username}").exists():
+    User.objects.create_superuser("{username}", "{email}", "{password}")
+    print("✅ Superuser '{username}' created")
+else:
+    print("✅ Superuser '{username}' already exists")
+"""
+
+    try:
+        from tempfile import NamedTemporaryFile
+        with NamedTemporaryFile("w", suffix=".py", delete=False) as f:
+            f.write(script)
+            temp_script = f.name
+
+        python_cmd = python_path if django_path == "." else os.path.join(os.sep.join([".."] * len(django_path.split(os.sep))), python_path)
+        result = subprocess.run([python_cmd, "manage.py", "shell", "<", temp_script], shell=True, check=False)
+
+        os.unlink(temp_script)
+        return result.returncode == 0
+    except Exception as e:
+        print(f"❌ Failed to create superuser: {e}")
+        return False
+    finally:
+        os.chdir("..")  # Restore to parent directory
+
 
 def install_python_venv_packages():
     """Install python3-venv package on Unix systems"""
@@ -965,6 +1047,10 @@ def main():
             print("\n--- Updating system packages ---")
             update_system_packages()
         
+        print("\n--- Installing ODBC libraries for pyodbc ---")
+        if not install_unix_odbc_drivers():
+            print("❌ Failed to install required ODBC drivers for pyodbc")
+            return
         # Step 1: Setup PostgreSQL
         print("\n--- Setting up PostgreSQL ---")
         if os_type == "windows":
@@ -988,8 +1074,12 @@ def main():
         print("\n--- Running Django migrations ---")
         if not run_django_migrations(python_path):
             print("Django migrations failed - but continuing...")
+
+        # Step 4: Create Django superuser
+        print("\n--- Creating Django superuser ---")
+        create_django_superuser(python_path)
         
-        # Step 4: Start Django server
+        # Step 5: Start Django server
         print("\n--- Starting Django backend ---")
         django_thread = start_django_server(python_path)
         
