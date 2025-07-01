@@ -363,7 +363,6 @@ def get_scan_result_view(request, project_name, scan_name):
 def create_scan(request):
     print("entered create scan")
     data = request.data.copy()
-    print(data)
 
     project_name = data.get("project_name")
     scan_author = data.get("scan_author", "unknown")
