@@ -577,10 +577,9 @@ def create_django_superuser(python_path):
 
     os.chdir(django_path)
     
-    # You can customize this
     username = "admin"
     email = "admin@example.com"
-    password = "admin123"
+    password = "admin"
 
     script = f"""
 import os
