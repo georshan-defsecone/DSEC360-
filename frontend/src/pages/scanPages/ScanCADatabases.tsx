@@ -1192,7 +1192,7 @@ const ScanCADatabases = () => {
 
         {/* Flavour Selection */}
         <div className="flex items-center">
-          <p className="block w-70">Select Flavour:</p>
+          <p className="block w-70">Select DB:</p>
           <Select
             value={formData.selectedFlavour}
             onValueChange={(value) => {
@@ -1224,7 +1224,7 @@ const ScanCADatabases = () => {
 
         {/* Compliance Category Selection */}
         <div className="flex items-center">
-          <p className="block w-70">Network Solution:</p>
+          <p className="block w-70">Compliance Category:</p>
           <Select
             value={formData.complianceCategory}
             onValueChange={(value) => {

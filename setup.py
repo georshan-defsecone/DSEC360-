@@ -508,7 +508,7 @@ def setup_postgresql_unix():
         
     print("Refreshing collation version in system databases...")
     run_command('sudo -u postgres psql -d template1 -c "ALTER DATABASE template1 REFRESH COLLATION VERSION;"', check=False)
-    run_command('sudo -u postgres psql -d postgres -c "ALTER DATABASE postgres REFRESH COLLATION VERSION;"', check=False) in setup_postgres, before createdb
+    run_command('sudo -u postgres psql -d postgres -c "ALTER DATABASE postgres REFRESH COLLATION VERSION;"', check=False) 
 
 
     

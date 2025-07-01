@@ -4,8 +4,8 @@ import re
 import shutil
 from .Configuration_Audit.Database.MARIA import connection_maria
 from .Configuration_Audit.Database.MSSQL import remote
-import zipfile
 from .Configuration_Audit.Database.ORACLE import generate_sql
+import zipfile
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
@@ -35,16 +35,16 @@ def database_config_audit(scan_data):
     print(f"[DEBUG] normalized_compliance: {normalized_compliance}")
     unchecked_items = scan_data.get("uncheckedComplianceItems", [])
 
-    if normalized_compliance == "oracle":
+    if normalized_compliance == "oracle_12c" or normalized_compliance == "oracle12c":
         try:
             base_dir = os.path.dirname(os.path.abspath(__file__))
             oracle_dir = os.path.join(base_dir,"Configuration_Audit","Database","ORACLE","CIS","Queries")
-            csv_name = "data.csv"
+            csv_name = "oracle_12c_cis.csv"
             csv_path = os.path.join(oracle_dir, csv_name)
             
-            sql_output = os.path.join(oracle_dir, "output.sql")
-            result_csv=os.path.join(oracle_dir,"result.csv")
-            json_output = os.path.join(oracle_dir, "output.json")
+            sql_output = os.path.join(base_dir,"Configuration_Audit","Database","ORACLE","CIS","output.sql")
+            result_csv=os.path.join(base_dir,"Configuration_Audit","Database","ORACLE","CIS","result.csv")
+            json_output = os.path.join(base_dir,"Configuration_Audit","Database","ORACLE","CIS", "output.json")
             print(json_output)
 
             if not os.path.exists(csv_path):
@@ -215,15 +215,8 @@ def linux_config_audit(scan_data):
     excluded = scan_data.get("uncheckedComplianceItems", [])
     
     target = scan_data.get("target", "")
+    port = scan_data.get("port", 22)  # default port for SSH
     ip = target
-    port = 22  # default
-
-    if "/" in target:
-        try:
-            ip, port_str = target.split("/", 1)
-            port = int(port_str)
-        except ValueError:
-            port = 22  # fallback to default if port is invalid
 
     ssh_info = {
         "username": scan_data.get("username"),
