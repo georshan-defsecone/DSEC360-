@@ -1,13 +1,3 @@
-
-
-Skip to content
-Using Gmail with screen readers
-Conversations
-75% of 15 GB used
-Terms · Privacy · Programme Policies
-Last account activity: 0 minutes ago
-Details
-
 #!/usr/bin/env python3
 """
 Cross-platform project launcher for React + Django application
@@ -576,6 +566,52 @@ def setup_postgresql_unix():
         print("You may need to configure pg_hba.conf for password authentication manually.")
         return True  # Continue anyway as the setup might still work
 
+def create_django_superuser(python_path):
+    """Create Django superuser non-interactively using shell script"""
+    print("Creating Django superuser...")
+
+    django_path = find_django_project()
+    if not django_path:
+        print("Django project directory with manage.py not found!")
+        return False
+
+    os.chdir(django_path)
+    
+    # You can customize this
+    username = "admin"
+    email = "admin@example.com"
+    password = "admin123"
+
+    script = f"""
+import os
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+if not User.objects.filter(username="{username}").exists():
+    User.objects.create_superuser("{username}", "{email}", "{password}")
+    print("✅ Superuser '{username}' created")
+else:
+    print("✅ Superuser '{username}' already exists")
+"""
+
+    try:
+        from tempfile import NamedTemporaryFile
+        with NamedTemporaryFile("w", suffix=".py", delete=False) as f:
+            f.write(script)
+            temp_script = f.name
+
+        python_cmd = python_path if django_path == "." else os.path.join(os.sep.join([".."] * len(django_path.split(os.sep))), python_path)
+        result = subprocess.run([python_cmd, "manage.py", "shell", "<", temp_script], shell=True, check=False)
+
+        os.unlink(temp_script)
+        return result.returncode == 0
+    except Exception as e:
+        print(f"❌ Failed to create superuser: {e}")
+        return False
+    finally:
+        os.chdir("..")  # Restore to parent directory
+
+
 def install_python_venv_packages():
     """Install python3-venv package on Unix systems"""
     print("Installing python3-venv package...")
@@ -1039,8 +1075,12 @@ def main():
         print("\n--- Running Django migrations ---")
         if not run_django_migrations(python_path):
             print("Django migrations failed - but continuing...")
+
+        # Step 4: Create Django superuser
+        print("\n--- Creating Django superuser ---")
+        create_django_superuser(python_path)
         
-        # Step 4: Start Django server
+        # Step 5: Start Django server
         print("\n--- Starting Django backend ---")
         django_thread = start_django_server(python_path)
         
