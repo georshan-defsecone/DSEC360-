@@ -505,6 +505,12 @@ def setup_postgresql_unix():
             run_command(f'sudo -u postgres createuser -d -P {PG_USER}', check=False)
     else:
         print(f"User {PG_USER} already exists")
+        
+    print("Refreshing collation version in system databases...")
+    run_command('sudo -u postgres psql -d template1 -c "ALTER DATABASE template1 REFRESH COLLATION VERSION;"', check=False)
+    run_command('sudo -u postgres psql -d postgres -c "ALTER DATABASE postgres REFRESH COLLATION VERSION;"', check=False) in setup_postgres, before createdb
+
+
     
     # Create database - now that user exists
     print(f"Creating database {PG_DB}...")
@@ -567,7 +573,7 @@ def setup_postgresql_unix():
         return True  # Continue anyway as the setup might still work
 
 def create_django_superuser(python_path):
-    """Create Django superuser non-interactively using shell script"""
+    """Create Django superuser non-interactively using a script execution"""
     print("Creating Django superuser...")
 
     django_path = find_django_project()
@@ -575,17 +581,20 @@ def create_django_superuser(python_path):
         print("Django project directory with manage.py not found!")
         return False
 
+    original_dir = os.getcwd()
     os.chdir(django_path)
-    
+
+    # Customize these:
     username = "admin"
     email = "admin@example.com"
     password = "admin"
 
     script = f"""
-import os
+import django
+django.setup()
 from django.contrib.auth import get_user_model
-
 User = get_user_model()
+
 if not User.objects.filter(username="{username}").exists():
     User.objects.create_superuser("{username}", "{email}", "{password}")
     print("✅ Superuser '{username}' created")
@@ -599,17 +608,21 @@ else:
             f.write(script)
             temp_script = f.name
 
-        python_cmd = python_path if django_path == "." else os.path.join(os.sep.join([".."] * len(django_path.split(os.sep))), python_path)
-        result = subprocess.run([python_cmd, "manage.py", "shell", "<", temp_script], shell=True, check=False)
+        env = os.environ.copy()
+        env["DJANGO_SETTINGS_MODULE"] = "DSEC.settings"
+        env["PYTHONPATH"] = os.path.abspath(".")  # current dir is now backend/DSEC
+
+        result = subprocess.run([python_path, temp_script], env=env, check=False)
 
         os.unlink(temp_script)
         return result.returncode == 0
+
     except Exception as e:
         print(f"❌ Failed to create superuser: {e}")
         return False
-    finally:
-        os.chdir("..")  # Restore to parent directory
 
+    finally:
+        os.chdir(original_dir)
 
 def install_python_venv_packages():
     """Install python3-venv package on Unix systems"""
@@ -750,7 +763,7 @@ def activate_venv_and_install_deps():
         # Install basic requirements if no requirements.txt found
         run_command(f"{pip_path} install django psycopg2-binary python-dotenv")
     
-    return python_path
+    return os.path.abspath(python_path)
 
 def run_django_migrations(python_path):
     """Run Django migrations"""

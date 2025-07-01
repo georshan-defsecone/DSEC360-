@@ -2,10 +2,7 @@ import os
 import subprocess
 import re
 import shutil
-from .Configuration_Audit.Database.MARIA import connection_maria
-from .Configuration_Audit.Database.MSSQL import remote
 import zipfile
-from .Configuration_Audit.Database.ORACLE import generate_sql
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
@@ -215,15 +212,8 @@ def linux_config_audit(scan_data):
     excluded = scan_data.get("uncheckedComplianceItems", [])
     
     target = scan_data.get("target", "")
+    port = scan_data.get("port", 22)  # default port for SSH
     ip = target
-    port = 22  # default
-
-    if "/" in target:
-        try:
-            ip, port_str = target.split("/", 1)
-            port = int(port_str)
-        except ValueError:
-            port = 22  # fallback to default if port is invalid
 
     ssh_info = {
         "username": scan_data.get("username"),
