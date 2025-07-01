@@ -250,7 +250,7 @@ const ScanCADatabases = () => {
     .toLowerCase()
     .replace(/\s+/g, "_");
 
-  const folderPath = `Configuration_audit/database/${flavour.toLowerCase()}/${securityStandard.toLowerCase()}/Queries`;
+  const folderPath = `Configuration_Audit/Database/${flavour}/${securityStandard}/Queries`;
 
   try {
     const response = await api.get(`/get-csv/${folderPath}/${filename}/`, {
