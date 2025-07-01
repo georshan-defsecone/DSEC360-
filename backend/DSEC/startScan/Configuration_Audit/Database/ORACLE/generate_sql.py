@@ -254,9 +254,10 @@ def write_queries_to_file(queries, output_file,unchecked_items=None):
 
 def execute_sql_script_remotely(sql_file, connection_info):
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_json_path = os.path.join(script_dir, "output.json")
-    check_csv_path = os.path.join(script_dir, "check.csv")
-    result_csv_path = os.path.join(script_dir, "result.csv")
+    output_json_path = os.path.join(script_dir,"CIS","Queries","output.json")
+    check_csv_path = os.path.join(script_dir,"CIS","Queries","check.csv")
+    result_csv_path = os.path.join(script_dir,"CIS","Queries","result.csv")
+    print(result_csv_path)
 
     host = connection_info.get("target", "")
     port = connection_info.get("port", "1521")
