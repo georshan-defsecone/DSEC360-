@@ -505,6 +505,12 @@ def setup_postgresql_unix():
             run_command(f'sudo -u postgres createuser -d -P {PG_USER}', check=False)
     else:
         print(f"User {PG_USER} already exists")
+        
+    print("Refreshing collation version in system databases...")
+    run_command('sudo -u postgres psql -d template1 -c "ALTER DATABASE template1 REFRESH COLLATION VERSION;"', check=False)
+    run_command('sudo -u postgres psql -d postgres -c "ALTER DATABASE postgres REFRESH COLLATION VERSION;"', check=False) in setup_postgres, before createdb
+
+
     
     # Create database - now that user exists
     print(f"Creating database {PG_DB}...")
