@@ -45,7 +45,7 @@ const ScanCALinux = () => {
   const [page, setPage] = useState(1);
   const [formData, setFormData] = useState({
     // General Info
-    scanName: "",
+    scan_name: "",
     projectName: "",
     description: "",
     os: "Linux", // Default to Linux for this scan type
@@ -157,7 +157,7 @@ const ScanCALinux = () => {
 
   const validatePage1 = () => {
     return (
-      formData.scanName.trim() !== "" && formData.projectName.trim() !== ""
+      formData.scan_name.trim() !== "" && formData.projectName.trim() !== ""
     );
   };
 
@@ -327,7 +327,7 @@ const ScanCALinux = () => {
     console.log("Downloading script with formData:", formData);
     const scanPayload = {
       project_name: formData.projectName,
-      scanName: formData.scanName,
+      scan_name: formData.scan_name,
       scan_author: userName || "unknown",
       scan_status: "Pending", // Ensure this matches your backend's expected type (e.g., string, integer, or choice)
 
@@ -551,7 +551,7 @@ const ScanCALinux = () => {
       const toastId = toast.info("Processing scan ...", { duration: Infinity });
       const payload = {
         project_name: formData.projectName,
-        scanName: formData.scanName,
+        scan_name: formData.scan_name,
         scan_author: userName, // Replace with user context if needed
         scan_status: "Pending",
         scan_data: {
@@ -612,7 +612,7 @@ const ScanCALinux = () => {
       });
       setTimeout(() => {
         navigate(
-          `/scan/scanresult/${formData.projectName}/${formData.scanName}`
+          `/scan/scanresult/${formData.projectName}/${formData.scan_name}`
         );
       }, 2000);
       // Optionally reset form
@@ -661,9 +661,9 @@ const ScanCALinux = () => {
 
               <Input
                 type="text"
-                name="scanName"
+                name="scan_name"
                 placeholder="Scan Name"
-                value={formData.scanName}
+                value={formData.scan_name}
                 className="w-80"
                 onChange={handleInputChange}
                 required
