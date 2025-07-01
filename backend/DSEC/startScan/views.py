@@ -559,7 +559,7 @@ def windows_compromise_assesment(scan_data):
         
         elif audit_method == "agent":
             # Generate PowerShell Script for agent method
-            generate_powershell_script(xlsx_path, generate_script_path, excluded_controls)
+            generate_powershell_script(xlsx_path, generate_script_path, excluded_controls,audit_method)
             print(f"[+] PowerShell script generated at: {generate_script_path}")
             print("[*] Using agent method.")
             script_path = download_script(generate_script_path)

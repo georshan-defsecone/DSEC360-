@@ -1,7 +1,8 @@
 import pandas as pd
 import re
+import os
 
-def generate_powershell_script(excel_path, output_ps1_path, excluded_controls):
+def generate_powershell_script(excel_path, output_ps1_path, excluded_controls, audit_method):
     """
     Generates a PowerShell script based on user-selected IOC scripts from an Excel file.
 
@@ -27,6 +28,9 @@ def generate_powershell_script(excel_path, output_ps1_path, excluded_controls):
 
     if included_df.empty:
         raise ValueError("No scripts to include after exclusion.")
+    
+    output_json_name = "IOCoutput.json"
+    output_json_path = os.path.join(os.path.dirname(output_ps1_path), output_json_name)
     
     # PowerShell Template
     ps_code = """\
@@ -67,8 +71,7 @@ foreach ($check in $selectedChecks) {
 }
 
 # Export Results to JSON
-$timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-$outputPath = "results_$timestamp.json"
+$outputPath = "IOCoutput.json"
 $results | ConvertTo-Json -Depth 3 | Out-File $outputPath -Encoding UTF8
 
 Write-Host "`nAll checks completed. Results saved to: $outputPath"
@@ -79,3 +82,5 @@ Write-Host "`nAll checks completed. Results saved to: $outputPath"
         f.write(ps_code)
 
     print(f"\nPowerShell script generated: {output_ps1_path}")
+    if audit_method.lower() == 'agent':
+        print(f"Results will be saved to: {output_json_path}")
