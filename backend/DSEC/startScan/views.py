@@ -2,9 +2,9 @@ import os
 import subprocess
 import re
 import shutil
-from .Configuration_Audit.Database.MARIA import connection_maria
-from .Configuration_Audit.Database.MSSQL import remote
-from .Configuration_Audit.Database.ORACLE import generate_sql
+from .Configuration_Audit.database.maria import connection_maria
+from . import remote
+from .Configuration_Audit.database.ORACLE import generate_sql
 import zipfile
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -67,7 +67,7 @@ def database_config_audit(scan_data):
 
             if audit_method == "remoteaccess":
                 print("[*] Using remote access method.")
-                generate_sql.execute_sql_script_remotely(sql_output, scan_data)
+                remote.oracle_connection(sql_output, scan_data)
                 convert_csv_to_excel(result_csv)
 
                 return result_csv,json_output
@@ -106,7 +106,11 @@ def database_config_audit(scan_data):
                 input_csv_path = os.path.join(Maria_dir, "CIS", "Queries", "MariaDB_10_6_query.csv")
                 sql_commands = os.path.join(Maria_dir, "CIS", "MariaDB_10_6_cis_query.sql")
                 linux_file = os.path.join(Maria_dir, "CIS", "MariaDB_10_6_linux_commands.sh")
-                connection_maria.mariadb_connection(excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
+                try:
+                  remote.mariadb_connection(excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
+                except SystemExit as e:
+                  print(f"Validation caused exit with code: {e.code}")
+                
                 if db_access_method == "agent":
                     path_for_sql = os.path.join(Maria_dir, "CIS", "MariaDB_10_6_cis_query.sql")
                     #path_for_linux = os.path.join(Maria_dir, "CIS", "linux_commands.sh")
@@ -121,7 +125,7 @@ def database_config_audit(scan_data):
                 input_csv_path = os.path.join(Maria_dir, "CIS", "Queries", "MariaDB_10_11_query.csv")
                 sql_commands = os.path.join(Maria_dir, "CIS", "MariaDB_10_11_cis_query.sql")
                 linux_file = os.path.join(Maria_dir, "CIS", "MariaDB_10_11_linux_commands.sh")
-                connection_maria.mariadb_connection(excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
+                remote.mariadb_connection(excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
                 if db_access_method == "agent":
                     path_for_sql = os.path.join(Maria_dir, "CIS", "MariaDB_10_11_cis_query.sql")
                     path_for_script= download_script(path_for_sql)

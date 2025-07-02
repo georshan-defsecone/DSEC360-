@@ -257,8 +257,8 @@ echo "Audit complete. Results saved to {result_file}"
         if not ssh_info or not all(k in ssh_info for k in ("username", "password", "ip", "port")):
             raise ValueError("Missing SSH info for remote execution")
         
-        from .remote import execute_remote
-        execute_remote(
+        from ...remote import linux_connection
+        linux_connection(
             script_name=output_file,
             username=ssh_info["username"],
             password=ssh_info["password"],

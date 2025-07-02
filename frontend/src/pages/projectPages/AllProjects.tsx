@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
@@ -23,11 +24,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Link } from "react-router-dom";
 
 const AllProjects = () => {
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const navigate = useNavigate();
 
   const fetchProjects = async () => {
     try {
@@ -58,94 +59,93 @@ const AllProjects = () => {
         }
       );
       console.log(`Project ${projectId} moved to trash.`);
-      // Refresh project list
-      fetchProjects();
+      fetchProjects(); // Refresh list
     } catch (error) {
       console.error("Error moving project to trash:", error);
     }
   };
 
   return (
-    <>
-      <div className="flex h-screen text-black">
-        <Sidebar settings={false} scanSettings={false} homeSettings={true} />
-        <div className="flex-1 flex flex-col ml-64 pt-20">
-          <Header title="All Projects"></Header>
-          <Card className="mt-10 w-[80%] shadow-2xl ml-12">
-            <CardContent className="p-4 px-12">
-              <ScrollArea className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow  className="text-center">
-                      <TableHead className="w-[40%]">Project Name</TableHead>
-                      <TableHead className="w-[40%]">Author</TableHead>
-                      <TableHead className="w-[20%]">Trash</TableHead>
+    <div className="flex h-screen text-black">
+      <Sidebar settings={false} scanSettings={false} homeSettings={true} />
+      <div className="flex-1 flex flex-col ml-64 pt-20">
+        <Header title="All Projects" />
+        <Card className="mt-10 w-[80%] shadow-2xl ml-12">
+          <CardContent className="p-4 px-12">
+            <ScrollArea className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow className="text-center">
+                    <TableHead className="w-[40%]">Project Name</TableHead>
+                    <TableHead className="w-[40%]">Author</TableHead>
+                    <TableHead className="w-[20%]">Trash</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {projects.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center">
+                        No projects found.
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {projects.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center">
-                          No projects found.
+                  ) : (
+                    projects.map((pro) => (
+                      <TableRow
+                        key={pro.project_id}
+                        className="cursor-pointer hover:bg-gray-100"
+                        onClick={() => navigate(`/project/${pro.project_id}`)}
+                      >
+                        <TableCell className="font-medium">
+                          {pro.project_name}
+                        </TableCell>
+                        <TableCell>{pro.project_author}</TableCell>
+                        <TableCell
+                          onClick={(e) => e.stopPropagation()} // Prevent row click when clicking trash
+                        >
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <button
+                                onClick={() =>
+                                  setSelectedProjectId(pro.project_id)
+                                }
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                ❌
+                              </button>
+                            </AlertDialogTrigger>
+
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will move the project to trash. You can restore it later if needed.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => {
+                                    if (selectedProjectId) {
+                                      moveToTrash(selectedProjectId);
+                                    }
+                                  }}
+                                >
+                                  Move to Trash
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      projects.map((pro) => (
-                        <TableRow key={pro.project_id}>
-                          <TableCell className="font-medium">
-                            <Link to={`/project/${pro.project_id}`}>
-                              {pro.project_name}
-                            </Link>
-                          </TableCell>
-                          <TableCell>{pro.project_author}</TableCell>
-                          <TableCell>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <button
-                                  onClick={() =>
-                                    setSelectedProjectId(pro.project_id)
-                                  }
-                                >
-                                  ❌
-                                </button>
-                              </AlertDialogTrigger>
-
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Are you sure?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This will move the project to trash. You can
-                                    restore it later if needed.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => {
-                                      if (selectedProjectId) {
-                                        moveToTrash(selectedProjectId);
-                                      }
-                                    }}
-                                  >
-                                    Move to Trash
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </div>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </CardContent>
+        </Card>
       </div>
-    </>
+    </div>
   );
 };
 

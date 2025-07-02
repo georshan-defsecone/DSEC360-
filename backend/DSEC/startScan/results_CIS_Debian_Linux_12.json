@@ -1,0 +1,1700 @@
+[
+  {
+    "audit_id": "1.1.1.1",
+    "audit_name": "Ensure cramfs kernel module is not available",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - kernel module: \"cramfs\" doesn't exist in \"/usr/lib/modules/6.1.0-35-amd64/kernel/fs\"\n - kernel module: \"cramfs\" doesn't exist in \"/usr/lib/modules/6.1.0-37-amd64/kernel/fs\""
+  },
+  {
+    "audit_id": "1.1.1.2",
+    "audit_name": "Ensure freevxfs kernel module is not available",
+    "status": "FAIL",
+    "output": "\n -- INFO --\n - module: \"freevxfs\" exists in:\n - \"/usr/lib/modules/6.1.0-35-amd64/kernel/fs\"\n - \"/usr/lib/modules/6.1.0-37-amd64/kernel/fs\"\n\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - kernel module: \"freevxfs\" is loadable\n - kernel module: \"freevxfs\" is not deny listed\n- Correctly set:\n - kernel module: \"freevxfs\" is not loaded"
+  },
+  {
+    "audit_id": "1.1.1.3",
+    "audit_name": "Ensure hfs kernel module is not available",
+    "status": "FAIL",
+    "output": "\n -- INFO --\n - module: \"hfs\" exists in:\n - \"/usr/lib/modules/6.1.0-35-amd64/kernel/fs\"\n - \"/usr/lib/modules/6.1.0-37-amd64/kernel/fs\"\n\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - kernel module: \"hfs\" is loadable\n - kernel module: \"hfs\" is not deny listed\n- Correctly set:\n - kernel module: \"hfs\" is not loaded"
+  },
+  {
+    "audit_id": "1.1.1.4",
+    "audit_name": "Ensure hfsplus kernel module is not available",
+    "status": "FAIL",
+    "output": "\n -- INFO --\n - module: \"hfsplus\" exists in:\n - \"/usr/lib/modules/6.1.0-35-amd64/kernel/fs\"\n - \"/usr/lib/modules/6.1.0-37-amd64/kernel/fs\"\n\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - kernel module: \"hfsplus\" is loadable\n - kernel module: \"hfsplus\" is not deny listed\n- Correctly set:\n - kernel module: \"hfsplus\" is not loaded"
+  },
+  {
+    "audit_id": "1.1.1.5",
+    "audit_name": "Ensure jffs2 kernel module is not available",
+    "status": "FAIL",
+    "output": "\n -- INFO --\n - module: \"jffs2\" exists in:\n - \"/usr/lib/modules/6.1.0-35-amd64/kernel/fs\"\n - \"/usr/lib/modules/6.1.0-37-amd64/kernel/fs\"\n\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - kernel module: \"jffs2\" is loadable\n - kernel module: \"jffs2\" is not deny listed\n- Correctly set:\n - kernel module: \"jffs2\" is not loaded"
+  },
+  {
+    "audit_id": "1.1.1.6",
+    "audit_name": "Ensure overlayfs kernel module is not available",
+    "status": "FAIL",
+    "output": "\n -- INFO --\n - module: \"overlayfs\" exists in:\n - \"/usr/lib/modules/6.1.0-35-amd64/kernel/fs\"\n - \"/usr/lib/modules/6.1.0-37-amd64/kernel/fs\"\n\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - kernel module: \"overlayfs\" is loadable\n - kernel module: \"overlayfs\" is not deny listed\n- Correctly set:\n - kernel module: \"overlayfs\" is not loaded"
+  },
+  {
+    "audit_id": "1.1.1.7",
+    "audit_name": "Ensure squashfs kernel module is not available",
+    "status": "FAIL",
+    "output": "\n -- INFO --\n - module: \"squashfs\" exists in:\n - \"/usr/lib/modules/6.1.0-35-amd64/kernel/fs\"\n - \"/usr/lib/modules/6.1.0-37-amd64/kernel/fs\"\n\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - kernel module: \"squashfs\" is loadable\n - kernel module: \"squashfs\" is not deny listed\n- Correctly set:\n - kernel module: \"squashfs\" is not loaded"
+  },
+  {
+    "audit_id": "1.1.1.8",
+    "audit_name": "Ensure udf kernel module is not available",
+    "status": "FAIL",
+    "output": "\n -- INFO --\n - module: \"udf\" exists in:\n - \"/usr/lib/modules/6.1.0-35-amd64/kernel/fs\"\n - \"/usr/lib/modules/6.1.0-37-amd64/kernel/fs\"\n\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - kernel module: \"udf\" is loadable\n - kernel module: \"udf\" is not deny listed\n- Correctly set:\n - kernel module: \"udf\" is not loaded"
+  },
+  {
+    "audit_id": "1.1.1.9",
+    "audit_name": "Ensure usb-storage kernel module is not available",
+    "status": "FAIL",
+    "output": "\n -- INFO --\n - module: \"usb-storage\" exists in:\n - \"/usr/lib/modules/6.1.0-35-amd64/kernel/drivers\"\n - \"/usr/lib/modules/6.1.0-37-amd64/kernel/drivers\"\n\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - kernel module: \"usb-storage\" is loadable\n - kernel module: \"usb-storage\" is not deny listed\n- Correctly set:\n - kernel module: \"usb-storage\" is not loaded"
+  },
+  {
+    "audit_id": "1.1.1.10",
+    "audit_name": "Ensure unused filesystems kernel modules are not available",
+    "status": "FAIL",
+    "output": "\n-- Audit Result: --\n ** FAIL **\nThe following modules have CVE and are not fully disabled:\n  - Kernel module: \"exfat\" is not fully disabled <- CVE exists!\n  - Kernel module: \"fat\" is not fully disabled <- CVE exists!\n  - Kernel module: \"gfs2\" is not fully disabled <- CVE exists!\n  - Kernel module: \"afs\" is not fully disabled <- CVE exists!\n  - Kernel module: \"nfsd\" is not fully disabled <- CVE exists!\n  - Kernel module: \"ceph\" is not fully disabled <- CVE exists!\n  - Kernel module: \"fscache\" is not fully disabled <- CVE exists!\n  - Kernel module: \"nfs_common\" is not fully disabled <- CVE exists!\n  - Kernel module: \"fuse\" is not fully disabled <- CVE exists!\n\n-- Other findings --\n  - Kernel module: \"freevxfs\" is not fully disabled\n  - Kernel module: \"omfs\" is not fully disabled\n  - Kernel module: \"sysv\" is not fully disabled\n  - Kernel module: \"bfs\" is not fully disabled\n  - Kernel module: \"romfs\" is not fully disabled\n  - Kernel module: \"jffs2\" is not fully disabled\n  - Kernel module: \"hfs\" is not fully disabled\n  - Kernel module: \"efs\" is not fully disabled\n  - Kernel module: \"lockd\" is not fully disabled\n  - Kernel module: \"qnx6\" is not fully disabled\n  - Kernel module: \"nfs\" is not fully disabled\n  - Kernel module: \"hpfs\" is not fully disabled\n  - Kernel module: \"configfs\" is not fully disabled\n  - Kernel module: \"configfs\" is loaded\n  - Kernel module: \"affs\" is not fully disabled\n  - Kernel module: \"autofs\" is not fully disabled\n  - Kernel module: \"autofs\" is loaded\n  - Kernel module: \"vboxsf\" is not fully disabled\n  - Kernel module: \"pstore\" is not fully disabled\n  - Kernel module: \"pstore\" is loaded\n  - Kernel module: \"reiserfs\" is not fully disabled\n  - Kernel module: \"quota\" is not fully disabled\n  - Kernel module: \"dlm\" is not fully disabled\n  - Kernel module: \"nls\" is not fully disabled\n  - Kernel module: \"ubifs\" is not fully disabled\n  - Kernel module: \"ecryptfs\" is not fully disabled\n  - Kernel module: \"hfsplus\" is not fully disabled\n  - Kernel module: \"f2fs\" is not fully disabled\n  - Kernel module: \"overlay\" is not fully disabled\n  - Kernel module: \"9p\" is not fully disabled\n  - Kernel module: \"efivarfs\" is not fully disabled\n  - Kernel module: \"erofs\" is not fully disabled\n  - Kernel module: \"smb\" is not fully disabled\n  - Kernel module: \"qnx4\" is not fully disabled\n  - Kernel module: \"jbd2\" is not fully disabled\n  - Kernel module: \"jbd2\" is loaded\n  - Kernel module: \"befs\" is not fully disabled\n  - Kernel module: \"orangefs\" is not fully disabled\n  - Kernel module: \"udf\" is not fully disabled\n  - Kernel module: \"squashfs\" is not fully disabled\n  - Kernel module: \"adfs\" is not fully disabled\n  - Kernel module: \"cachefiles\" is not fully disabled\n  - Kernel module: \"zonefs\" is not fully disabled\n  - Kernel module: \"minix\" is not fully disabled\n  - Kernel module: \"nilfs2\" is not fully disabled\n  - Kernel module: \"ocfs2\" is not fully disabled\n  - Kernel module: \"coda\" is not fully disabled\n  - Kernel module: \"ufs\" is not fully disabled\n  - Kernel module: \"btrfs\" is not fully disabled\n  - Kernel module: \"fuse\" is loaded\n  - Kernel module: \"jfs\" is not fully disabled\n  - Kernel module: \"isofs\" is not fully disabled\n  - Kernel module: \"netfs\" is not fully disabled"
+  },
+  {
+    "audit_id": "1.1.2.1.1",
+    "audit_name": "Ensure /tmp is a separate partition",
+    "status": "FAIL",
+    "output": "** FAIL ** /tmp is not mounted separately"
+  },
+  {
+    "audit_id": "1.1.2.1.2",
+    "audit_name": "Ensure nodev option set on /tmp partition",
+    "status": "FAIL",
+    "output": "** FAIL ** /tmp is not a separate mount — this audit is not applicable"
+  },
+  {
+    "audit_id": "1.1.2.1.3",
+    "audit_name": "Ensure nosuid option set on /tmp partition",
+    "status": "FAIL",
+    "output": "** FAIL ** /tmp is not a separate mount — this audit is not applicable"
+  },
+  {
+    "audit_id": "1.1.2.1.4",
+    "audit_name": "Ensure noexec option set on /tmp partition",
+    "status": "FAIL",
+    "output": "** FAIL ** /tmp is not a separate mount — this audit is not applicable"
+  },
+  {
+    "audit_id": "1.1.2.2.1",
+    "audit_name": "Ensure /dev/shm is a separate partition",
+    "status": "PASS",
+    "output": "** PASS ** /dev/shm is mounted as a separate filesystem"
+  },
+  {
+    "audit_id": "1.1.2.2.2",
+    "audit_name": "Ensure nodev option set on /dev/shm partition",
+    "status": "PASS",
+    "output": "** PASS ** /dev/shm is mounted separately with nodev option"
+  },
+  {
+    "audit_id": "1.1.2.2.3",
+    "audit_name": "Ensure nosuid option set on /dev/shm partition",
+    "status": "PASS",
+    "output": "** PASS ** /dev/shm is mounted separately with nosuid option"
+  },
+  {
+    "audit_id": "1.1.2.2.4",
+    "audit_name": "Ensure noexec option set on /dev/shm partition",
+    "status": "FAIL",
+    "output": "** FAIL ** /dev/shm is mounted separately but missing noexec option"
+  },
+  {
+    "audit_id": "1.1.2.3.1",
+    "audit_name": "Ensure separate partition exists for /home",
+    "status": "FAIL",
+    "output": "** FAIL **/home is not mounted separately"
+  },
+  {
+    "audit_id": "1.1.2.3.2",
+    "audit_name": "Ensure nodev option set on /home partition",
+    "status": "FAIL",
+    "output": "** FAIL ** /home is not a separate mount — this audit is not applicable"
+  },
+  {
+    "audit_id": "1.1.2.3.3",
+    "audit_name": "Ensure nosuid option set on /home partition",
+    "status": "FAIL",
+    "output": "** FAIL ** /home is not a separate mount — this audit is not applicable"
+  },
+  {
+    "audit_id": "1.1.2.4.1",
+    "audit_name": "Ensure separate partition exists for /var",
+    "status": "FAIL",
+    "output": "** FAIL **/var is not mounted separately"
+  },
+  {
+    "audit_id": "1.1.2.4.2",
+    "audit_name": "Ensure nodev option set on /var partition",
+    "status": "FAIL",
+    "output": "** FAIL ** /var is not a separate mount — this audit is not applicable"
+  },
+  {
+    "audit_id": "1.1.2.4.3",
+    "audit_name": "Ensure nosuid option set on /var partition",
+    "status": "FAIL",
+    "output": "** FAIL ** /var is not a separate mount — this audit is not applicable"
+  },
+  {
+    "audit_id": "1.1.2.5.1",
+    "audit_name": "Ensure separate partition exists for /var/tmp",
+    "status": "FAIL",
+    "output": "** FAIL **/var/tmp is not mounted separately"
+  },
+  {
+    "audit_id": "1.1.2.5.2",
+    "audit_name": "Ensure nodev option set on /var/tmp partition",
+    "status": "FAIL",
+    "output": "** FAIL ** /var/tmp is not a separate mount — this audit is not applicable"
+  },
+  {
+    "audit_id": "1.1.2.5.3",
+    "audit_name": "Ensure nosuid option set on /var/tmp partition",
+    "status": "FAIL",
+    "output": "** FAIL ** /var/tmp is not a separate mount — this audit is not applicable"
+  },
+  {
+    "audit_id": "1.1.2.5.4",
+    "audit_name": "Ensure noexec option set on /var/tmp partition",
+    "status": "FAIL",
+    "output": "** FAIL ** /var/tmp is not a separate mount — this audit is not applicable"
+  },
+  {
+    "audit_id": "1.1.2.6.1",
+    "audit_name": "Ensure separate partition exists for /var/log",
+    "status": "FAIL",
+    "output": "** FAIL **/var/log is not mounted separately"
+  },
+  {
+    "audit_id": "1.1.2.6.2",
+    "audit_name": "Ensure nodev option set on /var/log partition",
+    "status": "FAIL",
+    "output": "** FAIL ** /var/log is not a separate mount — this audit is not applicable"
+  },
+  {
+    "audit_id": "1.1.2.6.3",
+    "audit_name": "Ensure nosuid option set on /var/log partition",
+    "status": "FAIL",
+    "output": "** FAIL ** /var/log is not a separate mount — this audit is not applicable"
+  },
+  {
+    "audit_id": "1.1.2.6.4",
+    "audit_name": "Ensure noexec option set on /var/log partition",
+    "status": "FAIL",
+    "output": "** FAIL ** /var/log is not a separate mount — this audit is not applicable"
+  },
+  {
+    "audit_id": "1.1.2.7.1",
+    "audit_name": "Ensure separate partition exists for /var/log/audit",
+    "status": "FAIL",
+    "output": "** FAIL **/var/log/audit is not mounted separately"
+  },
+  {
+    "audit_id": "1.1.2.7.2",
+    "audit_name": "Ensure noexec option set on /var/log/audit partition",
+    "status": "FAIL",
+    "output": "** FAIL ** /var/log/audit is not a separate mount — this audit is not applicable"
+  },
+  {
+    "audit_id": "1.3.1.1",
+    "audit_name": "Ensure AppArmor is installed",
+    "status": "FAIL",
+    "output": "FAIL: apparmor-utils is NOT installed\nPASS: apparmor is installed\n** FAIL ** One or both of apparmor and apparmor-utils are missing"
+  },
+  {
+    "audit_id": "1.3.1.2",
+    "audit_name": "Ensure AppArmor is enabled in the bootloader configuration",
+    "status": "FAIL",
+    "output": "FAIL: One or more linux lines are missing 'apparmor=1'\nFAIL: One or more linux lines are missing 'security=apparmor'\n** FAIL ** Missing apparmor kernel parameters"
+  },
+  {
+    "audit_id": "1.3.1.3",
+    "audit_name": "Ensure all AppArmor profiles are in enforce or complain mode",
+    "status": "PASS",
+    "output": "/tmp/combined_CIS_Debian_Linux_12.sh: line 1086: [: : integer expression expected\n** PASS ** All AppArmor profiles and processes are properly confined (enforce or complain mode)"
+  },
+  {
+    "audit_id": "1.3.1.4",
+    "audit_name": "Ensure all AppArmor profiles are in enforce mode",
+    "status": "FAIL",
+    "output": "FAIL: 2 profiles are in complain mode\n/tmp/combined_CIS_Debian_Linux_12.sh: line 1130: [: : integer expression expected\n/tmp/combined_CIS_Debian_Linux_12.sh: line 1151: [: : integer expression expected\n** FAIL ** One or more profiles or processes are not enforcing"
+  },
+  {
+    "audit_id": "1.4.1",
+    "audit_name": "Ensure bootloader password is set",
+    "status": "FAIL",
+    "output": "** FAIL **: No superusers set in grub.cfg\n** FAIL **"
+  },
+  {
+    "audit_id": "1.4.2",
+    "audit_name": "Ensure access to bootloader config is configured",
+    "status": "PASS",
+    "output": "** PASS **"
+  },
+  {
+    "audit_id": "1.5.1",
+    "audit_name": "Ensure address space layout randomization is enabled",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - \"kernel.randomize_va_space\" is not set in an included file\n** Note: \"kernel.randomize_va_space\" may be set in a file that's ignored by load procedure **\n\n- Correctly set:\n - \"kernel.randomize_va_space\" is correctly set to \"2\" in the running configuration"
+  },
+  {
+    "audit_id": "1.5.2",
+    "audit_name": "Ensure ptrace_scope is restricted",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - \"kernel.yama.ptrace_scope\" is incorrectly set to \"0\" in the running configuration\n and should have a value of: \"1 or 2 or 3\"\n - \"kernel.yama.ptrace_scope\" is not set in an included file\n ** Note: \"kernel.yama.ptrace_scope\" may be set in a file that's ignored by load procedure **"
+  },
+  {
+    "audit_id": "1.5.3",
+    "audit_name": "Ensure core dumps are restricted",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n- Reason(s) for audit failure:\n - Hard limit for core dumps is NOT set to 0 in limits.conf or limits.d\n - fs.suid_dumpable is NOT correctly set to 0 in any sysctl configuration file\n\n- Correctly set:\n - fs.suid_dumpable is correctly set to 0 in running configuration\n - systemd-coredump is not installed"
+  },
+  {
+    "audit_id": "1.6.1",
+    "audit_name": "Ensure message of the day is configured properly",
+    "status": "PASS",
+    "output": "** PASS ** /etc/motd does not contain dynamic system information"
+  },
+  {
+    "audit_id": "1.6.2",
+    "audit_name": "Ensure local login warning banner is configured properly",
+    "status": "FAIL",
+    "output": "** FAIL ** /etc/issue contains dynamic system information or OS identifier\nDebian GNU/Linux 12 \\n \\l"
+  },
+  {
+    "audit_id": "1.6.3",
+    "audit_name": "Ensure remote login warning banner is configured properly",
+    "status": "FAIL",
+    "output": "** FAIL ** /etc/issue.net contains disallowed dynamic system information\nDebian GNU/Linux 12"
+  },
+  {
+    "audit_id": "1.6.4",
+    "audit_name": "Ensure access to /etc/motd is configured",
+    "status": "PASS",
+    "output": "** PASS ** /etc/motd has correct permissions and ownership\nAccess: (0644/-rw-r--r--) Uid: (0/root) Gid: (0/root)"
+  },
+  {
+    "audit_id": "1.6.5",
+    "audit_name": "Ensure access to /etc/issue is configured",
+    "status": "PASS",
+    "output": "** PASS ** /etc/issue has correct permissions and ownership\nAccess: (0644/-rw-r--r--) Uid: (0/root) Gid: (0/root)"
+  },
+  {
+    "audit_id": "1.6.6",
+    "audit_name": "Ensure access to /etc/issue.net is configured",
+    "status": "PASS",
+    "output": "** PASS ** /etc/issue.net has correct permissions and ownership\nAccess: (0644/-rw-r--r--) Uid: (0/root) Gid: (0/root)"
+  },
+  {
+    "audit_id": "1.7.1",
+    "audit_name": "Ensure GDM login banner is configured",
+    "status": "FAIL",
+    "output": "** FAIL ** gdm3 appears to be installed or partially installed\ngdm3\\tinstall ok installed\\tinstalled\\n"
+  },
+  {
+    "audit_id": "1.7.2",
+    "audit_name": "Ensure GDM login banner is configured",
+    "status": "FAIL",
+    "output": "** FAIL ** GNOME login banner is not enabled\nbanner-message-enable = false"
+  },
+  {
+    "audit_id": "1.7.3",
+    "audit_name": "Ensure GDM disable-user-list option is enabled",
+    "status": "FAIL",
+    "output": "** FAIL ** GDM disable-user-list option is not enabled\ndisable-user-list = false"
+  },
+  {
+    "audit_id": "1.7.4",
+    "audit_name": "Ensure GDM screen locks when the user is idle",
+    "status": "PASS",
+    "output": "** PASS ** Screen lock activates after idle: idle-delay = 300 seconds, lock-delay = 0 seconds"
+  },
+  {
+    "audit_id": "1.7.5",
+    "audit_name": "Ensure GDM screen locks cannot be overridden",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n- \"lock-delay\" is not locked or not set\n- \"idle-delay\" is not locked or not set"
+  },
+  {
+    "audit_id": "1.7.6",
+    "audit_name": "Ensure GDM automatic mounting of removable media is disabled",
+    "status": "FAIL",
+    "output": "** FAIL ** automount is not disabled (current: true)"
+  },
+  {
+    "audit_id": "1.7.7",
+    "audit_name": "Ensure GDM disabling automatic mounting of removable media is not overridden",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n- \"automount-open\" is not locked or not set to false\n- \"automount\" is not locked or not set to false"
+  },
+  {
+    "audit_id": "1.7.8",
+    "audit_name": "Ensure GDM autorun-never is enabled",
+    "status": "FAIL",
+    "output": "** FAIL ** autorun-never is not enabled (current: false)"
+  },
+  {
+    "audit_id": "1.7.9",
+    "audit_name": "Ensure GDM autorun-never is not overridden",
+    "status": "FAIL",
+    "output": "- Audit Result:\n ** FAIL **\n- Reason(s) for audit failure:\n- \"autorun-never\" is not locked or not set to true"
+  },
+  {
+    "audit_id": "1.7.10",
+    "audit_name": "Ensure XDMCP is not enabled",
+    "status": "PASS",
+    "output": "** PASS ** XDMCP is not enabled in any GDM configuration file"
+  },
+  {
+    "audit_id": "2.1.1",
+    "audit_name": "Ensure autofs services are not in use",
+    "status": "PASS",
+    "output": "** PASS ** autofs is not installed"
+  },
+  {
+    "audit_id": "2.1.2",
+    "audit_name": "Ensure avahi daemon services are not in use",
+    "status": "FAIL",
+    "output": "- avahi-daemon is installed\n** FAIL ** avahi-daemon.socket and avahi-daemon.service is enabled"
+  },
+  {
+    "audit_id": "2.1.3",
+    "audit_name": "Ensure dhcp server services are not in use",
+    "status": "PASS",
+    "output": "** PASS ** isc-dhcp-server is not installed"
+  },
+  {
+    "audit_id": "2.1.4",
+    "audit_name": "Ensure dns server services are not in use",
+    "status": "PASS",
+    "output": "** PASS ** bind9 is not installed"
+  },
+  {
+    "audit_id": "2.1.5",
+    "audit_name": "Ensure dnsmasq services are not in use",
+    "status": "PASS",
+    "output": "** PASS ** dnsmasq is not installed"
+  },
+  {
+    "audit_id": "2.1.6",
+    "audit_name": "Ensure ftp server services are not in use",
+    "status": "PASS",
+    "output": "** PASS ** vsftpd is not installed"
+  },
+  {
+    "audit_id": "2.1.7",
+    "audit_name": "Ensure ldap server services are not in use",
+    "status": "PASS",
+    "output": "** PASS ** slapd is not installed"
+  },
+  {
+    "audit_id": "2.1.9",
+    "audit_name": "Ensure network file system services are not in use",
+    "status": "PASS",
+    "output": "** PASS ** nfs-kernel-server is not installed"
+  },
+  {
+    "audit_id": "2.1.10",
+    "audit_name": "Ensure nis server services are not in use",
+    "status": "PASS",
+    "output": "** PASS ** ypserv is not installed"
+  },
+  {
+    "audit_id": "2.1.11",
+    "audit_name": "Ensure print server services are not in use",
+    "status": "FAIL",
+    "output": "- cups is installed\n** FAIL ** cups.service or cups.socket is enabled"
+  },
+  {
+    "audit_id": "2.1.12",
+    "audit_name": "Ensure rpcbind services are not in use",
+    "status": "PASS",
+    "output": "** PASS ** rpcbind is not installed"
+  },
+  {
+    "audit_id": "2.1.13",
+    "audit_name": "Ensure rsync services are not in use",
+    "status": "PASS",
+    "output": "** PASS ** rsync is not installed"
+  },
+  {
+    "audit_id": "2.1.15",
+    "audit_name": "Ensure snmp services are not in use",
+    "status": "PASS",
+    "output": "** PASS ** snmpd is not installed"
+  },
+  {
+    "audit_id": "2.1.16",
+    "audit_name": "Ensure tftp server services are not in use",
+    "status": "PASS",
+    "output": "** PASS ** tftpd-hpa is not installed"
+  },
+  {
+    "audit_id": "2.1.17",
+    "audit_name": "Ensure web proxy server services are not in use",
+    "status": "PASS",
+    "output": "** PASS ** squid is not installed"
+  },
+  {
+    "audit_id": "2.1.18",
+    "audit_name": "Ensure web server services are not in use",
+    "status": "PASS",
+    "output": "** PASS ** apache2 and nginx are not installed"
+  },
+  {
+    "audit_id": "2.1.19",
+    "audit_name": "Ensure xinetd services are not in use",
+    "status": "PASS",
+    "output": "** PASS ** xinetd is not installed"
+  },
+  {
+    "audit_id": "2.1.20",
+    "audit_name": "Ensure X window server services are not in use",
+    "status": "FAIL",
+    "output": "** FAIL ** xserver-common is installed"
+  },
+  {
+    "audit_id": "2.1.21",
+    "audit_name": "Ensure mail transfer agent is configured for local-only mode",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n- Port \"25\" is not listening on a non-loopback network interface\n- Port \"465\" is not listening on a non-loopback network interface\n- Port \"587\" is not listening on a non-loopback network interface\n- MTA not detected or in use"
+  },
+  {
+    "audit_id": "2.2.1",
+    "audit_name": "Ensure NIS Client is not installed",
+    "status": "PASS",
+    "output": "** PASS ** nis is not installed"
+  },
+  {
+    "audit_id": "2.2.2",
+    "audit_name": "Ensure rsh client is not installed",
+    "status": "PASS",
+    "output": "** PASS ** rsh-client is not installed"
+  },
+  {
+    "audit_id": "2.2.3",
+    "audit_name": "Ensure talk client is not installed",
+    "status": "PASS",
+    "output": "** PASS ** talk is not installed"
+  },
+  {
+    "audit_id": "2.2.4",
+    "audit_name": "Ensure telnet client is not installed",
+    "status": "FAIL",
+    "output": "** FAIL ** telnet client is installed"
+  },
+  {
+    "audit_id": "2.2.5",
+    "audit_name": "Ensure ldap client is not installed",
+    "status": "PASS",
+    "output": "** PASS ** ldap-utls is not installed"
+  },
+  {
+    "audit_id": "2.2.6",
+    "audit_name": "Ensure ftp client is not installed",
+    "status": "FAIL",
+    "output": "** FAIL ** ftp client is installed"
+  },
+  {
+    "audit_id": "2.3.1.1",
+    "audit_name": "Ensure a single time synchronization daemon is in use",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - Only one time sync daemon is in use on the system\n - Daemon: \"systemd-timesyncd.service\" is enabled on the system\n - Daemon: \"systemd-timesyncd.service\" is active on the system\n - Daemon: \"chrony.service\" is not enabled and not active on the system"
+  },
+  {
+    "audit_id": "2.3.2.1",
+    "audit_name": "Ensure systemd-timesyncd configured with authorized timeserver",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - \"NTP\" is not set in an included file *** Note: \"NTP\" may be set in a file that's ignored by load procedure ***\n - \"FallbackNTP\" is not set in an included file *** Note: \"FallbackNTP\" may be set in a file that's ignored by load procedure ***"
+  },
+  {
+    "audit_id": "2.3.2.2",
+    "audit_name": "Ensure systemd-timesyncd is enabled and running",
+    "status": "PASS",
+    "output": "Checking systemd-timesyncd.service...\n - Service is enabled.\n - Service is active.\n\nAudit Result:\n ** PASS **\n - systemd-timesyncd.service is enabled and active."
+  },
+  {
+    "audit_id": "2.3.3.1",
+    "audit_name": "Ensure chrony is configured with authorized timeserver",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - Parameter: \"server or pool\"\n Does not exist in the chrony configuration"
+  },
+  {
+    "audit_id": "2.3.3.2",
+    "audit_name": "Ensure chrony is running as user _chrony",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - chrony service is not active or enabled, skipping user check"
+  },
+  {
+    "audit_id": "2.3.3.3",
+    "audit_name": "Ensure chrony is enabled and running",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - chrony.service is not in use (not active on the system)."
+  },
+  {
+    "audit_id": "2.4.1.1",
+    "audit_name": "Ensure cron daemon is enabled and active",
+    "status": "FAIL",
+    "output": "** FAIL ** cron service is not enabled\n** FAIL ** cron service is not active"
+  },
+  {
+    "audit_id": "2.4.1.2",
+    "audit_name": "Ensure permissions on /etc/crontab are configured",
+    "status": "FAIL",
+    "output": "** FAIL **: Access: (644/-rw-r--r--) Uid: (0/root) Gid: (0/root)"
+  },
+  {
+    "audit_id": "2.4.1.3",
+    "audit_name": "Ensure permissions on /etc/cron.hourly are configured",
+    "status": "FAIL",
+    "output": "** FAIL **: Access: (755/drwxr-xr-x) Uid: (0/root) Gid: (0/root)"
+  },
+  {
+    "audit_id": "2.4.1.4",
+    "audit_name": "Ensure permissions on /etc/cron.daily are configured",
+    "status": "FAIL",
+    "output": "** FAIL **: Access: (755/drwxr-xr-x) Uid: (0/root) Gid: (0/root)"
+  },
+  {
+    "audit_id": "2.4.1.5",
+    "audit_name": "Ensure permissions on /etc/cron.weekly are configured",
+    "status": "FAIL",
+    "output": "** FAIL **: Access: (755/drwxr-xr-x) Uid: (0/root) Gid: (0/root)"
+  },
+  {
+    "audit_id": "2.4.1.6",
+    "audit_name": "Ensure permissions on /etc/cron.monthly are configured",
+    "status": "FAIL",
+    "output": "** FAIL **: Access: (755/drwxr-xr-x) Uid: (0/root) Gid: (0/root)"
+  },
+  {
+    "audit_id": "2.4.1.7",
+    "audit_name": "Ensure permissions on /etc/cron.d are configured",
+    "status": "FAIL",
+    "output": "** FAIL **: Access: (755/drwxr-xr-x) Uid: (0/root) Gid: (0/root)"
+  },
+  {
+    "audit_id": "2.4.1.8",
+    "audit_name": "Ensure crontab is restricted to authorized users",
+    "status": "FAIL",
+    "output": "** FAIL **: /etc/cron.allow does not exist"
+  },
+  {
+    "audit_id": "3.1.2",
+    "audit_name": "Ensure bluetooth services are not in use",
+    "status": "FAIL",
+    "output": "** FAIL **: bluez is installed and bluetooth.service is enabled/inactive"
+  },
+  {
+    "audit_id": "3.2.1",
+    "audit_name": "Ensure dccp kernel module is not available",
+    "status": "FAIL",
+    "output": "grep: dccp\\b: No such file or directory\n\n -- INFO --\n - module: \"dccp\" exists in:\n - \"/usr/lib/modules/6.1.0-35-amd64/kernel/net\"\n - \"/usr/lib/modules/6.1.0-37-amd64/kernel/net\"\n\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - kernel module: \"dccp\" is loadable\n - kernel module: \"dccp\" is not deny listed\n- Correctly set:\n - kernel module: \"dccp\" is not loaded"
+  },
+  {
+    "audit_id": "3.2.2",
+    "audit_name": "Ensure tipc kernel module is not available",
+    "status": "FAIL",
+    "output": "grep: tipc\\b: No such file or directory\n\n -- INFO --\n - module: \"tipc\" exists in:\n - \"/usr/lib/modules/6.1.0-35-amd64/kernel/net\"\n - \"/usr/lib/modules/6.1.0-37-amd64/kernel/net\"\n\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - kernel module: \"tipc\" is loadable\n - kernel module: \"tipc\" is not deny listed\n- Correctly set:\n - kernel module: \"tipc\" is not loaded"
+  },
+  {
+    "audit_id": "3.2.3",
+    "audit_name": "Ensure rds kernel module is not available",
+    "status": "FAIL",
+    "output": "grep: rds\\b: No such file or directory\n\n -- INFO --\n - module: \"rds\" exists in:\n - \"/usr/lib/modules/6.1.0-35-amd64/kernel/net\"\n - \"/usr/lib/modules/6.1.0-37-amd64/kernel/net\"\n\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - kernel module: \"rds\" is loadable\n - kernel module: \"rds\" is not deny listed\n- Correctly set:\n - kernel module: \"rds\" is not loaded"
+  },
+  {
+    "audit_id": "3.2.4",
+    "audit_name": "Ensure sctp kernel module is not available",
+    "status": "FAIL",
+    "output": "grep: sctp\\b: No such file or directory\n\n -- INFO --\n - module: \"sctp\" exists in:\n - \"/usr/lib/modules/6.1.0-35-amd64/kernel/net\"\n - \"/usr/lib/modules/6.1.0-37-amd64/kernel/net\"\n\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - kernel module: \"sctp\" is loadable\n - kernel module: \"sctp\" is not deny listed\n- Correctly set:\n - kernel module: \"sctp\" is not loaded"
+  },
+  {
+    "audit_id": "3.3.1",
+    "audit_name": "Ensure ip forwarding is disabled",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - \"net.ipv4.ip_forward\" is not set in an included file\n   ** Note: \"net.ipv4.ip_forward\" may be set in a file that's ignored by the load procedure **\n - \"net.ipv6.conf.all.forwarding\" is not set in an included file\n   ** Note: \"net.ipv6.conf.all.forwarding\" may be set in a file that's ignored by the load procedure **\n\n- Correctly set:\n - \"net.ipv4.ip_forward\" is correctly set to \"0\" in the running configuration\n - \"net.ipv6.conf.all.forwarding\" is correctly set to \"0\" in the running configuration"
+  },
+  {
+    "audit_id": "3.3.2",
+    "audit_name": "Ensure packet redirect sending is disabled",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - \"net.ipv4.conf.all.send_redirects\" is incorrectly set to \"1\" in the running configuration\n   and should have a value of: \"0\"\n - \"net.ipv4.conf.all.send_redirects\" is not set in an included file\n   ** Note: \"net.ipv4.conf.all.send_redirects\" may be set in a file that's ignored by the load procedure **\n - \"net.ipv4.conf.default.send_redirects\" is incorrectly set to \"1\" in the running configuration\n   and should have a value of: \"0\"\n - \"net.ipv4.conf.default.send_redirects\" is not set in an included file\n   ** Note: \"net.ipv4.conf.default.send_redirects\" may be set in a file that's ignored by the load procedure **"
+  },
+  {
+    "audit_id": "3.3.3",
+    "audit_name": "Ensure bogus icmp responses are ignored",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - \"net.ipv4.icmp_ignore_bogus_error_responses\" is not set in an included file\n   ** Note: \"net.ipv4.icmp_ignore_bogus_error_responses\" may be set in a file that's ignored by load procedure **\n\n- Correctly set:\n - \"net.ipv4.icmp_ignore_bogus_error_responses\" is correctly set to \"1\" in the running configuration"
+  },
+  {
+    "audit_id": "3.3.4",
+    "audit_name": "Ensure broadcast icmp requests are ignored",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - \"net.ipv4.icmp_echo_ignore_broadcasts\" is not set in an included file\n ** Note: \"net.ipv4.icmp_echo_ignore_broadcasts\" may be set in a file that's ignored by the load procedure **\n\n- Correctly set:\n - \"net.ipv4.icmp_echo_ignore_broadcasts\" is correctly set to \"1\" in the running configuration"
+  },
+  {
+    "audit_id": "3.3.5",
+    "audit_name": "Ensure icmp redirects are not accepted",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - \"net.ipv4.conf.all.accept_redirects\" is incorrectly set to \"1\" in the running configuration\n and should have a value of: \"0\"\n - \"net.ipv4.conf.all.accept_redirects\" is not set in an included file\n ** Note: \"net.ipv4.conf.all.accept_redirects\" may be set in a file that's ignored by load procedure **\n - \"net.ipv4.conf.default.accept_redirects\" is incorrectly set to \"1\" in the running configuration\n and should have a value of: \"0\"\n - \"net.ipv4.conf.default.accept_redirects\" is not set in an included file\n ** Note: \"net.ipv4.conf.default.accept_redirects\" may be set in a file that's ignored by load procedure **\n - \"net.ipv6.conf.all.accept_redirects\" is incorrectly set to \"1\" in the running configuration\n and should have a value of: \"0\"\n - \"net.ipv6.conf.all.accept_redirects\" is not set in an included file\n ** Note: \"net.ipv6.conf.all.accept_redirects\" may be set in a file that's ignored by load procedure **\n - \"net.ipv6.conf.default.accept_redirects\" is incorrectly set to \"1\" in the running configuration\n and should have a value of: \"0\"\n - \"net.ipv6.conf.default.accept_redirects\" is not set in an included file\n ** Note: \"net.ipv6.conf.default.accept_redirects\" may be set in a file that's ignored by load procedure **"
+  },
+  {
+    "audit_id": "3.3.6",
+    "audit_name": "Ensure secure icmp redirects are not accepted",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - \"net.ipv4.conf.all.secure_redirects\" is incorrectly set to \"1\"\n   in the running configuration\n   and should have a value of: \"0\"\n - \"net.ipv4.conf.all.secure_redirects\" is not set in an included file\n ** Note: \"net.ipv4.conf.all.secure_redirects\" may be set in a file that's ignored by load procedure **\n - \"net.ipv4.conf.default.secure_redirects\" is incorrectly set to \"1\"\n   in the running configuration\n   and should have a value of: \"0\"\n - \"net.ipv4.conf.default.secure_redirects\" is not set in an included file\n ** Note: \"net.ipv4.conf.default.secure_redirects\" may be set in a file that's ignored by load procedure **"
+  },
+  {
+    "audit_id": "3.3.7",
+    "audit_name": "Ensure reverse path filtering is enabled",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - \"net.ipv4.conf.all.rp_filter\" is incorrectly set to \"0\"\n   in the running configuration\n   and should have a value of: \"1\"\n - \"net.ipv4.conf.all.rp_filter\" is not set in an included file\n ** Note: \"net.ipv4.conf.all.rp_filter\" may be set in a file that's ignored by load procedure **\n - \"net.ipv4.conf.default.rp_filter\" is incorrectly set to \"0\"\n   in the running configuration\n   and should have a value of: \"1\"\n - \"net.ipv4.conf.default.rp_filter\" is not set in an included file\n ** Note: \"net.ipv4.conf.default.rp_filter\" may be set in a file that's ignored by load procedure **"
+  },
+  {
+    "audit_id": "3.3.8",
+    "audit_name": "Ensure source routed packets are not accepted",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - \"net.ipv4.conf.all.accept_source_route\" is not set in an included file\n ** Note: \"net.ipv4.conf.all.accept_source_route\" may be set in a file that's ignored by load procedure **\n - \"net.ipv4.conf.default.accept_source_route\" is incorrectly set to \"1\"\n   in the running configuration\n   and should have a value of: \"0\"\n - \"net.ipv4.conf.default.accept_source_route\" is not set in an included file\n ** Note: \"net.ipv4.conf.default.accept_source_route\" may be set in a file that's ignored by load procedure **\n - \"net.ipv6.conf.all.accept_source_route\" is not set in an included file\n ** Note: \"net.ipv6.conf.all.accept_source_route\" may be set in a file that's ignored by load procedure **\n - \"net.ipv6.conf.default.accept_source_route\" is not set in an included file\n ** Note: \"net.ipv6.conf.default.accept_source_route\" may be set in a file that's ignored by load procedure **\n\n- Correctly set:\n - \"net.ipv4.conf.all.accept_source_route\" is correctly set to \"0\"\n   in the running configuration\n - \"net.ipv6.conf.all.accept_source_route\" is correctly set to \"0\"\n   in the running configuration\n - \"net.ipv6.conf.default.accept_source_route\" is correctly set to \"0\"\n   in the running configuration"
+  },
+  {
+    "audit_id": "3.3.9",
+    "audit_name": "Ensure suspicious packets are logged",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - \"net.ipv4.conf.all.log_martians\" is incorrectly set to \"0\"\n   in the running configuration\n   and should have a value of: \"1\"\n - \"net.ipv4.conf.all.log_martians\" is not set in an included file\n ** Note: \"net.ipv4.conf.all.log_martians\" may be set in a file that's ignored by load procedure **\n - \"net.ipv4.conf.default.log_martians\" is incorrectly set to \"0\"\n   in the running configuration\n   and should have a value of: \"1\"\n - \"net.ipv4.conf.default.log_martians\" is not set in an included file\n ** Note: \"net.ipv4.conf.default.log_martians\" may be set in a file that's ignored by load procedure **"
+  },
+  {
+    "audit_id": "3.3.10",
+    "audit_name": "Ensure tcp syn cookies is enabled",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - \"net.ipv4.tcp_syncookies\" is not set in an included file\n ** Note: \"net.ipv4.tcp_syncookies\" may be set in a file that's ignored by load procedure **\n\n- Correctly set:\n - \"net.ipv4.tcp_syncookies\" is correctly set to \"1\"\n   in the running configuration"
+  },
+  {
+    "audit_id": "3.3.11",
+    "audit_name": "Ensure ipv6 router advertisements are not accepted",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - \"net.ipv6.conf.all.accept_ra\" is incorrectly set to \"1\"\n   in the running configuration\n   and should have a value of: \"0\"\n - \"net.ipv6.conf.all.accept_ra\" is not set in an included file\n ** Note: \"net.ipv6.conf.all.accept_ra\" may be set in a file that's ignored by load procedure **\n - \"net.ipv6.conf.default.accept_ra\" is incorrectly set to \"1\"\n   in the running configuration\n   and should have a value of: \"0\"\n - \"net.ipv6.conf.default.accept_ra\" is not set in an included file\n ** Note: \"net.ipv6.conf.default.accept_ra\" may be set in a file that's ignored by load procedure **"
+  },
+  {
+    "audit_id": "4.1.1",
+    "audit_name": "Ensure a single firewall configuration utility is in use",
+    "status": "FAIL",
+    "output": "\nAudit Results:\n ** FAIL **\n - No firewall is in use or firewall status could not be determined."
+  },
+  {
+    "audit_id": "4.2.1",
+    "audit_name": "Ensure ufw is installed",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.2.2",
+    "audit_name": "Ensure iptables-persistent is not installed with ufw",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.2.3",
+    "audit_name": "Ensure ufw service is enabled",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.2.4",
+    "audit_name": "Ensure ufw loopback traffic is configured",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.2.6",
+    "audit_name": "Ensure ufw firewall rules exist for all open ports",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.2.7",
+    "audit_name": "Ensure ufw default deny firewall policy",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.3.1",
+    "audit_name": "Ensure nftables is installed",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.3.2",
+    "audit_name": "Ensure ufw is uninstalled or disabled with nftables",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.3.3",
+    "audit_name": "Ensure iptables are flushed with nftables",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.3.4",
+    "audit_name": "Ensure a nftables table exists",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.3.5",
+    "audit_name": "Ensure nftables base chains exist",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.3.5",
+    "audit_name": "Ensure nftables base chains exist",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.3.6",
+    "audit_name": "Ensure nftables loopback traffic is configured",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.3.8",
+    "audit_name": "Ensure nftables default deny firewall policy",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.3.9",
+    "audit_name": "Ensure nftables service is enabled",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.4.1.1",
+    "audit_name": "Ensure iptables packages are installed",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.4.1.2",
+    "audit_name": "Ensure nftables is not in use with iptables",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.4.1.3",
+    "audit_name": "Ensure ufw is not in use with iptables",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.4.2.1",
+    "audit_name": "Ensure iptables default deny firewall policy",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.4.2.2",
+    "audit_name": "Ensure iptables loopback traffic is configured",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.4.3.1",
+    "audit_name": "Ensure ip6tables default deny firewall policy",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "4.4.3.2",
+    "audit_name": "Ensure ip6tables loopback traffic is configured",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 4.1.1 failed"
+  },
+  {
+    "audit_id": "5.1.1",
+    "audit_name": "Ensure permissions on /etc/ssh/sshd_config are configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - File: \"/etc/ssh/sshd_config\":\n - Is mode: \"0644\"\n   Should be mode: \"600\" or more restrictive\n- End List"
+  },
+  {
+    "audit_id": "5.1.2",
+    "audit_name": "Ensure permissions on SSH private host key files are configured",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - File: \"/etc/ssh/ssh_host_rsa_key\":\n   Correct: mode (0600), owner (root), group (root)\n - File: \"/etc/ssh/ssh_host_ecdsa_key\":\n   Correct: mode (0600), owner (root), group (root)\n - File: \"/etc/ssh/ssh_host_ed25519_key\":\n   Correct: mode (0600), owner (root), group (root)\n- End List"
+  },
+  {
+    "audit_id": "5.1.3",
+    "audit_name": "Ensure permissions on SSH public host key files are configured",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - File: \"/etc/ssh/ssh_host_ecdsa_key.pub\":\n   Correct: mode (0644), owner (root), group (root)\n - File: \"/etc/ssh/ssh_host_ed25519_key.pub\":\n   Correct: mode (0644), owner (root), group (root)\n - File: \"/etc/ssh/ssh_host_rsa_key.pub\":\n   Correct: mode (0644), owner (root), group (root)\n- End List"
+  },
+  {
+    "audit_id": "5.1.4",
+    "audit_name": "Ensure sshd access is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - No global AllowUsers, AllowGroups, DenyUsers, or DenyGroups configured in sshd_config\n- End List"
+  },
+  {
+    "audit_id": "5.1.5",
+    "audit_name": "Ensure sshd Banner is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Global SSH banner is not set\n- End List"
+  },
+  {
+    "audit_id": "5.1.6",
+    "audit_name": "Ensure sshd Ciphers are configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - chacha20-poly1305@openssh.com is in use — review CVE-2023-48795 and ensure patching is applied\n- End List"
+  },
+  {
+    "audit_id": "5.1.7",
+    "audit_name": "Ensure sshd ClientAliveInterval and ClientAliveCountMax are configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - One or both values are missing or set to 0:\nclientaliveinterval 0\nclientalivecountmax 3\n- End List"
+  },
+  {
+    "audit_id": "5.1.8",
+    "audit_name": "Ensure sshd DisableForwarding is enabled",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - disableforwarding is not set to 'yes'\n   Actual value: disableforwarding no\n- End List"
+  },
+  {
+    "audit_id": "5.1.9",
+    "audit_name": "Ensure sshd GSSAPIAuthentication is disabled",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - GSSAPIAuthentication is set to 'no' globally\n- End List"
+  },
+  {
+    "audit_id": "5.1.10",
+    "audit_name": "Ensure sshd HostbasedAuthentication is disabled",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - HostbasedAuthentication is set to 'no' globally\n- End List"
+  },
+  {
+    "audit_id": "5.1.11",
+    "audit_name": "Ensure sshd IgnoreRhosts is enabled",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - IgnoreRhosts is set to 'yes' globally\n- End List"
+  },
+  {
+    "audit_id": "5.1.12",
+    "audit_name": "Ensure sshd KexAlgorithms is configured",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - No weak Key Exchange algorithms are configured\n- End List"
+  },
+  {
+    "audit_id": "5.1.13",
+    "audit_name": "Ensure sshd LoginGraceTime is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - LoginGraceTime is set to 120 seconds — must be between 1 and 60\n- End List"
+  },
+  {
+    "audit_id": "5.1.14",
+    "audit_name": "Ensure sshd LogLevel is configured",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - LogLevel is set correctly: loglevel INFO\n- End List"
+  },
+  {
+    "audit_id": "5.1.15",
+    "audit_name": "Ensure sshd MACs are configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Weak MACs found in SSH configuration:\n   macs umac-64-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha1-etm@openssh.com,umac-64@openssh.com,umac-128@openssh.com,hmac-sha2-256,hmac-sha2-512,hmac-sha1\n- End List"
+  },
+  {
+    "audit_id": "5.1.16",
+    "audit_name": "Ensure sshd MaxAuthTries is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - MaxAuthTries is set to 6 — must be ≤ 4\n- End List"
+  },
+  {
+    "audit_id": "5.1.17",
+    "audit_name": "Ensure sshd MaxSessions is configured",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - MaxSessions is properly set (≤ 10) in all applicable configurations\n- End List"
+  },
+  {
+    "audit_id": "5.1.18",
+    "audit_name": "Ensure sshd MaxStartups is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - MaxStartups is set to 10:30:100 (must be ≤ 10:30:60)\n- End List"
+  },
+  {
+    "audit_id": "5.1.19",
+    "audit_name": "Ensure sshd PermitEmptyPasswords is disabled",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - PermitEmptyPasswords is set to 'no' globally\n- End List"
+  },
+  {
+    "audit_id": "5.1.20",
+    "audit_name": "Ensure sshd PermitRootLogin is disabled",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - PermitRootLogin is not set to 'no'\n   Actual value: permitrootlogin without-password\n- End List"
+  },
+  {
+    "audit_id": "5.1.21",
+    "audit_name": "Ensure sshd PermitUserEnvironment is disabled",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - PermitUserEnvironment is set to 'no' globally\n- End List"
+  },
+  {
+    "audit_id": "5.1.22",
+    "audit_name": "Ensure sshd UsePAM is enabled",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - UsePAM is set to 'yes' globally\n- End List"
+  },
+  {
+    "audit_id": "5.2.1",
+    "audit_name": "Ensure sudo is installed",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - sudo is installed\n- End List"
+  },
+  {
+    "audit_id": "5.2.2",
+    "audit_name": "Ensure sudo commands use pty",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - sudo is configured to require a pseudo-terminal (use_pty)\n- End List"
+  },
+  {
+    "audit_id": "5.2.3",
+    "audit_name": "Ensure sudo log file exists",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - No 'Defaults logfile=' setting found in sudoers configuration\n- End List"
+  },
+  {
+    "audit_id": "5.2.4",
+    "audit_name": "Ensure users must provide password for privilege escalation",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - sudo requires a password for privilege escalation\n- End List"
+  },
+  {
+    "audit_id": "5.2.5",
+    "audit_name": "Ensure re-authentication for privilege escalation is not disabled globally",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - No '!authenticate' entries found — sudo requires re-authentication\n- End List"
+  },
+  {
+    "audit_id": "5.2.6",
+    "audit_name": "Ensure sudo authentication timeout is configured correctly",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Default timestamp timeout is 150 minutes (must be ≤ 15, not -1)\n- End List"
+  },
+  {
+    "audit_id": "5.3.1.1",
+    "audit_name": "Ensure latest version of pam is installed",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Installed version is 1.5.2-6+deb12u1, which is less than required 1.5.3-5\n- End List"
+  },
+  {
+    "audit_id": "5.3.1.2",
+    "audit_name": "Ensure libpam-modules is installed",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Installed version is 1.5.2-6+deb12u1, which is less than required 1.5.3-5\n- End List"
+  },
+  {
+    "audit_id": "5.3.1.3",
+    "audit_name": "Ensure libpam-pwquality is installed",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - libpam-pwquality is NOT installed\n- End List"
+  },
+  {
+    "audit_id": "5.3.2.1",
+    "audit_name": "Ensure pam_unix module is enabled",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - pam_unix.so is present in all required PAM configuration files\n- End List"
+  },
+  {
+    "audit_id": "5.3.2.2",
+    "audit_name": "Ensure pam_faillock module is enabled",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Missing 'auth requisite pam_faillock.so preauth' in /etc/pam.d/common-auth\n - Missing 'auth [default=die] pam_faillock.so authfail' in /etc/pam.d/common-auth\n - Missing 'account required pam_faillock.so' in /etc/pam.d/common-account\n- End List"
+  },
+  {
+    "audit_id": "5.3.2.3",
+    "audit_name": "Ensure pam_pwquality module is enabled",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - pam_pwquality.so not found in /etc/pam.d/common-password\n- End List"
+  },
+  {
+    "audit_id": "5.3.2.4",
+    "audit_name": "Ensure pam_pwhistory module is enabled",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - pam_pwhistory.so not found in /etc/pam.d/common-password\n- End List"
+  },
+  {
+    "audit_id": "5.3.3.1.1",
+    "audit_name": "",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - 'deny' setting in /etc/security/faillock.conf is missing or > 5\n- End List"
+  },
+  {
+    "audit_id": "5.3.3.1.2",
+    "audit_name": "Ensure password unlock time is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - 'unlock_time' in /etc/security/faillock.conf is missing or set to a value less than 900 (unless 0)\n- End List"
+  },
+  {
+    "audit_id": "5.3.3.1.3",
+    "audit_name": "Ensure password failed attempts lockout includes root account",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Neither 'even_deny_root' nor 'root_unlock_time' found in /etc/security/faillock.conf\n- End List"
+  },
+  {
+    "audit_id": "5.3.3.2.1",
+    "audit_name": "Ensure password number of changed characters is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - difok not found or set to less than 2 in pwquality configuration files\n- End List"
+  },
+  {
+    "audit_id": "5.3.3.2.2",
+    "audit_name": "Ensure minimum password length is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - No minlen ≥ 14 found in pwquality config files\n- End List"
+  },
+  {
+    "audit_id": "5.3.3.2.4",
+    "audit_name": "Ensure password same consecutive characters is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - No valid maxrepeat (1-3) found in pwquality configuration files\n- End List"
+  },
+  {
+    "audit_id": "5.3.3.2.5",
+    "audit_name": "Ensure password maximum sequential characters is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - No valid maxsequence (1–3) found in pwquality configuration files\n- End List"
+  },
+  {
+    "audit_id": "5.3.3.2.6",
+    "audit_name": "Ensure password dictionary check is enabled",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - dictcheck is enabled (not set to 0 anywhere)\n- End List"
+  },
+  {
+    "audit_id": "5.3.3.2.7",
+    "audit_name": "Ensure password quality checking is enforced",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - enforcing is not set to 0 anywhere (password enforcement is active)\n- End List"
+  },
+  {
+    "audit_id": "5.3.3.2.8",
+    "audit_name": "Ensure password quality is enforced for the root user",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - enforce_for_root is not enabled in any pwquality configuration file\n- End List"
+  },
+  {
+    "audit_id": "5.3.3.3.1",
+    "audit_name": "Ensure password history remember is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - pam_pwhistory.so line with remember=N not found in /etc/pam.d/common-password\n- End List"
+  },
+  {
+    "audit_id": "5.3.3.3.2",
+    "audit_name": "Ensure password history is enforced for the root user",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - pam_pwhistory.so does not include enforce_for_root in /etc/pam.d/common-password\n- End List"
+  },
+  {
+    "audit_id": "5.3.3.3.3",
+    "audit_name": "Ensure pam_pwhistory includes use_authtok",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - pam_pwhistory.so line does not include use_authtok in /etc/pam.d/common-password\n- End List"
+  },
+  {
+    "audit_id": "5.3.3.4.1",
+    "audit_name": "Ensure pam_unix does not include nullok",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - nullok found in pam_unix.so line in /etc/pam.d/common-auth\n- End List"
+  },
+  {
+    "audit_id": "5.3.3.4.2",
+    "audit_name": "Ensure pam_unix does not include remember",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - pam_unix.so does not use remember= in any monitored PAM file\n- End List"
+  },
+  {
+    "audit_id": "5.3.3.4.3",
+    "audit_name": "Ensure pam_unix includes a strong password hashing algorithm",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - pam_unix.so in /etc/pam.d/common-password uses a strong hashing algorithm (sha512 or yescrypt)\n- End List"
+  },
+  {
+    "audit_id": "5.3.3.4.4",
+    "audit_name": "Ensure pam_unix includes use_authtok",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - pam_unix.so line is missing use_authtok in /etc/pam.d/common-password\n- End List"
+  },
+  {
+    "audit_id": "5.4.1.1",
+    "audit_name": "Ensure password expiration is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - PASS_MAX_DAYS is set to 99999 in /etc/login.defs (must be ≤ 365)\n - User: root has PASS_MAX_DAYS set to '99999' (must be 1–365)\n - User: regal has PASS_MAX_DAYS set to '99999' (must be 1–365)\n- End List"
+  },
+  {
+    "audit_id": "5.4.1.2",
+    "audit_name": "Ensure minimum password days is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - PASS_MIN_DAYS is set to 0 in /etc/login.defs (must be > 0)\n - User: root has PASS_MIN_DAYS = 0 (must be > 0)\n - User: regal has PASS_MIN_DAYS = 0 (must be > 0)\n- End List"
+  },
+  {
+    "audit_id": "5.4.1.3",
+    "audit_name": "Ensure password expiration warning days is configured",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - PASS_WARN_AGE is compliant in /etc/login.defs and /etc/shadow (≥ 7)\n- End List"
+  },
+  {
+    "audit_id": "5.4.1.4",
+    "audit_name": "Ensure strong password hashing algorithm is configured",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - ENCRYPT_METHOD is set to SHA512 (strong hash)\n- End List"
+  },
+  {
+    "audit_id": "5.4.1.5",
+    "audit_name": "Ensure inactive password lock is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - User: root has INACTIVE=unset (must be 0–45)\n - User: regal has INACTIVE=unset (must be 0–45)\n- End List"
+  },
+  {
+    "audit_id": "5.4.1.6",
+    "audit_name": "Ensure all users last password change date is in the past",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - No users have future-dated password change entries\n- End List"
+  },
+  {
+    "audit_id": "5.4.2.1",
+    "audit_name": "Ensure root is the only UID 0 account",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - Only 'root' has UID 0\n- End List"
+  },
+  {
+    "audit_id": "5.4.2.2",
+    "audit_name": "Ensure root is the only GID 0 account",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - Only root (and allowed exceptions) have GID 0\n- End List"
+  },
+  {
+    "audit_id": "5.4.2.3",
+    "audit_name": "Ensure group root is the only GID 0 group",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - Only the 'root' group is assigned GID 0\n- End List"
+  },
+  {
+    "audit_id": "5.4.2.4",
+    "audit_name": "Ensure root account access is controlled",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - User: \"root\" Password is status: P\n- End List"
+  },
+  {
+    "audit_id": "5.4.2.5",
+    "audit_name": "Ensure root path integrity",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - root's PATH is correctly configured"
+  },
+  {
+    "audit_id": "5.4.2.6",
+    "audit_name": "Ensure root user umask is configured",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - root's umask setting is 027 or more restrictive in /root/.bash_profile and /root/.bashrc\n- End List"
+  },
+  {
+    "audit_id": "5.4.2.7",
+    "audit_name": "Ensure system accounts do not have a valid login shell",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - Service account \"postgres\" has a valid login shell: /bin/bash\n- End List"
+  },
+  {
+    "audit_id": "5.4.2.8",
+    "audit_name": "Ensure accounts without a valid login shell are locked",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - Account \"regal\" does not have a valid login shell and is not locked\n- End List"
+  },
+  {
+    "audit_id": "5.4.3.1",
+    "audit_name": "Ensure nologin is not listed in /etc/shells",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - /etc/shells does not include /nologin\n- End List"
+  },
+  {
+    "audit_id": "5.4.3.2",
+    "audit_name": "Ensure default user shell timeout is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - TMOUT is not securely set (or not marked readonly/exported)\n- End List"
+  },
+  {
+    "audit_id": "5.4.3.3",
+    "audit_name": "Ensure default user umask is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - * Reasons for audit failure * :\n - Insecure umask found in \"/etc/login.defs\""
+  },
+  {
+    "audit_id": "6.1.1.1",
+    "audit_name": "Ensure journald service is enabled and active",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - systemd-journald is statically enabled and active\n- End List"
+  },
+  {
+    "audit_id": "6.1.1.4",
+    "audit_name": "Ensure only one logging system is in use",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n\n - journald is in use\n - Follow the recommendations in the Configure journald subsection only"
+  },
+  {
+    "audit_id": "6.1.2.1.1",
+    "audit_name": "Ensure systemd-journal-remote is installed",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - systemd-journal-remote is not installed\n- End List"
+  },
+  {
+    "audit_id": "6.1.2.1.3",
+    "audit_name": "Ensure systemd-journal-upload is enabled and active",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - systemd-journal-upload.service is not active\n- End List"
+  },
+  {
+    "audit_id": "6.1.2.1.4",
+    "audit_name": "Ensure systemd-journal-remote service is not in use",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - systemd-journal-remote.service and .socket are neither active nor enabled\n- End List"
+  },
+  {
+    "audit_id": "6.1.2.2",
+    "audit_name": "Ensure journald ForwardToSyslog is disabled",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n - Parameter: \"ForwardToSyslog\" is not set in an included file\n *** Note: \"ForwardToSyslog\" may be set in a file that's ignored by the load procedure ***"
+  },
+  {
+    "audit_id": "6.1.2.3",
+    "audit_name": "Ensure journald Compress is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n- Reason(s) for audit failure:\n - Parameter: \"Compress\" is not set in an included file\n *** Note: \"Compress\" may be set in a file that's ignored by the load procedure ***"
+  },
+  {
+    "audit_id": "6.1.2.4",
+    "audit_name": "Ensure journald Storage is configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n- Reason(s) for audit failure:\n - Parameter: \"Storage\" is not set in an included file\n *** Note: \"Storage\" may be set in a file that's ignored by the load procedure ***"
+  },
+  {
+    "audit_id": "6.1.3.1",
+    "audit_name": "Ensure rsyslog is installed",
+    "status": "PASS",
+    "output": "Skipped: not applicable as a different firewall was detected by 6.1.1.4"
+  },
+  {
+    "audit_id": "6.1.3.2",
+    "audit_name": "Ensure rsyslog service is enabled and active",
+    "status": "PASS",
+    "output": "Skipped: not applicable as a different firewall was detected by 6.1.1.4"
+  },
+  {
+    "audit_id": "6.1.3.3",
+    "audit_name": "Ensure journald is configured to send logs to rsyslog",
+    "status": "PASS",
+    "output": "Skipped: not applicable as a different firewall was detected by 6.1.1.4"
+  },
+  {
+    "audit_id": "6.1.3.4",
+    "audit_name": "Ensure rsyslog log file creation mode is configured",
+    "status": "PASS",
+    "output": "Skipped: not applicable as a different firewall was detected by 6.1.1.4"
+  },
+  {
+    "audit_id": "6.1.3.7",
+    "audit_name": "Ensure rsyslog is not configured to receive logs from a remote client",
+    "status": "PASS",
+    "output": "Skipped: not applicable as a different firewall was detected by 6.1.1.4"
+  },
+  {
+    "audit_id": "6.1.4.1",
+    "audit_name": "Ensure access to all logfiles has been configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n\n ** FAIL **\n\n - Reason(s) for audit failure:\n\n - File: \"/var/log/fontconfig.log\" is:\n\n o Mode: \"0644\" should be \"640\" or more restrictive\n\n - File: \"/var/log/faillog\" is:\n\n o Mode: \"0644\" should be \"640\" or more restrictive\n\n - File: \"/var/log/alternatives.log\" is:\n\n o Mode: \"0644\" should be \"640\" or more restrictive\n\n - File: \"/var/log/alternatives.log.1\" is:\n\n o Mode: \"0644\" should be \"640\" or more restrictive\n\n - File: \"/var/log/vboxpostinstall.log\" is:\n\n o Mode: \"0644\" should be \"640\" or more restrictive\n\n - File: \"/var/log/dpkg.log\" is:\n\n o Mode: \"0644\" should be \"640\" or more restrictive\n\n - File: \"/var/log/postgresql/postgresql-15-main.log\" is:\n\n o Owned by: \"postgres\" and should be owned by \"(root or syslog)\"\n\n - File: \"/var/log/dpkg.log.1\" is:\n\n o Mode: \"0644\" should be \"640\" or more restrictive\n\n - File: \"/var/log/installer/status\" is:\n\n o Mode: \"0644\" should be \"640\" or more restrictive\n\n - File: \"/var/log/installer/firmware-summary\" is:\n\n o Mode: \"0644\" should be \"640\" or more restrictive\n\n - File: \"/var/log/installer/hardware-summary\" is:\n\n o Mode: \"0644\" should be \"640\" or more restrictive\n\n - File: \"/var/log/installer/lsb-release\" is:\n\n o Mode: \"0644\" should be \"640\" or more restrictive"
+  },
+  {
+    "audit_id": "6.2.1.1",
+    "audit_name": "Ensure auditd packages are installed",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - auditd is NOT installed\n - audispd-plugins is NOT installed"
+  },
+  {
+    "audit_id": "6.2.1.2",
+    "audit_name": "Ensure auditd service is enabled and active",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.1.3",
+    "audit_name": "Ensure auditing for processes that start prior to auditd is enabled",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.1.4",
+    "audit_name": "Ensure audit_backlog_limit is sufficient",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.2.1",
+    "audit_name": "Ensure audit log storage size is configured",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.2.2",
+    "audit_name": "Ensure audit logs are not automatically deleted",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.2.3",
+    "audit_name": "Ensure system is disabled when audit logs are full",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.2.4",
+    "audit_name": "Ensure system warns when audit logs are low on space",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.1",
+    "audit_name": "Ensure changes to system administration scope is collected",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.2",
+    "audit_name": "Ensure actions as another user are always logged",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.3",
+    "audit_name": "Ensure events that modify the sudo log file are collected",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.4",
+    "audit_name": "Ensure events that modify date and time information are collected",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.5",
+    "audit_name": "Ensure events that modify the system's network environment are collected",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.6",
+    "audit_name": "Ensure use of privileged commands are collected",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.7",
+    "audit_name": "Ensure unsuccessful file access attempts are collected",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.8",
+    "audit_name": "Ensure events that modify user/group information are collected",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.9",
+    "audit_name": "Ensure discretionary access control permission modification events are collected",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.10",
+    "audit_name": "Ensure successful file system mounts are collected",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.11",
+    "audit_name": "Ensure session initiation information is collected",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.12",
+    "audit_name": "Ensure login and logout events are collected",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.13",
+    "audit_name": "Ensure file deletion events by users are collected",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.14",
+    "audit_name": "Ensure events that modify the system's Mandatory Access Controls are collected",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.15",
+    "audit_name": "Ensure successful and unsuccessful attempts to use the chcon command are collected",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.16",
+    "audit_name": "Ensure successful and unsuccessful attempts to use the setfacl command are collected",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.17",
+    "audit_name": "Ensure successful and unsuccessful attempts to use the chacl command are collected",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.18",
+    "audit_name": "Ensure successful and unsuccessful attempts to use the usermod command are collected",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.19",
+    "audit_name": "6.2.3.19",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.3.20",
+    "audit_name": "6.2.3.20",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.4.1",
+    "audit_name": "Ensure audit log files mode is configured",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.4.2",
+    "audit_name": "Ensure audit log files owner is configured",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.4.3",
+    "audit_name": "Ensure audit log files group owner is configured",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.4.4",
+    "audit_name": "Ensure the audit log file directory mode is configured",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.4.5",
+    "audit_name": "Ensure audit configuration files mode is configured",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.4.6",
+    "audit_name": "Ensure audit configuration files owner is configured",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.4.7",
+    "audit_name": "Ensure audit configuration files group owner is configured",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.4.8",
+    "audit_name": "Ensure audit tools mode is configured",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.4.9",
+    "audit_name": "Ensure audit tools owner is configured",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.2.4.10",
+    "audit_name": "Ensure audit tools group owner is configured",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.2.1.1 failed"
+  },
+  {
+    "audit_id": "6.3.1",
+    "audit_name": "Ensure AIDE is installed",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - aide package is NOT installed\n - aide-common package is NOT installed"
+  },
+  {
+    "audit_id": "6.3.2",
+    "audit_name": "Ensure filesystem integrity is regularly checked",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.3.1 failed"
+  },
+  {
+    "audit_id": "6.3.3",
+    "audit_name": "Ensure cryptographic mechanisms are used to protect the integrity of audit tools",
+    "status": "FAIL",
+    "output": "Skipped: prerequisite audit 6.3.1 failed"
+  },
+  {
+    "audit_id": "7.1.1",
+    "audit_name": "Ensure permissions on /etc/passwd are configured",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - /etc/passwd is securely configured (mode: 644, owner: root, group: root)"
+  },
+  {
+    "audit_id": "7.1.2",
+    "audit_name": "Ensure permissions on /etc/passwd- are configured",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - /etc/passwd- is securely configured (mode: 644, owner: root, group: root)"
+  },
+  {
+    "audit_id": "7.1.3",
+    "audit_name": "Ensure permissions on /etc/group are configured",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - /etc/group is securely configured (mode: 644, owner: root, group: root)"
+  },
+  {
+    "audit_id": "7.1.4",
+    "audit_name": "Ensure permissions on /etc/group- are configured",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - /etc/group- is securely configured (mode: 644, owner: root, group: root)"
+  },
+  {
+    "audit_id": "7.1.5",
+    "audit_name": "Ensure permissions on /etc/shadow are configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Incorrect group: GID=42 (shadow), should be root"
+  },
+  {
+    "audit_id": "7.1.6",
+    "audit_name": "Ensure permissions on /etc/shadow- are configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Incorrect group: GID=42 (shadow), should be root"
+  },
+  {
+    "audit_id": "7.1.7",
+    "audit_name": "Ensure permissions on /etc/gshadow are configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Incorrect group: GID=42 (shadow), should be root"
+  },
+  {
+    "audit_id": "7.1.8",
+    "audit_name": "Ensure permissions on /etc/gshadow- are configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - Incorrect group: GID=42 (shadow), should be root"
+  },
+  {
+    "audit_id": "7.1.9",
+    "audit_name": "Ensure permissions on /etc/shells are configured",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - /etc/shells is securely configured (mode: 644, owner: root, group: root)"
+  },
+  {
+    "audit_id": "7.1.10",
+    "audit_name": "Ensure permissions on /etc/security/opasswd are configured",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - All relevant files (if present) are securely configured"
+  },
+  {
+    "audit_id": "7.1.11",
+    "audit_name": "Ensure world writable files and directories are secured",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - No world-writable files found\n - All world-writable directories have the sticky bit set"
+  },
+  {
+    "audit_id": "7.1.12",
+    "audit_name": "Ensure no files or directories without an owner and a group exist",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - No unowned files or directories found on the local filesystem.\n - No ungrouped files or directories found on the local filesystem."
+  },
+  {
+    "audit_id": "7.2.1",
+    "audit_name": "Ensure accounts in /etc/passwd use shadowed passwords",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - All users in /etc/passwd are using shadowed passwords."
+  },
+  {
+    "audit_id": "7.2.2",
+    "audit_name": "Ensure /etc/shadow password fields are not empty",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - All users in /etc/shadow have passwords set."
+  },
+  {
+    "audit_id": "7.2.3",
+    "audit_name": "Ensure all groups in /etc/passwd exist in /etc/group",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - All GIDs in /etc/passwd are valid and exist in /etc/group."
+  },
+  {
+    "audit_id": "7.2.4",
+    "audit_name": "Ensure shadow group is empty",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - No misuse of 'shadow' group found."
+  },
+  {
+    "audit_id": "7.2.5",
+    "audit_name": "Ensure no duplicate UIDs exist",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - No duplicate UIDs found in /etc/passwd"
+  },
+  {
+    "audit_id": "7.2.6",
+    "audit_name": "Ensure no duplicate GIDs exist",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - No duplicate GIDs found in /etc/group"
+  },
+  {
+    "audit_id": "7.2.7",
+    "audit_name": "Ensure no duplicate user names exist",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - No duplicate usernames found in /etc/passwd"
+  },
+  {
+    "audit_id": "7.2.8",
+    "audit_name": "Ensure no duplicate group names exist",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n ** PASS **\n - No duplicate group names found in /etc/group"
+  },
+  {
+    "audit_id": "7.2.9",
+    "audit_name": "Ensure local interactive user home directories are configured",
+    "status": "FAIL",
+    "output": "\n- Audit Result:\n ** FAIL **\n - * Reasons for audit failure *:\n - User \"root\" home \"/root\" is mode \"700\" (should be 750 or more restrictive)\n - User \"regal\" home \"/home/regal\" is mode \"700\" (should be 750 or more restrictive)\n - User \"postgres\" home \"/var/lib/postgresql\" is mode \"755\" (should be 750 or more restrictive)\n\n - * Correctly configured *:\n - Checked interactive users:\n - All home directories exist\n - All users own their home directories"
+  },
+  {
+    "audit_id": "7.2.10",
+    "audit_name": "Ensure local interactive user dot files access is configured",
+    "status": "PASS",
+    "output": "\n- Audit Result:\n  ** PASS **\n - All interactive users' dotfiles are secure and correctly configured."
+  }
+]
