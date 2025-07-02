@@ -162,68 +162,57 @@ const ScanCALinux = () => {
   };
 
   const isValidIPv4 = (ip: string) => {
-    const ipv4Regex =
-      /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
-    return ipv4Regex.test(ip);
-  };
+        const ipv4Regex =
+            /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+        return ipv4Regex.test(ip);
+    };
 
-  const isValidPort = (port: string) => {
-    const p = parseInt(port as string, 10);
-    return Number.isInteger(p) && p > 0 && p <= 65535;
-  };
+    const isValidCIDR = (input: string) => {
+        const cidrRegex =
+            /^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\/([0-9]|[1-2][0-9]|3[0-2])$/;
+        return cidrRegex.test(input);
+    };
 
-  const isValidHostname = (input: string) => {
-    const hostnameRegex = /^(?!:\/\/)([a-zA-Z0-9-_]+\.)+[a-zA-Z]{2,}$/;
-    return hostnameRegex.test(input);
-  };
+    const isValidRange = (input: string) => {
+        const rangeRegex =
+            /^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(\d{1,3})-(\d{1,3})$/;
+        const match = input.match(rangeRegex);
+        if (!match) return false;
 
-  const isValidCIDR = (input: string) => {
-    const cidrRegex =
-      /^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\/([0-9]|[1-2][0-9]|3[0-2])$/;
-    return cidrRegex.test(input);
-  };
+        const base = input.substring(0, input.lastIndexOf(".")) + "."; // e.g. "192.168.1."
+        const start = parseInt(match[3], 10); // start of range (last octet)
+        const end = parseInt(match[4], 10); // end of range (last octet)
 
-  const isValidRange = (input: string) => {
-    const rangeRegex =
-      /^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(\d{1,3})-(\d{1,3})$/;
-    const match = input.match(rangeRegex);
-    if (!match) return false;
+        // Check range validity
+        if (isNaN(start) || isNaN(end)) return false;
+        if (start > end) return false;
+        if (start < 0 || start > 255) return false;
+        if (end < 0 || end > 255) return false;
 
-    const base = input.substring(0, input.lastIndexOf(".")) + "."; // e.g. "192.168.1."
-    const start = parseInt(match[3], 10); // start of range (last octet)
-    const end = parseInt(match[4], 10); // end of range (last octet)
+        // Validate full IPs constructed from base + start/end
+        return isValidIPv4(base + start) && isValidIPv4(base + end);
+    };
 
-    // Check range validity
-    if (isNaN(start) || isNaN(end)) return false;
-    if (start > end) return false;
-    if (start < 0 || start > 255) return false;
-    if (end < 0 || end > 255) return false;
+    const isValidHostname = (input: string) => {
+        const hostnameRegex = /^(?!:\/\/)([a-zA-Z0-9-_]+\.)+[a-zA-Z]{2,}$/;
+        return hostnameRegex.test(input);
+    };
 
-    // Validate full IPs constructed from base + start/end
-    return isValidIPv4(base + start) && isValidIPv4(base + end);
-  };
+    const validateTargetIPInput = (input: string) => {
+        const targets = input
+            .split(/[ ,]+/)
+            .map((t) => t.trim())
+            .filter(Boolean);
 
-  const isValidTargetWithPort = (input: string) => {
-    if (input.includes("/")) {
-      const [ip, port] = input.split("/");
-      return (isValidIPv4(ip) || isValidHostname(ip)) && isValidPort(port);
-    }
-    return (
-      isValidIPv4(input) ||
-      isValidCIDR(input) ||
-      isValidRange(input) ||
-      isValidHostname(input)
-    );
-  };
+        return targets.every(
+            (target) =>
+                isValidIPv4(target) ||
+                isValidCIDR(target) ||
+                isValidRange(target) ||
+                isValidHostname(target)
+        );
+    };
 
-  const validateTargetIPInput = (input: string) => {
-    const targets = input
-      .split(/[ ,]+/)
-      .map((t) => t.trim())
-      .filter(Boolean);
-
-    return targets.every((target) => isValidTargetWithPort(target));
-  };
 
   const validatePage2 = () => {
     if (!formData.auditMethod) return "Audit method is required.";

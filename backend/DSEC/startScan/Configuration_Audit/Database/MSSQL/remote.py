@@ -15,25 +15,23 @@ from .validate_result import validate_mssql  # Your custom module
 # validate_mssql(output_sql_path,validate_csv_path,output_csv_path)
 
 
+import pymssql
+
 def connect(user, password, host, port, database):
-    """
-    Connects to MSSQL Server using pyodbc.
-    """
     try:
-        conn_str = (
-            f"DRIVER={{SQL Server}};"
-            f"SERVER={host},{port};"
-            f"DATABASE={database};"
-            f"UID={user};"
-            f"PWD={password};"
-            f"TrustServerCertificate=Yes;"
+        conn = pymssql.connect(
+            server=host,
+            user=user,
+            password=password,
+            database=database,
+            port=port
         )
-        conn = pyodbc.connect(conn_str)
-        print("✅ Connected to MSSQL via pyodbc as", user)
+        print("✅ Connected using pymssql")
         return conn
     except Exception as e:
-        print(f"❌ Connection Error: {e}")
+        print(f"❌ pymssql Connection Error: {e}")
         return None
+
 def run_script_and_save_json(conn, script_path, json_path):
     cursor = conn.cursor()
     json_found = False
