@@ -491,7 +491,8 @@ def windows_compromise_assesment(scan_data):
     print("[*] Entered windows_compromise_assesment()")
     base_dir = os.path.dirname(os.path.abspath(__file__))
     windows_dir = os.path.join(base_dir,"Compromise_Assesment","Windows")
-    audit_method = (scan_data.get("auditMethod")).strip().lower()
+    audit_method = (scan_data.get("auditMethod")).lower()
+    print(f"[DEBUG] Audit method: {audit_method}")
     
     try:
         # Dynamically find the query CSV

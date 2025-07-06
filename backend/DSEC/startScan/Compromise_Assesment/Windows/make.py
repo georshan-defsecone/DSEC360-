@@ -13,36 +13,43 @@ def generate_powershell_script(excel_path, output_ps1_path, excluded_controls, a
     # Load Excel
     df = pd.read_excel(excel_path)
     df.columns = df.columns.str.strip().str.lower()
-    # Clean excluded query names (trim whitespace and lowercase for comparison)
-    excluded_controls_cleaned = [q.strip().lower() for q in excluded_controls]
-    
 
-    # Filter the DataFrame to exclude selected scripts
-    included_df = df[df['name'].apply(lambda x: x.strip().lower() not in excluded_controls_cleaned)]
+    # Clean excluded query names (ensure they are all strings and lowercase)
+    excluded_controls_cleaned = [str(q).strip().lower() for q in excluded_controls if q is not None]
+
+    # Define a safe filtering function to handle NaN or non-string values in Excel
+    def is_not_excluded(x):
+        if pd.isnull(x):
+            return False  # Skip NaN values
+        return str(x).strip().lower() not in excluded_controls_cleaned
+
+    # Filter the DataFrame to exclude unchecked items
+    included_df = df[df['name'].apply(is_not_excluded)]
+    print("Included queries: ", included_df['name'].tolist())
+
 
     print("Excluded Queries: ", excluded_controls_cleaned)
-    print("Available Queries: ", df['name'].str.strip().str.lower().tolist())
-    print("Excel names:", list(df['name'].str.strip().str.lower()))
+    print("Available Queries: ", df['name'].dropna().str.strip().str.lower().tolist())
+    print("Excel names:", list(df['name'].dropna().str.strip().str.lower()))
     print("Excluded names:", excluded_controls_cleaned)
-
 
     if included_df.empty:
         raise ValueError("No scripts to include after exclusion.")
-    
+
     output_json_name = "IOCoutput.json"
     output_json_path = os.path.join(os.path.dirname(output_ps1_path), output_json_name)
-    
+
     # PowerShell Template
     ps_code = """\
 # PowerShell IOC Scan Script
-$results = @{}
+$results = [ordered]@{ }
 
 function Run_Check {
     param (
         [string]$Name,
         [scriptblock]$Command
     )
-    
+
     Write-Host "Running $Name..."
     try {
         $output = & $Command  
@@ -60,7 +67,7 @@ $selectedChecks = @(
     for index, row in included_df.iterrows():
         name = row['name']
         raw_script = row['script']
-        script_code = raw_script.strip().replace('"', '\"')
+        script_code = str(raw_script).strip().replace('"', '\"')  # Safe casting to string
         ps_code += f'    @{{"Name"="{name}"; "Command"={{ {script_code} }} }}\n'
 
     ps_code += """
@@ -72,7 +79,7 @@ foreach ($check in $selectedChecks) {
 
 # Export Results to JSON
 $outputPath = "IOCoutput.json"
-$results | ConvertTo-Json -Depth 3 | Out-File $outputPath -Encoding UTF8
+$results | ConvertTo-Json -Depth 5 | Out-File $outputPath -Encoding UTF8
 
 Write-Host "`nAll checks completed. Results saved to: $outputPath"
 """
