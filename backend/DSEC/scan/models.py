@@ -14,11 +14,13 @@ class Project(models.Model):
 class Scan(models.Model):
     scan_id = models.CharField(primary_key=True, max_length=100)
     scan_name = models.CharField(max_length=255)
+    scan_type = models.CharField(max_length=100)
     scan_author = models.CharField(max_length=255)
     scan_status = models.CharField(max_length=50)
     scan_data = models.JSONField(null=True, blank=True)#data from frontend  # <-- New JSON field added here
     scan_result = models.TextField(null=True, blank=True)#data from 
     scan_output = models.JSONField(null=True, blank=True)#output from remote machine
+    scan_time = models.DateTimeField(auto_now_add=True)
     trash = models.BooleanField(default=False)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='scans')
 

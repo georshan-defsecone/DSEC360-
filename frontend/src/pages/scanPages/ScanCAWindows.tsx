@@ -390,6 +390,7 @@ const ScanCAWindows = () => {
             scan_name: formData.scanName,
             scan_author: userName || "unknown",
             scan_status: "Pending",
+            scan_type:"Configuration Audit",
 
             scan_data: {
                 scanType: "Configuration Audit",
@@ -476,6 +477,7 @@ const ScanCAWindows = () => {
                 scan_name: formData.scanName,
                 scan_author: userName, // adjust as needed or pull from user context
                 scan_status: "Pending", // or dynamic status
+                scan_type:"Configuration Audit",
                 scan_data: {
                     scanType: "Configuration Audit",
                     description: formData.description,

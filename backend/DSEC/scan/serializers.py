@@ -1,11 +1,26 @@
 from rest_framework import serializers
 from .models import Project, Scan
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+import csv
+from io import StringIO
+from rest_framework import serializers
+from .models import Scan
 
 class ScanSerializer(serializers.ModelSerializer):
+    parsed_scan_result = serializers.SerializerMethodField()
     class Meta:
         model = Scan
         fields = '__all__'
+
+    def get_parsed_scan_result(self, obj):
+        if not obj.scan_result:
+            return []
+        try:
+            csv_file = StringIO(obj.scan_result)
+            reader = csv.DictReader(csv_file)
+            return list(reader)
+        except Exception:
+            return []  # Or handle the error
 
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:

@@ -336,13 +336,11 @@ def get_scan_result_view(request, project_name, scan_name):
     user = request.user
 
     try:
-        # Find project by name
         project = Project.objects.get(project_name=project_name, trash=False)
     except Project.DoesNotExist:
         return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
 
     try:
-        # Filter scan by name and project
         if user.is_admin:
             scan = Scan.objects.get(scan_name=scan_name, project=project, trash=False)
         else:
@@ -350,12 +348,11 @@ def get_scan_result_view(request, project_name, scan_name):
     except Scan.DoesNotExist:
         return Response({'error': 'Scan not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    if not scan.scan_result:
+    if not scan.scan_result or not scan.scan_result.strip():
         return Response({'error': 'Scan result is empty or missing.'}, status=status.HTTP_204_NO_CONTENT)
 
-    # Return scan_result as a CSV stream (not downloaded)
-    csv_stream = BytesIO(scan.scan_result.encode('utf-8'))
-    return FileResponse(csv_stream, content_type='text/csv')
+    serializer = ScanSerializer(scan)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 @csrf_exempt
 @api_view(['POST'])

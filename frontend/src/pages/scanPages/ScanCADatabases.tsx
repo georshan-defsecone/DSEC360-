@@ -169,7 +169,7 @@ const ScanCADatabases = () => {
 
   const validatePage2 = () => {
     if (!formData.auditMethod) return "Audit method is required.";
-    if (!formData.OS) return "Operating system is required.";
+
 
     if (formData.auditMethod === "remoteAccess") {
       if (!formData.target) return "Target IP is required.";
@@ -386,6 +386,7 @@ const ScanCADatabases = () => {
       scan_name: formData.scanName,
       scan_author: userName || "unknown",
       scan_status: "Pending",
+      scan_type:"Configuration Audit",
 
       scan_data: {
         scanType: "Configuration Audit",
@@ -485,6 +486,7 @@ const ScanCADatabases = () => {
         scan_name: formData.scanName,
         scan_author: userName, // Replace with actual user context if needed
         scan_status: "Pending",
+        scan_type:"Configuration Audit",
 
         scan_data: {
           scanType: "Configuration Audit",
@@ -552,7 +554,7 @@ const ScanCADatabases = () => {
         icon: <CheckCircle2 className="text-green-500" />,
       });
       setTimeout(() => {
-        navigate(`/scan/scanresult/${formData.projectName}/${formData.scanName}`);
+        // navigate(`/scan/scanresult/${formData.projectName}/${formData.scanName}`);
       }, 2000);
 
       // Optionally reset form here
@@ -628,399 +630,284 @@ const ScanCADatabases = () => {
           </div>
         );
       case 2:
-        return (
-          <div className="space-y-4">
-            {renderError()}
-            <h2 className="text-xl font-semibold">Target Details</h2>
-            <div className="flex justify-start items-center gap-2">
-              <p className="block w-68 ">Audit Method:</p>
+  return (
+    <div className="space-y-4">
+      {renderError()}
+      <h2 className="text-xl font-semibold">Target Details</h2>
 
-              <Select
-                value={formData.OS}
-                onValueChange={(value) => handleInputChange(value, "OS")}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select OS" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="windows">Windows</SelectItem>
-                  <SelectItem value="linux">Linux</SelectItem>
-                </SelectContent>
-              </Select>
+      <div className="flex justify-start items-center gap-2">
+        <p className="block w-68">Audit Method:</p>
 
-              <Select
-                value={formData.auditMethod}
-                onValueChange={(value) =>
-                  handleInputChange(value, "auditMethod")
-                }
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select Audit Method" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="agent">Agent</SelectItem>
-                  <SelectItem value="remoteAccess">Remote Access</SelectItem>
-                  <SelectItem value="uploadConfig">Upload Config</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <Select
+          value={formData.auditMethod}
+          onValueChange={(value) => handleInputChange(value, "auditMethod")}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select Audit Method" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="agent">Agent</SelectItem>
+            <SelectItem value="remoteAccess">Remote Access</SelectItem>
+            <SelectItem value="uploadConfig">Upload Config</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-            {formData.auditMethod === "remoteAccess" && (
-              <div className="space-y-4">
-                <div className="flex items-center">
-                  <p className="block w-70">Target:</p>
-
-                  <Input
-                    type="text"
-                    name="target"
-                    placeholder="target"
-                    value={formData.target}
-                    onChange={handleInputChange}
-                    className="w-80"
-                    required
-                    //className="w-full p-2 border rounded"
-                  />
-
-                  <FileUploader onFileParsed={handleFileParsed}></FileUploader>
-                </div>
-
-                <div className="flex justify-start items-center">
-                  <p className="block w-70 ">Authentication Method:</p>
-                  <Select
-                    value={formData.authMethod}
-                    onValueChange={(value) =>
-                      handleInputChange(value, "authMethod")
-                    }
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select Auth Method" />
-                    </SelectTrigger>
-                    {formData.OS === "windows" && (
-                      <SelectContent>
-                        <SelectItem value="password">Password</SelectItem>
-                        <SelectItem value="ntlm">NTLM Hash</SelectItem>
-                        <SelectItem value="lm">LM Hash</SelectItem>
-                        <SelectItem value="kerberos">Kerberos</SelectItem>
-                      </SelectContent>
-                    )}
-                    {formData.OS === "linux" && (
-                      <SelectContent>
-                        <SelectItem value="password">Password</SelectItem>
-                        <SelectItem value="publicKey">Public Key</SelectItem>
-                        <SelectItem value="certificate">Certificate</SelectItem>
-                        <SelectItem value="kerberos">Kerberos</SelectItem>
-                      </SelectContent>
-                    )}
-                  </Select>
-                </div>
-
-                {formData.authMethod === "password" && (
-                  <div className="space-y-4">
-                    <div className="flex items-center">
-                      <p className="block w-70">Username:</p>
-                      <Input
-                        type="text"
-                        name="username"
-                        placeholder="Username"
-                        value={formData.username}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">Password:</p>
-                      <Input
-                        type="password"
-                        name="password"
-                        placeholder="Password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70 ">Domain:</p>
-
-                      <Input
-                        type="text"
-                        name="domain"
-                        placeholder="Domain"
-                        value={formData.domain}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    {formData.OS === "linux" && (
-                      <ElevatePrivilegeForm
-                        elevatePrivilege={formData.elevatePrivilege}
-                        formData={formData}
-                        handleInputChange={handleInputChange}
-                      />
-                    )}
-                  </div>
-                )}
-
-                {formData.authMethod === "ntlm" &&
-                  formData.OS === "windows" && (
-                    <div className="space-y-4">
-                      <div className="flex items-center">
-                        <p className="block w-70">Username:</p>
-                        <Input
-                          type="text"
-                          name="username"
-                          placeholder="Username"
-                          value={formData.username}
-                          onChange={handleInputChange}
-                          className="w-80"
-                          required
-                        />
-                      </div>
-                      <div className="flex items-center">
-                        <p className="block w-70">NTLM Hash:</p>
-                        <Input
-                          type="text"
-                          name="ntlmHash"
-                          placeholder="NTLM Hash"
-                          value={formData.ntlmHash}
-                          onChange={handleInputChange}
-                          className="w-80"
-                          required
-                        />
-                      </div>
-                      <div className="flex items-center">
-                        <p className="block w-70">Domain:</p>
-                        <Input
-                          type="text"
-                          name="domain"
-                          placeholder="Domain"
-                          value={formData.domain}
-                          onChange={handleInputChange}
-                          className="w-80"
-                          required
-                        />
-                      </div>
-                    </div>
-                  )}
-                {formData.authMethod === "kerberos" && (
-                  <div className="space-y-4">
-                    <div className="flex items-center">
-                      <p className="block w-70">Username:</p>
-                      <Input
-                        type="text"
-                        name="username"
-                        placeholder="Username"
-                        value={formData.username}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">Password:</p>
-                      <Input
-                        type="password"
-                        name="password"
-                        placeholder="Password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">
-                        Key Distribution Center (KDC):
-                      </p>
-                      <Input
-                        type="text"
-                        name="kdc"
-                        placeholder="kdc.example.com"
-                        value={formData.kdc}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">KDC Transport: </p>
-                      <Input
-                        type="text"
-                        name="kdcPort"
-                        placeholder="KDC Port"
-                        value={formData.kdcPort}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">Domain:</p>
-                      <Input
-                        type="text"
-                        name="domain"
-                        placeholder="Domain"
-                        value={formData.domain}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    {formData.OS === "linux" && (
-                      <ElevatePrivilegeForm
-                        elevatePrivilege={formData.elevatePrivilege}
-                        formData={formData}
-                        handleInputChange={handleInputChange}
-                      />
-                    )}
-                  </div>
-                )}
-
-                {formData.authMethod === "publicKey" &&
-                  formData.OS === "linux" && (
-                    <div className="space-y-4">
-                      <div className="flex items-center">
-                        <p className="block w-70">Username:</p>
-                        <Input
-                          type="text"
-                          name="username"
-                          placeholder="Username"
-                          value={formData.username}
-                          onChange={handleInputChange}
-                          className="w-80"
-                          required
-                        />
-                      </div>
-                      <div className="flex items-center">
-                        <p className="block w-70">Private Key</p>
-                        <Button>Add file</Button>
-                      </div>
-                      <div className="flex items-center">
-                        <p className="block w-70">Private Key Passphrase</p>
-                        <Input
-                          type="text"
-                          name="privateKeyPassphrase"
-                          placeholder="Passphrase"
-                          value={formData.privateKeyPassphrase}
-                          onChange={handleInputChange}
-                          className="w-80"
-                          required
-                        />
-                      </div>
-                      <ElevatePrivilegeForm
-                        elevatePrivilege={formData.elevatePrivilege}
-                        formData={formData}
-                        handleInputChange={handleInputChange}
-                      />
-                    </div>
-                  )}
-
-                {formData.authMethod === "certificate" &&
-                  formData.OS === "linux" && (
-                    <div className="space-y-4">
-                      <div className="flex items-center">
-                        <p className="block w-70">Username:</p>
-                        <Input
-                          type="text"
-                          name="username"
-                          placeholder="Username"
-                          value={formData.username}
-                          onChange={handleInputChange}
-                          className="w-80"
-                          required
-                        />
-                      </div>
-                      <div className="flex items-center">
-                        <p className="block w-70">User Certificate</p>
-                        <Button>Add file</Button>
-                      </div>
-                      <div className="flex items-center">
-                        <p className="block w-70">Private Key</p>
-                        <Button>Add file</Button>
-                      </div>
-                      <div className="flex items-center">
-                        <p className="block w-70">Private Key Passphrase</p>
-                        <Input
-                          type="text"
-                          name="privateKeyPassphrase"
-                          placeholder="Private Key Passphrase"
-                          value={formData.privateKeyPassphrase}
-                          onChange={handleInputChange}
-                          className="w-80"
-                          required
-                        />
-                      </div>
-                      <ElevatePrivilegeForm
-                        elevatePrivilege={formData.elevatePrivilege}
-                        formData={formData}
-                        handleInputChange={handleInputChange}
-                      />
-                    </div>
-                  )}
-
-                {formData.authMethod === "lm" && formData.OS === "windows" && (
-                  <div className="space-y-4 border-l-2 border-gray-200">
-                    <div className="flex items-center">
-                      <p className="block w-70">Username:</p>
-                      <Input
-                        type="text"
-                        name="username"
-                        placeholder="Username"
-                        value={formData.username}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">LM Hash:</p>
-                      <Input
-                        type="text"
-                        name="lmHash"
-                        placeholder="LM Hash"
-                        value={formData.lmHash}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-center">
-                      <p className="block w-70">Domain:</p>
-                      <Input
-                        type="text"
-                        name="domain"
-                        placeholder="Domain"
-                        value={formData.domain}
-                        onChange={handleInputChange}
-                        className="w-80"
-                        required
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {formData.auditMethod === "uploadConfig" && (
-              <>
-                <div className="space-y-4">
-                  {renderError()}
-                  <div className="flex justify-between items-center">
-                    <Button
-                      type="button"
-                      className="px-4 py-2 bg-black text-white rounded"
-                      onClick={() => console.log("Uploading config")}
-                    >
-                      Upload config
-                    </Button>
-                  </div>
-                </div>
-              </>
-            )}
+      {formData.auditMethod === "remoteAccess" && (
+        <div className="space-y-4">
+          <div className="flex items-center">
+            <p className="block w-70">Target:</p>
+            <Input
+              type="text"
+              name="target"
+              placeholder="target"
+              value={formData.target}
+              onChange={handleInputChange}
+              className="w-80"
+              required
+            />
+            <FileUploader onFileParsed={handleFileParsed} />
           </div>
-        );
+
+          <div className="flex justify-start items-center">
+            <p className="block w-70">Authentication Method:</p>
+            <Select
+              value={formData.authMethod}
+              onValueChange={(value) =>
+                handleInputChange(value, "authMethod")
+              }
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select Auth Method" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="password">Password</SelectItem>
+                <SelectItem value="publicKey">Public Key</SelectItem>
+                <SelectItem value="certificate">Certificate</SelectItem>
+                <SelectItem value="kerberos">Kerberos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {formData.authMethod === "password" && (
+            <div className="space-y-4">
+              <div className="flex items-center">
+                <p className="block w-70">Username:</p>
+                <Input
+                  type="text"
+                  name="username"
+                  placeholder="Username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  className="w-80"
+                  required
+                />
+              </div>
+              <div className="flex items-center">
+                <p className="block w-70">Password:</p>
+                <Input
+                  type="password"
+                  name="password"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="w-80"
+                  required
+                />
+              </div>
+              <div className="flex items-center">
+                <p className="block w-70">Domain:</p>
+                <Input
+                  type="text"
+                  name="domain"
+                  placeholder="Domain"
+                  value={formData.domain}
+                  onChange={handleInputChange}
+                  className="w-80"
+                  required
+                />
+              </div>
+
+              <ElevatePrivilegeForm
+                elevatePrivilege={formData.elevatePrivilege}
+                formData={formData}
+                handleInputChange={handleInputChange}
+              />
+            </div>
+          )}
+
+          {formData.authMethod === "kerberos" && (
+            <div className="space-y-4">
+              <div className="flex items-center">
+                <p className="block w-70">Username:</p>
+                <Input
+                  type="text"
+                  name="username"
+                  placeholder="Username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  className="w-80"
+                  required
+                />
+              </div>
+              <div className="flex items-center">
+                <p className="block w-70">Password:</p>
+                <Input
+                  type="password"
+                  name="password"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="w-80"
+                  required
+                />
+              </div>
+              <div className="flex items-center">
+                <p className="block w-70">Key Distribution Center (KDC):</p>
+                <Input
+                  type="text"
+                  name="kdc"
+                  placeholder="kdc.example.com"
+                  value={formData.kdc}
+                  onChange={handleInputChange}
+                  className="w-80"
+                  required
+                />
+              </div>
+              <div className="flex items-center">
+                <p className="block w-70">KDC Transport:</p>
+                <Input
+                  type="text"
+                  name="kdcPort"
+                  placeholder="KDC Port"
+                  value={formData.kdcPort}
+                  onChange={handleInputChange}
+                  className="w-80"
+                  required
+                />
+              </div>
+              <div className="flex items-center">
+                <p className="block w-70">Domain:</p>
+                <Input
+                  type="text"
+                  name="domain"
+                  placeholder="Domain"
+                  value={formData.domain}
+                  onChange={handleInputChange}
+                  className="w-80"
+                  required
+                />
+              </div>
+
+              <ElevatePrivilegeForm
+                elevatePrivilege={formData.elevatePrivilege}
+                formData={formData}
+                handleInputChange={handleInputChange}
+              />
+            </div>
+          )}
+
+          {formData.authMethod === "publicKey" && (
+            <div className="space-y-4">
+              <div className="flex items-center">
+                <p className="block w-70">Username:</p>
+                <Input
+                  type="text"
+                  name="username"
+                  placeholder="Username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  className="w-80"
+                  required
+                />
+              </div>
+              <div className="flex items-center">
+                <p className="block w-70">Private Key</p>
+                <Button>Add file</Button>
+              </div>
+              <div className="flex items-center">
+                <p className="block w-70">Private Key Passphrase</p>
+                <Input
+                  type="text"
+                  name="privateKeyPassphrase"
+                  placeholder="Passphrase"
+                  value={formData.privateKeyPassphrase}
+                  onChange={handleInputChange}
+                  className="w-80"
+                  required
+                />
+              </div>
+
+              <ElevatePrivilegeForm
+                elevatePrivilege={formData.elevatePrivilege}
+                formData={formData}
+                handleInputChange={handleInputChange}
+              />
+            </div>
+          )}
+
+          {formData.authMethod === "certificate" && (
+            <div className="space-y-4">
+              <div className="flex items-center">
+                <p className="block w-70">Username:</p>
+                <Input
+                  type="text"
+                  name="username"
+                  placeholder="Username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  className="w-80"
+                  required
+                />
+              </div>
+              <div className="flex items-center">
+                <p className="block w-70">User Certificate</p>
+                <Button>Add file</Button>
+              </div>
+              <div className="flex items-center">
+                <p className="block w-70">Private Key</p>
+                <Button>Add file</Button>
+              </div>
+              <div className="flex items-center">
+                <p className="block w-70">Private Key Passphrase</p>
+                <Input
+                  type="text"
+                  name="privateKeyPassphrase"
+                  placeholder="Private Key Passphrase"
+                  value={formData.privateKeyPassphrase}
+                  onChange={handleInputChange}
+                  className="w-80"
+                  required
+                />
+              </div>
+
+              <ElevatePrivilegeForm
+                elevatePrivilege={formData.elevatePrivilege}
+                formData={formData}
+                handleInputChange={handleInputChange}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {formData.auditMethod === "uploadConfig" && (
+        <div className="space-y-4">
+          {renderError()}
+          <div className="flex justify-between items-center">
+            <Button
+              type="button"
+              className="px-4 py-2 bg-black text-white rounded"
+              onClick={() => console.log("Uploading config")}
+            >
+              Upload config
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
       case 3:
         return (
           <div className="space-y-4">

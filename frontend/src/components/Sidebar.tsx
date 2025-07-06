@@ -18,6 +18,7 @@ import logo from "@/assets/logo.png";
 import "@/styles/sidebar.css";
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
+import { Button } from "./ui/button";
 
 type SidebarProps = {
   scanSettings: boolean;
@@ -167,21 +168,18 @@ const HomeSettingSidebar = () => {
       <SidebarSection
         title="Projects"
         links={[
-          {
-            to: "/",
-            label: "My Projects",
-          },
+          
           ...(isAdmin
             ? [
                 {
                   to: "/dashboard/allprojects",
-                  label: "All Projects",
+                  label: "Projects",
                 },
               ]
             : []),
           {
             to: "/dashboard/results",
-            label: "Results",
+            label: "Scans",
           },
           {
             to: "/dashboard/trash",
@@ -197,7 +195,7 @@ const HomeSettingSidebar = () => {
 
 const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
   return (
-    <div className="fixed top-0 left-0 h-screen w-64 flex flex-col p-6 justify-between  z-10 bg-white">
+    <div className="fixed top-0 left-0 h-screen w-64 flex flex-col p-6 justify-between  z-10 bg-neutral-100 border-r border-r-neutral-200">
       <div>
         <div className="mb-6">
           <a href="/" className="inline-flex items-center gap-4">
@@ -214,11 +212,12 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
       </div>
 
       <div className="mt-4">
-        <button className="flex items-center px-4 py-2">
-          <Link to={"/settings/about"}>
-            <Settings className="w-5 h-5 mr-2" />
-          </Link>
-        </button>
+        <Link to="/settings/about">
+  <Button className="flex items-center px-4 py-2 bg-black text-white rounded w-25 cursor-pointer">
+    <Settings className="w-5 h-5 mr-2" />
+    Settings
+  </Button>
+</Link>
       </div>
     </div>
   );
