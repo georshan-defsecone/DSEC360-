@@ -2,9 +2,9 @@ import os
 import subprocess
 import re
 import shutil
-from .Configuration_Audit.database.maria import connection_maria
+from .Configuration_Audit.Database.MARIA import connection_maria
 from . import remote
-from .Configuration_Audit.database.ORACLE import generate_sql
+from .Configuration_Audit.Database.ORACLE import generate_sql
 import zipfile
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny

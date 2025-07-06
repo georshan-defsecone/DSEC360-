@@ -2,8 +2,8 @@ import sys
 import json
 import os
 import re
-from .generate import generate_mariadb_work_remote
-from .generate import generate_mariadb_work
+from .generate_maria import generate_mariadb_work_remote
+from .generate_maria import generate_mariadb_work
 from .validate import validate_maria_db
 
 import pymysql
