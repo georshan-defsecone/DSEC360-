@@ -7,7 +7,7 @@ import time
 # === Config ===
 VT_API_KEY = "1dabfd5ff3f905101b1fe45a41c8a00a93185bedd696c03418dcefd8add2cd53" 
 current_dir = os.getcwd()
-JSON_FILE = os.path.join(current_dir, "IOC_Script.json")
+JSON_FILE = os.path.join(current_dir, "IOCoutput.json")
 CSV_FILE = os.path.join(current_dir, "validation_results.csv")
 # Ensure the JSON file exists
 if not os.path.exists(JSON_FILE):
@@ -173,7 +173,7 @@ def validate_lolbins(entries):
 validation_map = {
     "Current Running Process Signed": validate_generic,
     "Current Running Service Signed": validate_services,
-    "Check the service Everyone Write Permission": validate_services_permissions,
+    "Check the service Everyone Permission": validate_services_permissions,
     "Download Directory": validate_download_directory,
     "Visual Basic for Applications": validate_vba_settings,
     "Startup files": validate_startup_files,
@@ -225,11 +225,14 @@ csv_headers_map = {
 
     "Download Directory": ["IOC_Control", "File Name", "Hash", "Status", "Malicious Count", "Signature Status"],
 
-    "Visual Basic for Applications": ["IOC_Control", "File Name", "Hash", "Status", "Malicious Count", "Setting Description"],
+    "Visual Basic for Applications": ["IOC_Control", "File Name", "Status","Setting Description"],
 
     "Startup files": ["IOC_Control", "File Name", "Hash", "Status", "Malicious Count", "Vendors Name"],
 
-    "Living off the Land": ["IOC_Control", "File Name", "Status"]
+    "Living off the Land": ["IOC_Control", "File Name", "Status"],
+
+    "default": ["IOC_Control", "File Name", "Hash", "Status", "Malicious Count", "Vendors Name"]
+
 }
 
 
@@ -256,7 +259,7 @@ with open(CSV_FILE, "w", newline="", encoding="utf-8") as csvfile:
 
         # Determine header based on control
         headers = csv_headers_map.get(check_name, csv_headers_map["default"])
-        writer.writerow([check_name])  # Write control name as a header line
+        
         writer.writerow(headers)
 
         # Write results based on the control type
