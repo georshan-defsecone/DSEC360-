@@ -131,7 +131,7 @@ def mariadb_connection(excluded_audit, user_name, password_name, host_name, port
 
 
     elif db_access_method == "agent":
-        connection_maria.generate_mariadb_work(name,maria_db_csv_path,sql_commands,linux_file)
+        generate_maria.generate_mariadb_work(name,maria_db_csv_path,sql_commands,linux_file)
         # Add local execution logic if needed
 
 
