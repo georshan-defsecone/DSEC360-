@@ -87,6 +87,7 @@ const ScanIOCWindows = () => {
         scan_author: userName || "unknown",
         scan_status: "Pending",
 
+        scan_type: "Compromise Assessment",
         scan_data: {
             scanType: "Compromise Assessment",
             description: formData.description,
@@ -409,9 +410,10 @@ setUserName(response1.data.username);
       scan_name: formData.scanName,
       scan_author: userName, // adjust as needed
       scan_status: "Pending",       // or dynamic status
+      scan_type:"Compromise Assessment",
 
       scan_data: {
-        scanType:"IOC",
+        scanType:"Compromise Assessment",
         description: formData.description,
 
         // Target Details
