@@ -554,7 +554,7 @@ const ScanCADatabases = () => {
         icon: <CheckCircle2 className="text-green-500" />,
       });
       setTimeout(() => {
-        // navigate(`/scan/scanresult/${formData.projectName}/${formData.scanName}`);
+         navigate(`/scan/scanresult/${formData.projectName}/${formData.scanName}`);
       }, 2000);
 
       // Optionally reset form here
