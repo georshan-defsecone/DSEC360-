@@ -22,6 +22,7 @@ from .Compromise_Assesment.Windows.make import generate_powershell_script
 from .Configuration_Audit.Windows.generate_PowerShell import generate_script
 from .Configuration_Audit.Windows.validate import validate_compliance
 from .Configuration_Audit.Windows.Windows_Remote_exec.wmi import run_remote_audit, cleanup_remote_files
+from .remote import mariadb_connection,linux_connection,oracle_connection,mssql_connection
 
 def database_config_audit(scan_data):
     print("[*] Entered database_config_audit()")
