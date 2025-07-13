@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
-import { CircleUserRound, LogOut, User } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -35,6 +35,14 @@ export default function Header({ title }: { title: string }) {
     }
   }, []);
 
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
@@ -46,29 +54,39 @@ export default function Header({ title }: { title: string }) {
       {/* Page Title */}
       <div className="text-3xl font-bold ml-8 text-gray-800">{title}</div>
 
-      {/* User Menu */}
-      <div className="flex gap-4">
+      {/* Navigation + User Dropdown */}
+      <div className="flex items-center gap-6">
         <Link to="/">
-          <Button className="px-4 py-2 bg-black text-white rounded w-25 cursor-pointer">Home</Button>
+          <Button className="px-4 py-2 bg-black text-white rounded cursor-pointer">
+            Home
+          </Button>
         </Link>
         <Link to="/scan">
-          <Button className="px-4 py-2 bg-black text-white rounded w-25 cursor-pointer">New Scan</Button>
+          <Button className="px-4 py-2 bg-black text-white rounded cursor-pointer">
+            New Scan
+          </Button>
         </Link>
+
+        {/* Profile Dropdown with Hover Effects */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="outline-none">
-              <CircleUserRound className="w-8 h-8 text-gray-800 hover:text-gray-600" />
+            <button className="outline-none group" title={email}>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-gray-600 flex items-center justify-center text-white text-sm font-bold shadow transition-all duration-200 transform group-hover:scale-105 group-hover:ring-2 group-hover:ring-blue-400 cursor-pointer">
+                {getInitials(username || "U")}
+              </div>
             </button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent
             className="w-64 mt-2 p-3 rounded-xl shadow-lg bg-white border border-gray-200 right-0"
-            align="end" // ensures dropdown doesn't go to corner
+            align="end"
           >
-            {/* Mini Profile */}
+            {/* Mini Profile Info */}
             <div className="flex items-center gap-3 px-2 py-2">
               <div className="bg-gray-100 p-2 rounded-full">
-                <CircleUserRound className="w-6 h-6 text-gray-700" />
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-gray-600 flex items-center justify-center text-white text-sm font-bold shadow">
+                  {getInitials(username || "U")}
+                </div>
               </div>
               <div className="text-sm">
                 <div className="font-semibold text-gray-800">{username}</div>
@@ -78,13 +96,13 @@ export default function Header({ title }: { title: string }) {
 
             <DropdownMenuSeparator className="my-2" />
 
-            {/* Horizontal Menu Options in Dropdown Format */}
+            {/* Actions */}
             <div className="flex items-center justify-between gap-4 px-2 py-1 text-sm">
               <button
                 className="flex items-center gap-2 px-3 py-2 bg-white text-black hover:bg-black hover:text-white rounded-md transition-all duration-200 ease-in-out"
                 onClick={() => navigate("/settings/myaccounts")}
               >
-                <User className="w-4 h-4 transition-transform duration-200" />
+                <User className="w-4 h-4" />
                 My Profile
               </button>
 

@@ -90,7 +90,7 @@ const Myaccounts = () => {
         <Header title="My Account" />
 
         {/* Account Info Card */}
-        <Card className="w-[85%] mt-10 ml-4 shadow-2xl">
+        <Card className="w-[85%] mt-10 ml-4 rounded-none shadow-2xl">
           <CardContent className="w-full p-4 px-12">
             <div className="flex items-center gap-6">
               <div className="w-24 h-24 mb-12 mr-5 rounded-full bg-gradient-to-br from-blue-500 to-gray-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg shrink-0">
@@ -153,7 +153,7 @@ const Myaccounts = () => {
       {showPasswordCard && (
         <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
           <div className="pointer-events-auto w-xl">
-            <Card className="w-full max-w-lg shadow-2xl relative">
+            <Card className="w-full max-w-lg rounded-none shadow-2xl relative">
               <CardContent className="p-8 space-y-6">
                 <button
                   className="absolute top-3 right-3 text-gray-500 hover:text-black"
@@ -213,7 +213,7 @@ const Myaccounts = () => {
       {showEditCard && (
         <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
           <div className="pointer-events-auto w-xl">
-            <Card className="w-full max-w-lg shadow-2xl relative">
+            <Card className="w-full max-w-lg shadow-2xl relative rounded-none">
               <CardContent className="p-8 space-y-6">
                 <button
                   className="absolute top-3 right-3 text-gray-500 hover:text-black"

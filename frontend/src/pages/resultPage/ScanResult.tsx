@@ -86,7 +86,8 @@ const ScanResult = () => {
       <Sidebar settings={false} scanSettings={false} homeSettings={true} />
       <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
         <Header
-          title={`Result: ${projectName ?? "Unknown"} - ${scanName ?? ""}`}
+          title={`Project: ${projectName ?? "Unknown"} / Scan: ${scanName ?? "Unnamed"}`}
+
         />
 
         {loading ? (
@@ -96,6 +97,7 @@ const ScanResult = () => {
         ) : (
           <>
             <div className="flex gap-6 mt-8 items-start">
+              {/* Scan Information */}
               <div className="w-1/3">
                 <Card className="p-6 space-y-4 shadow-2xl border border-blue-300 border-l-4 ml-5 rounded-none">
                   <h3 className="text-lg font-bold text-blue-400">
@@ -145,14 +147,25 @@ const ScanResult = () => {
                 </Card>
               </div>
 
-              <div className="w-2/3 ml-25">
-                <ScanPieChart data={summary} />
+              {/* Pie Chart Card */}
+              <div className="w-2/3">
+                <Card className="p-6 shadow-2xl border border-blue-300 border-l-4 mr-5 rounded-none">
+                  <ScanPieChart data={summary} />
+                </Card>
               </div>
             </div>
 
             <div className="border-t-2 border-gray-300 my-8" />
 
-            <Card className="w-full mt-8 shadow-lg border border-gray-200 bg-white rounded-none">
+            {/* Download Button Outside the Card */}
+            <div className="flex justify-end mb-2">
+              <button className="flex items-center px-4 py-2 bg-black text-white rounded cursor-pointer">
+                Download
+              </button>
+            </div>
+
+            {/* Audit Results Card */}
+            <Card className="w-full mt-2 shadow-lg border border-gray-200 bg-white rounded-none">
               <div className="p-5">
                 <div className="flex justify-between items-center mb-2">
                   <h2 className="text-xl font-semibold text-gray-800">

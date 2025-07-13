@@ -35,7 +35,9 @@ const ProjectScans = () => {
         const response = await api.get(`scans/project/${project_id}/`);
         setScans(response.data);
 
-        const allTypes = [...new Set(response.data.map((scan: any) => scan.scan_type))];
+        const allTypes = [
+          ...new Set(response.data.map((scan: any) => scan.scan_type)),
+        ];
         setScanTypeFilters(allTypes);
         setSelectedScanTypes(allTypes); // Preselect all by default
       } catch (err) {
@@ -64,7 +66,9 @@ const ProjectScans = () => {
 
   const goToScan = (scanName: string) => {
     navigate(
-      `/scan/scanresult/${encodeURIComponent(projectName)}/${encodeURIComponent(scanName)}`
+      `/scan/scanresult/${encodeURIComponent(projectName)}/${encodeURIComponent(
+        scanName
+      )}`
     );
   };
 
@@ -77,7 +81,8 @@ const ProjectScans = () => {
     .filter(
       (scan) =>
         scan.scan_data?.complianceCategory &&
-        (selectedScanTypes.length === 0 || selectedScanTypes.includes(scan.scan_type))
+        (selectedScanTypes.length === 0 ||
+          selectedScanTypes.includes(scan.scan_type))
     )
     .map((scan) => {
       const results = scan.parsed_scan_result || [];
@@ -180,7 +185,8 @@ const ProjectScans = () => {
 
   const filteredScans = scans.filter(
     (scan) =>
-      (selectedScanTypes.length === 0 || selectedScanTypes.includes(scan.scan_type)) &&
+      (selectedScanTypes.length === 0 ||
+        selectedScanTypes.includes(scan.scan_type)) &&
       `${scan.scan_name} ${scan.scan_author} ${scan.scan_status}`
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
@@ -209,7 +215,10 @@ const ProjectScans = () => {
             {/* 🔘 Dynamic Scan Type Filters (as checkboxes above pie chart) */}
             <div className="mb-4 flex flex-wrap gap-3">
               {scanTypeFilters.map((type) => (
-                <label key={type} className="flex items-center text-sm space-x-1">
+                <label
+                  key={type}
+                  className="flex items-center text-sm space-x-1"
+                >
                   <input
                     type="checkbox"
                     checked={selectedScanTypes.includes(type)}
@@ -250,66 +259,66 @@ const ProjectScans = () => {
                 <div className="border-b border-gray-300 mb-4" />
 
                 <div className="relative">
-                  <Table className="table-auto w-full text-sm">
-                    <TableHeader>
-                      <TableRow className="sticky top-0 z-10 bg-gray-100 text-gray-700 border-b border-gray-400">
-                        <TableHead className="w-[30%] text-left">
-                          Scan Name
-                        </TableHead>
-                        <TableHead className="w-[25%] text-left">
-                          Author
-                        </TableHead>
-                        <TableHead className="w-[20%] text-left">
-                          Created At
-                        </TableHead>
-                        <TableHead className="w-[25%] text-left">
-                          Status
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                  </Table>
-
-                  <div className="h-[410px] overflow-y-auto">
-                    <Table className="table-auto w-full text-sm">
-                      <TableBody>
+                  <div className="overflow-y-auto h-[410px]">
+                    <table className="table-fixed w-full text-sm border-collapse">
+                      <thead className="sticky top-0 z-10 bg-gray-100 text-gray-700 border-b border-gray-400">
+                        <tr>
+                          <th className="w-[30%] text-left px-4 py-2">
+                            Scan Name
+                          </th>
+                          <th className="w-[25%] text-left px-4 py-2">
+                            Author
+                          </th>
+                          <th className="w-[20%] text-left px-4 py-2">
+                            Created At
+                          </th>
+                          <th className="w-[25%] text-left px-4 py-2">
+                            Status
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
                         {filteredScans.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center py-4">
+                          <tr>
+                            <td colSpan={4} className="text-center py-4">
                               No matching scans found.
-                            </TableCell>
-                          </TableRow>
+                            </td>
+                          </tr>
                         ) : (
                           filteredScans.map((scan, i) => (
-                            <TableRow
+                            <tr
                               key={i}
                               onClick={() => goToScan(scan.scan_name)}
                               className={`cursor-pointer hover:bg-gray-100 border-b border-gray-100 ${
                                 i % 2 === 0 ? "bg-white" : "bg-gray-50"
                               }`}
                             >
-                              <TableCell className="py-3 font-medium border-none">
+                              <td className="py-3 px-4 font-medium border-none">
                                 {scan.scan_name}
-                              </TableCell>
-                              <TableCell className="py-3 border-none">
+                              </td>
+                              <td className="py-3 px-4 border-none">
                                 {scan.scan_author}
-                              </TableCell>
-                              <TableCell className="py-3 border-none">
+                              </td>
+                              <td className="py-3 px-4 border-none">
                                 {scan.scan_time
-                                  ? new Date(scan.scan_time).toLocaleTimeString([], {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                      hour12: true,
-                                    })
+                                  ? new Date(scan.scan_time).toLocaleTimeString(
+                                      [],
+                                      {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                        hour12: true,
+                                      }
+                                    )
                                   : "N/A"}
-                              </TableCell>
-                              <TableCell className="py-3 border-none">
+                              </td>
+                              <td className="py-3 px-4 border-none">
                                 {scan.scan_status}
-                              </TableCell>
-                            </TableRow>
+                              </td>
+                            </tr>
                           ))
                         )}
-                      </TableBody>
-                    </Table>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </CardContent>

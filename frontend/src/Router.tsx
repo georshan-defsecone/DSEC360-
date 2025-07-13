@@ -39,7 +39,7 @@ import ScanResult from "./pages/resultPage/ScanResult";
 const Router = [
     {
         path: "/",
-        element: <ProtectedRoute><RequireAdmin><Dashboard/></RequireAdmin></ProtectedRoute>
+        element: <ProtectedRoute><RequireAdmin><AllProjects/></RequireAdmin></ProtectedRoute>
     },
     {
         path: "/dashboard/allprojects",

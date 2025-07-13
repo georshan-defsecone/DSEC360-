@@ -123,7 +123,6 @@ const AllProjects = () => {
             {/* Left - Project Table */}
             <Card className="w-[65%] mt-7 shadow-lg border border-gray-200 bg-white rounded-none">
               <CardContent className="p-5">
-                {/* Header row with title and search */}
                 <div className="flex justify-between items-center mb-2">
                   <h2 className="text-xl font-semibold text-gray-800">
                     Project List
@@ -137,42 +136,33 @@ const AllProjects = () => {
                   />
                 </div>
 
-                {/* Dark Divider Line */}
                 <div className="border-b-1 border-gray-800 mb-4" />
 
                 <div className="relative">
-                  <Table className="table-auto w-full text-sm">
-                    <TableHeader>
-                      <TableRow className="sticky top-0 z-10 bg-gray-100 text-gray-700 border-b border-gray-400">
-                        <TableHead className="w-[35%] text-left">
-                          Project Name
-                        </TableHead>
-                        <TableHead className="w-[25%] text-left">
-                          Author
-                        </TableHead>
-                        <TableHead className="w-[20%] text-left">
-                          Scans
-                        </TableHead>
-                        <TableHead className="w-[10%] text-left"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                  </Table>
-
-                  <div className="h-[410px] overflow-y-auto">
-                    <Table className="table-auto w-full text-sm">
-                      <TableBody>
+                  <div className="overflow-y-auto h-[400px]">
+                    <table className="table-fixed w-full text-sm border-collapse">
+                      <thead className="sticky top-0 z-10 bg-gray-100 text-gray-700 border-b border-gray-400">
+                        <tr>
+                          <th className="w-[35%] text-left px-4 py-2">
+                            Project Name
+                          </th>
+                          <th className="w-[25%] text-left px-4 py-2">
+                            Author
+                          </th>
+                          <th className="w-[20%] text-left px-4 py-2">Scans</th>
+                          <th className="w-[10%] text-left px-4 py-2"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
                         {filteredProjects.length === 0 ? (
-                          <TableRow>
-                            <TableCell
-                              colSpan={4}
-                              className="text-center py-4"
-                            >
+                          <tr>
+                            <td colSpan={4} className="text-center py-4">
                               No matching projects found.
-                            </TableCell>
-                          </TableRow>
+                            </td>
+                          </tr>
                         ) : (
                           filteredProjects.map((pro, idx) => (
-                            <TableRow
+                            <tr
                               key={pro.project_id}
                               className={`cursor-pointer hover:bg-gray-100 border-b border-gray-100 ${
                                 idx % 2 === 0 ? "bg-white" : "bg-gray-50"
@@ -181,17 +171,17 @@ const AllProjects = () => {
                                 navigate(`/project/${pro.project_id}`)
                               }
                             >
-                              <TableCell className="py-3 font-medium border-none">
+                              <td className="py-3 px-4 font-medium border-none">
                                 {pro.project_name}
-                              </TableCell>
-                              <TableCell className="py-3 border-none">
+                              </td>
+                              <td className="py-3 px-4 border-none">
                                 {pro.project_author}
-                              </TableCell>
-                              <TableCell className="py-3 border-none">
+                              </td>
+                              <td className="py-3 px-4 border-none">
                                 {scanCounts[pro.project_id] || 0}
-                              </TableCell>
-                              <TableCell
-                                className="py-3 border-none"
+                              </td>
+                              <td
+                                className="py-3 px-4 border-none"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <DropdownMenu>
@@ -225,9 +215,8 @@ const AllProjects = () => {
                                             Are you sure?
                                           </AlertDialogTitle>
                                           <AlertDialogDescription>
-                                            This will move the project to
-                                            trash. You can restore it later if
-                                            needed.
+                                            This will move the project to trash.
+                                            You can restore it later if needed.
                                           </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
@@ -252,12 +241,12 @@ const AllProjects = () => {
                                     </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
-                              </TableCell>
-                            </TableRow>
+                              </td>
+                            </tr>
                           ))
                         )}
-                      </TableBody>
-                    </Table>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </CardContent>
@@ -266,10 +255,12 @@ const AllProjects = () => {
             {/* Vertical Divider */}
             <div className="w-[1px] bg-gray-300 mt-7 mx-4 ml-12"></div>
 
-            {/* Right - Pie Chart (enlarged) */}
-            <div className="w-[15%] min-w-[320px] h-[500px] ml-6 flex items-center justify-center ">
-              <ScanPieChart data={scanStats} />
-            </div>
+            {/* Right - Pie Chart in Card */}
+            <Card className="w-[15%] min-w-[320px] h-[500px] mt-7 shadow-lg border border-gray-200 bg-white rounded-none flex items-center justify-center">
+              <CardContent className="flex items-center justify-center w-full h-full">
+                <ScanPieChart data={scanStats} />
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

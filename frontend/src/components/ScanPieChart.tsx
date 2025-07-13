@@ -6,7 +6,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// Default color palette
+// Default color palette for non pass/fail types
 const COLORS = [
   "#4F46E5", // Indigo
   "#10B981", // Emerald
@@ -16,14 +16,13 @@ const COLORS = [
   "#EC4899", // Pink
 ];
 
-// Override colors for pass/fail types
+// Color override for PASS/FAIL types
 const PASS_FAIL_COLORS: Record<string, string> = {
-  Pass: "#10B981",
-  Passed: "#10B981",
-  Fail: "#EF4444",
-  Failed: "#EF4444",
+  PASS: "#10B981", // Green
+  FAIL: "#EF4444", // Red
 };
 
+// Tooltip component
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const { name, value } = payload[0];
@@ -37,18 +36,23 @@ const CustomTooltip = ({ active, payload }) => {
 };
 
 const ScanPieChart = ({ data }) => {
-  const chartData = Object.entries(data).map(([type, count]) => ({
-    name: type,
-    value: count,
-  }));
+  // Normalize data keys to uppercase PASS/FAIL
+  const chartData = Object.entries(data).map(([type, count]) => {
+    const upperType =
+      type.toLowerCase() === "passed"
+        ? "PASS"
+        : type.toLowerCase() === "failed"
+        ? "FAIL"
+        : type;
+    return { name: upperType, value: count };
+  });
 
   const total = chartData.reduce((acc, item) => acc + item.value, 0);
 
-  // Check if data is for a pass/fail summary
   const isPassFail =
     chartData.length <= 2 &&
     chartData.every((entry) =>
-      ["pass", "fail", "passed", "failed"].includes(entry.name.toLowerCase())
+      ["pass", "fail"].includes(entry.name.toLowerCase())
     );
 
   if (chartData.length === 0) {
@@ -60,7 +64,7 @@ const ScanPieChart = ({ data }) => {
   }
 
   return (
-    <div className="bg-white shadow-md p-5 w-full">
+    <div className="w-full">
       <h2 className="text-lg font-semibold text-center mb-4 text-gray-700">
         Audit Summary
       </h2>
@@ -102,27 +106,26 @@ const ScanPieChart = ({ data }) => {
           </PieChart>
         </ResponsiveContainer>
 
+        {/* Total Scans in the center */}
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
           <div className="text-lg font-semibold text-gray-700">{total}</div>
           <div className="text-xs text-gray-500">Total Scans</div>
         </div>
       </div>
 
-      <div className="mt-5 w-full px-4 text-sm text-gray-700">
+      {/* Legend: label + value combined */}
+      <div className="mt-5 w-full px-6 text-sm text-gray-700">
         {chartData.map((entry, index) => (
-          <div key={index} className="flex items-center mb-1">
-            <div className="flex items-center w-36">
-              <div
-                className="w-3 h-3 rounded-full mr-2"
-                style={{
-                  backgroundColor: isPassFail
-                    ? PASS_FAIL_COLORS[entry.name] || "#999"
-                    : COLORS[index % COLORS.length],
-                }}
-              />
-              <span className="truncate">{entry.name}</span>
-            </div>
-            <div className="ml-auto">{entry.value}</div>
+          <div key={index} className="flex items-center mb-2">
+            <div
+              className="w-3 h-3 rounded-full mr-2"
+              style={{
+                backgroundColor: isPassFail
+                  ? PASS_FAIL_COLORS[entry.name] || "#999"
+                  : COLORS[index % COLORS.length],
+              }}
+            />
+            <span className="font-medium">{`${entry.name} ${entry.value}`}</span>
           </div>
         ))}
       </div>

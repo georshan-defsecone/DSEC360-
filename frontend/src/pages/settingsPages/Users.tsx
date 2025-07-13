@@ -1,18 +1,24 @@
+import { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { Pencil, X, Plus } from "lucide-react";
-import api from "@/pages/api";
 import { Card, CardContent } from "@/components/ui/card";
-import { toast } from "sonner";
-import { CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Pencil, X } from "lucide-react";
+import api from "@/pages/api";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 2;
+  const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -26,81 +32,90 @@ const Users = () => {
     fetchData();
   }, []);
 
-  const indexOfLastUser = currentPage * usersPerPage;
-  const indexOfFirstUser = indexOfLastUser - usersPerPage;
-  const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
-  const totalPages = Math.ceil(users.length / usersPerPage);
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
+  const filteredUsers = users.filter((user) =>
+    `${user.username} ${user.email}`.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="flex h-screen text-black pt-24 overflow-hidden">
       <Sidebar settings={true} scanSettings={false} homeSettings={false} />
 
-      <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
+      <div className="flex-1 flex flex-col ml-64 pr-8 pl-8">
         <Header title="Users" />
 
         <div className="flex justify-end mt-4 mb-4">
           <Link to="/settings/users/createuser">
-            <Button className="flex items-center gap-2 mr-44">
-               Add User
-            </Button>
+            <Button className="flex items-center gap-2 mr-10">Add User</Button>
           </Link>
         </div>
 
-        {/* Card Container - no scroll */}
-        <div className="space-y-4">
-          {currentUsers.map((user) => (
-            <Card key={user.id} className="shadow-2xl border rounded-lg p-4 w-[86%]">
-              <CardContent className="flex justify-between items-center p-0">
-                <div className="space-y-1">
-                  <p className="text-sm text-gray-500 font-medium">
-                    Name: <span className="text-gray-900">{user.username}</span>
-                  </p>
-                  <p className="text-sm text-gray-500 font-medium">
-                    Email: <span className="text-gray-900">{user.email}</span>
-                  </p>
-                  <p className="text-sm text-gray-500 font-medium">
-                    Role: <span className="text-gray-900">{user.is_admin ? "Admin" : "User"}</span>
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <Pencil
-                    size={18}
-                    className="cursor-pointer text-blue-600 hover:scale-110 transition"
-                  />
-                  <X
-                    size={18}
-                    className="cursor-pointer text-red-500 hover:scale-110 transition"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card className="w-full shadow-lg border border-gray-200 bg-white rounded-none">
+          <CardContent className="p-5">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-xl font-semibold text-gray-800">Users</h2>
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+            </div>
 
-        {/* Pagination Controls */}
-        <div className="flex justify-center items-center mr-12 mt-4 gap-4">
-          <Button onClick={handlePrevPage} disabled={currentPage === 1}>
-            Previous
-          </Button>
-          <span className="text-sm">
-            Page {currentPage} of {totalPages}
-          </span>
-          <Button onClick={handleNextPage} disabled={currentPage === totalPages}>
-            Next
-          </Button>
-        </div>
+            <div className="border-b border-gray-300 mb-4" />
+
+            <div className="overflow-y-auto max-h-[500px]">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-100 text-gray-700 border-b border-gray-400">
+                    <TableHead className="w-[30%] px-4 py-2 text-left">Name</TableHead>
+                    <TableHead className="w-[35%] px-4 py-2 text-left">Email</TableHead>
+                    <TableHead className="w-[20%] px-4 py-2 text-left">Role</TableHead>
+                    <TableHead className="w-[15%] px-4 py-2 text-left">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-4">
+                        No users found.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredUsers.map((user, idx) => (
+                      <TableRow
+                        key={user.id}
+                        className={`border-b ${
+                          idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                        }`}
+                      >
+                        <TableCell className="px-4 py-3">{user.username}</TableCell>
+                        <TableCell className="px-4 py-3">{user.email}</TableCell>
+                        <TableCell className="px-4 py-3">
+                          {user.is_admin ? "Admin" : "User"}
+                        </TableCell>
+                        <TableCell className="px-4 py-3">
+                          <div className="flex gap-3">
+                            <Pencil
+                              size={18}
+                              className="cursor-pointer text-blue-600 hover:scale-110 transition"
+                              onClick={() => navigate(`/settings/users/edit/${user.id}`)}
+                            />
+                            <X
+                              size={18}
+                              className="cursor-pointer text-red-500 hover:scale-110 transition"
+                              onClick={() => console.log("Delete logic here")}
+                            />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

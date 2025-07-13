@@ -120,7 +120,7 @@ const ProxyServer = () => {
       <Sidebar settings={true} scanSettings={false} homeSettings={false} />
       <div className="flex-1 flex flex-col ml-64 px-8">
         <Header title="Proxy Server" />
-        <Card className="rounded-2xl shadow-2xl mt-6 w-[85%]">
+        <Card className="rounded-none shadow-2xl mt-6 w-[85%]">
           <CardContent className="p-6">
             <div className="flex flex-col space-y-2 text-base text-gray-800">
               <div className="flex items-center space-x-4">
