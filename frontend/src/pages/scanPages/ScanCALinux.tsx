@@ -49,7 +49,7 @@ const ScanCALinux = () => {
     projectName: "",
     description: "",
     os: "Linux", // Default to Linux for this scan type
-    scanType: "Configuration Audit",
+    scan_type: "Configuration Audit",
     // Target Details
     auditMethod: "",
     target: "",
@@ -317,11 +317,12 @@ const ScanCALinux = () => {
     const scanPayload = {
       project_name: formData.projectName,
       scan_name: formData.scan_name,
+      scan_type: "Configuration Audit", 
       scan_author: userName || "unknown",
       scan_status: "Pending", // Ensure this matches your backend's expected type (e.g., string, integer, or choice)
 
       scan_data: {
-        scanType: "Configuration Audit",
+        scanType: "Configuration Audit", 
         description: formData.description,
         category: "linux",
         os: formData.os,
@@ -543,6 +544,7 @@ const ScanCALinux = () => {
         scan_name: formData.scan_name,
         scan_author: userName, // Replace with user context if needed
         scan_status: "Pending",
+        scan_type: "Configuration Audit",
         scan_data: {
           scanType: "Configuration Audit",
           description: formData.description,
