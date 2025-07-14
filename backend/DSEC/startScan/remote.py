@@ -248,7 +248,11 @@ def linux_connection(script_name, username, password, ip, port, result_name="res
         host=ip,
         user=username,
         port=port,
-        connect_kwargs={"password":password},
+        connect_kwargs={
+            "password":password,
+            "allow_agent": False,
+            "look_for_keys": False
+            },
         config=config
     )
 
