@@ -45,16 +45,16 @@ def validateResult(json_path, csv_path, output_csv_path):
         remediation = audit.get("remediation", "") if status == "FAIL" else ""
 
         csv_rows.append({
-            "CIS.No.": audit.get("audit_id", ""),
-            "Name": audit.get("audit_name", ""),
+            "CIS.NO": audit.get("audit_id", ""),
+            "Subject": audit.get("audit_name", ""),
             "Description": audit.get("description", ""),
             "Current Settings": current_settings,
-            "Result": status,
+            "Status": status,
             "Remediation": remediation
         })
 
     # Write to output CSV
-    fieldnames = ["CIS.No.", "Name", "Description", "Current Settings", "Result", "Remediation"]
+    fieldnames = ["CIS.NO", "Subject", "Description", "Current Settings", "Status", "Remediation"]
     with open(output_csv_path, "w", encoding="utf-8", newline="") as out_csv:
         writer = csv.DictWriter(out_csv, fieldnames=fieldnames)
         writer.writeheader()
