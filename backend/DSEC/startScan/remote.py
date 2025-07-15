@@ -13,9 +13,9 @@ import os
 
 def oracle_connection(sql_file, connection_info):
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_json_path = os.path.join(script_dir,"Configuration_Audit","database","ORACLE","CIS","output.json")
-    check_csv_path = os.path.join(script_dir,"Configuration_Audit","database","ORACLE","CIS","Validators","check.csv")
-    result_csv_path = os.path.join(script_dir,"Configuration_Audit","database","ORACLE","CIS","result.csv")
+    output_json_path = os.path.join(script_dir,"Configuration_Audit","Database","ORACLE","CIS","output.json")
+    check_csv_path = os.path.join(script_dir,"Configuration_Audit","Database","ORACLE","CIS","Validators","check.csv")
+    result_csv_path = os.path.join(script_dir,"Configuration_Audit","Database","ORACLE","CIS","result.csv")
     print(result_csv_path)
 
     host = connection_info.get("target", "")
