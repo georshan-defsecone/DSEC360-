@@ -800,7 +800,7 @@ const ScanCALinux = () => {
                     </div>
                     <div className="flex items-center">
                       <p className="block w-70">Private Key</p>
-                      <Button>Add file</Button>
+                      <Button className="rounded-none">Add file</Button>
                     </div>
                     <div className="flex items-center">
                       <p className="block w-70">Private Key Passphrase</p>
@@ -908,11 +908,11 @@ const ScanCALinux = () => {
                     </div>
                     <div className="flex items-center">
                       <p className="block w-70">User Certificate</p>
-                      <Button>Add file</Button>
+                      <Button className="rounded-none">Add file</Button>
                     </div>
                     <div className="flex items-center">
                       <p className="block w-70">Private Key</p>
-                      <Button>Add file</Button>
+                      <Button className="rounded-none">Add file</Button>
                     </div>
                     <div className="flex items-center">
                       <p className="block w-70">Private Key Passphrase</p>
@@ -942,7 +942,7 @@ const ScanCALinux = () => {
                   <div className="flex justify-between items-center">
                     <Button
                       type="button"
-                      className="px-4 py-2 bg-black text-white rounded"
+                      className="px-4 py-2 bg-black text-white rounded-none"
                       onClick={() => console.log("Uploading config")}
                     >
                       Upload config
@@ -962,7 +962,7 @@ const ScanCALinux = () => {
             </h2>
             <div className="flex items-center">
               <p className="block w-70">known_hosts file</p>
-              <Button>Add file</Button>
+              <Button className="rounded-none">Add file</Button>
             </div>
             <div className="flex items-center">
               <p className="block w-70">Preferred port</p>
@@ -1257,7 +1257,7 @@ const ScanCALinux = () => {
                   <button
                     type="button"
                     onClick={prevPage}
-                    className={`px-4 py-2 rounded cursor-pointer ${
+                    className={`px-4 py-2 rounded-none cursor-pointer ${
                       page === 1 ? "bg-gray-300" : "bg-black text-white"
                     }`}
                     disabled={page === 1}
@@ -1276,14 +1276,14 @@ const ScanCALinux = () => {
                     <button
                       type="button"
                       onClick={handleSubmit}
-                      className="px-4 py-2 w-25 bg-green-500 text-white rounded cursor-pointer"
+                      className="px-4 py-2 w-25 bg-green-500 text-white rounded-none cursor-pointer"
                     >
                       Submit
                     </button>
                   ) : formData.auditMethod === "agent" && page === 4 ? (
                     <Button
                       type="button"
-                      className="px-4 py-2 bg-black text-white rounded h-10 cursor-pointer"
+                      className="px-4 py-2 bg-black text-white rounded-none h-10 cursor-pointer"
                       onClick={() => downloadScript()}
                     >
                       Download script
@@ -1292,7 +1292,7 @@ const ScanCALinux = () => {
                     <button
                       type="button"
                       onClick={nextPage}
-                      className="px-4 py-2 bg-black text-white rounded w-25 cursor-pointer"
+                      className="px-4 py-2 bg-black text-white rounded-none w-25 cursor-pointer"
                     >
                       Next
                     </button>

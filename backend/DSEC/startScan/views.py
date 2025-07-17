@@ -2,14 +2,20 @@ import os
 import subprocess
 import re
 import shutil
+import zipfile
+from io import BytesIO
 from .Configuration_Audit.Database.MARIA import connection_maria
 from . import remote
 from .Configuration_Audit.Database.ORACLE import generate_sql
 import zipfile
+from django.http import HttpResponse, JsonResponse
+from django.views import View
+from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework import status
 from django.http import HttpResponse
 from django.http import JsonResponse, Http404
 import json
@@ -24,8 +30,9 @@ from .Configuration_Audit.Windows.validate import validate_compliance
 from .Configuration_Audit.Windows.Windows_Remote_exec.wmi import run_remote_audit, cleanup_remote_files
 from .remote import mariadb_connection,linux_connection,oracle_connection,mssql_connection
 
-def database_config_audit(scan_data):
+def database_config_audit(data):
     print("[*] Entered database_config_audit()")
+    scan_data = data.get("scan_data", {})
 
     # Normalize compliance and standard names
     compliance_name = (scan_data.get("complianceCategory") or "").strip().lower()
@@ -43,9 +50,33 @@ def database_config_audit(scan_data):
             csv_name = "oracle_12c_cis.csv"
             csv_path = os.path.join(oracle_dir, csv_name)
             
-            sql_output = os.path.join(base_dir,"Configuration_Audit","Database","ORACLE","CIS","output.sql")
-            result_csv=os.path.join(base_dir,"Configuration_Audit","Database","ORACLE","CIS","result.csv")
-            json_output = os.path.join(base_dir,"Configuration_Audit","Database","ORACLE","CIS", "output.json")
+            project_name = (data.get("project_name") or "unknown_project").strip().replace(" ", "_")
+            scan_name = (data.get("scan_name") or "unknown_scan").strip().replace(" ", "_")
+
+            project_folder = os.path.join(
+                                base_dir,
+                                "Projects",
+                                project_name,
+                                scan_name
+                            )
+
+
+            # Create the nested directory structure if it doesn't exist
+            os.makedirs(project_folder, exist_ok=True)
+
+            sql_output = os.path.join(project_folder, "output.sql")
+            # Normalize components for filename
+            safe_compliance_name = normalized_compliance or "unknown_compliance"
+            safe_standard = normalized_standard or "unknown_standard"
+            safe_project_name = project_name
+            safe_scan_name = scan_name
+
+            # Construct dynamic filename
+            dynamic_filename = f"{safe_compliance_name}_{safe_standard}_{safe_project_name}_{safe_scan_name}.csv"
+            result_csv = os.path.join(project_folder, dynamic_filename)
+
+            json_output = os.path.join(project_folder, "output.json")
+
             print(json_output)
 
             if not os.path.exists(csv_path):
@@ -68,8 +99,10 @@ def database_config_audit(scan_data):
 
             if audit_method == "remoteaccess":
                 print("[*] Using remote access method.")
-                remote.oracle_connection(sql_output, scan_data)
+                remote.oracle_connection(sql_output, scan_data, json_output, result_csv)
+                print("returning ",result_csv,json_output)
                 convert_csv_to_excel(result_csv)
+                
 
                 return result_csv,json_output
             elif audit_method == "agent":
@@ -115,7 +148,7 @@ def database_config_audit(scan_data):
                 if db_access_method == "agent":
                     path_for_sql = os.path.join(Maria_dir, "CIS", "MariaDB_10_6_cis_query.sql")
                     #path_for_linux = os.path.join(Maria_dir, "CIS", "linux_commands.sh")
-                    path_for_script= download_script(path_for_sql)
+                    path_for_script=download_script(path_for_sql)
                     return path_for_script,None
                 if db_access_method == "remoteAccess":
                     path_for_json = os.path.join(Maria_dir, "CIS", "mariaDB_10_6_query_result.json")
@@ -209,10 +242,11 @@ def database_config_audit(scan_data):
         print(f"[-] Unsupported compliance type: {normalized_compliance}")
         return None,None
 
-def linux_config_audit(scan_data):
+def linux_config_audit(data):
     print("[*] Entered linux_config_audit()")
     from .Configuration_Audit.Linux.generate import ubuntu
     import os
+    scan_data = data.get("scan_data", {})
 
     standard = scan_data.get("complianceSecurityStandard", "CIS").strip()
     version = scan_data.get("complianceCategory", "").strip().replace(" ", "_")
@@ -261,8 +295,9 @@ def linux_config_audit(scan_data):
         return None, None
 
 
-def windows_config_audit(scan_data):
+def windows_config_audit(data):
     print("[*] Entered windows_config_audit()")
+    scan_data = data.get("scan_data", {})
     base_dir = os.path.dirname(os.path.abspath(__file__))
     windows_dir = os.path.join(base_dir,"Configuration_Audit","Windows")
     
@@ -418,7 +453,9 @@ def convert_csv_to_excel(csv_file_path, excel_file_path=None):
         raise FileNotFoundError(f"CSV file not found: {csv_file_path}")
 
     # Load CSV into a DataFrame
-    df = pd.read_csv(csv_file_path)
+    with open(csv_file_path, "r", encoding="utf-8", errors="replace") as f:
+         df = pd.read_csv(f)
+
 
     # Determine output file path
     if not excel_file_path:
@@ -492,8 +529,9 @@ def convert_csv_to_excel(csv_file_path, excel_file_path=None):
 
 
 
-def windows_compromise_assesment(scan_data):
+def windows_compromise_assesment(data):
     print("[*] Entered windows_compromise_assesment()")
+    scan_data = data.get("scan_data", {})
     base_dir = os.path.dirname(os.path.abspath(__file__))
     windows_dir = os.path.join(base_dir,"Compromise_Assesment","Windows")
     audit_method = (scan_data.get("auditMethod")).lower()
@@ -580,6 +618,7 @@ def windows_compromise_assesment(scan_data):
 def get_csv_file(request, folder_path, filename):
     import os
     from django.http import HttpResponse
+    print("get csv file")
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
     safe_folder_path = os.path.normpath(folder_path).replace('..', '')
@@ -595,3 +634,72 @@ def get_csv_file(request, folder_path, filename):
         return HttpResponse(content, content_type='text/csv')
     except Exception as e:
         return HttpResponse(f'Error reading file: {str(e)}', status=500)
+    
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def download_project_excels(request, project_name):
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        project_dir = os.path.join(base_dir, "Projects", project_name)
+
+        if not os.path.exists(project_dir):
+            return Response({'error': f"Project '{project_name}' not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        zip_buffer = BytesIO()
+
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            found_excel = False
+            for scan_folder in os.listdir(project_dir):
+                scan_path = os.path.join(project_dir, scan_folder)
+                if os.path.isdir(scan_path):
+                    for file_name in os.listdir(scan_path):
+                        if file_name.lower().endswith('.xlsx'):
+                            found_excel = True
+                            file_path = os.path.join(scan_path, file_name)
+                            arcname = os.path.join(scan_folder, file_name)
+                            zip_file.write(file_path, arcname)
+
+        if not found_excel:
+            return Response({'error': 'No Excel files found for this project.'}, status=status.HTTP_404_NOT_FOUND)
+
+        zip_buffer.seek(0)
+        response = HttpResponse(zip_buffer, content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="{project_name}_scans.zip"'
+        return response
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def download_project_scan_excels(request, project_name, scan_name):
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        scan_dir = os.path.join(base_dir, "Projects", project_name, scan_name)
+
+        if not os.path.exists(scan_dir):
+            return Response({'error': f"Scan folder '{scan_name}' for project '{project_name}' not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        zip_buffer = BytesIO()
+        found_excel = False
+
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for file_name in os.listdir(scan_dir):
+                if file_name.lower().endswith(".xlsx"):
+                    found_excel = True
+                    file_path = os.path.join(scan_dir, file_name)
+                    zip_file.write(file_path, arcname=file_name)
+
+        if not found_excel:
+            return Response({'error': f"No Excel files found in '{scan_name}'."}, status=status.HTTP_404_NOT_FOUND)
+
+        zip_buffer.seek(0)
+        response = HttpResponse(zip_buffer, content_type="application/zip")
+        response['Content-Disposition'] = f'attachment; filename="{project_name}_{scan_name}_excels.zip"'
+        return response
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

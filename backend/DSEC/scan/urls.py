@@ -14,6 +14,7 @@ urlpatterns = [
     path('projects/trash/', views.trashed_projects_view, ),
     path('project/trash/delete/<str:project_id>/', views.delete_project_view),
     path('projects/trash/deleteAll', views.delete_all_projects_view),
+    path('project/update/<str:project_id>/', views.update_project_details, name='update-project'),
 
 
     # Scans
@@ -27,10 +28,12 @@ urlpatterns = [
     #path('scans/add/', views.add_MyProjectsView, name='scan-add'),
     path('scans/<str:scan_id>/trash/', views.update_MyProjectsView, name='move_to_trash'),
     path('scans/trashed/', views.trashed_scans_view, name='trashed_scans'),
+    path('scan/trash/delete/<str:scan_id>/', views.delete_scan_view, name='delete_scan'),
     path('scans/compliance/configaudit/<str:os_name>/', views.get_compliance_data, name='compliance-data'),
     path('scans/compliance/ioc/<str:os_name>/', views.get_compromise_assessment_data, name='compromise-assessment-data'),
     path('scans/create-scan/', views.create_scan, name='create_scan'),
     path('scans/scan-result/<str:project_name>/<str:scan_name>/',views.get_scan_result_view,name='scan-result'),
+    path("scans/<str:scan_id>/audit/<str:audit_id>/", views.update_scan_result, name="update_audit_status"),
    
 
 ]

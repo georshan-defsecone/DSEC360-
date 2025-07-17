@@ -12,7 +12,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Pencil, X } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { Pencil, X, MoreVertical } from "lucide-react";
 import api from "@/pages/api";
 
 const Users = () => {
@@ -43,16 +49,10 @@ const Users = () => {
       <div className="flex-1 flex flex-col ml-64 pr-8 pl-8">
         <Header title="Users" />
 
-        <div className="flex justify-end mt-4 mb-4">
-          <Link to="/settings/users/createuser">
-            <Button className="flex items-center gap-2 mr-10">Add User</Button>
-          </Link>
-        </div>
-
-        <Card className="w-full shadow-lg border border-gray-200 bg-white rounded-none">
+        <Card className="w-full mt-6 shadow-lg border border-gray-200 bg-white rounded-none">
           <CardContent className="p-5">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-xl font-semibold text-gray-800">Users</h2>
+            {/* Search and Add User */}
+            <div className="flex justify-between items-center mb-4">
               <input
                 type="text"
                 placeholder="Search..."
@@ -60,6 +60,9 @@ const Users = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               />
+              <Link to="/settings/users/createuser">
+                <Button className="flex items-center gap-2 cursor-pointer rounded-none">Add User</Button>
+              </Link>
             </div>
 
             <div className="border-b border-gray-300 mb-4" />
@@ -85,9 +88,7 @@ const Users = () => {
                     filteredUsers.map((user, idx) => (
                       <TableRow
                         key={user.id}
-                        className={`border-b ${
-                          idx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                        }`}
+                        className={`border-b ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
                       >
                         <TableCell className="px-4 py-3">{user.username}</TableCell>
                         <TableCell className="px-4 py-3">{user.email}</TableCell>
@@ -95,18 +96,28 @@ const Users = () => {
                           {user.is_admin ? "Admin" : "User"}
                         </TableCell>
                         <TableCell className="px-4 py-3">
-                          <div className="flex gap-3">
-                            <Pencil
-                              size={18}
-                              className="cursor-pointer text-blue-600 hover:scale-110 transition"
-                              onClick={() => navigate(`/settings/users/edit/${user.id}`)}
-                            />
-                            <X
-                              size={18}
-                              className="cursor-pointer text-red-500 hover:scale-110 transition"
-                              onClick={() => console.log("Delete logic here")}
-                            />
-                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="p-1 rounded hover:bg-gray-200 transition">
+                                <MoreVertical size={18} className="cursor-pointer" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem className="cursor-pointer"
+                                onClick={() => navigate(`/settings/users/edit/${user.id}`)}
+                              >
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => console.log("Delete logic here")}
+                                className="text-red-600 focus:bg-red-50 cursor-pointer"
+                              >
+                                <X className="mr-2 h-4 w-4 text-red-600" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))

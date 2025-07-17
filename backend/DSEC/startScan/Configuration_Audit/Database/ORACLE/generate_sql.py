@@ -4,7 +4,7 @@ import re
 import os
 import oracledb
 import getpass
-from . import validate
+from . import oraclevalidate
 import importlib
 
 def normalize(s):

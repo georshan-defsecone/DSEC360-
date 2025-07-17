@@ -128,6 +128,7 @@ const ProxyServer = () => {
                   id="proxyserver"
                   checked={isProxyEnabled}
                   onCheckedChange={handleSwitchChange}
+                  className="cursor-pointer"
                 />
                 <label htmlFor="proxyserver" className="text-lg font-semibold">
                   Enable Proxy
@@ -241,7 +242,7 @@ const ProxyServer = () => {
 
                   {/* Save/Edit Button */}
                   <div className="flex justify-end pt-4 w-full">
-                    <Button
+                    <Button className="cursor-pointer rounded-none"
                       onClick={() => {
                         if (isEditMode) {
                           handleSave();

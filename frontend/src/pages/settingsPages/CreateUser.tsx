@@ -104,7 +104,7 @@ const CreateUser = () => {
             </div>
 
             <div className="flex justify-end">
-              <Button variant="outline" className="w-24 bg-black text-white hover:bg-gray-800" onClick={handleCreateUser}>
+              <Button variant="outline" className="w-24 bg-black text-white hover:bg-gray-800 rounded-none" onClick={handleCreateUser}>
                 Create
               </Button>
             </div>

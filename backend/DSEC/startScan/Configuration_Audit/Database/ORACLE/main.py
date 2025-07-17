@@ -1,7 +1,7 @@
 import sys
 import json
 from generate_sql import extract_db_queries, write_queries_to_file, execute_sql_script_remotely
-from validate import load_csv, validate
+from backend.DSEC.startScan.Configuration_Audit.Database.ORACLE.oraclevalidate import load_csv, validate
 
 def main():
     # === Step 1: Input setup ===

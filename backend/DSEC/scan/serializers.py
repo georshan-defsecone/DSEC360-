@@ -8,9 +8,11 @@ from .models import Scan
 
 class ScanSerializer(serializers.ModelSerializer):
     parsed_scan_result = serializers.SerializerMethodField()
+    project_name = serializers.CharField(source='project.project_name', read_only=True)  
     class Meta:
         model = Scan
-        fields = '__all__'
+        fields = '__all__'  # includes all fields, plus parsed_scan_result and project_name
+        extra_fields = ['parsed_scan_result', 'project_name']
 
     def get_parsed_scan_result(self, obj):
         if not obj.scan_result:
@@ -20,7 +22,8 @@ class ScanSerializer(serializers.ModelSerializer):
             reader = csv.DictReader(csv_file)
             return list(reader)
         except Exception:
-            return []  # Or handle the error
+            return []
+
 
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:

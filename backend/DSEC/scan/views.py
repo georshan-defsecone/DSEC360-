@@ -7,11 +7,17 @@ from .models import Project, Scan
 from .serializers import ProjectSerializer, ScanSerializer
 #from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import AllowAny
+from django.http import JsonResponse
 import uuid
 from io import BytesIO
 import os
+from pathlib import Path
+import csv
+import io
+import traceback
 from django.conf import settings
 import pandas as pd
+import openpyxl
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer
 from rest_framework.decorators import api_view, permission_classes
@@ -26,9 +32,13 @@ from django.views.decorators.csrf import csrf_exempt
 from startScan.views import database_config_audit, windows_config_audit, linux_config_audit
 from startScan.views import windows_compromise_assesment
 from startScan.views import download_script
+from startScan.views import convert_csv_to_excel
 from django.http import FileResponse
 import json
 import mimetypes
+from django.shortcuts import get_object_or_404
+from startScan.Configuration_Audit.Database.ORACLE import oraclevalidate as oraclevalidator
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -44,19 +54,19 @@ def add_MyProjectsView(request):
 def update_MyProjectsView(request, scan_id):
     try:
         scan = Scan.objects.get(scan_id=scan_id)
-        scan.trash = True
-        scan.save()
-        return Response({"message": "Scan moved to trash"}, status=status.HTTP_200_OK)
     except Scan.DoesNotExist:
         return Response({"error": "Scan not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    trash_value = request.data.get('trash')
+    if trash_value is None:
+        return Response({"error": "Missing 'trash' value in request body"}, status=status.HTTP_400_BAD_REQUEST)
+
+    scan.trash = trash_value
+    scan.save()
+    return Response({"message": f"Scan trash status updated to {scan.trash}"}, status=status.HTTP_200_OK)
     
 
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def trashed_scans_view(request):
-    trashed_scans = Scan.objects.filter(trash=True)
-    serializer = ScanSerializer(trashed_scans, many=True)
-    return Response(serializer.data)
+
 
 # Create your views here.
 
@@ -189,6 +199,21 @@ def trashed_projects_view(request):
 
     return Response(serializer.data)
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def trashed_scans_view(request):
+    user = request.user
+
+    if user.is_admin:
+        trashed_scans = Scan.objects.filter(trash=True)
+    else:
+        trashed_scans = Scan.objects.filter(trash=True, scan_author=user.username)
+
+    serializer = ScanSerializer(trashed_scans, many=True)
+    return Response(serializer.data)
+
+
 #remove (trashed) project and thier related scans from DB
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
@@ -208,6 +233,7 @@ def delete_project_view(request, project_id):
     # Delete the project
     project.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 
 #remove (trashed) all projects and thier related scans from DB
@@ -280,6 +306,22 @@ def get_project_scans_view(request, project_id):
 
     serializer = ScanSerializer(scans, many=True)
     return Response(serializer.data)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_scan_view(request, scan_id):
+    try:
+        scan = Scan.objects.get(scan_id=scan_id)
+    except Scan.DoesNotExist:
+        return Response({'error': 'Scan not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Check if the user is the author of the scan or an admin
+    if request.user.username != scan.scan_author and not request.user.is_admin:
+        return Response({'error': 'You do not have permission to delete this scan'}, status=status.HTTP_403_FORBIDDEN)
+
+    # Delete the scan
+    scan.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 #get scans by user logged in for result page
 @api_view(['GET'])
@@ -354,17 +396,196 @@ def get_scan_result_view(request, project_name, scan_name):
     serializer = ScanSerializer(scan)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_project_details(request, project_id):
+    try:
+        project = Project.objects.get(project_id=project_id)
+    except Project.DoesNotExist:
+        return Response({"detail": "Project not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ProjectSerializer(project, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def update_scan_result(request, scan_id, audit_id):
+    try:
+        new_status = request.data.get("status", "").strip().upper()
+        if not new_status:
+            return Response({"error": "Status is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        scan = get_object_or_404(Scan, scan_id=scan_id)
+
+        # Parse scan_result (CSV stored as text)
+        csv_file = io.StringIO(scan.scan_result)
+        reader = csv.DictReader(csv_file)
+        parsed_result = list(reader)
+
+        updated = False
+        for entry in parsed_result:
+            if str(entry.get("CIS.NO")) == str(audit_id):
+                entry["Status"] = new_status
+                updated = True
+                break
+
+        if not updated:
+            return Response({"error": "Audit ID not found in DB scan_result."}, status=404)
+
+        # Re-dump to CSV text
+        output_csv = io.StringIO()
+        writer = csv.DictWriter(output_csv, fieldnames=reader.fieldnames)
+        writer.writeheader()
+        writer.writerows(parsed_result)
+        scan.scan_result = output_csv.getvalue()
+        scan.save()
+
+        updated_excel_path = sync_excel_with_db_csv(scan)
+
+        # ✅ Update Excel
+        updated_file_path = update_excel_status(scan, audit_id, new_status)
+
+        return Response({
+            "message": "Audit status updated successfully.",
+            "excel_updated_path": updated_file_path
+        })
+
+    except Exception as e:
+        print("\n🔥 Internal Server Error:")
+        traceback.print_exc()
+        return Response({"error": str(e)}, status=500)
+
+def update_excel_status(scan, audit_id: str, new_status: str) -> str:
+    """
+    Updates the Excel file entry matching audit_id with the new status.
+    Returns the updated file path or raises errors if fails.
+    """
+
+    project_name = scan.project.project_name
+    scan_name = scan.scan_name
+
+    compliance_name = scan.scan_data.get("complianceCategory", "").strip().lower().replace(" ", "")
+    compliance_category = scan.scan_data.get("complianceSecurityStandard", "").strip().lower()
+
+    # Build relative to current file (views.py)
+    base_dir = Path(__file__).resolve().parent.parent  # This gives you backend/DSEC/
+    excel_file_path = base_dir / "startScan" / "Projects" / project_name / scan_name / f"{compliance_name}_{compliance_category}_{project_name}_{scan_name}.xlsx"
+
+    if not excel_file_path.exists():
+        raise FileNotFoundError(f"Excel file not found: {excel_file_path}")
+
+    # Load workbook
+    wb = openpyxl.load_workbook(excel_file_path)
+    ws = wb.active
+
+    headers = [cell.value for cell in ws[1]]
+    if "CIS.NO" not in headers or "Status" not in headers:
+        raise ValueError("Missing 'CIS.NO' or 'Status' in Excel headers.")
+
+    cis_index = headers.index("CIS.NO")
+    status_index = headers.index("Status")
+
+    found = False
+    for row in ws.iter_rows(min_row=2):
+        if str(row[cis_index].value).strip() == str(audit_id):
+            row[status_index].value = new_status
+            found = True
+            break
+
+    if not found:
+        raise ValueError("Audit ID not found in Excel file.")
+
+    wb.save(excel_file_path)
+
+    return str(excel_file_path)
+
+
+def sync_excel_with_db_csv(scan) -> str:
+    """
+    Writes the scan.scan_result (CSV string from DB) to the CSV file on disk,
+    then regenerates the Excel file with updated formatting.
+    Returns the Excel file path.
+    """
+    project_name = scan.project.project_name
+    scan_name = scan.scan_name
+
+    compliance_name = scan.scan_data.get("complianceCategory", "").strip().lower().replace(" ", "")
+    compliance_category = scan.scan_data.get("complianceSecurityStandard", "").strip().lower()
+
+    # Construct file paths
+    base_dir = Path(__file__).resolve().parent.parent  # Points to backend/DSEC
+    project_dir = base_dir / "startScan" / "Projects" / project_name / scan_name
+
+    csv_file_name = f"{compliance_name}_{compliance_category}_{project_name}_{scan_name}.csv"
+    excel_file_name = f"{compliance_name}_{compliance_category}_{project_name}_{scan_name}.xlsx"
+
+    csv_file_path = project_dir / csv_file_name
+    excel_file_path = project_dir / excel_file_name
+
+    # ✅ Ensure folder exists
+    project_dir.mkdir(parents=True, exist_ok=True)
+
+    # ✅ Write the CSV string from DB to disk
+    with open(csv_file_path, "w", encoding="utf-8") as f:
+        f.write(scan.scan_result)
+
+    # ✅ Rebuild Excel from new CSV
+    convert_csv_to_excel(str(csv_file_path), str(excel_file_path))
+
+    return str(excel_file_path)
+
+@csrf_exempt  # Remove if CSRF is handled on frontend
+@api_view(['POST'])
+def upload_scan_output(request, scan_id):
+    """
+    Uploads a file and saves it in startScan/Projects/<project_name>/<scan_name>/
+    under the backend/DSEC directory (relative to this file).
+    """
+    scan = get_object_or_404(Scan, scan_id=scan_id)
+    project = scan.project
+
+    uploaded_file = request.FILES.get("file")
+    if not uploaded_file:
+        return JsonResponse({"error": "No file uploaded."}, status=400)
+
+    # Manually resolve base_dir: backend/DSEC (adjust according to actual structure)
+    base_dir = Path(__file__).resolve().parent.parent  # Points to backend/DSEC
+    target_dir = base_dir / 'startScan' / 'Projects' / project.project_name / scan.scan_name
+
+    # Ensure directory exists
+    os.makedirs(target_dir, exist_ok=True)
+
+    # Full file path
+    file_path = target_dir / uploaded_file.name
+
+    # Save uploaded file
+    with open(file_path, 'wb+') as destination:
+        for chunk in uploaded_file.chunks():
+            destination.write(chunk)
+
+    return JsonResponse({
+        "message": "File uploaded successfully.",
+        "file_path": str(file_path)
+    }, status=200)
+
+
+
 @csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def create_scan(request):
     print("entered create scan")
     data = request.data.copy()
+    print(data)
 
     project_name = data.get("project_name")
     scan_author = data.get("scan_author", "unknown")
     scan_name = data.get("scan_name")  
-   
+
     if not project_name:
         return Response({"error": "project_name is required."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -380,7 +601,6 @@ def create_scan(request):
         }
     )
 
-    # ✅ Check if a scan with the same name already exists in the project
     if Scan.objects.filter(scan_name=scan_name, project=project, trash=False).exists():
         return Response(
             {"error": f"Scan with name '{scan_name}' already exists in project '{project_name}'."},
@@ -389,9 +609,6 @@ def create_scan(request):
 
     data["project"] = project.pk
     data["scan_id"] = str(uuid.uuid4())
-    data["scan_name"] = scan_name  # map frontend key to model field
-    data.pop("project_name", None)
-    data.pop("scanName", None)
 
     serializer = ScanSerializer(data=data)
 
@@ -400,7 +617,7 @@ def create_scan(request):
 
         scan_data = data.get("scan_data", {})
         try:
-            result = launch_scan(scan_data)
+            result = launch_scan(data)
             if result is None:
                 print("[!] launch_scan() returned None")
                 return Response({"error": "Scan execution failed"}, status=500)
@@ -416,7 +633,6 @@ def create_scan(request):
         audit_method = scan_data.get("auditMethod", "").strip().lower()
         scan_instance = Scan.objects.get(scan_id=data["scan_id"])
 
-        # Save output.json content to scan_output field
         if output_json_path and os.path.exists(output_json_path):
             with open(output_json_path, "r", encoding="utf-8") as f:
                 try:
@@ -427,7 +643,6 @@ def create_scan(request):
                     print("[!] Failed to decode output.json")
 
         if file_path and os.path.exists(file_path):
-            # Determine filename based on audit type
             if audit_method == "agent" and category == "linux":
                 version = scan_data.get("complianceCategory", "").strip().replace(" ", "_")
                 filename = f"{version}_audit_script.sh"
@@ -435,12 +650,17 @@ def create_scan(request):
                 filename = os.path.basename(file_path)
 
             if audit_method != "agent":
-                with open(file_path, "r", encoding="utf-8") as f:
+                print("not agent")
+                with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                     csv_text = f.read()
 
                 scan_instance.scan_result = csv_text
-                scan_instance.save()
 
+            # ✅ Set scan status as 'complete'
+            scan_instance.scan_status = "complete"
+            scan_instance.save()
+
+            if audit_method != "agent":
                 csv_stream = BytesIO(csv_text.encode("utf-8"))
                 return FileResponse(csv_stream, content_type="text/csv")
 
@@ -455,19 +675,26 @@ def create_scan(request):
                     content_type=mime_type
                 )
 
+        # ✅ Even if file_path not present, mark status complete
+        scan_instance.scan_status = "complete"
+        scan_instance.save()
+
         return Response({
             "message": "Scan created successfully.",
             "scan": serializer.data
         }, status=status.HTTP_201_CREATED)
+
     print("[!] Serializer Errors:", serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
+
 import re
 
-def launch_scan(scan_data):
+def launch_scan(data):
     print("[*] Entered launch_scan()")
+    scan_data = data.get("scan_data", {})
     
 
     # Normalize and extract values from scan_data
@@ -502,15 +729,15 @@ def launch_scan(scan_data):
     if scan_type == "configurationaudit":
 
         if category=="database":
-           return database_config_audit(scan_data)
+           return database_config_audit(data)
            
 
         if category=="windows":
             
-            return windows_config_audit(scan_data)
+            return windows_config_audit(data)
 
         if category == "linux":
-            return linux_config_audit(scan_data)
+            return linux_config_audit(data)
 
         if category=="firewall":
             return None,None
@@ -520,7 +747,7 @@ def launch_scan(scan_data):
 
     elif scan_type == "compromiseassessment":
         if category == "windows":
-            return windows_compromise_assesment(scan_data)
+            return windows_compromise_assesment(data)
 
     
         if category == "linux":

@@ -3,6 +3,7 @@ import json
 import sys
 import re
 import os
+import traceback
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 
@@ -25,7 +26,7 @@ def strip_audit_number(audit_name):
 
 def load_csv(csv_file):
     expected_dict = {}
-    with open(csv_file, newline='') as f:
+    with open(csv_file, newline='') as f:  
         reader = csv.DictReader(f)
         for row in reader:
             full_name = row['name'].strip()
@@ -63,7 +64,7 @@ def compare_values(actual, expected, comp_type):
 
 def write_csv(results, csv_path):
     fieldnames = ['CIS.NO', 'Subject', 'Description', 'Current Settings', 'Status', 'Remediation']
-    with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+    with open(csv_path, 'w', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for row in results:
@@ -109,8 +110,9 @@ def validate(json_file, expected_dict, output_path):
     with open(json_file) as f:
         try:
             json_objects = json.load(f)
-        except json.JSONDecodeError:
-            print("Failed to parse JSON file.")
+        except json.JSONDecodeError as e:
+            print(f"❌ Failed to parse JSON file: {e}")
+            traceback.print_exc()
             return
 
     results_csv = []

@@ -163,10 +163,11 @@ const LDAP = () => {
       <Sidebar settings={true} scanSettings={false} homeSettings={false} />
       <div className="flex-1 flex flex-col pl-72 pr-12">
         <Header title="LDAP" />
-        <Card className="rounded-none shadow-2xl mt-6 w-[86%]">
+        <Card className="rounded-none shadow-2xl mt-6 w-[86%] ">
           <CardContent className="p-6 space-y-6 text-sm">
             <div className="flex items-center space-x-4">
               <Switch
+                className="cursor-pointer"
                 id="ldapserver"
                 checked={isLdapEnabled}
                 onCheckedChange={handleSwitchChange}
@@ -266,7 +267,7 @@ const LDAP = () => {
 
                 <div className="flex justify-end pt-4">
                   <Button
-                    className="w-28"
+                    className=" cursor-pointer rounded-none"
                     onClick={() => {
                       if (isEditMode) {
                         handleSave();

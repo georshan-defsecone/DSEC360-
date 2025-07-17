@@ -848,7 +848,7 @@ const ScanCAWindows = () => {
                 <div className="flex items-center gap-4">
                   <Button
                     type="button"
-                    className="px-4 py-2 bg-black text-white rounded"
+                    className="px-4 py-2 bg-black text-white  rounded-none"
                     onClick={() => console.log("Uploading config")}
                   >
                     Upload config
@@ -1212,7 +1212,7 @@ const ScanCAWindows = () => {
                     <button
                       type="button"
                       onClick={prevPage}
-                      className={`px-4 py-2 rounded cursor-pointer ${
+                      className={`px-4 py-2 rounded-none cursor-pointer ${
                         page === 1 ? "bg-gray-300" : "bg-black text-white"
                       }`}
                       disabled={page === 1}
@@ -1231,14 +1231,14 @@ const ScanCAWindows = () => {
                       <button
                         type="button"
                         onClick={handleSubmit}
-                        className="px-4 py-2 bg-green-500 w-25 text-white rounded cursor-pointer"
+                        className="px-4 py-2 bg-green-500 w-25 text-white rounded-none cursor-pointer"
                       >
                         Submit
                       </button>
                     ) : formData.auditMethod === "agent" && page === 4 ? (
                       <Button
                         type="button"
-                        className="px-4 py-2 bg-black text-white h-10 rounded cursor-pointer"
+                        className="px-4 py-2 bg-black text-white h-10 rounded-none cursor-pointer"
                         onClick={downloadScript}
                       >
                         Download script
@@ -1247,7 +1247,7 @@ const ScanCAWindows = () => {
                       <button
                         type="button"
                         onClick={nextPage}
-                        className="px-4 py-2 bg-black w-25 text-white rounded cursor-pointer"
+                        className="px-4 py-2 bg-black w-25 text-white rounded-none cursor-pointer"
                       >
                         Next
                       </button>

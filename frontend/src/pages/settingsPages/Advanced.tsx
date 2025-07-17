@@ -34,7 +34,7 @@ const Advanced = () => {
                   <TabsTrigger
                     key={tab}
                     value={tab}
-                    className="text-sm text-gray-700 hover:bg-black hover:text-white data-[state=active]:bg-black data-[state=active]:text-white transition-colors duration-200 px-2 py-2 rounded-md font-medium capitalize text-center"
+                    className="text-sm text-gray-700 hover:bg-black hover:text-white data-[state=active]:bg-black data-[state=active]:text-white transition-colors duration-200 px-2 py-2 rounded-md font-medium capitalize text-center cursor-pointer"
                   >
                     {tab}
                   </TabsTrigger>

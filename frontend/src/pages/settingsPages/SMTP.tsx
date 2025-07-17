@@ -159,7 +159,7 @@ const SMTP = () => {
           <CardContent className="p-6">
             <div className="flex flex-col space-y-2 text-base text-gray-800">
               <div className="flex items-center space-x-4">
-                <Switch
+                <Switch className="cursor-pointer"
                   id="smtp"
                   checked={isSMTPEnabled}
                   onCheckedChange={handleSwitchChange}
@@ -251,7 +251,7 @@ const SMTP = () => {
                 <div className="flex justify-end mt-4">
                   <Button
                     variant="outline"
-                    className="bg-black text-white hover:bg-gray-800"
+                    className="bg-black text-white hover:bg-gray-800 cursor-pointer rounded-none"
                     onClick={() => {
                       if (isEditMode) {
                         handleSave();

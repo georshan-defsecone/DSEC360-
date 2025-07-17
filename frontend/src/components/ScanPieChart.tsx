@@ -28,7 +28,7 @@ const CustomTooltip = ({ active, payload }) => {
     const { name, value } = payload[0];
     return (
       <div className="bg-white p-2 border rounded shadow text-sm text-gray-700">
-        <strong>{name}</strong>: {value} scans
+        <strong>{name}</strong> {value} scans
       </div>
     );
   }
@@ -36,7 +36,6 @@ const CustomTooltip = ({ active, payload }) => {
 };
 
 const ScanPieChart = ({ data }) => {
-  // Normalize data keys to uppercase PASS/FAIL
   const chartData = Object.entries(data).map(([type, count]) => {
     const upperType =
       type.toLowerCase() === "passed"
@@ -113,10 +112,10 @@ const ScanPieChart = ({ data }) => {
         </div>
       </div>
 
-      {/* Legend: label + value combined */}
+      {/* Legend with aligned values */}
       <div className="mt-5 w-full px-6 text-sm text-gray-700">
         {chartData.map((entry, index) => (
-          <div key={index} className="flex items-center mb-2">
+          <div key={index} className="flex items-center mb-1.5">
             <div
               className="w-3 h-3 rounded-full mr-2"
               style={{
@@ -125,7 +124,10 @@ const ScanPieChart = ({ data }) => {
                   : COLORS[index % COLORS.length],
               }}
             />
-            <span className="font-medium">{`${entry.name} ${entry.value}`}</span>
+            <div className="flex w-full">
+              <span className="w-28 font-medium">{entry.name}</span>
+              <span className="text-gray-600">{entry.value}</span>
+            </div>
           </div>
         ))}
       </div>

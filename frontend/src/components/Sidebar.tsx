@@ -123,7 +123,7 @@ const SettingSidebar = () => {
         return (
           <Link to={item.path} key={item.path}>
             <button
-              className={`block w-full text-left px-4 py-2 rounded font-medium ${
+              className={`block w-full text-left px-4 py-2 rounded font-medium cursor-pointer ${
                 isActive
                   ? "bg-black text-white"
                   : "hover:bg-gray-400 hover:text-white"
@@ -166,7 +166,7 @@ const HomeSettingSidebar = () => {
   return (
     <>
       <SidebarSection
-        title="Projects"
+        collapsible={false}
         links={[
           
           ...(isAdmin
@@ -213,9 +213,8 @@ const Sidebar = ({ scanSettings, homeSettings, settings }: SidebarProps) => {
 
       <div className="mt-4">
         <Link to="/settings/about">
-  <Button className="flex items-center px-4 py-2 bg-black text-white rounded w-25 cursor-pointer">
-    <Settings className="w-5 h-5 mr-2" />
-    Settings
+  <Button className="flex items-center px-4 py-2 bg-black text-white rounded  cursor-pointer">
+    <Settings className="w-5 h-5 " />
   </Button>
 </Link>
       </div>

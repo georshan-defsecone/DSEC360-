@@ -4,19 +4,17 @@ import csv
 import re
 import oracledb
 import getpass
-from .Configuration_Audit.Database.ORACLE import validate
+from .Configuration_Audit.Database.ORACLE import oraclevalidate
 from .Configuration_Audit.Database.MARIA import connection_maria,validate,generate_maria
 from .Configuration_Audit.Database.MSSQL import remote,validate_result,generate
 import importlib
 from fabric import Connection, Config
 import os
 
-def oracle_connection(sql_file, connection_info):
+def oracle_connection(sql_file, connection_info, output_json_path, result_csv_path):
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_json_path = os.path.join(script_dir,"Configuration_Audit","database","ORACLE","CIS","output.json")
-    check_csv_path = os.path.join(script_dir,"Configuration_Audit","database","ORACLE","CIS","Validators","check.csv")
-    result_csv_path = os.path.join(script_dir,"Configuration_Audit","database","ORACLE","CIS","result.csv")
-    print(result_csv_path)
+    check_csv_path = os.path.join(script_dir, "Configuration_Audit", "Database", "ORACLE", "CIS", "Validators", "check.csv")
+    print("the result path for testing ",result_csv_path)
 
     host = connection_info.get("target", "")
     port = connection_info.get("port", "1521")
@@ -34,7 +32,7 @@ def oracle_connection(sql_file, connection_info):
             with connection.cursor() as cursor:
                 cursor.callproc("dbms_output.enable")
                 print(f"\n📤 Executing {sql_file} on remote Oracle DB...\n")
-                with open(sql_file, 'r', encoding='utf-8') as f:
+                with open(sql_file, 'r') as f:
                     statement = ""
                     for line in f:
                         stripped = line.strip()
@@ -63,17 +61,15 @@ def oracle_connection(sql_file, connection_info):
                 print("\n✅ Execution completed.")
 
         if all_output_lines:
-            with open(output_json_path, "w", encoding="utf-8") as out_json:
+            with open(output_json_path, "w", encoding="utf-8", errors="replace") as out_json:
                 out_json.write("[\n" + ",\n".join(all_output_lines) + "\n]\n")
             print(f"📝 JSON output written to {output_json_path}")
 
-            try:
-                print("🧪 Running validate.validate(...) directly...")
-                expected = validate.load_csv(check_csv_path)
-                validate.validate(output_json_path, expected, result_csv_path)
-                print(f"✅ Validation completed and written to {result_csv_path}")
-            except Exception as e:
-                print(f"❌ Error during validation: {e}")
+            
+            print("🧪 Running validate.validate(...) directly...")
+            expected = oraclevalidate.load_csv(check_csv_path)
+            oraclevalidate.validate(output_json_path, expected, result_csv_path)
+            print(f"✅ Validation completed and written to {result_csv_path}")
         else:
             print("⚠️ No output captured from DBMS_OUTPUT.")
     except Exception as e:

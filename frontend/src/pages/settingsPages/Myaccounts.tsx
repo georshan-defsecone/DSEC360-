@@ -12,15 +12,14 @@ const Myaccounts = () => {
   const [useremail, setUserEmail] = useState("");
   const [role, setRole] = useState("User");
 
-  const [showPasswordCard, setShowPasswordCard] = useState(false);
   const [showEditCard, setShowEditCard] = useState(false);
+
+  const [newUsername, setNewUsername] = useState("");
+  const [newEmail, setNewEmail] = useState("");
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  const [newUsername, setNewUsername] = useState("");
-  const [newEmail, setNewEmail] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,31 +36,39 @@ const Myaccounts = () => {
     fetchData();
   }, []);
 
-  const handleSavePassword = () => {
-    if (newPassword !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
-    console.log("Password updated:", {
-      currentPassword,
-      newPassword,
-      confirmPassword,
-    });
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setShowPasswordCard(false);
-  };
-
   const handleSaveEdit = async () => {
     const updatedData: any = {};
     if (newUsername) updatedData.username = newUsername;
     if (newEmail) updatedData.email = newEmail;
 
     try {
-      const response = await api.put("updateuser/", updatedData);
-      setUserName(response.data.username);
-      setUserEmail(response.data.email);
+      if (Object.keys(updatedData).length > 0) {
+        const response = await api.put("updateuser/", updatedData);
+        setUserName(response.data.username);
+        setUserEmail(response.data.email);
+      }
+
+      if (currentPassword || newPassword || confirmPassword) {
+        if (!currentPassword || !newPassword || !confirmPassword) {
+          alert("Please fill out all password fields.");
+          return;
+        }
+
+        if (newPassword !== confirmPassword) {
+          alert("Passwords do not match");
+          return;
+        }
+
+        await api.put("updateuser/password", {
+          current_password: currentPassword,
+          new_password: newPassword,
+        });
+
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      }
+
       setShowEditCard(false);
     } catch (error) {
       console.error("Error updating user information:", error);
@@ -72,6 +79,9 @@ const Myaccounts = () => {
   const handleEditCardOpen = () => {
     setNewUsername("");
     setNewEmail("");
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
     setShowEditCard(true);
   };
 
@@ -127,125 +137,106 @@ const Myaccounts = () => {
 
                 <div className="pt-4">
                   <Button
-                    onClick={() => setShowPasswordCard(true)}
-                    className="bg-black text-white hover:bg-gray-800"
+                    onClick={handleEditCardOpen}
+                    className="bg-black text-white hover:bg-gray-800 cursor-pointer rounded-none"
                   >
-                    Change Password
+                    Edit
                   </Button>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
-
-        {/* Edit Button Below the Card */}
-        <div className="w-[70%] mt-4 ml-48 flex justify-end">
-          <Button
-            onClick={handleEditCardOpen}
-            className="bg-black text-white hover:bg-gray-800 w-20"
-          >
-            Edit
-          </Button>
-        </div>
       </div>
 
-      {/* Change Password Modal */}
-      {showPasswordCard && (
-        <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="pointer-events-auto w-xl">
-            <Card className="w-full max-w-lg rounded-none shadow-2xl relative">
-              <CardContent className="p-8 space-y-6">
-                <button
-                  className="absolute top-3 right-3 text-gray-500 hover:text-black"
-                  onClick={() => setShowPasswordCard(false)}
-                >
-                  <X />
-                </button>
-                <h2 className="text-xl font-semibold text-center">
-                  Change Password
-                </h2>
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-600">
-                    Current Password
-                  </label>
-                  <Input
-                    type="password"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Enter your current password"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-600">New Password</label>
-                  <Input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Enter new password"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-600">
-                    Confirm Password
-                  </label>
-                  <Input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Retype new password"
-                  />
-                </div>
-                <div className="pt-4">
-                  <Button
-                    onClick={handleSavePassword}
-                    className="bg-black text-white hover:bg-gray-800 w-full"
-                  >
-                    Save
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
-
-      {/* Edit User Modal */}
+      {/* Edit Modal */}
       {showEditCard && (
-        <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="pointer-events-auto w-xl">
-            <Card className="w-full max-w-lg shadow-2xl relative rounded-none">
-              <CardContent className="p-8 space-y-6">
+        <div className="absolute inset-0 flex items-center justify-center z-50 ">
+          <div className="pointer-events-auto w-full max-w-3xl">
+            <Card className="w-full shadow-2xl relative rounded-none">
+              <CardContent className="p-8">
                 <button
-                  className="absolute top-3 right-3 text-gray-500 hover:text-black"
+                  className="absolute top-3 right-3 text-gray-500 hover:text-black cursor-pointer rounded-none"
                   onClick={() => setShowEditCard(false)}
                 >
                   <X />
                 </button>
-                <h2 className="text-xl font-semibold text-center">
+                <h2 className="text-xl font-semibold text-center mb-6">
                   Edit User Info
                 </h2>
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-600">Username</label>
-                  <Input
-                    type="text"
-                    value={newUsername}
-                    onChange={(e) => setNewUsername(e.target.value)}
-                    placeholder="Enter new username (Leave blank to keep current)"
-                  />
+
+                <div className="flex flex-col md:flex-row gap-8">
+                  {/* Left: Profile Info */}
+                  <div className="flex-1 space-y-4">
+                    {/* Username */}
+                    <div className="space-y-1">
+                      <label className="text-sm text-gray-600">Username</label>
+                      <Input
+                        type="text"
+                        value={newUsername}
+                        onChange={(e) => setNewUsername(e.target.value)}
+                        placeholder="Enter new username"
+                      />
+                    </div>
+
+                    {/* Email */}
+                    <div className="space-y-1">
+                      <label className="text-sm text-gray-600 ">Email</label>
+                      <Input
+                        type="email"
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                        placeholder="Enter new email"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right: Password Update */}
+                  <div className="flex-1 space-y-4">
+                    <h3 className="text-md font-semibold text-gray-700">
+                      Change Password (Optional)
+                    </h3>
+
+                    <div className="space-y-1">
+                      <label className="text-sm text-gray-600">
+                        Current Password
+                      </label>
+                      <Input
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="Enter current password"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm text-gray-600">New Password</label>
+                      <Input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Enter new password"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm text-gray-600">
+                        Confirm New Password
+                      </label>
+                      <Input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Retype new password"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-600">Email</label>
-                  <Input
-                    type="email"
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                    placeholder="Enter new email (Leave blank to keep current)"
-                  />
-                </div>
-                <div className="pt-4">
+
+                <div className="pt-6">
                   <Button
                     onClick={handleSaveEdit}
-                    className="bg-black text-white hover:bg-gray-800 w-full"
+                    className="bg-black text-white hover:bg-gray-800 w-full cursor-pointer rounded-none"
                   >
                     Save Changes
                   </Button>

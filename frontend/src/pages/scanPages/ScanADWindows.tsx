@@ -140,7 +140,7 @@ function ScanADWindows() {
                 />
                 {assetDiscoveryMethod === "upload" && (
                     <>
-                        <Button type="button">Upload</Button>
+                        <Button type="button" className="rounded-none">Upload</Button>
                     </>
                 )}
                 {assetDiscoveryMethod === "remote" && (
@@ -314,7 +314,7 @@ function ScanADWindows() {
                                                 <button
                                                     type="button"
                                                     onClick={prevPage}
-                                                    className={`px-4 py-2 rounded cursor-pointer ${
+                                                    className={`px-4 py-2 rounded-none cursor-pointer ${
                                                         page === 1
                                                             ? "bg-gray-300"
                                                             : "bg-black text-white"
@@ -330,7 +330,7 @@ function ScanADWindows() {
                                                 {page === 3 ? (
                                                     <button
                                                         type="button"
-                                                        className="px-4 py-2 bg-black text-white"
+                                                        className="px-4 py-2 bg-black text-white rounded-none"
                                                         onClick={async () => {
                                                             const isValid = await validateCurrentPage();
                                                             if (isValid) {
@@ -344,7 +344,7 @@ function ScanADWindows() {
                                                     <button
                                                         type="button"
                                                         onClick={nextPage}
-                                                        className="px-4 py-2 bg-black w-25 text-white rounded cursor-pointer"
+                                                        className="px-4 py-2 bg-black w-25 text-white rounded-none cursor-pointer"
                                                     >
                                                         Next
                                                     </button>

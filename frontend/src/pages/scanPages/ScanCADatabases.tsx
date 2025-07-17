@@ -823,7 +823,7 @@ const ScanCADatabases = () => {
               </div>
               <div className="flex items-center">
                 <p className="block w-70">Private Key</p>
-                <Button>Add file</Button>
+                <Button className="rounded-none">Add file</Button>
               </div>
               <div className="flex items-center">
                 <p className="block w-70">Private Key Passphrase</p>
@@ -862,11 +862,11 @@ const ScanCADatabases = () => {
               </div>
               <div className="flex items-center">
                 <p className="block w-70">User Certificate</p>
-                <Button>Add file</Button>
+                <Button className="rounded-none">Add file</Button>
               </div>
               <div className="flex items-center">
                 <p className="block w-70">Private Key</p>
-                <Button>Add file</Button>
+                <Button className="rounded-none">Add file</Button>
               </div>
               <div className="flex items-center">
                 <p className="block w-70">Private Key Passphrase</p>
@@ -897,7 +897,7 @@ const ScanCADatabases = () => {
           <div className="flex justify-between items-center">
             <Button
               type="button"
-              className="px-4 py-2 bg-black text-white rounded"
+              className="px-4 py-2 bg-black text-white rounded-none"
               onClick={() => console.log("Uploading config")}
             >
               Upload config
@@ -1004,7 +1004,7 @@ const ScanCADatabases = () => {
               <>
                 <div className="flex items-center">
                   <p className="block w-70">known_hosts file</p>
-                  <Button>Add file</Button>
+                  <Button className="rounded-none">Add file</Button>
                 </div>
                 <div className="flex items-center">
                   <p className="block w-70">Preferred port</p>
@@ -1375,7 +1375,7 @@ const ScanCADatabases = () => {
                   <button
                     type="button"
                     onClick={prevPage}
-                    className={`px-4 py-2 rounded cursor-pointer ${
+                    className={`px-4 py-2 rounded-none cursor-pointer ${
                       page === 1 ? "bg-gray-300" : "bg-black text-white"
                     }`}
                     disabled={page === 1}
@@ -1394,14 +1394,14 @@ const ScanCADatabases = () => {
                     <button
                       type="button"
                       onClick={handleSubmit}
-                      className="px-4 py-2 bg-green-500 w-25 text-white rounded cursor-pointer"
+                      className="px-4 py-2 bg-green-500 w-25 text-white rounded-none cursor-pointer"
                     >
                       Submit
                     </button>
                   ) : formData.auditMethod === "agent" && page === 4 ? (
                     <Button
                       type="button"
-                      className="px-4 py-2 bg-black text-white h-10 rounded cursor-pointer"
+                      className="px-4 py-2 bg-black text-white h-10 rounded-none cursor-pointer"
                       onClick={downloadScript} // no args, uses formData from closure
                     >
                       Download script
@@ -1410,7 +1410,7 @@ const ScanCADatabases = () => {
                     <button
                       type="button"
                       onClick={nextPage}
-                      className="px-4 py-2 bg-black w-25 text-white rounded cursor-pointer"
+                      className="px-4 py-2 bg-black w-25 text-white rounded-none cursor-pointer"
                     >
                       Next
                     </button>

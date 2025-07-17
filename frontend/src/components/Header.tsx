@@ -55,14 +55,14 @@ export default function Header({ title }: { title: string }) {
       <div className="text-3xl font-bold ml-8 text-gray-800">{title}</div>
 
       {/* Navigation + User Dropdown */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-6 ml-auto">
         <Link to="/">
-          <Button className="px-4 py-2 bg-black text-white rounded cursor-pointer">
+          <Button className="w-25 px-4 py-2 bg-black text-white rounded cursor-pointer">
             Home
           </Button>
         </Link>
         <Link to="/scan">
-          <Button className="px-4 py-2 bg-black text-white rounded cursor-pointer">
+          <Button className="w-25 px-4 py-2 bg-black text-white rounded cursor-pointer">
             New Scan
           </Button>
         </Link>
@@ -99,16 +99,16 @@ export default function Header({ title }: { title: string }) {
             {/* Actions */}
             <div className="flex items-center justify-between gap-4 px-2 py-1 text-sm">
               <button
-                className="flex items-center gap-2 px-3 py-2 bg-white text-black hover:bg-black hover:text-white rounded-md transition-all duration-200 ease-in-out"
+                className="flex items-center cursor-pointer gap-2 px-3 py-2 bg-white text-black hover:bg-black hover:text-white rounded-md transition-all duration-200 ease-in-out"
                 onClick={() => navigate("/settings/myaccounts")}
               >
-                <User className="w-4 h-4" />
+                <User className="w-4 h-4 " />
                 My Profile
               </button>
 
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-1 text-red-600 hover:text-red-800 transition"
+                className="flex items-center gap-1 cursor-pointer text-red-600 hover:text-red-800 transition"
               >
                 <LogOut className="h-4 w-4" />
                 Logout

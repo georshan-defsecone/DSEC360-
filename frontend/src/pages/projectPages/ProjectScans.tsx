@@ -7,15 +7,6 @@ import Sidebar from "@/components/Sidebar";
 import ScanPieChart from "@/components/ScanPieChart";
 
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
 import ReactECharts from "echarts-for-react";
 
 const ProjectScans = () => {
@@ -39,7 +30,7 @@ const ProjectScans = () => {
           ...new Set(response.data.map((scan: any) => scan.scan_type)),
         ];
         setScanTypeFilters(allTypes);
-        setSelectedScanTypes(allTypes); // Preselect all by default
+        setSelectedScanTypes(allTypes);
       } catch (err) {
         console.error("Failed to fetch scans", err);
       }
@@ -192,6 +183,20 @@ const ProjectScans = () => {
         .includes(searchTerm.toLowerCase())
   );
 
+  const formatDateWithSuffix = (date: Date) => {
+    const day = date.getDate();
+    const month = date.toLocaleString("en-GB", { month: "long" });
+    const suffix =
+      day % 10 === 1 && day !== 11
+        ? "st"
+        : day % 10 === 2 && day !== 12
+        ? "nd"
+        : day % 10 === 3 && day !== 13
+        ? "rd"
+        : "th";
+    return `${day}${suffix} ${month}`;
+  };
+
   return (
     <div className="flex h-screen text-black">
       <Sidebar settings={false} scanSettings={false} homeSettings={true} />
@@ -206,13 +211,11 @@ const ProjectScans = () => {
         </Header>
 
         <div className="w-full px-6 mt-4 space-y-8">
-          {/* ✅ Full-width Bar Chart with Filters */}
           <div className="bg-white border border-gray-200 shadow p-4 relative">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
               Scan Results Overview
             </h3>
 
-            {/* 🔘 Dynamic Scan Type Filters (as checkboxes above pie chart) */}
             <div className="mb-4 flex flex-wrap gap-3">
               {scanTypeFilters.map((type) => (
                 <label
@@ -238,9 +241,7 @@ const ProjectScans = () => {
             />
           </div>
 
-          {/* ✅ Scan Table and Pie Chart side by side */}
           <div className="flex gap-6">
-            {/* Scan Table */}
             <Card className="w-2/3 shadow-lg border rounded-none border-gray-200 bg-white">
               <CardContent className="p-5">
                 <div className="flex justify-between items-center mb-2">
@@ -261,7 +262,7 @@ const ProjectScans = () => {
                 <div className="relative">
                   <div className="overflow-y-auto h-[410px]">
                     <table className="table-fixed w-full text-sm border-collapse">
-                      <thead className="sticky top-0 z-10 bg-gray-100 text-gray-700 border-b border-gray-400">
+                      <thead className="sticky top-0 z-10 bg-gray-200 text-gray-700 border-b border-gray-400">
                         <tr>
                           <th className="w-[30%] text-left px-4 py-2">
                             Scan Name
@@ -285,37 +286,86 @@ const ProjectScans = () => {
                             </td>
                           </tr>
                         ) : (
-                          filteredScans.map((scan, i) => (
-                            <tr
-                              key={i}
-                              onClick={() => goToScan(scan.scan_name)}
-                              className={`cursor-pointer hover:bg-gray-100 border-b border-gray-100 ${
-                                i % 2 === 0 ? "bg-white" : "bg-gray-50"
-                              }`}
-                            >
-                              <td className="py-3 px-4 font-medium border-none">
-                                {scan.scan_name}
-                              </td>
-                              <td className="py-3 px-4 border-none">
-                                {scan.scan_author}
-                              </td>
-                              <td className="py-3 px-4 border-none">
-                                {scan.scan_time
-                                  ? new Date(scan.scan_time).toLocaleTimeString(
-                                      [],
-                                      {
+                          filteredScans.map((scan, i) => {
+                            const isUploadRequired =
+                              scan.scan_data?.auditMethod === "agent" &&
+                              !scan.scan_result;
+
+                            return (
+                              <tr
+                                key={i}
+                                onClick={() => {
+                                  if (!isUploadRequired)
+                                    goToScan(scan.scan_name);
+                                }}
+                                className={`border-b border-gray-100 ${
+                                  isUploadRequired
+                                    ? "cursor-default"
+                                    : "cursor-pointer hover:bg-gray-100"
+                                } ${i % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
+                              >
+                                <td className="py-3 px-4 font-medium border-none">
+                                  {scan.scan_name}
+                                </td>
+                                <td className="py-3 px-4 border-none">
+                                  {scan.scan_author}
+                                </td>
+                                <td className="py-3 px-4 border-none">
+                                  {scan.scan_time ? (
+                                    <>
+                                      {formatDateWithSuffix(
+                                        new Date(scan.scan_time)
+                                      )}
+                                      ,{" "}
+                                      {new Date(
+                                        scan.scan_time
+                                      ).toLocaleTimeString("en-GB", {
                                         hour: "2-digit",
                                         minute: "2-digit",
-                                        hour12: true,
-                                      }
-                                    )
-                                  : "N/A"}
-                              </td>
-                              <td className="py-3 px-4 border-none">
-                                {scan.scan_status}
-                              </td>
-                            </tr>
-                          ))
+                                        hour12: false,
+                                      })}
+                                    </>
+                                  ) : (
+                                    "N/A"
+                                  )}
+                                </td>
+                                <td className="py-3 px-4 border-none flex items-center gap-2 relative">
+                                  <span>{scan.scan_status}</span>
+                                  {isUploadRequired && (
+                                    <>
+                                      <input
+                                        type="file"
+                                        accept="*"
+                                        style={{ display: "none" }}
+                                        id={`file-upload-${scan.id}`}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onChange={(e) => {
+                                          e.stopPropagation();
+                                          const file = e.target.files?.[0];
+                                          if (file) {
+                                            console.log("Selected file:", file);
+                                            // TODO: upload logic here
+                                          }
+                                        }}
+                                      />
+                                      <button
+                                        className="text-xs bg-blue-600 cursor-pointer text-white px-2 py-1 rounded hover:bg-blue-700"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const input = document.getElementById(
+                                            `file-upload-${scan.id}`
+                                          ) as HTMLInputElement;
+                                          input?.click();
+                                        }}
+                                      >
+                                        Upload
+                                      </button>
+                                    </>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })
                         )}
                       </tbody>
                     </table>
@@ -324,7 +374,6 @@ const ProjectScans = () => {
               </CardContent>
             </Card>
 
-            {/* Pie Chart */}
             <div className="w-1/3 bg-white border border-gray-200 shadow flex items-center justify-center">
               <ScanPieChart
                 data={scanTypeCounts}
