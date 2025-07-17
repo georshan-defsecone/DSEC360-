@@ -104,11 +104,11 @@ def mariadb_connection(excluded_audit, user_name, password_name, host_name, port
             if normalized_compliance == "mariadb106":
                 script_path = os.path.join(base_dir,"Configuration_Audit","Database","MARIA","CIS", "MariaDB_10_6_cis_query.sql")
                 json_path = os.path.join(base_dir,"Configuration_Audit","Database","MARIA","CIS", "mariaDB_10_6_query_result.json")
-                json_data = connection_maria.remote.run_script_and_save_json(conn, script_path, json_path)
+                json_data = connection_maria.run_script_and_save_json(conn, script_path, json_path)
             elif normalized_compliance == "mariadb1011":
                 script_path = os.path.join(base_dir,"Configuration_Audit","Database","MARIA","CIS", "MariaDB_10_11_cis_query.sql")
                 json_path = os.path.join(base_dir,"Configuration_Audit","Database","MARIA", "CIS", "mariaDB_10_11_query_result.json")
-                json_data = connection_maria.remote.run_script_and_save_json(conn, script_path, json_path)
+                json_data = connection_maria.run_script_and_save_json(conn, script_path, json_path)
 
             conn.close()
             print(json_data)
@@ -244,7 +244,11 @@ def linux_connection(script_name, username, password, ip, port, result_name="res
         host=ip,
         user=username,
         port=port,
-        connect_kwargs={"password":password},
+        connect_kwargs={
+            "password":password,
+            "allow_agent": False,
+            "look_for_keys": False
+            },
         config=config
     )
 
