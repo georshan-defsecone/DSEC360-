@@ -1,0 +1,26 @@
+audit_id: "5.2.2"
+audit_name: "Ensure sudo commands use pty"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  # Check that use_pty is set
+  if grep -rPiq -- '^\h*Defaults\h+([^#\n\r]+,\h*)?use_pty\b' /etc/sudoers*; then
+    l_output=" - Defaults use_pty is set"
+  else
+    l_output2=" - Defaults use_pty is not set"
+  fi
+
+  # Check that !use_pty is not set
+  if grep -rPiq -- '^\h*Defaults\h+([^#\n\r]+,\h*)?!use_pty\b' /etc/sudoers*; then
+    l_output2="$l_output2\n - Defaults !use_pty is present"
+  fi
+
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+}
+"""

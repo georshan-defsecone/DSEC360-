@@ -1,0 +1,23 @@
+audit_id: "5.4.2.3"
+audit_name: "Ensure root is the only GID 0 account"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+  bad_groups=()
+
+  while IFS=: read -r group _ gid _; do
+    if [[ "$gid" == "0" && "$group" != "root" ]]; then
+      bad_groups+=("$group:$gid")
+    fi
+  done < /etc/group
+
+  if [[ "${#bad_groups[@]}" -eq 0 ]]; then
+    l_output=" - Only 'root' group has GID 0"
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    l_output2=" - Groups other than 'root' found with GID 0:\n   ${bad_groups[*]}"
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+}
+"""

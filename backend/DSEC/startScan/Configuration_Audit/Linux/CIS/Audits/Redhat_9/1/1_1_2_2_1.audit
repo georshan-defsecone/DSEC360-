@@ -1,0 +1,31 @@
+audit_id: "1.1.2.2.1"
+audit_name: "Ensure /dev/shm is a separate partition"
+audit_script: """
+{
+unset a_output
+unset a_output2
+unset l_output
+
+l_output=""
+l_findmnt_output="$(findmnt -kn /dev/shm 2>/dev/null)"
+
+if [ -z "$l_findmnt_output" ]; then
+    a_output2+=(" - /dev/shm is not mounted")
+else
+    a_output+=(" - /dev/shm is mounted")
+    l_output="$l_findmnt_output"
+fi
+
+# Display INFO
+[ -n "$l_output" ] && echo -e "\n\n -- INFO --\n - findmnt output:\n$l_output"
+
+# Display Audit Result
+if [ "${#a_output2[@]}" -le 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for audit failure:" "${a_output2[@]}"
+    [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "- Correctly set:" "${a_output[@]}"
+fi
+
+}
+"""

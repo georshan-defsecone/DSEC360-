@@ -1,0 +1,29 @@
+audit_id: "4.2.5"
+audit_name: "Ensure firewalld service is enabled and running"
+audit_script: """
+{
+output="" fail_output=""
+
+# Check if firewalld is enabled
+if systemctl is-enabled firewalld 2>/dev/null | grep -q '^enabled'; then
+    output+="\n - firewalld is enabled"
+else
+    fail_output+="\n - firewalld is not enabled"
+fi
+
+# Check if firewalld is running
+if firewall-cmd --state 2>/dev/null | grep -q '^running'; then
+    output+="\n - firewalld is running"
+else
+    fail_output+="\n - firewalld is not running"
+fi
+
+# Final result
+if [ -z "$fail_output" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **$output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **$fail_output"
+    [ -n "$output" ] && echo -e "\n - Correctly set:$output"
+fi
+}
+""""

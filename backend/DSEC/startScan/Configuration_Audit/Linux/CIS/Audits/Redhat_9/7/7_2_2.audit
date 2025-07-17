@@ -1,0 +1,18 @@
+audit_id: "7.2.2"
+audit_name: "Ensure /etc/shadow password fields are not empty"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Find users with empty password fields in /etc/shadow
+l_empty_pw=$(awk -F: '($2 == "") { print $1 " does not have a password "}' /etc/shadow)
+
+if [ -z "$l_empty_pw" ]; then
+  l_output="\n - All users have passwords set in /etc/shadow."
+  echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+else
+  l_output2="\n - The following user(s) do not have passwords set in /etc/shadow:\n$l_empty_pw"
+  echo -e "\n- Audit Result:\n ** FAIL **\n$l_output2"
+fi
+}
+"""

@@ -1,0 +1,69 @@
+audit_id: "6.3.3.10"
+audit_name: "Ensure successful file system mounts are collected"
+audit_script: """
+{
+echo "### Audit Check: Unauthorized Mount Syscalls"
+
+UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+if [ -z "$UID_MIN" ]; then
+  echo -e "\n- Audit Result:"
+  echo " ** FAIL **"
+  echo " - Could not determine UID_MIN from /etc/login.defs"
+  exit 1
+fi
+
+expected_disk_rules=(
+  "-a always,exit -F arch=b64 -S mount -F auid>=${UID_MIN} -F auid!=unset -k mounts"
+  "-a always,exit -F arch=b32 -S mount -F auid>=${UID_MIN} -F auid!=unset -k mounts"
+)
+
+expected_run_rules=(
+  "-a always,exit -F arch=b64 -S mount -F auid>=${UID_MIN} -F auid!=-1 -F key=mounts"
+  "-a always,exit -F arch=b32 -S mount -F auid>=${UID_MIN} -F auid!=-1 -F key=mounts"
+)
+
+missing_disk=()
+on_disk_rules=$(awk '
+  /^\s*-a\s+always,exit/ &&
+  /-F\s+arch=b(32|64)/ &&
+  /-S/ &&
+  /mount/ &&
+  /-F\s+auid/ &&
+  (/key=| -k /)
+' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+for rule in "${expected_disk_rules[@]}"; do
+  grep -qF -- "$rule" <<< "$on_disk_rules" || missing_disk+=("$rule")
+done
+
+if [ "${#missing_disk[@]}" -eq 0 ]; then
+  echo -e "\n- On-Disk Audit Result:"
+  echo " ** PASS **"
+  echo -e " - All expected on-disk audit rules for mount are present."
+
+else
+  echo -e "\n- On-Disk Audit Result:"
+  echo " ** FAIL **"
+  echo " - Missing on-disk rules:"
+  printf '   %s\n' "${missing_disk[@]}"
+fi
+
+missing_runtime=()
+running_rules=$(auditctl -l 2>/dev/null)
+
+for rule in "${expected_run_rules[@]}"; do
+  grep -qF -- "$rule" <<< "$running_rules" || missing_runtime+=("$rule")
+done
+
+if [ "${#missing_runtime[@]}" -eq 0 ]; then
+  echo -e "\n- Runtime Audit Result:"
+  echo "PASS"
+  echo -e " - All expected running audit rules for mount are present."
+else
+  echo -e "\n- Runtime Audit Result:"
+  echo "FAIL:"
+  echo " - Missing running rules:"
+  printf '   %s\n' "${missing_runtime[@]}"
+fi
+}
+""""

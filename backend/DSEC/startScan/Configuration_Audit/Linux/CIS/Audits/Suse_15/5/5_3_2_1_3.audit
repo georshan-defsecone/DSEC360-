@@ -1,0 +1,39 @@
+audit_id: "5.3.2.1.3"
+audit_name: "Ensure password failed attempts lockout includes root account"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+config="/etc/security/faillock.conf"
+
+# Check if 'even_deny_root' is set
+grep -Piq '^\s*even_deny_root\b' "$config" && \
+    a_output+=(" - 'even_deny_root' is set") || \
+    a_output2+=(" - 'even_deny_root' is not set")
+
+# Check if 'root_unlock_time' is set and valid
+root_unlock_time=$(awk -F= '/^\s*root_unlock_time\s*=/ {
+    gsub(/ /, "", $2); print $2
+}' "$config" | head -n1)
+
+if [[ -n "$root_unlock_time" ]]; then
+    if ! [[ "$root_unlock_time" =~ ^[0-9]+$ ]]; then
+        a_output2+=(" - 'root_unlock_time' is not a valid number: \"$root_unlock_time\"")
+    elif [ "$root_unlock_time" -lt 60 ]; then
+        a_output2+=(" - 'root_unlock_time' is set to \"$root_unlock_time\", which is less than 60 seconds")
+    else
+        a_output+=(" - 'root_unlock_time' is set to \"$root_unlock_time\" seconds")
+    fi
+else
+    a_output+=(" - 'root_unlock_time' is not set")
+fi
+
+# Final output
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+    [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "- Correctly set:" "${a_output[@]}"
+fi
+}
+""""

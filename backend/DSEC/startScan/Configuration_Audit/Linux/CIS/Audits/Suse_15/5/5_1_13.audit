@@ -1,0 +1,21 @@
+audit_id: "5.1.13"
+audit_name: "Ensure sshd IgnoreRhosts is enabled"
+audit_script: """
+{
+l_match_warning=""
+l_value="$(sshd -T 2>/dev/null | awk '$1 == "ignorerhosts" {print $2}')"
+
+# Check for Match blocks
+if grep -Piq '^\s*match\s+' /etc/ssh/sshd_config; then
+  l_match_warning=" - Match blocks are present in sshd_config. Use 'sshd -T -C user=<username>' to verify IgnoreRhosts is not overridden."
+fi
+
+if [[ "$l_value" == "yes" ]]; then
+  echo -e "\n- Audit Result:\n ** PASS **\n - IgnoreRhosts is correctly set to \"yes\""
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n - IgnoreRhosts is not set to \"yes\". Current value: \"${l_value:-not set}\""
+fi
+
+[[ -n "$l_match_warning" ]] && echo -e "\n ** WARNING **\n$l_match_warning"
+}
+""""

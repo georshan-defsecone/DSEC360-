@@ -1,0 +1,22 @@
+audit_id: "6.2.2.3"
+audit_name: "Ensure journald Compress is configured"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check if Compress is explicitly set to 'yes'
+if systemd-analyze cat-config systemd/journald.conf systemd/journald.conf.d/* 2>/dev/null | grep -Eq '^Compress=yes'; then
+    l_output="$l_output\n - Compress is correctly set to \"yes\""
+else
+    l_output2="$l_output2\n - Compress is not explicitly set to \"yes\" in journald configuration"
+fi
+
+# Output audit result
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output"
+fi
+}
+"""

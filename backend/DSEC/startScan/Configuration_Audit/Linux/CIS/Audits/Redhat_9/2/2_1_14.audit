@@ -1,0 +1,36 @@
+audit_id: "2.1.14"
+audit_name: "Ensure snmp services are not in use"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check if net-snmp package is installed
+if rpm -q net-snmp > /dev/null 2>&1; then
+    l_output="$l_output\n - Package 'net-snmp' is installed"
+
+    # Check if snmpd.service is enabled
+    if systemctl is-enabled snmpd.service 2>/dev/null | grep -q '^enabled'; then
+        l_output2="$l_output2\n - snmpd.service is enabled"
+    else
+        l_output="$l_output\n - snmpd.service is not enabled"
+    fi
+
+    # Check if snmpd.service is active
+    if systemctl is-active snmpd.service 2>/dev/null | grep -q '^active'; then
+        l_output2="$l_output2\n - snmpd.service is active"
+    else
+        l_output="$l_output\n - snmpd.service is not active"
+    fi
+else
+    l_output="$l_output\n - Package 'net-snmp' is not installed"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+}
+"""

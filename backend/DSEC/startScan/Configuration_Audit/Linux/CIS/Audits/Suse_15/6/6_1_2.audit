@@ -1,0 +1,28 @@
+audit_id: "6.1.2"
+audit_name: "Ensure filesystem integrity is regularly checked"
+audit_script: """
+{
+l_output=""
+
+# Check for cron-based scheduling
+cron_check=$(grep -Ers '^([^#]+\s+)?(\/usr\/s?bin\/|^\s*)aide(\.wrapper)?\s(--?\S+\s)*(--(check|update)|\$AIDEARGS)\b' /etc/cron.* /etc/crontab /var/spool/cron/ 2>/dev/null)
+
+# Check for systemd timer
+svc_enabled=$(systemctl is-enabled aidecheck.service 2>/dev/null)
+tmr_enabled=$(systemctl is-enabled aidecheck.timer 2>/dev/null)
+tmr_status=$(systemctl is-active aidecheck.timer 2>/dev/null)
+
+# Determine result
+if [[ -n "$cron_check" ]]; then
+    echo -e "\n** PASS **\n - AIDE is scheduled using cron:\n$cron_check"
+elif [[ "$svc_enabled" == "enabled" && "$tmr_enabled" == "enabled" && "$tmr_status" == "active" ]]; then
+    echo -e "\n** PASS **\n - AIDE is scheduled via systemd:\n - aidecheck.service is enabled\n - aidecheck.timer is enabled and active"
+else
+    echo -e "\n** FAIL **\n - AIDE is not scheduled properly\n"
+    [[ -z "$cron_check" ]] && echo " - No cron job found"
+    [[ "$svc_enabled" != "enabled" ]] && echo " - aidecheck.service is not enabled"
+    [[ "$tmr_enabled" != "enabled" ]] && echo " - aidecheck.timer is not enabled"
+    [[ "$tmr_status" != "active" ]] && echo " - aidecheck.timer is not active"
+fi
+}
+""""

@@ -1,0 +1,57 @@
+audit_id: "7.1.12"
+audit_name: "Ensure no files or directories without an owner and a group exist"
+audit_script: """
+{
+l_output="" l_output2=""
+a_nouser=()
+a_nogroup=()
+
+# Define excluded paths
+a_path=(
+  ! -path "/run/user/*"
+  ! -path "/proc/*"
+  ! -path "*/containerd/*"
+  ! -path "*/kubelet/pods/*"
+  ! -path "*/kubelet/plugins/*"
+  ! -path "/sys/fs/cgroup/memory/*"
+  ! -path "/var/*/private/*"
+)
+
+# Scan mounted filesystems (excluding remote/temporary mounts)
+while IFS= read -r l_mount; do
+  while IFS= read -r -d $'\0' l_file; do
+    if [ -e "$l_file" ]; then
+      while IFS=: read -r l_user l_group; do
+        [ "$l_user" = "UNKNOWN" ] && a_nouser+=("$l_file")
+        [ "$l_group" = "UNKNOWN" ] && a_nogroup+=("$l_file")
+      done < <(stat -Lc '%U:%G' "$l_file")
+    fi
+  done < <(find "$l_mount" -xdev \( "${a_path[@]}" \) \( -type f -o -type d \) \( -nouser -o -nogroup \) -print0 2>/dev/null)
+done < <(findmnt -Dkerno fstype,target | awk '($1 !~ /^(nfs|proc|smb|vfat|iso9660|efivarfs|selinuxfs)$/ && $2 !~ /^\/run\/user\//) { print $2 }')
+
+# Report unowned files
+if (( ${#a_nouser[@]} == 0 )); then
+  l_output+="\n - No unowned files or directories exist on the local filesystem."
+else
+  l_output2+="\n - ${#a_nouser[@]} unowned file(s) or directory(ies) found:\n$(printf '%s\n' "${a_nouser[@]}")\n - End of list"
+fi
+
+# Report ungrouped files
+if (( ${#a_nogroup[@]} == 0 )); then
+  l_output+="\n - No ungrouped files or directories exist on the local filesystem."
+else
+  l_output2+="\n - ${#a_nogroup[@]} ungrouped file(s) or directory(ies) found:\n$(printf '%s\n' "${a_nogroup[@]}")\n - End of list"
+fi
+
+# Cleanup
+unset a_path a_nouser a_nogroup
+
+# Final result
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n$l_output2"
+  [ -n "$l_output" ] && echo -e "\n- Correctly configured:\n$l_output"
+fi
+}
+"""

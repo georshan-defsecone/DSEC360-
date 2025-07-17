@@ -1,0 +1,126 @@
+audit_id: "6.3.3.19"
+audit_name: "Ensure kernel module loading unloading and modification is collected"
+audit_script: """
+{
+UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+overall_fail=0
+failures=()
+successes=()
+
+echo "### Kernel Module Audit Check ###"
+
+# 1. On-Disk: syscall rules
+on_disk_syscall=$(awk '
+/^ *-a *always,exit/ &&
+/ -F *arch=b(32|64)/ &&
+(/ -F auid!=unset/ || / -F auid!=-1/ || / -F auid!=4294967295/) &&
+/ -S/ &&
+(/init_module/ || /finit_module/ || /delete_module/ || /create_module/ || /query_module/) &&
+(/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)
+' /etc/audit/rules.d/*.rules)
+
+if [[ -n "$on_disk_syscall" ]]; then
+  successes+=("On-disk syscall rule exists")
+else
+  failures+=("Missing syscall rule in on-disk audit config")
+  overall_fail=1
+fi
+
+# 2. On-Disk: execution rule for /usr/bin/kmod
+if [[ -n "$UID_MIN" ]]; then
+  on_disk_exec=$(awk -v uidmin="$UID_MIN" '
+  /^ *-a *always,exit/ &&
+  (/ -F auid!=unset/ || / -F auid!=-1/ || / -F auid!=4294967295/) &&
+  / -F auid>=/ &&
+  / -F *perm=x/ &&
+  / -F *path=\/usr\/bin\/kmod/ &&
+  (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)
+  ' /etc/audit/rules.d/*.rules)
+
+  if [[ -n "$on_disk_exec" ]]; then
+    successes+=("On-disk exec rule for /usr/bin/kmod exists")
+  else
+    failures+=("Missing kmod exec rule in on-disk config")
+    overall_fail=1
+  fi
+else
+  failures+=("UID_MIN is unset (on-disk exec check)")
+  overall_fail=1
+fi
+
+# 3. Running: syscall rules
+running_syscall=$(auditctl -l | awk '
+/^ *-a *always,exit/ &&
+/ -F *arch=b(32|64)/ &&
+(/ -F auid!=unset/ || / -F auid!=-1/ || / -F auid!=4294967295/) &&
+/ -S/ &&
+(/init_module/ || /finit_module/ || /delete_module/ || /create_module/ || /query_module/) &&
+(/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)
+')
+
+if [[ -n "$running_syscall" ]]; then
+  successes+=("Running syscall rule loaded")
+else
+  failures+=("Missing syscall rule in running config")
+  overall_fail=1
+fi
+
+# 4. Running: execution rule for /usr/bin/kmod
+if [[ -n "$UID_MIN" ]]; then
+  running_exec=$(auditctl -l | awk -v uidmin="$UID_MIN" '
+  /^ *-a *always,exit/ &&
+  (/ -F auid!=unset/ || / -F auid!=-1/ || / -F auid!=4294967295/) &&
+  / -F auid>=/ &&
+  / -F *perm=x/ &&
+  / -F *path=\/usr\/bin\/kmod/ &&
+  (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)
+  ')
+
+  if [[ -n "$running_exec" ]]; then
+    successes+=("Running exec rule for /usr/bin/kmod loaded")
+  else
+    failures+=("Missing kmod exec rule in running config")
+    overall_fail=1
+  fi
+else
+  failures+=("UID_MIN is unset (running exec check)")
+  overall_fail=1
+fi
+
+# 5. Symlink checks
+kmod_path=$(readlink -f /bin/kmod)
+a_files=(
+  "/usr/sbin/lsmod"
+  "/usr/sbin/rmmod"
+  "/usr/sbin/insmod"
+  "/usr/sbin/modinfo"
+  "/usr/sbin/modprobe"
+  "/usr/sbin/depmod"
+)
+
+for l_file in "${a_files[@]}"; do
+  if [[ -e "$l_file" ]]; then
+    if [[ "$(readlink -f "$l_file")" == "$kmod_path" ]]; then
+      successes+=("$l_file points to /bin/kmod")
+    else
+      failures+=("$l_file does NOT point to /bin/kmod")
+      overall_fail=1
+    fi
+  else
+    failures+=("$l_file file does not exist")
+    overall_fail=1
+  fi
+done
+
+# === Display Outcome ===
+
+echo ""
+if [[ "$overall_fail" -eq 0 ]]; then
+  echo "** PASS **"
+  printf "%s\n" "${successes[@]}"
+else
+  echo "** FAIL **"
+  printf "%s\n" "${failures[@]}"
+fi
+}
+"""

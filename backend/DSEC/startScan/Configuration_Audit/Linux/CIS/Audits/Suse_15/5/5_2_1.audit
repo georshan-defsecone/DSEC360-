@@ -1,0 +1,24 @@
+audit_id: "5.2.1"
+audit_name: "Ensure sudo is installed"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+# Check if sudo is installed via RPM
+if rpm -q sudo &>/dev/null; then
+  l_sudo_version="$(rpm -q sudo)"
+  a_output+=(" - sudo is installed: $l_sudo_version")
+else
+  a_output2+=(" - sudo is not installed.")
+fi
+
+# Print audit result
+if [ "${#a_output2[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${a_output[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${a_output2[@]}"
+fi
+}
+""""

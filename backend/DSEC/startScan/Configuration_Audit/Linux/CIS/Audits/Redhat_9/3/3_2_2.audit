@@ -1,0 +1,66 @@
+audit_id: "3.2.2"
+audit_name: "Ensure tipc kernel module is not available"
+audit_script: """
+{
+l_output3=""
+unset a_output a_output2
+
+l_mod_name="tipc"
+l_mod_type="net"
+l_mod_path="$(readlink -f /lib/modules/**/kernel/$l_mod_type | sort -u)"
+
+f_module_chk() {
+    local a_showconfig=()
+
+    # Collect relevant modprobe config lines
+    while IFS= read -r line; do
+        a_showconfig+=("$line")
+    done < <(modprobe --showconfig | grep -P -- '\b(install|blacklist)\s+'"${l_mod_name//-/_}"'\b')
+
+    # Check if module is currently loaded
+    if ! lsmod | grep -qw "$l_mod_name"; then
+        a_output+=(" - kernel module: \"$l_mod_name\" is not loaded")
+    else
+        a_output2+=(" - kernel module: \"$l_mod_name\" is loaded")
+    fi
+
+    # Check if module is prevented from loading
+    if grep -Pq -- '\binstall\s+'"${l_mod_name//-/_}"'\s+/bin/(true|false)\b' <<< "${a_showconfig[*]}"; then
+        a_output+=(" - kernel module: \"$l_mod_name\" is not loadable")
+    else
+        a_output2+=(" - kernel module: \"$l_mod_name\" is loadable")
+    fi
+
+    # Check if module is blacklisted
+    if grep -Pq -- '\bblacklist\s+'"${l_mod_name//-/_}"'\b' <<< "${a_showconfig[*]}"; then
+        a_output+=(" - kernel module: \"$l_mod_name\" is deny listed")
+    else
+        a_output2+=(" - kernel module: \"$l_mod_name\" is not deny listed")
+    fi
+}
+
+# Check if the module exists in any kernel path
+for l_mod_base_directory in $l_mod_path; do
+    l_mod_fullpath="$l_mod_base_directory/${l_mod_name//-//}"
+
+    if [ -d "$l_mod_fullpath" ] && [ -n "$(ls -A "$l_mod_fullpath")" ]; then
+        l_output3="$l_output3\n - \"$l_mod_base_directory\""
+        f_module_chk
+    else
+        a_output+=(" - kernel module: \"$l_mod_name\" doesn't exist in \"$l_mod_base_directory\"")
+    fi
+done
+
+# Optional: show module existence
+[ -n "$l_output3" ] && echo -e "\n\n -- INFO --\n - module: \"$l_mod_name\" exists in:$l_output3"
+
+# Final output
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for audit failure:" "${a_output2[@]}"
+    [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "- Correctly set:" "${a_output[@]}"
+fi
+}
+
+"""

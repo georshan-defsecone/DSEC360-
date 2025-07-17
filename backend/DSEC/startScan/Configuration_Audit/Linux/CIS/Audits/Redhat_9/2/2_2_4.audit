@@ -1,0 +1,24 @@
+audit_id: "2.2.4"
+audit_name: "Ensure telnet client is not installed"
+audit_script: """
+#!/usr/bin/env bash
+{
+l_output="" l_output2=""
+
+# Check if telnet package is installed
+if rpm -q telnet > /dev/null 2>&1; then
+    l_output2="$l_output2\n - Package 'telnet' is installed"
+else
+    l_output="$l_output\n - Package 'telnet' is not installed"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+}
+
+"""

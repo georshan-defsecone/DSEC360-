@@ -1,0 +1,48 @@
+audit_id: "5.3.3.2.4"
+audit_name: "Ensure password same consecutive characters is configured"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  # --- CONFIGURATION FILE CHECK ---
+  config_files=(/etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf)
+  found_valid_maxrepeat=false
+  for file in "${config_files[@]}"; do
+    if [ -f "$file" ]; then
+      maxrepeat_line=$(grep -Psi -- '^\h*maxrepeat\h*=\h*[1-3]\b' "$file")
+      if [[ -n "$maxrepeat_line" ]]; then
+        l_output="$l_output\n - Valid maxrepeat found in $file: $(echo "$maxrepeat_line" | cut -d: -f2-)"
+        found_valid_maxrepeat=true
+        break  # Respect config precedence
+      fi
+    fi
+  done
+
+  if ! $found_valid_maxrepeat; then
+    l_output2="$l_output2\n - No valid maxrepeat setting (1–3) found in pwquality configuration files"
+  fi
+
+  # --- PAM FILE CHECK FOR OVERRIDES ---
+  pam_files=(/etc/pam.d/system-auth /etc/pam.d/password-auth)
+  for file in "${pam_files[@]}"; do
+    if [ -f "$file" ]; then
+      bad_maxrepeat=$(grep -Psi -- '^\h*password\h+(requisite|required|sufficient)\h+pam_pwquality\.so\h+([^#\n\r]+\h+)?maxrepeat\h*=\h*(0|[4-9]|[1-9][0-9]+)\b' "$file")
+      if [[ -n "$bad_maxrepeat" ]]; then
+        l_output2="$l_output2\n - Invalid maxrepeat override in $file: $(echo "$bad_maxrepeat" | cut -d: -f2-)"
+      else
+        l_output="$l_output\n - No invalid maxrepeat override found in $file"
+      fi
+    else
+      l_output2="$l_output2\n - PAM file not found: $file"
+    fi
+  done
+
+  # --- FINAL OUTPUT ---
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:$l_output2"
+  fi
+}
+"""

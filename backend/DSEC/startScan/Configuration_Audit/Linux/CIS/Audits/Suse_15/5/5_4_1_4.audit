@@ -1,0 +1,21 @@
+audit_id: "5.4.1.4"
+audit_name: "Ensure strong password hashing algorithm is configured"
+audit_script: """
+{
+algo=$(grep -Pi '^\h*ENCRYPT_METHOD\h+(sha512|yescrypt)\b' /etc/login.defs | awk '{print toupper($2)}' | head -n 1)
+
+if [[ "$algo" == "SHA512" || "$algo" == "YESCRYPT" ]]; then
+    printf '\n%s\n' " ** PASS **" \
+    "ENCRYPT_METHOD is set to $algo in /etc/login.defs"
+else
+    configured=$(grep -Pi '^\h*ENCRYPT_METHOD\h+\H+' /etc/login.defs | awk '{print $2}')
+    if [[ -n "$configured" ]]; then
+        printf '\n%s\n' " ** FAIL **" \
+        "ENCRYPT_METHOD is set to \"$configured\" in /etc/login.defs, which is not SHA512 or YESCRYPT"
+    else
+        printf '\n%s\n' " ** FAIL **" \
+        "ENCRYPT_METHOD is not configured in /etc/login.defs"
+    fi
+fi
+}
+""""

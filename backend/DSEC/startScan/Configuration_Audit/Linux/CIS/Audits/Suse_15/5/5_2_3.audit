@@ -1,0 +1,26 @@
+audit_id: "5.2.3"
+audit_name: "Ensure sudo log file exists"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+# Check for logfile directive in sudoers or its includes
+logfile_entry=$(grep -rPsi '^\s*Defaults\s+([^#]+,\s*)?logfile\s*=\s*("|'\''|)[^"'\''[:space:]]+("|'\''|)(,\s*\S+\s*)*\s*(#.*)?$' /etc/sudoers* 2>/dev/null)
+
+if [[ -n "$logfile_entry" ]]; then
+  a_output+=(" - Found custom sudo logfile configuration:")
+  a_output+=("$logfile_entry")
+else
+  a_output2+=(" - No 'Defaults logfile=...' directive found in /etc/sudoers or included files")
+fi
+
+# Print audit result
+if [ "${#a_output2[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${a_output[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${a_output2[@]}"
+fi
+}
+""""

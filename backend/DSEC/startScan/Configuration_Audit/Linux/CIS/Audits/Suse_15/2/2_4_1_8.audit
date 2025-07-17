@@ -1,0 +1,69 @@
+audit_id: "2.4.1.8"
+audit_name: "Ensure access to crontab is configured"
+audit_script: """
+{
+cron_bin=$(command -v cron || command -v crond)
+
+if [ -z "$cron_bin" ]; then
+    echo -e "\n- Audit Result:"
+    echo " ** PASS **"
+    echo " - Cron is not installed; audit not applicable"
+    exit 0
+fi
+
+failures=()
+pass_notes=()
+
+# === Check /etc/cron.allow ===
+cron_allow="/etc/cron.allow"
+if [ ! -e "$cron_allow" ]; then
+    failures+=("- $cron_allow is missing.")
+else
+    perm=$(stat -Lc '%a' "$cron_allow")
+    owner=$(stat -Lc '%U' "$cron_allow")
+    group=$(stat -Lc '%G' "$cron_allow")
+
+    [ "$perm" -gt 640 ] && failures+=("- $cron_allow has permission $perm, should be 0640 or more restrictive.")
+    [ "$owner" != "root" ] && failures+=("- $cron_allow owner is $owner, expected root.")
+    if [[ "$group" != "root" && "$group" != "crontab" ]]; then
+        failures+=("- $cron_allow group is $group, expected root or crontab.")
+    fi
+
+    if [ "${#failures[@]}" -eq 0 ]; then
+        pass_notes+=("- $cron_allow is correctly configured (640, root:$group)")
+    fi
+fi
+
+# === Check /etc/cron.deny ===
+cron_deny="/etc/cron.deny"
+if [ -e "$cron_deny" ]; then
+    perm=$(stat -Lc '%a' "$cron_deny")
+    owner=$(stat -Lc '%U' "$cron_deny")
+    group=$(stat -Lc '%G' "$cron_deny")
+
+    [ "$perm" -gt 640 ] && failures+=("- $cron_deny has permission $perm, should be 0640 or more restrictive.")
+    [ "$owner" != "root" ] && failures+=("- $cron_deny owner is $owner, expected root.")
+    if [[ "$group" != "root" && "$group" != "crontab" ]]; then
+        failures+=("- $cron_deny group is $group, expected root or crontab.")
+    fi
+
+    if [ "${#failures[@]}" -eq 0 ]; then
+        pass_notes+=("- $cron_deny is correctly configured (640, root:$group)")
+    fi
+else
+    pass_notes+=("- $cron_deny does not exist, which is acceptable")
+fi
+
+# === Output Result ===
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:"
+    echo " ** PASS **"
+    for note in "${pass_notes[@]}"; do echo " $note"; done
+else
+    echo -e "\n- Audit Result:"
+    echo " ** FAIL **"
+    for issue in "${failures[@]}"; do echo " $issue"; done
+    [ "${#pass_notes[@]}" -gt 0 ] && echo -e "\n- Correctly configured:" && for note in "${pass_notes[@]}"; do echo " $note"; done
+fi
+}
+""""

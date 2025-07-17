@@ -1,0 +1,27 @@
+audit_id: "5.3.2.3.3"
+audit_name: "Ensure pam_pwhistory includes use_authtok"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+matches=$(grep -P '^\h*password\h+\S+\h+pam_pwhistory\.so.*\buse_authtok\b' /etc/pam.d/* 2>/dev/null)
+all_lines=$(grep -P '^\h*password\h+\S+\h+pam_pwhistory\.so\b' /etc/pam.d/* 2>/dev/null)
+
+if [ -z "$all_lines" ]; then
+    a_output2+=("No pam_pwhistory.so lines found in /etc/pam.d/*")
+elif [ -z "$matches" ]; then
+    a_output2+=("pam_pwhistory.so lines found, but none include use_authtok")
+else
+    a_output+=("pam_pwhistory.so lines include use_authtok:")
+    while IFS= read -r line; do
+        a_output+=("  $line")
+    done <<< "$matches"
+fi
+
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+fi
+}
+""""

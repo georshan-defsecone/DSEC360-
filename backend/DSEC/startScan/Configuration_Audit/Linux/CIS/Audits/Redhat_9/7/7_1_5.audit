@@ -1,0 +1,49 @@
+audit_id: "7.1.5"
+audit_name: "Ensure permissions on /etc/shadow are configured"
+audit_script: """
+#!/usr/bin/env bash
+{
+l_output="" l_output2=""
+
+# Check if file exists
+if [ ! -e /etc/shadow ]; then
+  echo -e "\n- Audit Result:\n ** FAIL **\n - File /etc/shadow does not exist"
+  exit 1
+fi
+
+# Get file metadata
+perm=$(stat -Lc '%a' /etc/shadow)
+uid=$(stat -Lc '%u' /etc/shadow)
+gid=$(stat -Lc '%g' /etc/shadow)
+
+# Check permissions
+if [ "$perm" -eq 0 ]; then
+  l_output="$l_output\n - Permissions are correctly set to 000"
+else
+  l_output2="$l_output2\n - Permissions are $perm, expected exactly 000"
+fi
+
+# Check UID
+if [ "$uid" -eq 0 ]; then
+  l_output="$l_output\n - UID is correctly set to 0 (root)"
+else
+  l_output2="$l_output2\n - UID is $uid, expected 0 (root)"
+fi
+
+# Check GID
+if [ "$gid" -eq 0 ]; then
+  l_output="$l_output\n - GID is correctly set to 0 (root)"
+else
+  l_output2="$l_output2\n - GID is $gid, expected 0 (root)"
+fi
+
+# Final output
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n$l_output2"
+  [ -n "$l_output" ] && echo -e "\n- Correctly set:\n$l_output"
+fi
+}
+
+"""

@@ -1,0 +1,26 @@
+audit_id: "5.1.17"
+audit_name: "Ensure sshd MaxStartups is configured"
+audit_script: """
+{
+l_value="$(sshd -T 2>/dev/null | awk '$1 == "maxstartups" {print $2}')"
+l_match_warning=""
+
+if grep -Piq '^\s*match\s+' /etc/ssh/sshd_config; then
+  l_match_warning=" - Match blocks are present in sshd_config. Use 'sshd -T -C user=<username>' to verify MaxStartups is not overridden."
+fi
+
+if [[ "$l_value" =~ ^[0-9]+:[0-9]+:[0-9]+$ ]]; then
+  IFS=: read -r l_start l_rate l_full <<< "$l_value"
+
+  if [ "$l_start" -le 10 ] && [ "$l_rate" -le 30 ] && [ "$l_full" -le 60 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n - MaxStartups is set to $l_value, which is compliant (≤ 10:30:60)."
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - MaxStartups is set to $l_value, which is not compliant. It must be 10:30:60 or more restrictive."
+  fi
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n - MaxStartups format is invalid or not set as expected. Found: $l_value"
+fi
+
+[[ -n "$l_match_warning" ]] && echo -e "\n ** WARNING **\n$l_match_warning"
+}
+""""

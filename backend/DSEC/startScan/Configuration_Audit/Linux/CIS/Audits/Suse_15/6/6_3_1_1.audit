@@ -1,0 +1,22 @@
+audit_id: "6.3.1.1"
+audit_name: "Ensure auditd packages are installed"
+audit_script: """
+{
+l_output=""; l_output2=""
+
+# Check if 'audit' package is installed
+if rpm -q audit &>/dev/null; then
+    l_version="$(rpm -q audit)"
+    l_output+=" - Audit package is installed: $l_version"
+else
+    l_output2+=" - Audit package is NOT installed"
+fi
+
+# Final Audit Result
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n * Reasons for audit failure * :\n$l_output2\n"
+fi
+}
+""""

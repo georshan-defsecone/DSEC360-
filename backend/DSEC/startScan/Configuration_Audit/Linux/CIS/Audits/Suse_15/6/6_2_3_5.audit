@@ -1,0 +1,20 @@
+audit_id: "6.2.3.5"
+audit_name: "Ensure rsyslog log file creation mode is configured"
+audit_script: """
+{
+l_output_pass=""
+l_output_fail=""
+
+# Acceptable patterns: 0600, 0640, 0400, 0440, etc.
+grep -Ps '^\h*\$FileCreateMode\h+0[0,2,4,6][0,2,4]0\b' /etc/rsyslog.conf /etc/rsyslog.d/*.conf 2>/dev/null \
+    && l_output_pass=" - \$FileCreateMode is correctly set (0640 or more restrictive)" \
+    || l_output_fail=" - \$FileCreateMode is not set to 0640 or more restrictive in rsyslog configuration"
+
+# Output result
+if [ -z "$l_output_fail" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output_pass\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - * Reason for audit failure *:\n$l_output_fail\n"
+fi
+}
+""""

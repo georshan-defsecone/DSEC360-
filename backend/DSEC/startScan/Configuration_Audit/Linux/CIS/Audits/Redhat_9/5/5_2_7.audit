@@ -1,0 +1,36 @@
+audit_id: "5.2.7"
+audit_name: "Ensure access to the su command is restricted"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+  l_group=""
+
+  # Extract matching line
+  pam_line=$(grep -Pi '^\s*auth\s+(required|requisite)\s+pam_wheel\.so\s+(?:[^#\n\r]+\s+)?((?!\2)(use_uid\b|group=\S+))\s+(?:[^#\n\r]+\s+)?((?!\1)(use_uid\b|group=\S+))' /etc/pam.d/su)
+
+  if [ -n "$pam_line" ]; then
+    # Extract group name
+    l_group=$(echo "$pam_line" | grep -oP 'group=\K\S+')
+    if [ -n "$l_group" ]; then
+      # Look up group members
+      group_line=$(grep -E "^${l_group}:" /etc/group)
+      if [[ "$group_line" =~ ^${l_group}:[^:]*:[^:]*:$ ]]; then
+        l_output=" - Line in /etc/pam.d/su correctly configures pam_wheel.so with use_uid and group=$l_group\n - Group $l_group contains no users"
+      else
+        l_output2=" - Group $l_group contains one or more users:\n$group_line"
+      fi
+    else
+      l_output2=" - Could not extract group name from pam_wheel.so configuration"
+    fi
+  else
+    l_output2=" - Required pam_wheel.so configuration line not found in /etc/pam.d/su"
+  fi
+
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+}
+"""

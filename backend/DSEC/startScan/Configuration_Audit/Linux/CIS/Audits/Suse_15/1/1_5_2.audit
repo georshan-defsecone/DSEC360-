@@ -1,0 +1,50 @@
+audit_id: "1.5.2"
+audit_name: "Ensure core dumps are restricted"
+audit_script: """
+#!/usr/bin/env bash
+
+a_output=()
+a_output2=()
+
+# --- 1. Check hard core dump limit in limits.conf ---
+if grep -Psq -- '^\\s*\\*\\s+hard\\s+core\\s+0\\b' /etc/security/limits.conf /etc/security/limits.d/* 2>/dev/null; then
+    a_output+=(" - Hard limit for core dumps is correctly set to 0")
+else
+    a_output2+=(" - Hard limit for core dumps is NOT set to 0 in limits.conf or limits.d")
+fi
+
+# --- 2. Check fs.suid_dumpable kernel parameter ---
+param_name="fs.suid_dumpable"
+expected_val="0"
+running_val=$(sysctl -n "$param_name" 2>/dev/null)
+
+if [ "$running_val" = "$expected_val" ]; then
+    a_output+=(" - $param_name is correctly set to $expected_val in running configuration")
+else
+    a_output2+=(" - $param_name is set to $running_val (expected: $expected_val) in running configuration")
+fi
+
+# Check if it's configured persistently
+config_file_match=$(grep -Phs "^\s*${param_name}\s*=\s*${expected_val}\b" /etc/sysctl.conf /etc/sysctl.d/*.conf 2>/dev/null)
+
+if [ -n "$config_file_match" ]; then
+    a_output+=(" - $param_name is correctly set to $expected_val in sysctl configuration")
+else
+    a_output2+=(" - $param_name is NOT correctly set to $expected_val in any sysctl configuration file")
+fi
+
+# --- 3. Check if systemd-coredump is installed ---
+if systemctl list-unit-files | grep -q '^systemd-coredump'; then
+    a_output2+=(" - systemd-coredump is installed. This may override core dump restrictions unless properly configured")
+else
+    a_output+=(" - systemd-coredump is not installed")
+fi
+
+# --- Final Output ---
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}" ""
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+    [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "" "- Correctly set:" "${a_output[@]}" ""
+fi
+"""

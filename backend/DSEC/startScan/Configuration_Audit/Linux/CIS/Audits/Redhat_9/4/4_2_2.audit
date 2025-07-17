@@ -1,0 +1,61 @@
+audit_id: "4.2.2"
+audit_name: "Ensure firewalld loopback traffic is configured"
+audit_script: """
+#!/usr/bin/env bash
+{
+l_output="" l_output2="" l_hbfw=""
+
+# Detect active firewall
+if systemctl is-enabled firewalld.service 2>/dev/null | grep -q 'enabled'; then
+  echo -e "\n - FirewallD is in use on the system"
+  l_hbfw="fwd"
+elif systemctl is-enabled nftables.service 2>/dev/null | grep -q 'enabled'; then
+  echo -e "\n - nftables is in use on the system"
+  echo -e " - Recommendation is not applicable (NA)"
+  l_hbfw="nft"
+else
+  echo -e "\n - ERROR: Neither FirewallD nor NFTables is enabled"
+  echo -e " - Please follow the recommendation: Ensure a single firewall utility is in use"
+fi
+
+# If firewalld is active, inspect nft rules
+if [ "$l_hbfw" = "fwd" ]; then
+
+  # Check loopback ACCEPT rule
+  if nft list ruleset | awk '/hook\s+input\s+/,/\}\s*(#.*)?$/' | grep -Pq '\blo\b.*accept'; then
+    l_output+="\n - Network traffic to the loopback interface is correctly accepted"
+  else
+    l_output2+="\n - Loopback interface traffic is NOT explicitly accepted"
+  fi
+
+  # Check IPv4 loopback DROP rule
+  l_ipsaddr="$(nft list ruleset | awk '/filter_IN_public_deny|hook\s+input\s+/,/\}\s*(#.*)?$/' | grep -P 'ip\s+(saddr|daddr)')"
+  if grep -Pq 'ip\s+saddr\s+127\.0\.0\.0\/8\s+.*drop' <<< "$l_ipsaddr" || \
+     grep -Pq 'ip\s+daddr\s+\!\=\s*127\.0\.0\.1\s+ip\s+saddr\s+127\.0\.0\.1\s+.*drop' <<< "$l_ipsaddr"; then
+    l_output+="\n - IPv4 traffic from loopback is correctly dropped if destination is not loopback"
+  else
+    l_output2+="\n - IPv4 traffic from loopback is NOT dropped when destination is not loopback"
+  fi
+
+  # Check IPv6 loopback DROP rule (if IPv6 is enabled)
+  if grep -Pq '^\s*0\s*$' /sys/module/ipv6/parameters/disable 2>/dev/null; then
+    l_ip6saddr="$(nft list ruleset | awk '/filter_IN_public_deny|hook\s+input\s+/,/\}/' | grep -P 'ip6\s+(saddr|daddr)')"
+    if grep -Pq 'ip6\s+saddr\s+::1\s+.*drop' <<< "$l_ip6saddr" || \
+       grep -Pq 'ip6\s+daddr\s+\!\=\s*::1\s+ip6\s+saddr\s+::1\s+.*drop' <<< "$l_ip6saddr"; then
+      l_output+="\n - IPv6 traffic from loopback is correctly dropped if destination is not loopback"
+    else
+      l_output2+="\n - IPv6 traffic from loopback is NOT dropped when destination is not loopback"
+    fi
+  fi
+fi
+
+# Final result
+if [ "$l_hbfw" = "nft" ] || [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n$l_output2"
+  [ -n "$l_output" ] && echo -e "\n- Correctly set:\n$l_output"
+fi
+}
+
+"""

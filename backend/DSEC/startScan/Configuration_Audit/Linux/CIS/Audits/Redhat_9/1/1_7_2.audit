@@ -1,0 +1,27 @@
+audit_id: "1.7.2"
+audit_name: "Ensure local login warning banner is configured properly"
+audit_script: """
+#!/usr/bin/env bash
+{
+l_output="" l_output2=""
+
+if [ -f /etc/issue ]; then
+    l_os_id="$(grep -Po '^ID=\K.*' /etc/os-release | tr -d '"')"
+    
+    if grep -Piq -- "(\\\v|\\\r|\\\m|\\\s|\b${l_os_id}\b)" /etc/issue; then
+        l_output2=" - /etc/issue includes system information such as kernel version or OS identifier"
+    else
+        l_output=" - /etc/issue does not contain kernel version, OS name, or system identifiers"
+    fi
+else
+    l_output2=" - /etc/issue does not exist"
+fi
+
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n$l_output2\n"
+fi
+}
+
+"""

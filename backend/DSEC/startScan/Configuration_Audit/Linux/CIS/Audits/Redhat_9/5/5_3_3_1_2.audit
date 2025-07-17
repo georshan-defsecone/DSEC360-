@@ -1,0 +1,40 @@
+audit_id: "5.3.3.1.2"
+audit_name: "Ensure password unlock time is configured"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  # Check 1: faillock.conf unlock_time = 0 or >= 900
+  if [ -f /etc/security/faillock.conf ]; then
+    if grep -Pq '^\h*unlock_time\h*=\h*(0|9[0-9][0-9]|[1-9][0-9]{3,})\b' /etc/security/faillock.conf; then
+      l_output="$l_output\n - unlock_time in /etc/security/faillock.conf is valid (0 or >= 900)"
+    else
+      l_output2="$l_output2\n - unlock_time in /etc/security/faillock.conf is missing or less than 900 and not 0"
+    fi
+  else
+    l_output2="$l_output2\n - File not found: /etc/security/faillock.conf"
+  fi
+
+  # Check 2: pam_faillock.so unlock_time must not be set to 1–899
+  pam_files=("/etc/pam.d/system-auth" "/etc/pam.d/password-auth")
+  for file in "${pam_files[@]}"; do
+    if [ -f "$file" ]; then
+      if grep -Pq '^\h*auth\h+(requisite|required|sufficient)\h+pam_faillock\.so\h+([^#\n\r]+\h+)?unlock_time\h*=\h*([1-9]|[1-9][0-9]|[1-8][0-9][0-9])\b' "$file"; then
+        l_output2="$l_output2\n - pam_faillock.so unlock_time setting in $file is less than 900"
+      else
+        l_output="$l_output\n - pam_faillock.so unlock_time setting in $file is not set or is compliant"
+      fi
+    else
+      l_output2="$l_output2\n - File not found: $file"
+    fi
+  done
+
+  # Final result
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:$l_output2"
+  fi
+}
+"""

@@ -1,0 +1,15 @@
+audit_id: "4.2.1"
+audit_name: "Ensure firewalld is installed"
+audit_script: """
+#!/usr/bin/env bash
+{
+if rpm -q firewalld &> /dev/null; then
+    version=$(rpm -q firewalld)
+    echo -e "\n** PASS **"
+    echo " - firewalld is installed: $version"
+else
+    echo -e "\n** FAIL **"
+    echo " - firewalld package is not installed"
+fi
+}
+""""

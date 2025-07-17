@@ -1,0 +1,57 @@
+audit_id: "6.3.3.6"
+audit_name: "Ensure use of privileged commands are collected"
+audit_script: """
+{
+fail_on_disk=()
+fail_runtime=()
+
+# Get loaded audit rules once
+RUNNING_RULES=$(auditctl -l 2>/dev/null)
+
+# Determine relevant partitions (exclude noexec/nosuid)
+partitions=$(findmnt -n -l -k -it $(awk '/nodev/ { print $2 }' /proc/filesystems | paste -sd,) \
+  | grep -Pv "noexec|nosuid" | awk '{print $1}')
+
+for PARTITION in $partitions; do
+  while IFS= read -r PRIVILEGED; do
+    ## On-Disk Check
+    if grep -qr -- "$PRIVILEGED" /etc/audit/rules.d; then
+      echo "✔ On-Disk OK: '$PRIVILEGED' is audited in configuration files."
+    else
+      echo "✘ On-Disk Missing: '$PRIVILEGED' is NOT audited in configuration files."
+      fail_on_disk+=("$PRIVILEGED")
+    fi
+
+    ## Runtime Check
+    if grep -q -- "$PRIVILEGED" <<< "$RUNNING_RULES"; then
+      echo "✔ Runtime OK: '$PRIVILEGED' is audited in loaded rules."
+    else
+      echo "✘ Runtime Missing: '$PRIVILEGED' is NOT audited in loaded rules."
+      fail_runtime+=("$PRIVILEGED")
+    fi
+
+  done < <(find "$PARTITION" -xdev -perm /6000 -type f 2>/dev/null)
+done
+
+# --- Final Summary ---
+echo -e "\n========== AUDIT RESULTS =========="
+
+# On-Disk Result
+if [ ${#fail_on_disk[@]} -eq 0 ]; then
+  echo -e "\n- On-Disk Audit Result:\n ** PASS **\n - All privileged binaries are covered in /etc/audit/rules.d"
+else
+  echo -e "\n- On-Disk Audit Result:\n ** FAIL **\n - These binaries are missing from on-disk audit rules:"
+  printf ' - %s\n' "${fail_on_disk[@]}"
+fi
+
+# Runtime Result
+if [ ${#fail_runtime[@]} -eq 0 ]; then
+  echo -e "\n- Runtime Audit Result: PASS \n - All privileged binaries are covered in loaded rules"
+else
+  echo -e "\n- Runtime Audit Result: FAIL \n - These binaries are missing from loaded audit rules:"
+  printf ' - %s\n' "${fail_runtime[@]}"
+fi
+
+echo -e "\n====================================\n"
+}
+""""

@@ -1,0 +1,30 @@
+audit_id: "6.2.3.3"
+audit_name: "Ensure rsyslog service is enabled and active"
+audit_script: """
+{
+l_output=""
+l_output2=""
+
+# Check if rsyslog is enabled
+if systemctl is-enabled rsyslog 2>/dev/null | grep -q '^enabled$'; then
+    l_output+="\n - rsyslog.service is enabled"
+else
+    l_output2+="\n - rsyslog.service is not enabled"
+fi
+
+# Check if rsyslog is active
+if systemctl is-active rsyslog 2>/dev/null | grep -q '^active$'; then
+    l_output+="\n - rsyslog.service is active"
+else
+    l_output2+="\n - rsyslog.service is not active"
+fi
+
+# Report the audit result
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - * Reasons for audit failure *:$l_output2"
+    [ -n "$l_output" ] && echo -e "\n - * Correctly configured *:$l_output\n"
+fi
+}
+""""

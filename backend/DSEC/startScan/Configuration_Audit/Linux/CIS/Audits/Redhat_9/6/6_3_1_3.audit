@@ -1,0 +1,49 @@
+audit_id: "6.3.1.3"
+audit_name: "Ensure audit_backlog_limit is sufficient"
+audit_script: """
+{
+l_output="" l_output2=""
+l_min_limit=8192
+
+# Check audit_backlog_limit in GRUB entries
+l_current_values="$(grubby --info=ALL | grep -Po '\baudit_backlog_limit=\d+\b' | sort -u)"
+if [ -n "$l_current_values" ]; then
+    l_valid=true
+    while IFS='=' read -r _ val; do
+        if [ "$val" -lt "$l_min_limit" ]; then
+            l_valid=false
+            break
+        fi
+    done <<< "$l_current_values"
+
+    if $l_valid; then
+        l_output="$l_output\n - 'audit_backlog_limit' is set to a valid value ($l_current_values) in GRUB boot entries"
+    else
+        l_output2="$l_output2\n - 'audit_backlog_limit' is set too low ($l_current_values) in GRUB boot entries"
+    fi
+else
+    l_output2="$l_output2\n - 'audit_backlog_limit' is NOT set in GRUB boot entries"
+fi
+
+# Check audit_backlog_limit in /etc/default/grub
+if grep -Psoi -- '^\h*GRUB_CMDLINE_LINUX="([^"#\n\r]+\h+)?audit_backlog_limit=\d+\b' /etc/default/grub > /dev/null; then
+    l_line="$(grep -Psoi -- '^\h*GRUB_CMDLINE_LINUX="[^"]*audit_backlog_limit=\d+\b[^"]*"' /etc/default/grub)"
+    l_value="$(grep -Po 'audit_backlog_limit=\d+' <<< "$l_line" | cut -d= -f2)"
+    if [ "$l_value" -ge "$l_min_limit" ]; then
+        l_output="$l_output\n - 'audit_backlog_limit' is correctly set to $l_value in /etc/default/grub"
+    else
+        l_output2="$l_output2\n - 'audit_backlog_limit' in /etc/default/grub is set too low ($l_value)"
+    fi
+else
+    l_output2="$l_output2\n - 'audit_backlog_limit' is NOT set in /etc/default/grub"
+fi
+
+# Final Result
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **$l_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **$l_output2"
+    [ -n "$l_output" ] && echo -e "\n - Correctly configured:$l_output"
+fi
+}
+"""

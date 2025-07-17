@@ -1,0 +1,43 @@
+audit_id: "5.3.2.2.6"
+audit_name: "Ensure password maximum sequential characters is configured"
+audit_script: """
+{
+a_output=(); a_output2=()
+value=""
+
+# 1. Check via pam-config if available
+if command -v pam-config &>/dev/null; then
+    output="$(pam-config --query --cracklib --cracklib-maxsequence 2>/dev/null)"
+    [[ "$output" =~ maxsequence[=[:space:]]*([0-9]+) ]] && value="${BASH_REMATCH[1]}"
+fi
+
+# 2. If not found via pam-config, scan pwquality files (respecting override precedence)
+if [[ -z "$value" ]]; then
+    for file in /etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf; do
+        [ -f "$file" ] || continue
+        while IFS= read -r line; do
+            [[ "$line" =~ ^[[:space:]]*maxsequence[[:space:]]*=[[:space:]]*([0-9]+) ]] && value="${BASH_REMATCH[1]}"
+        done < "$file"
+    done
+fi
+
+# 3. Validate the value
+if [[ -n "$value" ]]; then
+    if [[ "$value" -ge 1 && "$value" -le 3 ]]; then
+        a_output+=("maxsequence = $value")
+    else
+        a_output2+=("maxsequence = $value is outside allowed range (must be 1–3, not 0)")
+    fi
+else
+    a_output2+=("maxsequence setting not found")
+fi
+
+# 4. Final result
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+    [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "" "- Correctly set:" "${a_output[@]}"
+fi
+}
+""""

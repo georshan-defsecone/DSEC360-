@@ -1,0 +1,45 @@
+audit_id: "2.4.1.2"
+audit_name: "Ensure access to /etc/crontab is configured"
+audit_script: """
+{
+cron_bin=$(command -v cron || command -v crond)
+
+if [ -z "$cron_bin" ]; then
+    echo -e "\n- Audit Result:"
+    echo " ** PASS **"
+    echo " - Cron is not installed; audit not applicable"
+    exit 0
+fi
+
+crontab_file="/etc/crontab"
+
+if [ ! -f "$crontab_file" ]; then
+    echo -e "\n- Audit Result:"
+    echo " ** FAIL **"
+    echo " - $crontab_file does not exist"
+    exit 1
+fi
+
+perm=$(stat -Lc '%a' "$crontab_file")
+uid=$(stat -Lc '%u' "$crontab_file")
+gid=$(stat -Lc '%g' "$crontab_file")
+
+failures=()
+
+[ "$perm" -gt 600 ] && failures+=("Access permissions are too permissive: ($perm). Expected 600 or more restrictive.")
+[ "$uid" -ne 0 ] && failures+=("Owner UID is $uid (expected 0).")
+[ "$gid" -ne 0 ] && failures+=("Group GID is $gid (expected 0).")
+
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:"
+    echo " ** PASS **"
+    echo " - /etc/crontab has permissions 600, and is owned by UID 0 and GID 0 (root:root)"
+else
+    echo -e "\n- Audit Result:"
+    echo " ** FAIL **"
+    for reason in "${failures[@]}"; do
+        echo " - $reason"
+    done
+fi
+}
+""""

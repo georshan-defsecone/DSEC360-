@@ -1,0 +1,48 @@
+audit_id: "5.3.3.2.1"
+audit_name: "Ensure password number of changed characters is configured"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  # --- CONFIGURATION FILE CHECK ---
+  config_files=(/etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf)
+  found_valid_difok=false
+  for file in "${config_files[@]}"; do
+    if [ -f "$file" ]; then
+      difok_line=$(grep -Psi -- '^\h*difok\h*=\h*([2-9]|[1-9][0-9]+)\b' "$file")
+      if [[ -n "$difok_line" ]]; then
+        l_output="$l_output\n - Valid difok found in $file: $(echo "$difok_line" | cut -d: -f2-)"
+        found_valid_difok=true
+        break  # Stop at first valid config, highest precedence
+      fi
+    fi
+  done
+
+  if ! $found_valid_difok; then
+    l_output2="$l_output2\n - No valid difok setting (>=2) found in pwquality configuration files"
+  fi
+
+  # --- PAM FILE CHECK FOR OVERRIDES ---
+  pam_files=(/etc/pam.d/system-auth /etc/pam.d/password-auth)
+  for file in "${pam_files[@]}"; do
+    if [ -f "$file" ]; then
+      bad_difok=$(grep -Psi -- '^\h*password\h+(requisite|required|sufficient)\h+pam_pwquality\.so\h+([^#\n\r]+\h+)?difok\h*=\h*([0-1])\b' "$file")
+      if [[ -n "$bad_difok" ]]; then
+        l_output2="$l_output2\n - Invalid difok override in $file: $(echo "$bad_difok" | cut -d: -f2-)"
+      else
+        l_output="$l_output\n - No invalid difok override found in $file"
+      fi
+    else
+      l_output2="$l_output2\n - PAM file not found: $file"
+    fi
+  done
+
+  # --- RESULT OUTPUT ---
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:$l_output2"
+  fi
+}
+"""

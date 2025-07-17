@@ -1,0 +1,94 @@
+audit_id: "7.2.9"
+audit_name: "Ensure local interactive user dot files access is configured"
+audit_script: """
+{
+a_output2=(); a_output3=(); a_output_pass=()
+l_maxsize="1000" # Max number of local interactive users before info warning
+
+# Build valid shell regex
+l_valid_shells="^($(awk -F/ '$NF != "nologin" && $0 ~ /^\// { print }' /etc/shells | paste -sd '|' -))$"
+
+# Gather local users with valid shells
+a_user_and_home=()
+while read -r l_local_user l_local_user_home; do
+  [[ -n "$l_local_user" && -n "$l_local_user_home" ]] &&
+    a_user_and_home+=("$l_local_user:$l_local_user_home")
+done <<< "$(awk -v pat="$l_valid_shells" -F: '$(NF) ~ pat { print $1 " " $(NF-1) }' /etc/passwd)"
+
+l_asize="${#a_user_and_home[@]}"
+[ "$l_asize" -gt "$l_maxsize" ] && printf '\n ** INFO **\n - "%s" local interactive users found\n - This may be a long running check\n\n' "$l_asize"
+
+# Permission checking function
+file_access_chk() {
+  a_access_out=()
+  l_max="$(printf '%o' $((0777 & ~$l_mask)))"
+
+  if [ $((l_mode & l_mask)) -gt 0 ]; then
+    a_access_out+=(" - File: \"$l_hdfile\" is mode: \"$l_mode\" and should be mode: \"$l_max\" or more restrictive")
+  fi
+  if [[ ! "$l_owner" =~ ($l_user) ]]; then
+    a_access_out+=(" - File: \"$l_hdfile\" owned by: \"$l_owner\" and should be owned by \"${l_user//|/ or }\"")
+  fi
+  if [[ ! "$l_gowner" =~ ($l_group) ]]; then
+    a_access_out+=(" - File: \"$l_hdfile\" group owned by: \"$l_gowner\" and should be group owned by \"${l_group//|/ or }\"")
+  fi
+}
+
+# Iterate over users
+while IFS=: read -r l_user l_home; do
+  a_dot_file=(); a_netrc=(); a_netrc_warn=(); a_bhout=(); a_hdirout=()
+
+  if [ -d "$l_home" ]; then
+    l_group="$(id -gn "$l_user" 2>/dev/null | xargs)"
+    l_group="${l_group// /|}"
+
+    while IFS= read -r -d $'\0' l_hdfile; do
+      while read -r l_mode l_owner l_gowner; do
+        case "$(basename "$l_hdfile")" in
+          .forward | .rhost )
+            a_dot_file+=(" - File: \"$l_hdfile\" exists")
+            ;;
+          .netrc )
+            l_mask='0177'; file_access_chk
+            if [ "${#a_access_out[@]}" -gt 0 ]; then
+              a_netrc+=("${a_access_out[@]}")
+            else
+              a_netrc_warn+=(" - File: \"$l_hdfile\" exists")
+            fi
+            ;;
+          .bash_history )
+            l_mask='0177'; file_access_chk
+            [ "${#a_access_out[@]}" -gt 0 ] && a_bhout+=("${a_access_out[@]}")
+            ;;
+          * )
+            l_mask='0133'; file_access_chk
+            [ "${#a_access_out[@]}" -gt 0 ] && a_hdirout+=("${a_access_out[@]}")
+            ;;
+        esac
+      done < <(stat -Lc '%#a %U %G' "$l_hdfile")
+    done < <(find "$l_home" -xdev -type f -name '.*' -print0)
+  fi
+
+  # Categorize results
+  if [[ "${#a_dot_file[@]}" -gt 0 || "${#a_netrc[@]}" -gt 0 || "${#a_bhout[@]}" -gt 0 || "${#a_hdirout[@]}" -gt 0 ]]; then
+    a_output2+=(" - User: \"$l_user\" Home Directory: \"$l_home\"" "${a_dot_file[@]}" "${a_netrc[@]}" "${a_bhout[@]}" "${a_hdirout[@]}")
+  else
+    a_output_pass+=(" - User: \"$l_user\" Home Directory: \"$l_home\" is correctly configured")
+  fi
+
+  [ "${#a_netrc_warn[@]}" -gt 0 ] && a_output3+=(" - User: \"$l_user\" Home Directory: \"$l_home\"" "${a_netrc_warn[@]}")
+done <<< "$(printf '%s\n' "${a_user_and_home[@]}")"
+
+# Output results
+if [ "${#a_output2[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  [ "${#a_output_pass[@]}" -gt 0 ] && printf '\n- Correctly configured:\n%s\n' "$(printf '%s\n' "${a_output_pass[@]}")"
+  [ "${#a_output3[@]}" -gt 0 ] && printf '\n ** WARNING **\n%s\n' "$(printf '%s\n' "${a_output3[@]}")"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  echo -e "\n- * Reasons for audit failure * :\n$(printf '%s\n' "${a_output2[@]}")"
+  [ "${#a_output_pass[@]}" -gt 0 ] && printf '\n- Correctly configured:\n%s\n' "$(printf '%s\n' "${a_output_pass[@]}")"
+  [ "${#a_output3[@]}" -gt 0 ] && printf '\n ** WARNING **\n%s\n' "$(printf '%s\n' "${a_output3[@]}")"
+fi
+}
+"""

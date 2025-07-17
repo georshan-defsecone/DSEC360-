@@ -1,0 +1,56 @@
+audit_id: "6.3.3.14"
+audit_name: "Ensure events that modify the system's Mandatory Access Controls are collected"
+audit_script: """
+{
+echo "### Audit Check: AppArmor Mandatory Access Control Policy Audit Rules"
+
+expected_rules=(
+  "-w /etc/apparmor -p wa -k MAC-policy"
+  "-w /usr/share/apparmor -p wa -k MAC-policy"
+)
+
+missing_disk=()
+on_disk=$(awk '
+  /^\s*-w/ &&
+  (/\/etc\/apparmor/ || /\/usr\/share\/apparmor/) &&
+  /-p\s*wa/ &&
+  (/key=| -k /)
+' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+for rule in "${expected_rules[@]}"; do
+  grep -qF -- "$rule" <<< "$on_disk" || missing_disk+=("$rule")
+done
+
+if [ "${#missing_disk[@]}" -eq 0 ]; then
+  echo -e "\n- On-Disk Audit Result:"
+  echo " ** PASS **"
+  echo " - All expected on-disk AppArmor audit rules are present."
+
+else
+  echo -e "\n- On-Disk Audit Result:"
+  echo " ** FAIL **"
+  echo " - Missing on-disk rules:"
+  printf '   %s\n' "${missing_disk[@]}"
+fi
+
+missing_runtime=()
+running=$(auditctl -l 2>/dev/null)
+
+for rule in "${expected_rules[@]}"; do
+  grep -qF -- "$rule" <<< "$running" || missing_runtime+=("$rule")
+done
+
+if [ "${#missing_runtime[@]}" -eq 0 ]; then
+  echo -e "\n- Runtime Audit Result:"
+  echo "PASS"
+  echo " - All expected runtime AppArmor audit rules are present."
+else
+  echo -e "\n- Runtime Audit Result:"
+  echo "FAIL:"
+  echo " - Missing running rules:"
+  printf '   %s\n' "${missing_runtime[@]}"
+fi
+
+echo -e "\n  Note: If a different Mandatory Access Control method (e.g. SELinux) is used, changes to the corresponding directories should be audited instead."
+}
+""""

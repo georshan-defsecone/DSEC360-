@@ -1,0 +1,47 @@
+audit_id: "7.1.4"
+audit_name: "Ensure permissions on /etc/group- are configured"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check if file exists
+if [ ! -e /etc/group- ]; then
+  echo -e "\n- Audit Result:\n ** FAIL **\n - File /etc/group- does not exist"
+  exit 1
+fi
+
+# Get file info
+perm=$(stat -Lc '%a' /etc/group-)
+uid=$(stat -Lc '%u' /etc/group-)
+gid=$(stat -Lc '%g' /etc/group-)
+
+# Check permissions
+if [ "$perm" -le 644 ]; then
+  l_output="$l_output\n - File permissions are $perm, which is 644 or more restrictive"
+else
+  l_output2="$l_output2\n - File permissions are $perm, which is more permissive than 644"
+fi
+
+# Check UID
+if [ "$uid" -eq 0 ]; then
+  l_output="$l_output\n - UID is 0 (root)"
+else
+  l_output2="$l_output2\n - UID is $uid, not 0 (root)"
+fi
+
+# Check GID
+if [ "$gid" -eq 0 ]; then
+  l_output="$l_output\n - GID is 0 (root)"
+else
+  l_output2="$l_output2\n - GID is $gid, not 0 (root)"
+fi
+
+# Final output
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n$l_output2"
+  [ -n "$l_output" ] && echo -e "\n- Correctly set:\n$l_output"
+fi
+}
+"""

@@ -1,0 +1,34 @@
+audit_id: "5.4.1.5"
+audit_name: "Ensure inactive password lock is configured"
+audit_script: """
+{
+# Get the default inactivity value for new users
+default_inactive=$(useradd -D | grep -Po 'INACTIVE=\K\S+')
+
+# Check system default
+if [[ "$default_inactive" =~ ^[0-9]+$ && "$default_inactive" -le 45 ]]; then
+    printf '\n%s\n' " ** PASS **" \
+    "Default INACTIVE value for new users is set to $default_inactive days"
+else
+    if [[ "$default_inactive" -eq -1 ]]; then
+        printf '\n%s\n' " ** FAIL **" \
+        "Default INACTIVE value is set to -1 (never lock inactive accounts)"
+    else
+        printf '\n%s\n' " ** FAIL **" \
+        "Default INACTIVE value is set to $default_inactive days, which exceeds the 45-day policy"
+    fi
+fi
+
+# Now check existing users
+violating_users=$(awk -F: '($2~/^\$.+\$/) && ($7 > 45 || $7 < 0) {print "User: " $1 " INACTIVE: " $7 " days"}' /etc/shadow)
+
+if [[ -n "$violating_users" ]]; then
+    printf '\n%s\n' " ** FAIL **" \
+    "The following users have INACTIVE set outside policy (0–45 days):" \
+    "$violating_users"
+else
+    printf '\n%s\n' " ** PASS **" \
+    "All users with passwords have INACTIVE set to a value between 0 and 45 days"
+fi
+}
+""""

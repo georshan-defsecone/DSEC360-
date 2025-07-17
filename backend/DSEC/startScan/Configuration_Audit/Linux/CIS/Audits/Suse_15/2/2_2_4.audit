@@ -1,0 +1,15 @@
+audit_id: "2.2.4"
+audit_name: "Ensure telnet client is not installed"
+audit_script: """
+{
+pkg_check=$(rpm -q telnet 2>&1)
+
+if echo "$pkg_check" | grep -q "is not installed"; then
+    echo "** PASS **"
+    echo "- Package 'telnet' is not installed."
+else
+    echo "** FAIL **"
+    echo "- $pkg_check"
+fi
+}
+""""

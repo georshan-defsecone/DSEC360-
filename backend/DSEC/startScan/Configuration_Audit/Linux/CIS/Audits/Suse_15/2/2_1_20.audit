@@ -1,0 +1,38 @@
+audit_id: "2.1.20"
+audit_name: "Ensure xinetd services are not in use"
+audit_script: """
+{
+pkg_status=$(rpm -q xinetd 2>/dev/null)
+fail=0
+details=""
+
+if [[ "$pkg_status" == "package xinetd is not installed" ]]; then
+    echo "** PASS **"
+    echo "- Package 'xinetd' is not installed."
+    exit 0
+fi
+
+# Check service status only if package is installed
+enabled_status=$(systemctl is-enabled xinetd.service 2>/dev/null | grep 'enabled')
+active_status=$(systemctl is-active xinetd.service 2>/dev/null | grep '^active')
+
+if [[ -n "$enabled_status" ]]; then
+    fail=1
+    details+="\n- 'xinetd.service' is enabled."
+fi
+
+if [[ -n "$active_status" ]]; then
+    fail=1
+    details+="\n- 'xinetd.service' is active."
+fi
+
+if [[ "$fail" -eq 0 ]]; then
+    echo "** PASS **"
+    echo "- Package 'xinetd' is installed but its service is disabled and inactive."
+else
+    echo "** FAIL **"
+    echo "- Package 'xinetd' is installed."
+    echo -e "$details"
+fi
+} 
+""""

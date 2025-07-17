@@ -1,0 +1,21 @@
+audit_id: "5.1.15"
+audit_name: "Ensure sshd LogLevel is configured"
+audit_script: """
+{
+l_value="$(sshd -T 2>/dev/null | awk '$1 == "loglevel" {print toupper($2)}')"
+l_match_warning=""
+
+# Check for Match blocks
+if grep -Piq '^\s*match\s+' /etc/ssh/sshd_config; then
+  l_match_warning=" - Match blocks are present in sshd_config. Use 'sshd -T -C user=<username>' to verify LogLevel is not overridden."
+fi
+
+if [[ "$l_value" == "VERBOSE" || "$l_value" == "INFO" ]]; then
+  echo -e "\n- Audit Result:\n ** PASS **\n - LogLevel is set to \"$l_value\", which is acceptable (VERBOSE or INFO)."
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n - LogLevel is set to \"$l_value\", which is not acceptable. Expected: VERBOSE or INFO."
+fi
+
+[[ -n "$l_match_warning" ]] && echo -e "\n ** WARNING **\n$l_match_warning"
+}
+""""

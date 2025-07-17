@@ -1,0 +1,39 @@
+audit_id: "6.3.4.10"
+audit_name: "Ensure audit tools group owner is configured"
+audit_script: """
+{
+audit_tools=(
+  "/sbin/auditctl"
+  "/sbin/aureport"
+  "/sbin/ausearch"
+  "/sbin/autrace"
+  "/sbin/auditd"
+  "/sbin/augenrules"
+)
+
+fail_output=""
+pass_output=""
+
+for tool in "${audit_tools[@]}"; do
+  if [ -e "$tool" ]; then
+    group_owner=$(stat -Lc "%G" "$tool")
+    if [ "$group_owner" != "root" ]; then
+      fail_output+="\n - $tool is group-owned by \"$group_owner\" (should be \"root\")"
+    else
+      pass_output+="\n - $tool is correctly group-owned by \"root\""
+    fi
+  else
+    fail_output+="\n - $tool not found"
+  fi
+done
+
+if [ -z "$fail_output" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **$pass_output"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **$fail_output"
+  [ -n "$pass_output" ] && echo -e "\n- Other tools correctly group-owned:$pass_output"
+fi
+
+unset audit_tools
+}
+"""

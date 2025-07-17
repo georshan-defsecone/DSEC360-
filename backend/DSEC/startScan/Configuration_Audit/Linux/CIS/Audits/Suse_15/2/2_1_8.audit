@@ -1,0 +1,49 @@
+audit_id: "2.1.8"
+audit_name: "Ensure ftp server services are not in use"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+pkg_installed=false
+fail=false
+
+# Check if vsftpd package is installed
+if rpm -q vsftpd &>/dev/null; then
+    echo "- Package 'vsftpd' is installed."
+    pkg_installed=true
+else
+    echo "- Package 'vsftpd' is NOT installed."
+fi
+
+# If package is installed, check service status
+if $pkg_installed; then
+    is_enabled=$(systemctl is-enabled vsftpd.service 2>/dev/null | grep 'enabled')
+    is_active=$(systemctl is-active vsftpd.service 2>/dev/null | grep '^active')
+
+    if [ -n "$is_enabled" ]; then
+        echo "- Service is ENABLED: vsftpd.service"
+        fail=true
+    else
+        echo "- Service is NOT enabled: vsftpd.service"
+    fi
+
+    if [ -n "$is_active" ]; then
+        echo "- Service is ACTIVE: vsftpd.service"
+        fail=true
+    else
+        echo "- Service is NOT active: vsftpd.service"
+    fi
+
+    if $fail; then
+        echo -e "\n** FAIL **"
+        echo "- vsftpd is installed and its service is either enabled or active."
+    else
+        echo -e "\n** PASS **"
+        echo "- vsftpd is installed, but its service is both disabled and inactive."
+    fi
+else
+    echo -e "\n** PASS **"
+    echo "- vsftpd is not installed."
+fi
+}
+""""

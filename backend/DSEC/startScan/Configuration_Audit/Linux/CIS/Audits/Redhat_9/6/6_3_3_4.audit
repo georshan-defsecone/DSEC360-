@@ -1,0 +1,65 @@
+audit_id: "6.3.3.4"
+audit_name: "Ensure events that modify date and time information are collected"
+audit_script: """
+{
+# Expected rules
+expected_disk_rules=(
+"-a always,exit -F arch=b64 -S adjtimex,settimeofday -k time-change"
+"-a always,exit -F arch=b32 -S adjtimex,settimeofday -k time-change"
+"-a always,exit -F arch=b64 -S clock_settime -F a0=0x0 -k time-change"
+"-a always,exit -F arch=b32 -S clock_settime -F a0=0x0 -k time-change"
+"-w /etc/localtime -p wa -k time-change"
+)
+
+expected_running_rules=(
+"-a always,exit -F arch=b64 -S adjtimex,settimeofday -F key=time-change"
+"-a always,exit -F arch=b32 -S adjtimex,settimeofday -F key=time-change"
+"-a always,exit -F arch=b64 -S clock_settime -F a0=0x0 -F key=time-change"
+"-a always,exit -F arch=b32 -S clock_settime -F a0=0x0 -F key=time-change"
+"-w /etc/localtime -p wa -k time-change"
+)
+
+# Capture actual rules
+disk_rules=$(awk '
+  /^\s*-a\s+always,exit/ && /-F\s+arch=b(32|64)/ && /-S/ && (/adjtimex/ || /settimeofday/ || /clock_settime/) && (/key=| -k /) { print }
+/^\s*-w/ && /\/etc\/localtime/ && /-p\s+wa/ && (/key=| -k /) { print }
+' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+running_rules=$(auditctl -l 2>/dev/null | awk '
+  /^\s*-a\s+always,exit/ && /-F\s+arch=b(32|64)/ && /-S/ && (/adjtimex/ || /settimeofday/ || /clock_settime/) && (/key=| -k /) { print }
+/^\s*-w/ && /\/etc\/localtime/ && /-p\s+wa/ && (/key=| -k /) { print }
+')
+
+# Compare rules
+fail_disk=()
+fail_run=()
+
+for rule in "${expected_disk_rules[@]}"; do
+  echo "$disk_rules" | grep -Pq -- "$rule" || fail_disk+=("$rule")
+done
+
+for rule in "${expected_running_rules[@]}"; do
+  echo "$running_rules" | grep -Pq -- "$rule" || fail_run+=("$rule")
+done
+
+# Final output
+if [ "${#fail_disk[@]}" -eq 0 ] && [ "${#fail_run[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **\n - All time-change audit rules are present in both disk and running configuration.\n"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  if [ "${#fail_disk[@]}" -gt 0 ]; then
+    echo -e "\n - Missing or incorrect **on-disk** rules:"
+    for rule in "${fail_disk[@]}"; do
+      echo "   - $rule"
+    done
+  fi
+  if [ "${#fail_run[@]}" -gt 0 ]; then
+    echo -e "\n - Missing or incorrect **running** rules:"
+    for rule in "${fail_run[@]}"; do
+      echo "   - $rule"
+    done
+  fi
+  echo
+fi
+}
+"""

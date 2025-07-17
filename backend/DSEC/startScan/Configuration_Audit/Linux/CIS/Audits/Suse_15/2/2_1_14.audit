@@ -1,0 +1,25 @@
+audit_id: "2.1.14"
+audit_name: "Ensure rsync services are not in use"
+audit_script: """
+{
+pkg_status=$(rpm -q rsync 2>/dev/null)
+
+if [[ "$pkg_status" == "package rsync is not installed" ]]; then
+    echo "** PASS **"
+    echo "- The 'rsync' package is not installed."
+else
+    enabled_units=$(systemctl is-enabled rsyncd.socket rsyncd.service 2>/dev/null | grep 'enabled')
+    active_units=$(systemctl is-active rsyncd.socket rsyncd.service 2>/dev/null | grep '^active')
+
+    if [[ -z "$enabled_units" && -z "$active_units" ]]; then
+        echo "** PASS **"
+        echo "- The 'rsync' package is installed but both rsyncd.socket and rsyncd.service are disabled and inactive."
+    else
+        echo "** FAIL **"
+        echo "- The 'rsync' package is installed."
+        [[ -n "$enabled_units" ]] && echo "- The following services are enabled:" && echo "$enabled_units"
+        [[ -n "$active_units" ]] && echo "- The following services are active:" && echo "$active_units"
+    fi
+fi
+}
+""""

@@ -1,0 +1,46 @@
+audit_id: "5.1.4"
+audit_name: "Ensure sshd Ciphers are configured"
+audit_script: """
+{
+l_output=""
+l_output2=""
+
+# Run sshd config test
+cipher_line=$(sshd -T 2>/dev/null | grep -Pi '^ciphers\s+')
+
+# If the line exists, extract the cipher list and inspect
+if [[ -n "$cipher_line" ]]; then
+  ciphers=$(echo "$cipher_line" | awk '{$1=""; print $0}' | sed 's/^ *//;s/ *$//')
+  
+  # Check for weak ciphers
+  weak_ciphers=()
+  IFS=',' read -ra cipher_array <<< "$ciphers"
+  for cipher in "${cipher_array[@]}"; do
+    case "$cipher" in
+      3des-cbc|blowfish-cbc|cast128-cbc|aes128-cbc|aes192-cbc|aes256-cbc|arcfour|arcfour128|arcfour256|rijndael-cbc@lysator.liu.se)
+        weak_ciphers+=("$cipher")
+        ;;
+      chacha20-poly1305@openssh.com)
+        l_output2="$l_output2\n - Cipher \"chacha20-poly1305@openssh.com\" is configured. Review CVE-2023-48795 and ensure your OpenSSH package is patched."
+        ;;
+    esac
+  done
+
+  if [ "${#weak_ciphers[@]}" -gt 0 ]; then
+    l_output2="$l_output2\n - The following weak ciphers are in use:\n   ${weak_ciphers[*]}"
+  else
+    l_output="$l_output\n - No weak ciphers are configured in sshd."
+  fi
+else
+  l_output="$l_output\n - No ciphers line found in sshd -T output (default configuration assumed)."
+fi
+
+# Final result
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **$l_output"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **$l_output2"
+  [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output"
+fi
+}
+""""

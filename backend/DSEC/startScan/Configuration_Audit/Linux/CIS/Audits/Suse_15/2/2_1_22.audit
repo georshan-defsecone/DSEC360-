@@ -1,0 +1,16 @@
+audit_id: "2.1.22"
+audit_name: "Ensure mail transfer agents are configured for local-only mode"
+audit_script: """
+{
+output=$(rpm -q xorg-x11-server* 2>&1)
+
+if echo "$output" | grep -q "not installed"; then
+    echo "** PASS **"
+    echo "- No X Windows Server packages (xorg-x11-server*) are installed."
+else
+    echo "** FAIL **"
+    echo "- One or more X Windows Server packages are installed:"
+    echo "$output"
+fi
+}
+""""

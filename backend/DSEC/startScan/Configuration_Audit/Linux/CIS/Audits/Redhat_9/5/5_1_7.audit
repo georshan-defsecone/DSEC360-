@@ -1,0 +1,34 @@
+audit_id: "5.1.7"
+audit_name: "Ensure sshd access is configured "
+audit_script: """
+{
+l_output=""
+l_output2=""
+l_warn=""
+
+# Check for allow/deny settings in global sshd config
+l_result="$(sshd -T 2>/dev/null | grep -Pi '^\s*(allow|deny)(users|groups)\s+\S+')"
+
+if [ -n "$l_result" ]; then
+    l_output="\n - Found the following allow/deny settings:\n$l_result"
+else
+    l_output2="\n - No AllowUsers, DenyUsers, AllowGroups, or DenyGroups directives found in global SSH configuration"
+fi
+
+# Check if Match blocks exist in config
+if grep -Eq '^\s*Match\b' /etc/ssh/sshd_config; then
+    l_warn="** WARNING **\n - Match blocks detected in sshd_config.\n - These may override global SSH access rules.\n - This audit does NOT evaluate Match blocks.\n - To manually verify a Match block:\n   sshd -T -C user=<username>\n"
+fi
+
+# Output result
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **$l_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:$l_output2"
+fi
+
+# Show warning about match blocks if applicable
+[ -n "$l_warn" ] && echo -e "\n$l_warn"
+
+}
+"""

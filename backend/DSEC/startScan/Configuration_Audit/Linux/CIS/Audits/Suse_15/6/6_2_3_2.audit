@@ -1,0 +1,23 @@
+audit_id: "6.2.3.2"
+audit_name: "Ensure rsyslog is installed"
+audit_script: """
+{
+l_output=""
+l_output2=""
+
+if systemctl is-active --quiet rsyslog; then
+    l_output+="\n - rsyslog is active"
+
+    rsyslog_pkg="$(rpm -q rsyslog 2>/dev/null)"
+    if [[ "$rsyslog_pkg" == rsyslog-* ]]; then
+        l_output+="\n - rsyslog package installed: $rsyslog_pkg"
+        echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+    else
+        l_output2+="\n - rsyslog is active but package not found via rpm"
+        echo -e "\n- Audit Result:\n ** FAIL **\n - * Reasons for audit failure *:$l_output2\n"
+    fi
+else
+    echo -e "\n- Audit Result:\n ** PASS **\n - rsyslog is not in use. Audit check not applicable\n"
+fi
+}
+""""

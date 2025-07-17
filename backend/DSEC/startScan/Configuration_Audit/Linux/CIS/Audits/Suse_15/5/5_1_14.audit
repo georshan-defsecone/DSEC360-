@@ -1,0 +1,42 @@
+audit_id: "5.1.14"
+audit_name: "Ensure sshd LoginGraceTime is configured"
+audit_script: """
+{
+l_value="$(sshd -T 2>/dev/null | awk '$1 == "logingracetime" {print $2}')"
+l_match_warning=""
+
+# Check for Match blocks
+if grep -Piq '^\s*match\s+' /etc/ssh/sshd_config; then
+  l_match_warning=" - Match blocks are present in sshd_config. Use 'sshd -T -C user=<username>' to verify LoginGraceTime is not overridden."
+fi
+
+# Convert LoginGraceTime value to seconds if it's in another unit
+convert_to_seconds() {
+  local input="$1"
+  if [[ "$input" =~ ^[0-9]+$ ]]; then
+    echo "$input"
+  elif [[ "$input" =~ ^([0-9]+)([smhSMH])$ ]]; then
+    local num="${BASH_REMATCH[1]}"
+    local unit="${BASH_REMATCH[2]}"
+    case "${unit,,}" in
+      s) echo "$num" ;;
+      m) echo $((num * 60)) ;;
+      h) echo $((num * 3600)) ;;
+      *) echo "-1" ;;
+    esac
+  else
+    echo "-1"
+  fi
+}
+
+l_seconds="$(convert_to_seconds "$l_value")"
+
+if [[ "$l_seconds" -ge 1 && "$l_seconds" -le 60 ]]; then
+  echo -e "\n- Audit Result:\n ** PASS **\n - LoginGraceTime is set to \"$l_value\" ($l_seconds seconds), which is within the allowed range (1–60 seconds)."
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n - LoginGraceTime is set to \"$l_value\" ($l_seconds seconds), which is outside the allowed range (1–60 seconds)."
+fi
+
+[[ -n "$l_match_warning" ]] && echo -e "\n ** WARNING **\n$l_match_warning"
+}
+""""

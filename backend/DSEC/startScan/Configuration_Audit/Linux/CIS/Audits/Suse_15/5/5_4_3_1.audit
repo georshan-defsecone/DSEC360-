@@ -1,0 +1,14 @@
+audit_id: "5.4.3.1"
+audit_name: "Ensure nologin is not listed in /etc/shells"
+audit_script: """
+{
+if grep -Ps '^\h*([^#\n\r]+)?/nologin\b' /etc/shells > /dev/null; then
+  echo -e "\n** FAIL **"
+  echo "Found one or more entries containing /nologin in /etc/shells:"
+  grep -Ps '^\h*([^#\n\r]+)?/nologin\b' /etc/shells
+else
+  echo -e "\n** PASS **"
+  echo "/nologin is not listed in /etc/shells"
+fi
+}
+""""

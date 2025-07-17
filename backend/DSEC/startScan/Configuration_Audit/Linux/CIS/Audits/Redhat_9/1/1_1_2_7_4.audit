@@ -1,0 +1,35 @@
+audit_id: "1.1.2.7.4"
+audit_name: "Ensure noexec option set on /var/log/audit partition"
+audit_script: """
+{
+unset a_output
+unset a_output2
+unset l_output
+
+l_output=""
+l_findmnt_output="$(findmnt -kn /var/log/audit 2>/dev/null)"
+
+if [ -z "$l_findmnt_output" ]; then
+    a_output2+=(" - /var/log/audit is not mounted as a separate partition")
+else
+    if echo "$l_findmnt_output" | grep -vq noexec; then
+        a_output2+=(" - /var/log/audit is mounted but missing the noexec option")
+        l_output="$l_findmnt_output"
+    else
+        a_output+=(" - /var/log/audit is mounted with noexec option")
+        l_output="$l_findmnt_output"
+    fi
+fi
+
+# Display INFO
+[ -n "$l_output" ] && echo -e "\n\n -- INFO --\n - findmnt output:\n$l_output"
+
+# Display Audit Result
+if [ "${#a_output2[@]}" -le 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for audit failure:" "${a_output2[@]}"
+    [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "- Correctly set:" "${a_output[@]}"
+fi
+}
+"""

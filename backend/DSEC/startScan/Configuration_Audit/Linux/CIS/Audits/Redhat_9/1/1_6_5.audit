@@ -1,0 +1,30 @@
+audit_id: "1.6.5"
+audit_name: "Ensure system wide crypto policy disables cbc for ssh"
+audit_script: """
+{
+l_output="" l_output2=""
+l_cpfile="/etc/crypto-policies/state/CURRENT.pol"
+
+if grep -Piq -- '^\h*cipher\h*=\h*([^#\n\r]+)?-CBC\b' "$l_cpfile"; then
+    if grep -Piq -- '^\h*cipher@(lib|open)ssh(-server|-client)?\h*=\h*' "$l_cpfile"; then
+        if ! grep -Piq -- '^\h*cipher@(lib|open)ssh(-server|-client)?\h*=\h*([^#\n\r]+)?-CBC\b' "$l_cpfile"; then
+            l_output="$l_output\n - Cipher Block Chaining (CBC) is disabled for SSH"
+        else
+            l_output2="$l_output2\n - Cipher Block Chaining (CBC) is enabled for SSH"
+        fi
+    else
+        l_output2="$l_output2\n - Cipher Block Chaining (CBC) is enabled for SSH"
+    fi
+else
+    l_output=" - Cipher Block Chaining (CBC) is disabled"
+fi
+
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:\n$l_output\n"
+fi
+}
+
+"""

@@ -1,0 +1,26 @@
+audit_id: "5.3.2.3.1"
+audit_name: "Ensure password history remember is configured"
+audit_script: """
+{
+a_output=(); a_output2=()
+if command -v pam-config &>/dev/null; then
+    output="$(pam-config --query --pwhistory --pwhistory-remember 2>/dev/null)"
+    if [[ -n "$output" ]]; then
+        remember_val=$(echo "$output" | grep -Poi 'remember\s*=\s*\K\d+')
+        if [[ -n "$remember_val" && "$remember_val" -ge 24 ]]; then
+            a_output+=("pam-config: remember = $remember_val (meets policy)")
+            printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+        else
+            a_output2+=("pam-config: remember = ${remember_val:-not set or invalid} (should be 24 or more)")
+            printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+        fi
+    else
+        a_output2+=("pam-config output is empty; remember value not configured")
+        printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+    fi
+else
+    a_output2+=("pam-config not available on system")
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+fi
+}
+""""

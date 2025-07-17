@@ -1,0 +1,33 @@
+audit_id: "5.1.12"
+audit_name: "Ensure sshd HostbasedAuthentication is disabled"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+  l_warning=""
+
+  # Check HostbasedAuthentication value
+  hb_val="$(sshd -T 2>/dev/null | awk '$1 == "hostbasedauthentication" {print $2}')"
+
+  if [ "$hb_val" = "no" ]; then
+    l_output=" - HostbasedAuthentication is set to no"
+  else
+    l_output2=" - HostbasedAuthentication is not set to no"
+  fi
+
+  # Warn if Match blocks are present
+  if grep -Piq '^\s*Match\b' /etc/ssh/sshd_config; then
+    l_warning=" - Match blocks detected in sshd_config. They may override this setting.\n - To verify for a specific user: sshd -T -C user=<username> | grep hostbasedauthentication"
+  fi
+
+  # Output audit result
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+
+  # Show warning if applicable
+  [ -n "$l_warning" ] && echo -e "\n ** WARNING **\n$l_warning"
+}
+"""

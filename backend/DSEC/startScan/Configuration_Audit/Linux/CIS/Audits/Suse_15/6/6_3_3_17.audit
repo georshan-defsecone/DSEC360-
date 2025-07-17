@@ -1,0 +1,59 @@
+audit_id: "6.3.3.17"
+audit_name: "Ensure successful and unsuccessful attempts to use the chacl command are collected"
+audit_script: """
+{
+echo "### Audit Check: Execution of /usr/bin/chacl Binary"
+
+expected_rule="-a always,exit -F path=/usr/bin/chacl -F perm=x -F auid>=1000 -F auid!=unset -k perm_chng"
+alt_running_rule="-a always,exit -S all -F path=/usr/bin/chacl -F perm=x -F auid>=1000 -F auid!=-1 -F key=perm_chng"
+
+UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+
+if [ -z "$UID_MIN" ]; then
+  echo -e "\n❌ ERROR: UID_MIN could not be determined from /etc/login.defs"
+  exit 1
+fi
+
+missing_disk=()
+on_disk=$(awk -v uid_min="$UID_MIN" '
+  /^\s*-a\s+always,exit/ &&
+  (/ -F\s+auid!=unset/ || / -F\s+auid!=-1/ || / -F\s+auid!=4294967295/) &&
+  $0 ~ "-F\\s+auid>="uid_min &&
+  / -F\s+perm=x/ &&
+  / -F\s+path=\/usr\/bin\/chacl/ &&
+  (/key=| -k /)
+' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+grep -qF -- "$expected_rule" <<< "$on_disk" || missing_disk+=("$expected_rule")
+
+if [ "${#missing_disk[@]}" -eq 0 ]; then
+  echo -e "\n- On-Disk Audit Result:"
+  echo " ** PASS **"
+  echo " - Expected on-disk audit rule for chacl is present."
+
+else
+  echo -e "\n- On-Disk Audit Result:"
+  echo " ** FAIL **"
+  echo " - Missing on-disk rules:"
+  printf '   %s\n' "${missing_disk[@]}"
+fi
+
+missing_runtime=()
+running=$(auditctl -l 2>/dev/null)
+
+if ! grep -qF -- "$expected_rule" <<< "$running" && ! grep -qF -- "$alt_running_rule" <<< "$running"; then
+  missing_runtime+=("$expected_rule OR $alt_running_rule")
+fi
+
+if [ "${#missing_runtime[@]}" -eq 0 ]; then
+  echo -e "\n- Runtime Audit Result:"
+  echo "PASS"
+  echo " - Expected runtime audit rule for chacl is present."
+else
+  echo -e "\n- Runtime Audit Result:"
+  echo "FAIL:"
+  echo " - Missing running rule:"
+  printf '   %s\n' "${missing_runtime[@]}"
+fi
+}
+""""

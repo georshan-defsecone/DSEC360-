@@ -1,0 +1,42 @@
+audit_id: "5.3.2.1"
+audit_name: "Ensure active authselect profile includes pam modules"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  profile=$(awk 'NR==1 {print $1}' /etc/authselect/authselect.conf 2>/dev/null)
+
+  if [ -z "$profile" ] || [ ! -d "/etc/authselect/$profile" ]; then
+    l_output2=" - Unable to detect active authselect profile or profile directory missing"
+  else
+    files=(/etc/authselect/"$profile"/system-auth /etc/authselect/"$profile"/password-auth)
+    missing_modules=""
+
+    for module in pam_pwquality.so pam_pwhistory.so pam_faillock.so pam_unix.so; do
+      found=false
+      for file in "${files[@]}"; do
+        if grep -Pq "\b$module\b" "$file" 2>/dev/null; then
+          found=true
+          break
+        fi
+      done
+      if ! $found; then
+        missing_modules="$missing_modules\n - Missing module: $module"
+      fi
+    done
+
+    if [ -z "$missing_modules" ]; then
+      l_output=" - All required PAM modules found in active authselect profile ($profile)"
+    else
+      l_output2=" - One or more required PAM modules missing in profile ($profile):$missing_modules"
+    fi
+  fi
+
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+}
+"""

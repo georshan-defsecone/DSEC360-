@@ -1,0 +1,42 @@
+audit_id: "5.1.9"
+audit_name: "Ensure sshd ClientAliveInterval and ClientAliveCountMax are configured"
+audit_script: """
+{
+l_output=""
+l_output2=""
+l_output3=""
+
+# Get values
+clientaliveinterval="$(sshd -T 2>/dev/null | awk '$1 == "clientaliveinterval" {print $2}')"
+clientalivecountmax="$(sshd -T 2>/dev/null | awk '$1 == "clientalivecountmax" {print $2}')"
+
+# Evaluate values
+if [[ "$clientaliveinterval" =~ ^[0-9]+$ && "$clientaliveinterval" -gt 0 ]]; then
+    l_output+=" - clientaliveinterval is set to $clientaliveinterval"
+else
+    l_output2+=" - clientaliveinterval is not set or is not greater than zero"
+fi
+
+if [[ "$clientalivecountmax" =~ ^[0-9]+$ && "$clientalivecountmax" -gt 0 ]]; then
+    l_output+="\n - clientalivecountmax is set to $clientalivecountmax"
+else
+    l_output2+="\n - clientalivecountmax is not set or is not greater than zero"
+fi
+
+# Check for Match blocks
+if grep -Piq '^\s*Match\b' /etc/ssh/sshd_config; then
+    l_output3+=" - Match blocks detected in sshd_config. These settings may be overridden.\n - Use: sshd -T -C user=<username> to validate actual applied configuration"
+fi
+
+# Final output
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+    [ -n "$l_output" ] && echo -e "\n$l_output"
+fi
+
+# Show warning if Match blocks present
+[ -n "$l_output3" ] && echo -e "\n ** WARNING **\n$l_output3"
+}
+"""

@@ -1,0 +1,21 @@
+audit_id: "1.8.10"
+audit_name: "Ensure XDMCP is not enabled"
+audit_script: """
+{
+l_output="" l_output2=""
+
+if grep -Eisq '^\s*Enable\s*=\s*true' /etc/gdm/custom.conf; then
+    l_output2="$l_output2\n - The line 'Enable=true' is present in /etc/gdm/custom.conf"
+else
+    l_output=" - 'Enable=true' is not present in /etc/gdm/custom.conf"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+fi
+}
+
+"""

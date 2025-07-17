@@ -1,0 +1,32 @@
+audit_id: "5.3.3.4.1"
+audit_name: "Ensure pam_unix does not include nullok"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  pam_files=(/etc/pam.d/password-auth /etc/pam.d/system-auth)
+  pattern='^\s*(auth|account|password|session)\s+(requisite|required|sufficient)\s+pam_unix\.so\b'
+
+  for file in "${pam_files[@]}"; do
+    while IFS= read -r line; do
+      # Skip commented lines
+      [[ "$line" =~ ^\s*# ]] && continue
+
+      if [[ "$line" =~ pam_unix\.so ]] && [[ "$line" =~ $pattern ]]; then
+        if [[ "$line" =~ nullok ]]; then
+          l_output2+=" - 'nullok' is present in $file:\n   $line\n"
+        else
+          l_output+=" - pam_unix.so line in $file does not include 'nullok'\n"
+        fi
+      fi
+    done < "$file"
+  done
+
+  if [[ -z "$l_output2" ]]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+}
+"""

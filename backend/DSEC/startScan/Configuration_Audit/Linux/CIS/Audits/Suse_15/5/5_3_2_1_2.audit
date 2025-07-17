@@ -1,0 +1,31 @@
+audit_id: "5.3.2.1.2"
+audit_name: "Ensure password unlock time is configured"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+# Extract unlock_time value
+unlock_time=$(awk -F= '/^\s*unlock_time\s*=/ {
+    gsub(/ /, "", $2); print $2
+}' /etc/security/faillock.conf | head -n1)
+
+# Validate setting
+if [[ -z "$unlock_time" ]]; then
+    a_output2+=(" - 'unlock_time' is not set in /etc/security/faillock.conf")
+elif ! [[ "$unlock_time" =~ ^[0-9]+$ ]]; then
+    a_output2+=(" - 'unlock_time' is set to a non-numeric value: \"$unlock_time\"")
+elif [ "$unlock_time" -eq 0 ] || [ "$unlock_time" -ge 900 ]; then
+    a_output+=(" - 'unlock_time' is correctly set to \"$unlock_time\" seconds")
+else
+    a_output2+=(" - 'unlock_time' is set to \"$unlock_time\", which is less than 900 and not zero")
+fi
+
+# Output result
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for audit failure:" "${a_output2[@]}"
+    [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "- Correctly set:" "${a_output[@]}"
+fi
+}
+""""

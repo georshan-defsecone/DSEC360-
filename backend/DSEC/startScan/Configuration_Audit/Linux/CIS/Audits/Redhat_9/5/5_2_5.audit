@@ -1,0 +1,21 @@
+audit_id: "5.2.5"
+audit_name: "Ensure re-authentication for privilege escalation is not disabled globally"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  # Look for uncommented lines containing '!authenticate'
+  l_findings="$(grep -r "^[^#].*\!authenticate" /etc/sudoers* 2>/dev/null)"
+
+  if [ -n "$l_findings" ]; then
+    l_output2=" - One or more sudoers entries contain '!authenticate':\n$l_findings"
+  else
+    l_output=" - No '!authenticate' directives found in /etc/sudoers or /etc/sudoers.d/*"
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+    exit 0
+  fi
+
+  echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+}
+"""

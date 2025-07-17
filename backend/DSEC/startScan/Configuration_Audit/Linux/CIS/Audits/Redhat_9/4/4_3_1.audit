@@ -1,0 +1,42 @@
+audit_id: "4.3.1"
+audit_name: "Ensure nftables base chains exist Ensure nftables base chains exist"
+audit_script: """
+{
+l_output="" l_output2=""
+l_nft_enabled="" l_fwd_enabled=""
+
+# Check which firewall is enabled
+if systemctl is-enabled firewalld.service 2>/dev/null | grep -q enabled; then
+  echo -e "\n - FirewallD is in use on the system"
+  echo -e " - Skipping base chain checks (handled automatically by firewalld)"
+  l_fwd_enabled="yes"
+elif systemctl is-enabled nftables.service 2>/dev/null | grep -q enabled; then
+  echo -e "\n - NFTables is in use on the system"
+  l_nft_enabled="yes"
+else
+  echo -e "\n - ERROR: Neither firewalld nor nftables is enabled"
+  echo -e " - Please ensure a supported firewall is installed and enabled"
+fi
+
+if [ "$l_nft_enabled" = "yes" ]; then
+  # Get all hook declarations
+  l_hooks="$(nft list ruleset 2>/dev/null | grep -Po 'type\s+filter\s+hook\s+\K(input|forward|output)')"
+
+  for hook in input forward output; do
+    if grep -q "$hook" <<< "$l_hooks"; then
+      l_output+="\n - Base chain for $hook hook exists"
+    else
+      l_output2+="\n - Base chain for $hook hook is missing"
+    fi
+  done
+fi
+
+# Print results
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s):\n$l_output2"
+  [ -n "$l_output" ] && echo -e "\n- Detected correctly:\n$l_output"
+fi
+}
+"""

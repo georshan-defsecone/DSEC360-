@@ -1,0 +1,23 @@
+audit_id: "6.2.3.4"
+audit_name: "Ensure journald is configured to send logs to rsyslog"
+audit_script: """
+{
+l_result=""
+l_fail=""
+
+# Check journald forwarding setting
+if systemd-analyze cat-config systemd/journald.conf systemd/journald.conf.d/* \
+    2>/dev/null | grep -E -q '^ForwardToSyslog=yes'; then
+    l_result=" - ForwardToSyslog is correctly set to yes"
+else
+    l_fail=" - ForwardToSyslog is not set to yes in systemd-journald configuration"
+fi
+
+# Print result
+if [ -z "$l_fail" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_result\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - * Reason for audit failure *:\n$l_fail\n"
+fi
+}
+""""

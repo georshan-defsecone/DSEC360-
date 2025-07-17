@@ -1,0 +1,22 @@
+audit_id: "2.3.2"
+audit_name: "Ensure chrony is configured "
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check for chrony configuration with server or pool directives
+if grep -Prs -- '^\h*(server|pool)\h+[^#\n\r]+' /etc/chrony.conf /etc/chrony.d/ > /dev/null 2>&1; then
+    l_output=" - Remote NTP server(s) are configured in chrony"
+else
+    l_output2=" - No valid 'server' or 'pool' directive found in /etc/chrony.conf or /etc/chrony.d/"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+fi
+}
+
+"""

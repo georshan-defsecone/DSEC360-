@@ -1,0 +1,34 @@
+audit_id: "5.1.19"
+audit_name: "Ensure sshd PermitEmptyPasswords is disabled"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+  l_warning=""
+
+  # Check the effective PermitEmptyPasswords setting
+  l_setting="$(sshd -T 2>/dev/null | awk '$1 == "permitemptypasswords" {print $2}')"
+
+  if [ -z "$l_setting" ]; then
+    l_output2=" - PermitEmptyPasswords directive not found"
+  elif [[ "$l_setting" != "no" ]]; then
+    l_output2=" - PermitEmptyPasswords is set to \"$l_setting\" (should be \"no\")"
+  else
+    l_output=" - PermitEmptyPasswords is set to \"$l_setting\""
+  fi
+
+  # Check for presence of Match blocks
+  if grep -Piq '^\s*Match\b' /etc/ssh/sshd_config; then
+    l_warning=" - Match blocks detected in sshd_config. They may override PermitEmptyPasswords.\n - To verify for a specific user: sshd -T -C user=<username> | grep permitemptypasswords"
+  fi
+
+  # Output results
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+
+  [ -n "$l_warning" ] && echo -e "\n ** WARNING **\n$l_warning"
+}
+"""

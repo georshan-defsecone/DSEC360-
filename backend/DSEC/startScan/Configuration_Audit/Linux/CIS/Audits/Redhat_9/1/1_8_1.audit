@@ -1,0 +1,19 @@
+audit_id: "1.8.1"
+audit_name: "Ensure GNOME Display Manager is removed"
+audit_script: """
+{
+l_output="" l_output2=""
+
+if rpm -q gdm &> /dev/null; then
+    l_output2=" - Package 'gdm' is installed"
+else
+    l_output=" - Package 'gdm' is not installed"
+fi
+
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n$l_output2\n"
+fi
+}
+"""

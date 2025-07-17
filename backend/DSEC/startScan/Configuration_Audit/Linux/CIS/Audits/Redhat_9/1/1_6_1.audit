@@ -1,0 +1,26 @@
+audit_id: "1.6.1"
+audit_name: "Ensure system wide crypto policy is not set to legacy"
+audit_script: """
+{
+l_output="" l_output2=""
+l_policy_file="/etc/crypto-policies/config"
+
+if [ ! -f "$l_policy_file" ]; then
+    l_output2="- File \"$l_policy_file\" does not exist"
+else
+    if grep -Pi '^\h*LEGACY\b' "$l_policy_file" &>/dev/null; then
+        l_output2="- System-wide crypto policy is set to LEGACY in \"$l_policy_file\""
+    else
+        l_output="- System-wide crypto policy is not set to LEGACY in \"$l_policy_file\""
+    fi
+fi
+
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n$l_output2"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:\n$l_output\n"
+fi
+}
+
+"""

@@ -1,0 +1,25 @@
+audit_id: "2.1.18"
+audit_name: "Ensure web proxy server services are not in use"
+audit_script: """
+{
+pkg_status=$(rpm -q squid 2>/dev/null)
+
+if [[ "$pkg_status" == "package squid is not installed" ]]; then
+    echo "** PASS **"
+    echo "- The 'squid' package is not installed."
+else
+    enabled_status=$(systemctl is-enabled squid.service 2>/dev/null | grep 'enabled')
+    active_status=$(systemctl is-active squid.service 2>/dev/null | grep '^active')
+
+    if [[ -z "$enabled_status" && -z "$active_status" ]]; then
+        echo "** PASS **"
+        echo "- The 'squid' package is installed but 'squid.service' is disabled and inactive."
+    else
+        echo "** FAIL **"
+        echo "- The 'squid' package is installed."
+        [[ -n "$enabled_status" ]] && echo "- 'squid.service' is enabled."
+        [[ -n "$active_status" ]] && echo "- 'squid.service' is active."
+    fi
+fi
+}
+""""

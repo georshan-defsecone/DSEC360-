@@ -1,0 +1,33 @@
+audit_id: "5.1.19"
+audit_name: "Ensure sshd PermitEmptyPasswords is disabled"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+# Get PermitEmptyPasswords value from sshd -T
+l_value="$(sshd -T 2>/dev/null | awk '$1 == "permitemptypasswords" {print $2}')"
+
+# Check for Match blocks
+grep -Piq '^\s*match\s+' /etc/ssh/sshd_config && l_match_warning=" - Match blocks detected in sshd_config. Verify with: sshd -T -C user=<user>"
+
+# Evaluate main value
+if [[ "$l_value" == "no" ]]; then
+  a_output+=(" - PermitEmptyPasswords is set to 'no' as required.")
+else
+  a_output2+=(" - PermitEmptyPasswords is set to '$l_value' but should be 'no'.")
+fi
+
+# Final output
+if [ "${#a_output2[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${a_output[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${a_output2[@]}"
+  [ "${#a_output[@]}" -gt 0 ] && printf '\n- Correctly set:\n%s\n' "${a_output[@]}"
+fi
+
+# Warn if match blocks are detected
+[ -n "$l_match_warning" ] && echo -e "\n ** WARNING **\n$l_match_warning"
+}
+""""

@@ -1,0 +1,41 @@
+audit_id: "7.1.2"
+audit_name: "Ensure access to /etc/passwd- is configured"
+audit_script: """
+{
+fail_output="" pass_output=""
+
+if [ -e /etc/passwd- ]; then
+    stat_output=$(stat -Lc '%a %u %g' /etc/passwd- 2>/dev/null)
+    read -r perms uid gid <<< "$stat_output"
+
+    # Check permissions (octal <= 644)
+    if [ "$perms" -le 644 ]; then
+        pass_output+="\n - /etc/passwd- permissions are $perms (644 or more restrictive)"
+    else
+        fail_output+="\n - /etc/passwd- permissions are $perms (should be 644 or more restrictive)"
+    fi
+
+    # Check ownership
+    if [ "$uid" -eq 0 ]; then
+        pass_output+="\n - /etc/passwd- is owned by UID 0 (root)"
+    else
+        fail_output+="\n - /etc/passwd- is owned by UID $uid (should be 0/root)"
+    fi
+
+    if [ "$gid" -eq 0 ]; then
+        pass_output+="\n - /etc/passwd- is group-owned by GID 0 (root)"
+    else
+        fail_output+="\n - /etc/passwd- is group-owned by GID $gid (should be 0/root)"
+    fi
+else
+    fail_output+="\n - /etc/passwd- does not exist"
+fi
+
+if [ -z "$fail_output" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **$pass_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **$fail_output"
+    [ -n "$pass_output" ] && echo -e "\n - Correctly set:$pass_output"
+fi
+}
+""""

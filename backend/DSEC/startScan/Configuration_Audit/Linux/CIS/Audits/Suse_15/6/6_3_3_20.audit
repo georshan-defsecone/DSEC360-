@@ -1,0 +1,15 @@
+audit_id: "6.3.3.20"
+audit_name: "Ensure the audit configuration is immutable"
+audit_script: """
+{
+last_e2=$(grep -Ph -- '^\h*-e\h+2\b' /etc/audit/rules.d/*.rules 2>/dev/null | tail -1)
+
+if [ "$last_e2" = "-e 2" ]; then
+    echo -e "\n** PASS **\n - Immutable audit mode (-e 2) is correctly configured in on-disk rules."
+else
+    echo -e "\n** FAIL **\n - Immutable audit mode (-e 2) is not correctly set."
+    echo "   Expected: -e 2"
+    echo "   Found   : ${last_e2:-[none]}"
+fi
+}
+""""

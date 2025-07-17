@@ -1,0 +1,42 @@
+audit_id: "7.1.7"
+audit_name: "Ensure access to /etc/gshadow is configured"
+audit_script: """
+{
+fail_output="" pass_output=""
+
+if [ -e /etc/gshadow ]; then
+    stat_output=$(stat -Lc '%a %u %U %g %G' /etc/gshadow 2>/dev/null)
+    read -r perms uid user gid group <<< "$stat_output"
+
+    # Check permissions
+    if [ "$perms" -le 640 ]; then
+        pass_output+="\n - /etc/gshadow permissions are $perms (640 or more restrictive)"
+    else
+        fail_output+="\n - /etc/gshadow permissions are $perms (should be 640 or more restrictive)"
+    fi
+
+    # Check owner
+    if [ "$uid" -eq 0 ]; then
+        pass_output+="\n - /etc/gshadow is owned by UID 0 (root)"
+    else
+        fail_output+="\n - /etc/gshadow is owned by UID $uid (should be 0/root)"
+    fi
+
+    # Check group ownership
+    if [ "$gid" -eq 0 ] || [ "$group" = "shadow" ]; then
+        pass_output+="\n - /etc/gshadow is group-owned by GID $gid ($group)"
+    else
+        fail_output+="\n - /etc/gshadow is group-owned by GID $gid ($group) (should be root or shadow)"
+    fi
+else
+    fail_output+="\n - /etc/gshadow does not exist"
+fi
+
+if [ -z "$fail_output" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **$pass_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **$fail_output"
+    [ -n "$pass_output" ] && echo -e "\n - Correctly set:$pass_output"
+fi
+}
+""""

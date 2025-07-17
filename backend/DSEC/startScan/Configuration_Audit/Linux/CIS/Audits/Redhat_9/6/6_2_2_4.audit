@@ -1,0 +1,23 @@
+audit_id: "6.2.2.4"
+audit_name: "Ensure journald Storage is configured"
+audit_script: """
+#!/usr/bin/env bash
+{
+l_output="" l_output2=""
+
+# Check if Storage is explicitly set to 'persistent'
+if systemd-analyze cat-config systemd/journald.conf systemd/journald.conf.d/* 2>/dev/null | grep -Eq '^Storage=persistent'; then
+    l_output="$l_output\n - Storage is correctly set to \"persistent\""
+else
+    l_output2="$l_output2\n - Storage is not explicitly set to \"persistent\" in journald configuration"
+fi
+
+# Output audit result
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output"
+fi
+}
+"""

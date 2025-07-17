@@ -1,0 +1,52 @@
+audit_id: "2.4.1.2"
+audit_name: "Ensure permissions on /etc/crontab are configured"
+audit_script: """
+#!/usr/bin/env bash
+{
+l_output="" l_output2=""
+
+# Check if cron is installed
+if rpm -q cronie > /dev/null 2>&1 || rpm -q vixie-cron > /dev/null 2>&1; then
+    if [ -f /etc/crontab ]; then
+        l_stat_output=$(stat -Lc 'Access: (%a/%A) Uid: (%u/%U) Gid: (%g/%G)' /etc/crontab)
+
+        # Extract permission, UID, GID
+        l_perm=$(stat -Lc '%a' /etc/crontab)
+        l_uid=$(stat -Lc '%u' /etc/crontab)
+        l_gid=$(stat -Lc '%g' /etc/crontab)
+
+        # Check permissions
+        if [ "$l_perm" -eq 600 ]; then
+            l_output="$l_output\n - /etc/crontab permissions are 600"
+        else
+            l_output2="$l_output2\n - /etc/crontab permissions are not 600 (found $l_perm)"
+        fi
+
+        # Check UID and GID
+        if [ "$l_uid" -eq 0 ]; then
+            l_output="$l_output\n - /etc/crontab is owned by UID 0"
+        else
+            l_output2="$l_output2\n - /etc/crontab is not owned by UID 0 (found $l_uid)"
+        fi
+
+        if [ "$l_gid" -eq 0 ]; then
+            l_output="$l_output\n - /etc/crontab is owned by GID 0"
+        else
+            l_output2="$l_output2\n - /etc/crontab is not owned by GID 0 (found $l_gid)"
+        fi
+    else
+        l_output2="$l_output2\n - /etc/crontab file does not exist"
+    fi
+else
+    l_output=" - Cron is not installed on the system"
+fi
+
+# Report result
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+}
+"""

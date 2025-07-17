@@ -1,0 +1,90 @@
+audit_id: "6.3.3.5"
+audit_name: "Ensure events that modify the system's network environment are collected"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+expected_disk_rules=(
+  "-a always,exit -F arch=b64 -S sethostname,setdomainname -k system-locale"
+  "-a always,exit -F arch=b32 -S sethostname,setdomainname -k system-locale"
+  "-w /etc/issue -p wa -k system-locale"
+  "-w /etc/issue.net -p wa -k system-locale"
+  "-w /etc/hosts -p wa -k system-locale"
+  "-w /etc/hostname -p wa -k system-locale"
+  "-w /etc/sysconfig/network -p wa -k system-locale"
+  "-w /etc/sysconfig/network-scripts -p wa -k system-locale"
+  "-w /etc/NetworkManager -p wa -k system-locale"
+)
+
+expected_runtime_rules=(
+  "-a always,exit -F arch=b64 -S sethostname,setdomainname -F key=system-locale"
+  "-a always,exit -F arch=b32 -S sethostname,setdomainname -F key=system-locale"
+  "-w /etc/issue -p wa -k system-locale"
+  "-w /etc/issue.net -p wa -k system-locale"
+  "-w /etc/hosts -p wa -k system-locale"
+  "-w /etc/hostname -p wa -k system-locale"
+  "-w /etc/sysconfig/network -p wa -k system-locale"
+  "-w /etc/sysconfig/network-scripts -p wa -k system-locale"
+  "-w /etc/NetworkManager -p wa -k system-locale"
+)
+
+# Gather on-disk rules
+disk_output=$(
+awk '
+  /^ *-a *always, *exit/ && /-F *arch=b(32|64)/ && /-S/ &&
+  (/sethostname/ || /setdomainname/) &&
+  (/ key= *[!-~]* *$/ || /-k *[!-~]* *$/)
+' /etc/audit/rules.d/*.rules 2>/dev/null
+
+awk '
+  /^ *-w/ && (/etc\/issue/ || /etc\/issue.net/ || /etc\/hosts/ ||
+  /etc\/sysconfig\/network/ || /etc\/hostname/ || /etc\/NetworkManager/) &&
+  / +-p *wa/ &&
+  (/ key= *[!-~]* *$/ || /-k *[!-~]* *$/)
+' /etc/audit/rules.d/*.rules 2>/dev/null
+)
+
+# Check each expected on-disk rule
+for rule in "${expected_disk_rules[@]}"; do
+  if ! grep -Pq -- "$(echo "$rule" | sed 's/[][().*^$]/\\&/g')" <<< "$disk_output"; then
+    a_output2+=(" - Missing on-disk rule: $rule")
+  else
+    a_output+=(" - Found on-disk rule: $rule")
+  fi
+done
+
+# Gather runtime rules
+runtime_output=$(
+auditctl -l 2>/dev/null | awk '
+  /^ *-a *always,exit/ && /-F *arch=b(32|64)/ && /-S/ &&
+  (/sethostname/ || /setdomainname/) &&
+  (/ key= *[!-~]* *$/ || /-k *[!-~]* *$/)
+'
+auditctl -l 2>/dev/null | awk '
+  /^ *-w/ && (/etc\/issue/ || /etc\/issue.net/ || /etc\/hosts/ ||
+  /etc\/sysconfig\/network/ || /etc\/hostname/ || /etc\/NetworkManager/) &&
+  / +-p *wa/ &&
+  (/ key= *[!-~]* *$/ || /-k *[!-~]* *$/)
+'
+)
+
+# Check each expected runtime rule
+for rule in "${expected_runtime_rules[@]}"; do
+  if ! grep -Pq -- "$(echo "$rule" | sed 's/[][().*^$]/\\&/g')" <<< "$runtime_output"; then
+    a_output2+=(" - Missing loaded rule: $rule")
+  else
+    a_output+=(" - Found loaded rule: $rule")
+  fi
+done
+
+# Final audit result
+if [ "${#a_output2[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${a_output[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${a_output2[@]}"
+  [ "${#a_output[@]}" -gt 0 ] && printf '\n- Correctly set:\n%s\n' "${a_output[@]}"
+fi
+}
+""""

@@ -1,0 +1,78 @@
+audit_id: "1.8.8"
+audit_name: "Ensure GDM autorun-never is enabled"
+audit_script: """
+{
+l_pkgoutput="" l_output="" l_output2=""
+
+# Determine system's package manager
+if command -v dpkg-query > /dev/null 2>&1; then
+    l_pq="dpkg-query -W"
+elif command -v rpm > /dev/null 2>&1; then
+    l_pq="rpm -q"
+fi
+
+# Check if GDM is installed
+l_pcl="gdm gdm3"
+for l_pn in $l_pcl; do
+    if $l_pq "$l_pn" > /dev/null 2>&1; then
+        l_pkgoutput="$l_pkgoutput\n - Package: \"$l_pn\" exists on the system\n - Checking configuration"
+    fi
+done
+
+# Only proceed if GDM is installed
+if [ -n "$l_pkgoutput" ]; then
+    echo -e "$l_pkgoutput"
+
+    # Look for existing autorun-never setting
+    l_kfile="$(grep -Prils -- '^\h*autorun-never\b' /etc/dconf/db/*.d)"
+
+    if [ -f "$l_kfile" ]; then
+        # Extract profile name
+        l_gpname="$(awk -F'/' '{split($(NF-1),a,"."); print a[1]}' <<< "$l_kfile")"
+        l_gpdir="/etc/dconf/db/$l_gpname.d"
+
+        # Check if profile file exists
+        if grep -Pq -- "^\h*system-db:$l_gpname\b" /etc/dconf/profile/*; then
+            profile_file="$(grep -Pl -- "^\h*system-db:$l_gpname\b" /etc/dconf/profile/*)"
+            l_output="$l_output\n - dconf database profile file \"$profile_file\" exists"
+        else
+            l_output2="$l_output2\n - dconf database profile \"$l_gpname\" isn't set in /etc/dconf/profile"
+        fi
+
+        # Check if the dconf database file exists
+        if [ -f "/etc/dconf/db/$l_gpname" ]; then
+            l_output="$l_output\n - The dconf database \"$l_gpname\" exists"
+        else
+            l_output2="$l_output2\n - The dconf database \"$l_gpname\" doesn't exist"
+        fi
+
+        # Check if the profile directory exists
+        if [ -d "$l_gpdir" ]; then
+            l_output="$l_output\n - The dconf directory \"$l_gpdir\" exists"
+        else
+            l_output2="$l_output2\n - The dconf directory \"$l_gpdir\" doesn't exist"
+        fi
+
+        # Check if autorun-never is correctly set
+        if grep -Pqrs -- '^\h*autorun-never\h*=\h*true\b' "$l_kfile"; then
+            l_output="$l_output\n - \"autorun-never\" is set to true in \"$l_kfile\""
+        else
+            l_output2="$l_output2\n - \"autorun-never\" is not set correctly in \"$l_kfile\""
+        fi
+    else
+        l_output2="$l_output2\n - \"autorun-never\" setting not found"
+    fi
+else
+    l_output="$l_output\n - GNOME Desktop Manager is not installed on the system\n - Recommendation is Not Applicable"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n$l_output2\n"
+    [ -n "$l_output" ] && echo -e "- Correctly set:\n$l_output\n"
+fi
+}
+
+"""

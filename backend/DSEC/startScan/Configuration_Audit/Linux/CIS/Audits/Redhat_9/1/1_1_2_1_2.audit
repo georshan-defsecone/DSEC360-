@@ -1,0 +1,36 @@
+audit_id: "1.1.2.1.2"
+audit_name: "Ensure nodev option set on /tmp partition"
+audit_script: """
+{
+unset a_output
+unset a_output2
+unset l_output
+
+l_output=""
+l_findmnt_output="$(findmnt -kn /tmp 2>/dev/null)"
+
+if [ -z "$l_findmnt_output" ]; then
+    a_output2+=(" - /tmp is not mounted as a separate partition")
+else
+    if echo "$l_findmnt_output" | grep -vq nodev; then
+        a_output2+=(" - /tmp is mounted but missing the nodev option")
+        l_output="$l_findmnt_output"
+    else
+        a_output+=(" - /tmp is mounted with nodev option")
+        l_output="$l_findmnt_output"
+    fi
+fi
+
+# Display INFO
+[ -n "$l_output" ] && echo -e "\n\n -- INFO --\n - findmnt output:\n$l_output"
+
+# Display Audit Result
+if [ "${#a_output2[@]}" -le 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for audit failure:" "${a_output2[@]}"
+    [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "- Correctly set:" "${a_output[@]}"
+fi
+
+}
+"""

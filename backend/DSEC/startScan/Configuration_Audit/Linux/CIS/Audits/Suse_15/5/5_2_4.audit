@@ -1,0 +1,26 @@
+audit_id: "5.2.4"
+audit_name: "Ensure users must provide password for escalation"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+# Search for any uncommented NOPASSWD entries
+nopasswd_lines=$(grep -rP '^[^#].*NOPASSWD' /etc/sudoers* 2>/dev/null)
+
+if [[ -n "$nopasswd_lines" ]]; then
+  a_output2+=(" - The following entries allow sudo without password:")
+  a_output2+=("$nopasswd_lines")
+else
+  a_output+=(" - No NOPASSWD entries found; sudo requires password for privilege escalation")
+fi
+
+# Print audit result
+if [ "${#a_output2[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${a_output[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${a_output2[@]}"
+fi
+}
+""""

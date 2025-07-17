@@ -1,0 +1,28 @@
+audit_id: "5.3.3.3.3"
+audit_name: "Ensure pam_pwhistory includes use_authtok"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  expected_pattern='^\s*password\s+\S+\s+pam_pwhistory\.so.*\buse_authtok\b'
+
+  check_file() {
+    local file="$1"
+    if grep -P "$expected_pattern" "$file" 2>/dev/null | grep -qvE '^\s*#'; then
+      l_output+=" - use_authtok is set for pam_pwhistory.so in $file\n"
+    else
+      l_output2+=" - Missing 'use_authtok' for pam_pwhistory.so in $file\n"
+    fi
+  }
+
+  check_file /etc/pam.d/password-auth
+  check_file /etc/pam.d/system-auth
+
+  if [[ -z "$l_output2" ]]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+}
+"""

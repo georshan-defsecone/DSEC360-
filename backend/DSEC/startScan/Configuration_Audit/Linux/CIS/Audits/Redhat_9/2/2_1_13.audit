@@ -1,0 +1,50 @@
+audit_id: "2.1.13"
+audit_name: "Ensure rsync services are not in use"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check if rsync-daemon package is installed
+if rpm -q rsync-daemon > /dev/null 2>&1; then
+    l_output="$l_output\n - Package 'rsync-daemon' is installed"
+
+    # Check if rsyncd.socket is enabled
+    if systemctl is-enabled rsyncd.socket 2>/dev/null | grep -q '^enabled'; then
+        l_output2="$l_output2\n - rsyncd.socket is enabled"
+    else
+        l_output="$l_output\n - rsyncd.socket is not enabled"
+    fi
+
+    # Check if rsyncd.service is enabled
+    if systemctl is-enabled rsyncd.service 2>/dev/null | grep -q '^enabled'; then
+        l_output2="$l_output2\n - rsyncd.service is enabled"
+    else
+        l_output="$l_output\n - rsyncd.service is not enabled"
+    fi
+
+    # Check if rsyncd.socket is active
+    if systemctl is-active rsyncd.socket 2>/dev/null | grep -q '^active'; then
+        l_output2="$l_output2\n - rsyncd.socket is active"
+    else
+        l_output="$l_output\n - rsyncd.socket is not active"
+    fi
+
+    # Check if rsyncd.service is active
+    if systemctl is-active rsyncd.service 2>/dev/null | grep -q '^active'; then
+        l_output2="$l_output2\n - rsyncd.service is active"
+    else
+        l_output="$l_output\n - rsyncd.service is not active"
+    fi
+else
+    l_output="$l_output\n - Package 'rsync-daemon' is not installed"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+}
+"""

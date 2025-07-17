@@ -1,0 +1,80 @@
+audit_id: "2.1.18"
+audit_name: "Ensure web server services are not in use"
+audit_script: """
+#!/usr/bin/env bash
+{
+l_output="" l_output2=""
+
+# Check if httpd or nginx packages are installed
+httpd_installed=false
+nginx_installed=false
+
+if rpm -q httpd > /dev/null 2>&1; then
+    l_output="$l_output\n - Package 'httpd' is installed"
+    httpd_installed=true
+else
+    l_output="$l_output\n - Package 'httpd' is not installed"
+fi
+
+if rpm -q nginx > /dev/null 2>&1; then
+    l_output="$l_output\n - Package 'nginx' is installed"
+    nginx_installed=true
+else
+    l_output="$l_output\n - Package 'nginx' is not installed"
+fi
+
+# If either package is installed, check their respective services
+if $httpd_installed || $nginx_installed; then
+    # Check if httpd.socket is enabled
+    if systemctl is-enabled httpd.socket 2>/dev/null | grep -q '^enabled'; then
+        l_output2="$l_output2\n - httpd.socket is enabled"
+    else
+        l_output="$l_output\n - httpd.socket is not enabled"
+    fi
+
+    # Check if httpd.service is enabled
+    if systemctl is-enabled httpd.service 2>/dev/null | grep -q '^enabled'; then
+        l_output2="$l_output2\n - httpd.service is enabled"
+    else
+        l_output="$l_output\n - httpd.service is not enabled"
+    fi
+
+    # Check if nginx.service is enabled
+    if systemctl is-enabled nginx.service 2>/dev/null | grep -q '^enabled'; then
+        l_output2="$l_output2\n - nginx.service is enabled"
+    else
+        l_output="$l_output\n - nginx.service is not enabled"
+    fi
+
+    # Check if httpd.socket is active
+    if systemctl is-active httpd.socket 2>/dev/null | grep -q '^active'; then
+        l_output2="$l_output2\n - httpd.socket is active"
+    else
+        l_output="$l_output\n - httpd.socket is not active"
+    fi
+
+    # Check if httpd.service is active
+    if systemctl is-active httpd.service 2>/dev/null | grep -q '^active'; then
+        l_output2="$l_output2\n - httpd.service is active"
+    else
+        l_output="$l_output\n - httpd.service is not active"
+    fi
+
+    # Check if nginx.service is active
+    if systemctl is-active nginx.service 2>/dev/null | grep -q '^active'; then
+        l_output2="$l_output2\n - nginx.service is active"
+    else
+        l_output="$l_output\n - nginx.service is not active"
+    fi
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+}
+
+"""

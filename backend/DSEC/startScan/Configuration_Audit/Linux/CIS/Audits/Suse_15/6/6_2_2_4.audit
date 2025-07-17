@@ -1,0 +1,5 @@
+audit_id: "6.2.2.4"
+audit_name: "Ensure journald Storage is configured"
+audit_script: """
+
+""""

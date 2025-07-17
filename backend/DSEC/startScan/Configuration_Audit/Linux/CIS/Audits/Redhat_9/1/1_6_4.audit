@@ -1,0 +1,27 @@
+audit_id: "1.6.4"
+audit_name: "Ensure system wide crypto policy disables macs less than 128 bits"
+audit_script: """
+{
+l_output="" l_output2=""
+l_cpfile="/etc/crypto-policies/state/CURRENT.pol"
+
+if [ -f "$l_cpfile" ]; then
+    l_weak_mac_lines="$(grep -Pi -- '^\h*mac\h*=\h*([^#\n\r]+)?-64\b' "$l_cpfile")"
+    if [ -n "$l_weak_mac_lines" ]; then
+        l_output2="$l_output2\n - Weak MACs (e.g., ending in -64) are enabled in \"$l_cpfile\":\n$l_weak_mac_lines"
+    else
+        l_output="$l_output\n - No weak MACs (ending in -64) are enabled in \"$l_cpfile\""
+    fi
+else
+    l_output2="$l_output2\n - \"$l_cpfile\" does not exist"
+fi
+
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n$l_output2"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:\n$l_output\n"
+fi
+}
+
+"""

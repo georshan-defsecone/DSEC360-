@@ -1,0 +1,39 @@
+audit_id: "5.4.1.1"
+audit_name: "Ensure password expiration is configured"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+# Check PASS_MAX_DAYS in /etc/login.defs
+login_defs_val=$(grep -Pi '^\h*PASS_MAX_DAYS\h+\d+\b' /etc/login.defs | awk '{print $2}' | head -n 1)
+
+if [[ -z "$login_defs_val" ]]; then
+    a_output2+=("PASS_MAX_DAYS not set in /etc/login.defs")
+elif (( login_defs_val > 365 )); then
+    a_output2+=("PASS_MAX_DAYS is set to $login_defs_val in /etc/login.defs, which exceeds 365")
+else
+    a_output+=("PASS_MAX_DAYS in /etc/login.defs is set to $login_defs_val")
+fi
+
+# Check PASS_MAX_DAYS for each user in /etc/shadow
+while IFS=: read -r user pass lastchg min max warn inactive expire flag; do
+    if [[ "$pass" =~ ^\$.*\$ ]]; then
+        if [[ -n "$max" ]]; then
+            if (( max < 1 || max > 365 )); then
+                a_output2+=("User: $user PASS_MAX_DAYS: $max (invalid)")
+            fi
+        else
+            a_output2+=("User: $user has no PASS_MAX_DAYS set in /etc/shadow")
+        fi
+    fi
+done < /etc/shadow
+
+# Final output
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    a_output+=("All users have valid PASS_MAX_DAYS values between 1 and 365")
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+fi
+}
+""""

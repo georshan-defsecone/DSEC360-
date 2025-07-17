@@ -1,0 +1,32 @@
+audit_id: "6.2.1.1"
+audit_name: "Ensure journald service is enabled and active"
+audit_script: """
+{
+l_output=""
+l_output2=""
+
+# Check if systemd-journald is enabled (should be 'static')
+enabled_status=$(systemctl is-enabled systemd-journald.service 2>/dev/null)
+if [[ "$enabled_status" == "static" ]]; then
+  l_output="$l_output\n - systemd-journald.service is enabled with status: static (expected)"
+else
+  l_output2="$l_output2\n - systemd-journald.service is enabled with status: $enabled_status (unexpected)"
+fi
+
+# Check if systemd-journald is active (should be 'active')
+active_status=$(systemctl is-active systemd-journald.service 2>/dev/null)
+if [[ "$active_status" == "active" ]]; then
+  l_output="$l_output\n - systemd-journald.service is active (expected)"
+else
+  l_output2="$l_output2\n - systemd-journald.service is NOT active (status: $active_status)"
+fi
+
+# Output audit result
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **$l_output\n"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+  [ -n "$l_output" ] && echo -e "- Correctly configured:$l_output\n"
+fi
+}
+""""

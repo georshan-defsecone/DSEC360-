@@ -1,0 +1,27 @@
+audit_id: "2.1.4"
+audit_name: "Ensure dns server services are not in use"
+audit_script: """
+{
+# Audit: Ensure 'bind' is not installed or named.service is disabled and inactive
+
+if rpm -q bind &>/dev/null; then
+    echo "- The 'bind' package is installed."
+
+    is_enabled=$(systemctl is-enabled named.service 2>/dev/null | grep 'enabled')
+    is_active=$(systemctl is-active named.service 2>/dev/null | grep '^active')
+
+    if [ -n "$is_enabled" ] || [ -n "$is_active" ]; then
+        echo -e "\n** FAIL **"
+        echo "- BIND is installed, and 'named.service' is either enabled or active."
+        [ -n "$is_enabled" ] && echo "- Service is ENABLED: named.service"
+        [ -n "$is_active" ] && echo "- Service is ACTIVE: named.service"
+    else
+        echo -e "\n** PASS **"
+        echo "- BIND is installed, but 'named.service' is both disabled and inactive."
+    fi
+else
+    echo -e "\n** PASS **"
+    echo "- The 'bind' package is not installed."
+fi
+}
+""""

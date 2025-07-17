@@ -1,0 +1,29 @@
+audit_id: "5.2.2"
+audit_name: "Ensure sudo commands use pty"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+# Check that 'Defaults use_pty' is set
+if grep -rPi -- '^\s*Defaults\s+([^#\n\r]+,\s*)?use_pty\b' /etc/sudoers* | grep -q '/etc/sudoers:Defaults use_pty'; then
+  a_output+=(" - 'Defaults use_pty' is correctly set in /etc/sudoers")
+else
+  a_output2+=(" - 'Defaults use_pty' not found or not correctly set in /etc/sudoers")
+fi
+
+# Ensure 'Defaults !use_pty' is not set anywhere
+if grep -rPi -- '^\s*Defaults\s+([^#\n\r]+,\s*)?!use_pty\b' /etc/sudoers* &>/dev/null; then
+  a_output2+=(" - 'Defaults !use_pty' is present, which disables pseudo-terminal usage")
+fi
+
+# Print audit result
+if [ "${#a_output2[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${a_output[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${a_output2[@]}"
+  [ "${#a_output[@]}" -gt 0 ] && printf '\n- Correctly set:\n%s\n' "${a_output[@]}"
+fi
+}
+""""

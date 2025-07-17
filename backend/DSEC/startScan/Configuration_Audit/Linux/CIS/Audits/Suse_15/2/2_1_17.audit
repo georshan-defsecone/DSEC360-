@@ -1,0 +1,25 @@
+audit_id: "2.1.17"
+audit_name: "Ensure tftp server services are not in use"
+audit_script: """
+{
+pkg_status=$(rpm -q tftp-server 2>/dev/null)
+
+if [[ "$pkg_status" == "package tftp-server is not installed" ]]; then
+    echo "** PASS **"
+    echo "- The 'tftp-server' package is not installed."
+else
+    enabled_units=$(systemctl is-enabled tftp.socket tftp.service 2>/dev/null | grep 'enabled')
+    active_units=$(systemctl is-active tftp.socket tftp.service 2>/dev/null | grep '^active')
+
+    if [[ -z "$enabled_units" && -z "$active_units" ]]; then
+        echo "** PASS **"
+        echo "- The 'tftp-server' package is installed but both 'tftp.socket' and 'tftp.service' are disabled and inactive."
+    else
+        echo "** FAIL **"
+        echo "- The 'tftp-server' package is installed."
+        [[ -n "$enabled_units" ]] && echo "- One or more units are enabled: $enabled_units"
+        [[ -n "$active_units" ]] && echo "- One or more units are active: $active_units"
+    fi
+fi
+}
+""""

@@ -1,0 +1,26 @@
+audit_id: "5.3.1.2"
+audit_name: "Ensure latest version of authselect is installed"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  required_version="1.2.6-2"
+  installed=$(rpm -q --qf '%{VERSION}-%{RELEASE}\n' authselect 2>/dev/null)
+
+  if [[ $? -ne 0 || -z "$installed" ]]; then
+    l_output2=" - authselect package not found or rpm query failed"
+  else
+    # Use rpm's built-in version comparison logic
+    rpm -q --qf "%{VERSION}-%{RELEASE}\n" authselect | grep -Pq '^1\.2\.6-(2[0-9]*|[3-9])|1\.[3-9]\.|[2-9]\.' && \
+      l_output=" - authselect version ($installed) is compliant" || \
+      l_output2=" - authselect version ($installed) is below required minimum ($required_version)"
+  fi
+
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+}
+"""

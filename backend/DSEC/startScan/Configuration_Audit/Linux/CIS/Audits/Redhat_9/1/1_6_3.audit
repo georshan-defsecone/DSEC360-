@@ -1,0 +1,40 @@
+audit_id: "1.6.3"
+audit_name: "Ensure system wide crypto policy disables sha1 hash and signature support"
+audit_script: """
+{
+l_output="" l_output2=""
+l_cpfile="/etc/crypto-policies/state/CURRENT.pol"
+
+# Check 1: SHA1 present in hash/sign lines and not properly excluded
+if [ -f "$l_cpfile" ]; then
+    l_sha1_lines=$(awk -F= '($1~/(hash|sign)/ && $2~/SHA1/ && $2!~/^\s*\-\s*([^#\n\r]+)?SHA1/){print}' "$l_cpfile")
+    if [ -n "$l_sha1_lines" ]; then
+        l_output2="$l_output2\n - SHA1 is incorrectly present in one or more hash/sign entries:\n$l_sha1_lines"
+    else
+        l_output="$l_output\n - No unexcluded SHA1 found in hash/sign lines of \"$l_cpfile\""
+    fi
+else
+    l_output2="$l_output2\n - \"$l_cpfile\" does not exist"
+fi
+
+# Check 2: sha1_in_certs = 0
+if grep -Psiq -- '^\h*sha1_in_certs\h*=\h*0\b' "$l_cpfile"; then
+    l_output="$l_output\n - \"sha1_in_certs\" is correctly set to 0 in \"$l_cpfile\""
+else
+    l_current_val="$(grep -Psi -- '^\h*sha1_in_certs\h*=' "$l_cpfile")"
+    if [ -n "$l_current_val" ]; then
+        l_output2="$l_output2\n - \"sha1_in_certs\" is incorrectly set:\n$l_current_val"
+    else
+        l_output2="$l_output2\n - \"sha1_in_certs\" entry not found in \"$l_cpfile\""
+    fi
+fi
+
+# Final output
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n$l_output2"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:\n$l_output\n"
+fi
+}
+"""

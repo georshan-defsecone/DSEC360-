@@ -1,0 +1,33 @@
+audit_id: "5.4.1.6"
+audit_name: "Ensure all users last password change date is in the past"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+  failed_users=()
+
+  while IFS= read -r l_user; do
+    l_change_raw=$(chage --list "$l_user" | grep '^Last password change' | cut -d: -f2- | sed 's/^[ \t]*//')
+
+    # Skip users who have never changed their password
+    if [[ "$l_change_raw" == "never" ]]; then
+      continue
+    fi
+
+    l_change_epoch=$(date -d "$l_change_raw" +%s 2>/dev/null)
+    now_epoch=$(date +%s)
+
+    if [[ -n "$l_change_epoch" && "$l_change_epoch" -gt "$now_epoch" ]]; then
+      failed_users+=("User: \"$l_user\" last password change is in the future: \"$l_change_raw\"")
+    fi
+  done < <(awk -F: '$2~/^\$.+\$/{print $1}' /etc/shadow)
+
+  if [[ ${#failed_users[@]} -eq 0 ]]; then
+    l_output=" - No user has a password change date set in the future"
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    l_output2=$(printf ' - %s\n' "${failed_users[@]}")
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+}
+"""

@@ -1,0 +1,40 @@
+audit_id: "2.1.21"
+audit_name: "Ensure mail transfer agents are configured for local-only mode"
+audit_script: """
+{
+l_output="" l_output2=""
+a_port_list=("25" "465" "587")
+
+# Check if postconf command exists
+if ! command -v postconf > /dev/null 2>&1; then
+    echo -e "\n- Audit Result:\n ** ERROR **\n - The 'postconf' command is not available on this system"
+    echo -e " - Please install the 'postfix' package:\n   - On RHEL/CentOS/Fedora: sudo dnf install postfix\n   - On Debian/Ubuntu: sudo apt install postfix\n"
+    exit 1
+fi
+
+# Check if Postfix is bound to all interfaces
+if postconf -n inet_interfaces | grep -Eq '^\s*inet_interfaces\s*=\s*all\b'; then
+    l_output2="$l_output2\n - Postfix is bound to all interfaces"
+else
+    for l_port_number in "${a_port_list[@]}"; do
+        # Check if port is listening on a non-loopback interface
+        if ss -plntu | grep -P -- ":$l_port_number\b" | grep -Pvq -- '\s+(127\.0\.0\.1|\[?::1\]?):'"$l_port_number"'\b'; then
+            l_output2="$l_output2\n - Port \"$l_port_number\" is listening on a non-loopback interface"
+        else
+            l_output="$l_output\n - Port \"$l_port_number\" is not listening on a non-loopback interface"
+        fi
+    done
+fi
+
+unset a_port_list
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+}
+
+"""

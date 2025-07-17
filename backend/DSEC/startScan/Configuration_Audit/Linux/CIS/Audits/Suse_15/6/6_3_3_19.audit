@@ -1,0 +1,109 @@
+audit_id: "6.3.3.19"
+audit_name: "Ensure kernel module loading unloading and modification is collected"
+audit_script: """
+{
+echo "### Audit Check: Kernel Module Loading and Execution Audit Rules"
+
+syscall_rule_b64="-a always,exit -F arch=b64 -S init_module,finit_module,delete_module,create_module,query_module -F auid>=1000 -F auid!=unset -k kernel_modules"
+exec_rule_kmod="-a always,exit -F path=/usr/bin/kmod -F perm=x -F auid>=1000 -F auid!=unset -k kernel_modules"
+exec_rule_kmod_runtime="-a always,exit -S all -F path=/usr/bin/kmod -F perm=x -F auid>=1000 -F auid!=-1 -F key=kernel_modules"
+syscall_alt_runtime="-a always,exit -F arch=b64 -S create_module,init_module,delete_module,query_module,finit_module -F auid>=1000 -F auid!=-1 -F key=kernel_modules"
+
+UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+if [ -z "$UID_MIN" ]; then
+  echo " ERROR: UID_MIN could not be determined."
+  exit 1
+fi
+
+missing_disk=()
+
+on_disk_syscalls=$(awk '
+  /^\s*-a\s+always,exit/ &&
+  /-F\s+arch=b(32|64)/ &&
+  (/init_module/ || /finit_module/ || /delete_module/ || /create_module/ || /query_module/) &&
+  (/key=| -k /)
+' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+on_disk_kmod=$(awk -v uid_min="$UID_MIN" '
+  /^\s*-a\s+always,exit/ &&
+  (/ -F\s+auid!=unset/ || / -F\s+auid!=-1/ || / -F\s+auid!=4294967295/) &&
+  $0 ~ "-F\\s+auid>="uid_min &&
+  / -F\s+perm=x/ &&
+  / -F\s+path=\/usr\/bin\/kmod/ &&
+  (/key=| -k /)
+' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+grep -qF -- "$syscall_rule_b64" <<< "$on_disk_syscalls" || missing_disk+=("$syscall_rule_b64")
+grep -qF -- "$exec_rule_kmod" <<< "$on_disk_kmod" || missing_disk+=("$exec_rule_kmod")
+
+if [ "${#missing_disk[@]}" -eq 0 ]; then
+  echo -e "\n- On-Disk Audit Result:"
+  echo " ** PASS **"
+  echo " - All expected on-disk rules for kernel module auditing are present."
+
+else
+  echo -e "\n- On-Disk Audit Result:"
+  echo " ** FAIL **"
+  echo " - Missing on-disk rules:"
+  printf '   %s\n' "${missing_disk[@]}"
+fi
+
+missing_runtime=()
+running=$(auditctl -l 2>/dev/null)
+
+if ! grep -qF -- "$syscall_rule_b64" <<< "$running" && ! grep -qF -- "$syscall_alt_runtime" <<< "$running"; then
+  missing_runtime+=("$syscall_rule_b64 OR $syscall_alt_runtime")
+fi
+
+if ! grep -qF -- "$exec_rule_kmod" <<< "$running" && ! grep -qF -- "$exec_rule_kmod_runtime" <<< "$running"; then
+  missing_runtime+=("$exec_rule_kmod OR $exec_rule_kmod_runtime")
+fi
+
+if [ "${#missing_runtime[@]}" -eq 0 ]; then
+  echo -e "\n- Runtime Audit Result:"
+  echo "PASS"
+  echo " - All expected runtime rules for kernel module auditing are present."
+
+else
+  echo -e "\n- Runtime Audit Result:"
+  echo "FAIL:"
+  echo " - Missing running rules:"
+  printf '   %s\n' "${missing_runtime[@]}"
+fi
+
+
+symlink_files=(
+  "/usr/sbin/lsmod"
+  "/usr/sbin/rmmod"
+  "/usr/sbin/insmod"
+  "/usr/sbin/modinfo"
+  "/usr/sbin/modprobe"
+  "/usr/sbin/depmod"
+)
+
+kmod_target="$(readlink -f /bin/kmod 2>/dev/null)"
+[ -z "$kmod_target" ] && kmod_target="$(readlink -f /usr/bin/kmod 2>/dev/null)"
+
+symlink_issues=()
+
+for f in "${symlink_files[@]}"; do
+  resolved="$(readlink -f "$f" 2>/dev/null)"
+  if [ "$resolved" = "$kmod_target" ]; then
+    echo " - OK: $f → $resolved"
+  else
+    echo " - Issue: $f → $resolved"
+    symlink_issues+=("$f")
+  fi
+done
+
+if [ "${#symlink_issues[@]}" -eq 0 ]; then
+  echo -e "\n- Symlink Check Result:"
+  echo "PASS"
+else
+  echo -e "\n- Symlink Check Result:"
+  echo "FAIL:"
+  echo " - Files with incorrect symlinks:"
+  printf '   %s\n' "${symlink_issues[@]}"
+fi
+}
+""""

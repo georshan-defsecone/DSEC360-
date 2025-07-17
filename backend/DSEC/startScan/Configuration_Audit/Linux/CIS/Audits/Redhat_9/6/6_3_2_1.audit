@@ -1,0 +1,27 @@
+audit_id: "6.3.2.1"
+audit_name: "Ensure audit log storage size is configured"
+audit_script: """
+{
+l_output="" l_output2=""
+l_val="$(grep -Po -- '^\h*max_log_file\h*=\h*\d+\b' /etc/audit/auditd.conf | grep -Po '\d+')"
+
+# Check if value was found
+if [ -n "$l_val" ]; then
+    if [ "$l_val" -ge 8 ]; then  # Example policy threshold: minimum 16MB
+        l_output="\n - max_log_file is set to $l_val MB, which meets policy"
+    else
+        l_output2="\n - max_log_file is set to $l_val MB, which is below the recommended minimum (e.g., 16MB)"
+    fi
+else
+    l_output2="\n - max_log_file is not set in /etc/audit/auditd.conf"
+fi
+
+# Final Result
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **$l_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **$l_output2"
+    [ -n "$l_output" ] && echo -e "\n - Correctly configured:$l_output"
+fi
+}
+"""

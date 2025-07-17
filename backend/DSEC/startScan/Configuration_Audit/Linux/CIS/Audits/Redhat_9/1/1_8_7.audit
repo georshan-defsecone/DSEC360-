@@ -1,0 +1,69 @@
+audit_id: "1.8.7"
+audit_name: "Ensure GDM disabling automatic mounting of removable media is not overridden"
+audit_script: """
+{
+l_pkgoutput="" l_output="" l_output2=""
+
+# Determine system's package manager
+if command -v dpkg-query > /dev/null 2>&1; then
+    l_pq="dpkg-query -W"
+elif command -v rpm > /dev/null 2>&1; then
+    l_pq="rpm -q"
+fi
+
+# Check if GDM or GDM3 is installed
+l_pcl="gdm gdm3"
+for l_pn in $l_pcl; do
+    if $l_pq "$l_pn" > /dev/null 2>&1; then
+        l_pkgoutput="$l_pkgoutput\n - Package: \"$l_pn\" exists on the system\n - Checking configuration"
+    fi
+done
+
+# Proceed only if GDM is installed
+if [ -n "$l_pkgoutput" ]; then
+    echo -e "$l_pkgoutput\n"
+
+    # Determine profile directory for automount
+    l_kfd="$(grep -Psril '^\h*automount\b' /etc/dconf/db/*/ | awk -F'/' '{split($(NF-1),a,"."); print a[1]}' | head -n1)"
+    l_kfd2="$(grep -Psril '^\h*automount-open\b' /etc/dconf/db/*/ | awk -F'/' '{split($(NF-1),a,"."); print a[1]}' | head -n1)"
+
+    l_kfd="/etc/dconf/db/${l_kfd}.d"
+    l_kfd2="/etc/dconf/db/${l_kfd2}.d"
+
+    # Check automount lock
+    if [ -d "$l_kfd" ]; then
+        l_automount_lock_file="$(grep -Pril '\/org\/gnome\/desktop\/media-handling\/automount\b' "$l_kfd")"
+        if [ -n "$l_automount_lock_file" ]; then
+            l_output="$l_output\n - \"automount\" is locked in \"$l_automount_lock_file\""
+        else
+            l_output2="$l_output2\n - \"automount\" is not locked"
+        fi
+    else
+        l_output2="$l_output2\n - \"automount\" is not set, so it cannot be locked"
+    fi
+
+    # Check automount-open lock
+    if [ -d "$l_kfd2" ]; then
+        l_automount_open_lock_file="$(grep -Pril '\/org\/gnome\/desktop\/media-handling\/automount-open\b' "$l_kfd2")"
+        if [ -n "$l_automount_open_lock_file" ]; then
+            l_output="$l_output\n - \"automount-open\" is locked in \"$l_automount_open_lock_file\""
+        else
+            l_output2="$l_output2\n - \"automount-open\" is not locked"
+        fi
+    else
+        l_output2="$l_output2\n - \"automount-open\" is not set, so it cannot be locked"
+    fi
+
+else
+    l_output="$l_output\n - GNOME Desktop Manager package is not installed on the system\n - Recommendation is not applicable"
+fi
+
+# Final result
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n$l_output2\n"
+    [ -n "$l_output" ] && echo -e "- Correctly set:\n$l_output\n"
+fi
+}
+"""

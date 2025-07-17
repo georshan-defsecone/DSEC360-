@@ -1,0 +1,22 @@
+audit_id: "2.3.3"
+audit_name: "Ensure chrony is not run as the root user"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check if chronyd is configured to run as root
+if grep -Psi -- '^\h*OPTIONS=\"?\h*([^#\n\r]+\h+)?-u\h+root\b' /etc/sysconfig/chronyd > /dev/null 2>&1; then
+    l_output2=" - Chrony is configured to run as root in /etc/sysconfig/chronyd"
+else
+    l_output=" - Chrony is not configured to run as root"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+fi
+}
+
+"""

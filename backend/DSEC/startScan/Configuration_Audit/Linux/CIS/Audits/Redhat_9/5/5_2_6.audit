@@ -1,0 +1,35 @@
+audit_id: "5.2.6"
+audit_name: "Ensure sudo authentication timeout is configured correctly"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  # Look for explicitly set timestamp_timeout
+  l_matches="$(grep -roP 'timestamp_timeout=\K-?[0-9]+' /etc/sudoers* 2>/dev/null | sort -u)"
+
+  if [ -n "$l_matches" ]; then
+    while IFS= read -r val; do
+      if [ "$val" -lt 0 ] || [ "$val" -gt 15 ]; then
+        l_output2="$l_output2\n - timestamp_timeout is set to $val which is greater than 15 or disabled"
+      fi
+    done <<< "$l_matches"
+  else
+    # If not explicitly set, check sudo's default (may be a float)
+    l_default="$(sudo -V | grep -i 'Authentication timestamp timeout:' | awk -F': ' '{print $2}' | awk '{print $1}')"
+    l_default_int="${l_default%.*}"  # Truncate float to int (e.g., 5.0 -> 5)
+
+    if [ "$l_default_int" -lt 0 ] || [ "$l_default_int" -gt 15 ]; then
+      l_output2=" - timestamp_timeout is not explicitly set and defaults to $l_default (greater than 15 or disabled)"
+    else
+      l_output=" - timestamp_timeout not explicitly set, default is $l_default minutes"
+    fi
+  fi
+
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+}
+"""

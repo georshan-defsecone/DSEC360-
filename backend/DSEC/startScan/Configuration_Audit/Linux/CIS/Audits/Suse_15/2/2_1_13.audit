@@ -1,0 +1,25 @@
+audit_id: "2.1.13"
+audit_name: ""
+audit_script: """
+{
+pkg_status=$(rpm -q rpcbind 2>/dev/null)
+
+if [[ "$pkg_status" == "package rpcbind is not installed" ]]; then
+    echo "** PASS **"
+    echo "- The 'rpcbind' package is not installed."
+else
+    enabled_units=$(systemctl is-enabled rpcbind.socket rpcbind.service 2>/dev/null | grep 'enabled')
+    active_units=$(systemctl is-active rpcbind.socket rpcbind.service 2>/dev/null | grep '^active')
+
+    if [[ -z "$enabled_units" && -z "$active_units" ]]; then
+        echo "** PASS **"
+        echo "- The 'rpcbind' package is installed but both rpcbind.socket and rpcbind.service are disabled and inactive."
+    else
+        echo "** FAIL **"
+        echo "- The 'rpcbind' package is installed."
+        [[ -n "$enabled_units" ]] && echo "- The following services are enabled:" && echo "$enabled_units"
+        [[ -n "$active_units" ]] && echo "- The following services are active:" && echo "$active_units"
+    fi
+fi
+}
+""""

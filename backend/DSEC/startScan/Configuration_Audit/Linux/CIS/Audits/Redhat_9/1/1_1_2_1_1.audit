@@ -1,0 +1,46 @@
+audit_id: "1.1.2.1.1"
+audit_name: "Ensure /tmp is a separate partition"
+audit_script: """
+{
+unset a_output
+unset a_output2
+unset l_output
+
+l_output=""
+l_tmp_mount_status=""
+l_tmp_enabled_status=""
+
+# Check if /tmp is mounted
+if findmnt -kn /tmp &> /dev/null; then
+    l_output="$(findmnt -kn /tmp)"
+    a_output+=(" - /tmp is mounted: $l_output")
+else
+    a_output2+=(" - /tmp is not mounted")
+fi
+
+# Check if systemd has tmp.mount enabled or generated
+l_tmp_enabled_status="$(systemctl is-enabled tmp.mount 2>/dev/null)"
+
+if [[ "$l_tmp_enabled_status" =~ ^(enabled|generated)$ ]]; then
+    a_output+=(" - tmp.mount is $l_tmp_enabled_status")
+else
+    if [[ "$l_tmp_enabled_status" == "disabled" || "$l_tmp_enabled_status" == "masked" ]]; then
+        a_output2+=(" - tmp.mount is $l_tmp_enabled_status")
+    else
+        a_output2+=(" - tmp.mount status is unknown or not handled: \"$l_tmp_enabled_status\"")
+    fi
+fi
+
+# Display INFO
+[ -n "$l_output" ] && echo -e "\n\n -- INFO --\n - findmnt output:\n$l_output\n - tmp.mount status: $l_tmp_enabled_status"
+
+# Display Audit Result
+if [ "${#a_output2[@]}" -le 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for audit failure:" "${a_output2[@]}"
+    [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "- Correctly set:" "${a_output[@]}"
+fi
+
+}
+"""

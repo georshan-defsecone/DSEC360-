@@ -1,0 +1,16 @@
+audit_id: "5.4.2.2"
+audit_name: "Ensure root is the only GID 0 account"
+audit_script: """
+{
+gid_0_users=$(awk -F: '($1 !~ /^(sync|shutdown|halt|operator)$/ && $4=="0") {print $1":"$4}' /etc/passwd)
+
+if [ "$gid_0_users" = "root:0" ]; then
+    printf '\n%s\n' " ** PASS **" \
+    "Only the 'root' user has primary GID 0."
+else
+    printf '\n%s\n' " ** FAIL **" \
+    "The following users have GID 0 as their primary group (should only be 'root'):"
+    echo "$gid_0_users"
+fi
+}
+""""

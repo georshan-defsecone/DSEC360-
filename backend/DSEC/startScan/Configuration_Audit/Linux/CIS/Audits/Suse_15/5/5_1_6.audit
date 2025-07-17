@@ -1,0 +1,44 @@
+audit_id: "5.1.6"
+audit_name: "Ensure sshd MACs are configured"
+audit_script: """
+{
+l_output=""
+l_output2=""
+
+# Extract MACs configuration from sshd
+mac_line=$(sshd -T 2>/dev/null | grep -Pi '^macs\s+')
+
+# Check for weak MACs if line exists
+if [[ -n "$mac_line" ]]; then
+  mac_list=$(echo "$mac_line" | awk '{$1=""; print $0}' | sed 's/^ *//;s/ *$//')
+  weak_macs=()
+  IFS=',' read -ra mac_array <<< "$mac_list"
+  for mac in "${mac_array[@]}"; do
+    case "$mac" in
+      hmac-md5|hmac-md5-96|hmac-ripemd160|hmac-sha1-96|umac-64@openssh.com|\
+hmac-md5-etm@openssh.com|hmac-md5-96-etm@openssh.com|\
+hmac-ripemd160-etm@openssh.com|hmac-sha1-96-etm@openssh.com|\
+umac-64-etm@openssh.com|umac-128-etm@openssh.com)
+        weak_macs+=("$mac")
+        ;;
+    esac
+  done
+
+  if [ "${#weak_macs[@]}" -gt 0 ]; then
+    l_output2="\n - The following weak MACs are in use:\n   ${weak_macs[*]}"
+  else
+    l_output="\n - No weak MACs are configured in sshd."
+  fi
+else
+  l_output="\n - No MACs line found in sshd -T output (default configuration assumed)."
+fi
+
+# Final audit result
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **$l_output"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **$l_output2"
+  [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output"
+fi
+}
+""""

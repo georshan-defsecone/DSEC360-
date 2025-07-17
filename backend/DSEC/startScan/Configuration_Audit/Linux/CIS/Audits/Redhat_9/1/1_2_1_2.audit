@@ -1,0 +1,32 @@
+audit_id: "1.2.1.2"
+audit_name: "Ensure gpgcheck is globally activated (Automated)"
+audit_script: """
+{
+unset a_output
+unset a_output2
+unset l_output
+
+l_output=""
+l_gpgcheck="$(grep -Pi -- '^\h*gpgcheck\h*=\h*(1|true|yes)\b' /etc/dnf/dnf.conf 2>/dev/null)"
+
+if [ -n "$l_gpgcheck" ]; then
+    a_output+=(" - global gpgcheck is enabled in /etc/dnf/dnf.conf")
+    l_output="$l_gpgcheck"
+else
+    a_output2+=(" - global gpgcheck is not properly set in /etc/dnf/dnf.conf")
+    l_output="$(grep -i gpgcheck /etc/dnf/dnf.conf 2>/dev/null || echo ' - No gpgcheck setting found')"
+fi
+
+# Display INFO
+echo -e "\n\n -- INFO --\n - gpgcheck setting in /etc/dnf/dnf.conf:\n$l_output"
+
+# Display Audit Result
+if [ "${#a_output2[@]}" -le 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for audit failure:" "${a_output2[@]}"
+    [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "- Correctly set:" "${a_output[@]}"
+fi
+
+}
+"""

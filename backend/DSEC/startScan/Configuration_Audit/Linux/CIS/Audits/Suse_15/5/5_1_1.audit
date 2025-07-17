@@ -1,0 +1,57 @@
+audit_id: "5.1.1"
+audit_name: "Ensure access to /etc/ssh/sshd_config is configured"
+audit_script: """
+{
+a_output=()
+a_output2=()
+
+perm_mask='0177'
+maxperm="$(printf '%o' $((0777 & ~$perm_mask)))"
+
+f_sshd_files_chk() {
+    while IFS=: read -r l_mode l_user l_group; do
+        a_out2=()
+
+        if [ $((l_mode & perm_mask)) -gt 0 ]; then
+            a_out2+=(" - Mode is \"$l_mode\" but should be \"$maxperm\" or more restrictive")
+        fi
+
+        if [ "$l_user" != "root" ]; then
+            a_out2+=(" - Owner is \"$l_user\" but should be \"root\"")
+        fi
+
+        if [ "$l_group" != "root" ]; then
+            a_out2+=(" - Group owner is \"$l_group\" but should be \"root\"")
+        fi
+
+        if [ "${#a_out2[@]}" -gt 0 ]; then
+            a_output2+=(" - File: \"$l_file\":" "${a_out2[@]}")
+        else
+            a_output+=(" - File: \"$l_file\" is correctly configured (mode: $l_mode, owner: $l_user, group: $l_group)")
+        fi
+    done < <(stat -Lc '%#a:%U:%G' "$l_file")
+}
+
+# Check main sshd_config
+if [ -e "/etc/ssh/sshd_config" ]; then
+    l_file="/etc/ssh/sshd_config"
+    f_sshd_files_chk
+fi
+
+# Check *.conf files in sshd_config.d
+while IFS= read -r -d $'\0' l_file; do
+    [ -e "$l_file" ] && f_sshd_files_chk
+done < <(find /etc/ssh/sshd_config.d -type f -name '*.conf' \
+    \( -perm /077 -o ! -user root -o ! -group root \) -print0 2>/dev/null)
+
+# Final output
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **"
+    printf '%s\n' "${a_output[@]}" ""
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **"
+    printf '%s\n' " - Reason(s) for audit failure:" "${a_output2[@]}"
+    [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "" "- Correctly set:" "${a_output[@]}" ""
+fi
+}
+""""

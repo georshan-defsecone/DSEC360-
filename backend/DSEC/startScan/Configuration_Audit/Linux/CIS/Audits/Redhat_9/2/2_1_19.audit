@@ -1,0 +1,37 @@
+audit_id: "2.1.19"
+audit_name: "Ensure xinetd services are not in use"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check if xinetd package is installed
+if rpm -q xinetd > /dev/null 2>&1; then
+    l_output="$l_output\n - Package 'xinetd' is installed"
+
+    # Check if xinetd.service is enabled
+    if systemctl is-enabled xinetd.service 2>/dev/null | grep -q '^enabled'; then
+        l_output2="$l_output2\n - xinetd.service is enabled"
+    else
+        l_output="$l_output\n - xinetd.service is not enabled"
+    fi
+
+    # Check if xinetd.service is active
+    if systemctl is-active xinetd.service 2>/dev/null | grep -q '^active'; then
+        l_output2="$l_output2\n - xinetd.service is active"
+    else
+        l_output="$l_output\n - xinetd.service is not active"
+    fi
+else
+    l_output=" - Package 'xinetd' is not installed"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+}
+
+"""

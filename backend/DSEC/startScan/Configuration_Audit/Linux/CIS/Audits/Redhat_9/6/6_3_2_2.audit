@@ -1,0 +1,22 @@
+audit_id: "6.3.2.2"
+audit_name: "Ensure audit logs are not automatically deleted"
+audit_script: """
+{
+l_output=""
+l_output2=""
+
+# Check for the correct setting
+if grep -Pq '^\h*max_log_file_action\h*=\h*keep_logs\b' /etc/audit/auditd.conf; then
+    l_output=" - max_log_file_action is correctly set to keep_logs"
+else
+    l_output2=" - max_log_file_action is NOT set to keep_logs or is missing from /etc/audit/auditd.conf"
+fi
+
+# Output result
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n$l_output2"
+fi
+}
+"""

@@ -1,0 +1,20 @@
+audit_id: "6.2.3.1"
+audit_name: "Ensure rsyslog is installed"
+audit_script: """
+{
+l_output="" l_output2=""
+
+if rpm -q rsyslog &>/dev/null; then
+    l_ver="$(rpm -q rsyslog)"
+    l_output=" - rsyslog is installed: $l_ver"
+else
+    l_output2=" - rsyslog is not installed on the system"
+fi
+
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n$l_output2"
+fi
+}
+"""

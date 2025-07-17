@@ -1,0 +1,44 @@
+audit_id: "5.1.18"
+audit_name: "Ensure sshd MaxSessions is configured"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+# Get main sshd config value
+l_value="$(sshd -T 2>/dev/null | awk '$1 == "maxsessions" {print $2}')"
+
+# Check for override in any config file
+l_override_files=$(grep -Psi -- '^\h*MaxSessions\h+\"?(1[1-9]|[2-9][0-9]|[1-9][0-9][0-9]+)\b' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null)
+
+# Check for Match blocks (could override)
+grep -Piq '^\s*match\s+' /etc/ssh/sshd_config && l_match_warning=" - Match blocks detected in sshd_config. Review with: sshd -T -C user=<user>"
+
+# Validate main config value
+if [[ "$l_value" =~ ^[0-9]+$ ]]; then
+  if [ "$l_value" -le 10 ]; then
+    a_output+=(" - MaxSessions is set to $l_value, which is compliant (≤ 10).")
+  else
+    a_output2+=(" - MaxSessions is set to $l_value, which exceeds 10.")
+  fi
+else
+  a_output2+=(" - Could not determine MaxSessions value from sshd -T.")
+fi
+
+# Check for override
+if [ -n "$l_override_files" ]; then
+  a_output2+=(" - MaxSessions override found in configuration file(s):" "$l_override_files")
+fi
+
+# Final result
+if [ "${#a_output2[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${a_output[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${a_output2[@]}"
+  [ "${#a_output[@]}" -gt 0 ] && printf '\n- Correctly set:\n%s\n' "${a_output[@]}"
+fi
+
+[ -n "$l_match_warning" ] && echo -e "\n ** WARNING **\n$l_match_warning"
+}
+""""

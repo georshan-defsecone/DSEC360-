@@ -1,0 +1,68 @@
+audit_id: "6.3.3.13"
+audit_name: "Ensure file deletion events by users are collected"
+audit_script: """
+{
+echo "### Audit Check: File Deletion Events (unlink, rename, etc.)"
+
+UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+if [ -z "$UID_MIN" ]; then
+  echo "ERROR: UID_MIN is unset in /etc/login.defs"
+  exit 1
+fi
+
+expected_rules=(
+  "-a always,exit -F arch=b64 -S unlink,unlinkat,rename,renameat -F auid>=${UID_MIN} -F auid!=unset -k delete"
+  "-a always,exit -F arch=b32 -S unlink,unlinkat,rename,renameat -F auid>=${UID_MIN} -F auid!=unset -k delete"
+)
+
+missing_disk=()
+on_disk=$(awk -v uid_min="$UID_MIN" '
+  /^\s*-a/ &&
+  /-F\s*arch=b(32|64)/ &&
+  (/auid!=unset/ || /auid!=-1/ || /auid!=4294967295/) &&
+  $0 ~ "-F auid>=" uid_min &&
+  /-S/ &&
+  (/unlink/ || /rename/ || /unlinkat/ || /renameat/) &&
+  (/key=| -k /)
+' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+for rule in "${expected_rules[@]}"; do
+  grep -qF -- "$rule" <<< "$on_disk" || missing_disk+=("$rule")
+done
+
+if [ "${#missing_disk[@]}" -eq 0 ]; then
+  echo -e "\n- On-Disk Audit Result:"
+  echo " - All expected on-disk audit rules for file deletion are present."
+  echo " ** PASS **"
+else
+  echo -e "\n- On-Disk Audit Result:"
+  echo " ** FAIL **"
+  echo " - Missing on-disk rules:"
+  printf '   %s\n' "${missing_disk[@]}"
+fi
+
+missing_runtime=()
+running=$(auditctl -l 2>/dev/null)
+
+expected_running_rules=(
+  "-a always,exit -F arch=b64 -S unlink,unlinkat,rename,renameat -F auid>=${UID_MIN} -F auid!=-1 -F key=delete"
+  "-a always,exit -F arch=b32 -S unlink,unlinkat,rename,renameat -F auid>=${UID_MIN} -F auid!=-1 -F key=delete"
+)
+
+for rule in "${expected_running_rules[@]}"; do
+  grep -qF -- "$rule" <<< "$running" || missing_runtime+=("$rule")
+done
+
+if [ "${#missing_runtime[@]}" -eq 0 ]; then
+  echo -e "\n- Runtime Audit Result:"
+  echo "PASS"
+  echo " - All expected runtime audit rules for file deletion are present."
+
+else
+  echo -e "\n- Runtime Audit Result:"
+  echo "FAIL:"
+  echo " - Missing running rules:"
+  printf '   %s\n' "${missing_runtime[@]}"
+fi
+}
+""""

@@ -1,0 +1,70 @@
+audit_id: "5.1.2"
+audit_name: "Ensure access to SSH private host key files is configured"
+audit_script: """
+{
+a_output=()
+a_output2=()
+
+# Get acceptable SSH private key group
+l_ssh_group_name="$(awk -F: '($1 ~ /^(ssh_keys|_?ssh)$/) {print $1}' /etc/group)"
+
+f_file_chk() {
+    while IFS=: read -r l_file_mode l_file_owner l_file_group; do
+        a_out2=()
+
+        # Determine permission mask
+        if [ "$l_file_group" = "$l_ssh_group_name" ]; then
+            l_pmask="0137"
+        else
+            l_pmask="0177"
+        fi
+
+        l_maxperm="$(printf '%o' $((0777 & ~$l_pmask)))"
+
+        # Check file mode
+        if [ $((l_file_mode & l_pmask)) -gt 0 ]; then
+            a_out2+=(" - Mode is \"$l_file_mode\" but should be \"$l_maxperm\" or more restrictive")
+        fi
+
+        # Check file owner
+        if [ "$l_file_owner" != "root" ]; then
+            a_out2+=(" - Owner is \"$l_file_owner\" but should be \"root\"")
+        fi
+
+        # Check file group
+        if [[ ! "$l_file_group" =~ ^($l_ssh_group_name|root)$ ]]; then
+            a_out2+=(" - Group is \"$l_file_group\" but should be \"$l_ssh_group_name\" or \"root\"")
+        fi
+
+        if [ "${#a_out2[@]}" -gt 0 ]; then
+            a_output2+=(" - File: \"$l_file\"" "${a_out2[@]}")
+        else
+            a_output+=(" - File: \"$l_file\" is correctly configured (mode: $l_file_mode, owner: $l_file_owner, group: $l_file_group)")
+        fi
+    done < <(stat -Lc '%#a:%U:%G' "$l_file")
+}
+
+# Locate and check all SSH private keys
+while IFS= read -r -d '' l_file; do
+    if ssh-keygen -lf "$l_file" &>/dev/null; then
+        if file "$l_file" | grep -Piq '\bopenssh\s+[^#\r\n]*\s+private\s+key\b'; then
+            f_file_chk
+        fi
+    fi
+done < <(find -L /etc/ssh -xdev -type f -print0 2>/dev/null)
+
+# Output results
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    printf '\n- Audit Result:\n ** PASS **\n'
+    if [ "${#a_output[@]}" -gt 0 ]; then
+        printf '%s\n' "${a_output[@]}" ""
+    else
+        printf ' - No OpenSSH private key files found under /etc/ssh or all were skipped.\n\n'
+    fi
+else
+    printf '\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n'
+    printf '%s\n' "${a_output2[@]}"
+    [ "${#a_output[@]}" -gt 0 ] && printf '\n- Correctly set:\n%s\n' "${a_output[@]}"
+fi
+}
+""""

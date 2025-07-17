@@ -1,0 +1,52 @@
+audit_id: "2.1.19"
+audit_name: ""
+audit_script: """
+{
+pkg_output=$(rpm -q apache2 nginx 2>/dev/null)
+
+apache_installed=$(echo "$pkg_output" | grep -v "not installed" | grep apache2)
+nginx_installed=$(echo "$pkg_output" | grep -v "not installed" | grep nginx)
+
+fail=0
+details=""
+
+if [[ -z "$apache_installed" && -z "$nginx_installed" ]]; then
+    echo "** PASS **"
+    echo "- Packages 'apache2' and 'nginx' are not installed."
+    exit 0
+fi
+
+if [[ -n "$apache_installed" ]]; then
+    enabled_apache=$(systemctl is-enabled apache2.service 2>/dev/null | grep 'enabled')
+    active_apache=$(systemctl is-active apache2.service 2>/dev/null | grep '^active')
+
+    if [[ -n "$enabled_apache" || -n "$active_apache" ]]; then
+        fail=1
+        [[ -n "$enabled_apache" ]] && details+="\n- 'apache2.service' is enabled."
+        [[ -n "$active_apache" ]] && details+="\n- 'apache2.service' is active."
+    fi
+fi
+
+if [[ -n "$nginx_installed" ]]; then
+    enabled_nginx=$(systemctl is-enabled nginx.service 2>/dev/null | grep 'enabled')
+    active_nginx=$(systemctl is-active nginx.service 2>/dev/null | grep '^active')
+
+    if [[ -n "$enabled_nginx" || -n "$active_nginx" ]]; then
+        fail=1
+        [[ -n "$enabled_nginx" ]] && details+="\n- 'nginx.service' is enabled."
+        [[ -n "$active_nginx" ]] && details+="\n- 'nginx.service' is active."
+    fi
+fi
+
+if [[ "$fail" -eq 0 ]]; then
+    echo "** PASS **"
+    [[ -n "$apache_installed" ]] && echo "- 'apache2' is installed but its service is disabled and inactive."
+    [[ -n "$nginx_installed" ]] && echo "- 'nginx' is installed but its service is disabled and inactive."
+else
+    echo "** FAIL **"
+    [[ -n "$apache_installed" ]] && echo "- 'apache2' package is installed."
+    [[ -n "$nginx_installed" ]] && echo "- 'nginx' package is installed."
+    echo -e "$details"
+fi
+}
+""""

@@ -1,0 +1,23 @@
+audit_id: "5.4.2.2"
+audit_name: "Ensure root is the only GID 0 account"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+  bad_users=()
+
+  while IFS=: read -r user _ _ gid _; do
+    if [[ "$gid" == "0" && ! "$user" =~ ^(root|sync|shutdown|halt|operator)$ ]]; then
+      bad_users+=("$user:$gid")
+    fi
+  done < /etc/passwd
+
+  if [[ "${#bad_users[@]}" -eq 0 ]]; then
+    l_output=" - Only 'root' has primary GID 0 (others are allowed exceptions: sync, shutdown, halt, operator)"
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    l_output2=" - Unauthorized users with primary GID 0 found:\n   ${bad_users[*]}"
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+}
+"""

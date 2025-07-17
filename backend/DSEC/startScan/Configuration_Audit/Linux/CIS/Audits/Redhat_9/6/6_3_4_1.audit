@@ -1,0 +1,41 @@
+audit_id: "6.3.4.1"
+audit_name: "Ensure the audit log file directory mode is configured"
+audit_script: """
+{
+echo "### Checking Audit Log Directory Permissions ###"
+
+# Define the permission mask for group/others
+perm_mask="0027"
+
+if [ -e "/etc/audit/auditd.conf" ]; then
+    log_file=$(awk -F= '/^\s*log_file\s*/ { print $2 }' /etc/audit/auditd.conf | xargs)
+    audit_log_dir=$(dirname "$log_file")
+
+    if [ -d "$audit_log_dir" ]; then
+        # Calculate the maximum allowed permission
+        max_perm=$(printf '%o' $((0777 & ~$((perm_mask)))))
+
+        # Get the current permission of the directory
+        dir_mode=$(stat -Lc '%#a' "$audit_log_dir")
+
+        # Perform the permission check
+        if [ $((0$(stat -Lc '%a' "$audit_log_dir") & perm_mask)) -gt 0 ]; then
+            echo -e "\n- Audit Result:\n ** FAIL **"
+            echo " - Directory: \"$audit_log_dir\" is mode: \"$dir_mode\""
+            echo "   (should be mode: \"$max_perm\" or more restrictive)"
+        else
+            echo -e "\n- Audit Result:\n ** PASS **"
+            echo " - Directory: \"$audit_log_dir\" is mode: \"$dir_mode\""
+            echo "   (is compliant: \"$max_perm\" or more restrictive)"
+        fi
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        echo " - Log file directory \"$audit_log_dir\" does not exist"
+    fi
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    echo " - File: \"/etc/audit/auditd.conf\" not found"
+    echo " - ** Verify auditd is installed **"
+fi
+}
+"""

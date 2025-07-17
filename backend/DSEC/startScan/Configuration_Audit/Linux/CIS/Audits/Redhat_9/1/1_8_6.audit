@@ -1,0 +1,93 @@
+audit_id: "1.8.6"
+audit_name: "Ensure GDM automatic mounting of removable media is disabled"
+audit_script: """
+{
+l_pkgoutput="" l_output="" l_output2=""
+
+# Determine system's package manager
+if command -v dpkg-query > /dev/null 2>&1; then
+    l_pq="dpkg-query -W"
+elif command -v rpm > /dev/null 2>&1; then
+    l_pq="rpm -q"
+else
+    echo "Unsupported package manager."
+    exit 1
+fi
+
+# Check if GDM is installed
+l_pcl="gdm gdm3"
+for l_pn in $l_pcl; do
+    if $l_pq "$l_pn" > /dev/null 2>&1; then
+        l_pkgoutput="$l_pkgoutput\n - Package: \"$l_pn\" exists on the system\n - Checking configuration"
+    fi
+done
+
+if [ -n "$l_pkgoutput" ]; then
+    echo -e "$l_pkgoutput"
+
+    # Look for automount and automount-open keys
+    l_kfile="$(grep -Prils -- '^\h*automount\b' /etc/dconf/db/*.d)"
+    l_kfile2="$(grep -Prils -- '^\h*automount-open\b' /etc/dconf/db/*.d)"
+
+    # Determine the profile name
+    if [ -f "$l_kfile" ]; then
+        l_gpname="$(awk -F/ '{split($(NF-1),a,"."); print a[1]}' <<< "$l_kfile")"
+    elif [ -f "$l_kfile2" ]; then
+        l_gpname="$(awk -F/ '{split($(NF-1),a,"."); print a[1]}' <<< "$l_kfile2")"
+    fi
+
+    # Proceed if profile name was found
+    if [ -n "$l_gpname" ]; then
+        l_gpdir="/etc/dconf/db/$l_gpname.d"
+
+        # Check if dconf profile file exists
+        if grep -Pq -- "^\h*system-db:$l_gpname\b" /etc/dconf/profile/*; then
+            l_output="$l_output\n - dconf profile file found: \"$(grep -Pl -- "^\h*system-db:$l_gpname\b" /etc/dconf/profile/*)\""
+        else
+            l_output2="$l_output2\n - dconf profile is not set"
+        fi
+
+        # Check if the dconf database file exists
+        if [ -f "/etc/dconf/db/$l_gpname" ]; then
+            l_output="$l_output\n - dconf database \"$l_gpname\" exists"
+        else
+            l_output2="$l_output2\n - dconf database \"$l_gpname\" does not exist"
+        fi
+
+        # Check if the dconf config directory exists
+        if [ -d "$l_gpdir" ]; then
+            l_output="$l_output\n - dconf directory \"$l_gpdir\" exists"
+        else
+            l_output2="$l_output2\n - dconf directory \"$l_gpdir\" does not exist"
+        fi
+
+        # Check automount setting
+        if grep -Pqrs -- '^\h*automount\h*=\h*false\b' "$l_kfile"; then
+            l_output="$l_output\n - \"automount\" is set to false in \"$l_kfile\""
+        else
+            l_output2="$l_output2\n - \"automount\" is not set correctly"
+        fi
+
+        # Check automount-open setting
+        if grep -Pqrs -- '^\h*automount-open\h*=\h*false\b' "$l_kfile2"; then
+            l_output="$l_output\n - \"automount-open\" is set to false in \"$l_kfile2\""
+        else
+            l_output2="$l_output2\n - \"automount-open\" is not set correctly"
+        fi
+    else
+        l_output2="$l_output2\n - Neither \"automount\" nor \"automount-open\" are set"
+    fi
+else
+    l_output="$l_output\n - GNOME Desktop Manager is not installed\n - Recommendation is not applicable"
+fi
+
+# Final Result Output
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n$l_output2\n"
+    [ -n "$l_output" ] && echo -e "- Correctly set:\n$l_output\n"
+fi
+}
+
+"""

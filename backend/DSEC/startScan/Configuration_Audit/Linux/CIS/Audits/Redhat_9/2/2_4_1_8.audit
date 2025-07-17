@@ -1,0 +1,76 @@
+audit_id: "2.4.1.8"
+audit_name: "Ensure crontab is restricted to authorized users"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check if cron is installed
+if rpm -q cronie > /dev/null 2>&1 || rpm -q vixie-cron > /dev/null 2>&1; then
+
+    # Check /etc/cron.allow
+    if [ -f /etc/cron.allow ]; then
+        perm=$(stat -Lc '%a' /etc/cron.allow)
+        owner=$(stat -Lc '%U' /etc/cron.allow)
+        group=$(stat -Lc '%G' /etc/cron.allow)
+
+        if [ "$perm" -le 640 ]; then
+            l_output="$l_output\n - /etc/cron.allow permissions are $perm (OK)"
+        else
+            l_output2="$l_output2\n - /etc/cron.allow permissions are $perm (too permissive)"
+        fi
+
+        if [ "$owner" = "root" ]; then
+            l_output="$l_output\n - /etc/cron.allow is owned by root"
+        else
+            l_output2="$l_output2\n - /etc/cron.allow is not owned by root (found $owner)"
+        fi
+
+        if [ "$group" = "root" ]; then
+            l_output="$l_output\n - /etc/cron.allow group is root"
+        else
+            l_output2="$l_output2\n - /etc/cron.allow group is not root (found $group)"
+        fi
+    else
+        l_output2="$l_output2\n - /etc/cron.allow does not exist"
+    fi
+
+    # Check /etc/cron.deny (if exists)
+    if [ -f /etc/cron.deny ]; then
+        perm=$(stat -Lc '%a' /etc/cron.deny)
+        owner=$(stat -Lc '%U' /etc/cron.deny)
+        group=$(stat -Lc '%G' /etc/cron.deny)
+
+        if [ "$perm" -le 640 ]; then
+            l_output="$l_output\n - /etc/cron.deny permissions are $perm (OK)"
+        else
+            l_output2="$l_output2\n - /etc/cron.deny permissions are $perm (too permissive)"
+        fi
+
+        if [ "$owner" = "root" ]; then
+            l_output="$l_output\n - /etc/cron.deny is owned by root"
+        else
+            l_output2="$l_output2\n - /etc/cron.deny is not owned by root (found $owner)"
+        fi
+
+        if [ "$group" = "root" ]; then
+            l_output="$l_output\n - /etc/cron.deny group is root"
+        else
+            l_output2="$l_output2\n - /etc/cron.deny group is not root (found $group)"
+        fi
+    else
+        l_output="$l_output\n - /etc/cron.deny does not exist (OK)"
+    fi
+
+else
+    l_output=" - Cron is not installed on the system"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+}
+"""

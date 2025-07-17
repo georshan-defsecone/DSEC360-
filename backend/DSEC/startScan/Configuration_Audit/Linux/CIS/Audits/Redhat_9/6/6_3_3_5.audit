@@ -1,0 +1,85 @@
+audit_id: "6.3.3.5"
+audit_name: "Ensure events that modify the system's network environment are collected"
+audit_script: """
+{
+# Define expected rules
+expected_disk_rules=(
+"-a always,exit -F arch=b64 -S sethostname,setdomainname -k system-locale"
+"-a always,exit -F arch=b32 -S sethostname,setdomainname -k system-locale"
+"-w /etc/issue -p wa -k system-locale"
+"-w /etc/issue.net -p wa -k system-locale"
+"-w /etc/hosts -p wa -k system-locale"
+"-w /etc/hostname -p wa -k system-locale"
+"-w /etc/sysconfig/network -p wa -k system-locale"
+"-w /etc/sysconfig/network-scripts -p wa -k system-locale"
+"-w /etc/NetworkManager -p wa -k system-locale"
+)
+
+expected_running_rules=(
+"-a always,exit -F arch=b64 -S sethostname,setdomainname -F key=system-locale"
+"-a always,exit -F arch=b32 -S sethostname,setdomainname -F key=system-locale"
+"-w /etc/issue -p wa -k system-locale"
+"-w /etc/issue.net -p wa -k system-locale"
+"-w /etc/hosts -p wa -k system-locale"
+"-w /etc/hostname -p wa -k system-locale"
+"-w /etc/sysconfig/network -p wa -k system-locale"
+"-w /etc/sysconfig/network-scripts -p wa -k system-locale"
+"-w /etc/NetworkManager -p wa -k system-locale"
+)
+
+# Extract on-disk audit rules
+disk_rules=$(awk '
+  /^\s*-a\s+always,exit/ && /-F\s+arch=b(32|64)/ && /-S/ &&
+  (/sethostname/ || /setdomainname/) && (/key=| -k /) { print }
+  /^\s*-w/ &&
+  (/\/etc\/issue/ || /\/etc\/issue.net/ || /\/etc\/hosts/ ||
+   /\/etc\/hostname/ || /\/etc\/sysconfig\/network/ ||
+   /\/etc\/sysconfig\/network-scripts/ || /\/etc\/NetworkManager/) &&
+  /-p\s+wa/ && (/key=| -k /) { print }
+' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+# Extract currently loaded audit rules
+running_rules=$(auditctl -l 2>/dev/null | awk '
+  /^\s*-a\s+always,exit/ && /-F\s+arch=b(32|64)/ && /-S/ &&
+  (/sethostname/ || /setdomainname/) && (/key=| -k /) { print }
+  /^\s*-w/ &&
+  (/\/etc\/issue/ || /\/etc\/issue.net/ || /\/etc\/hosts/ ||
+   /\/etc\/hostname/ || /\/etc\/sysconfig\/network/ ||
+   /\/etc\/sysconfig\/network-scripts/ || /\/etc\/NetworkManager/) &&
+  /-p\s+wa/ && (/key=| -k /) { print }
+')
+
+# Compare
+fail_disk=()
+fail_run=()
+
+for rule in "${expected_disk_rules[@]}"; do
+  echo "$disk_rules" | grep -Pq -- "$rule" || fail_disk+=("$rule")
+done
+
+for rule in "${expected_running_rules[@]}"; do
+  echo "$running_rules" | grep -Pq -- "$rule" || fail_run+=("$rule")
+done
+
+# Output
+if [ "${#fail_disk[@]}" -eq 0 ] && [ "${#fail_run[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  echo -e " - All system-locale audit rules are present in both on-disk and running configurations.\n"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  if [ "${#fail_disk[@]}" -gt 0 ]; then
+    echo -e "\n - Missing or incorrect **on-disk** rules:"
+    for rule in "${fail_disk[@]}"; do
+      echo "   - $rule"
+    done
+  fi
+  if [ "${#fail_run[@]}" -gt 0 ]; then
+    echo -e "\n - Missing or incorrect **running** rules:"
+    for rule in "${fail_run[@]}"; do
+      echo "   - $rule"
+    done
+  fi
+  echo
+fi
+}
+"""

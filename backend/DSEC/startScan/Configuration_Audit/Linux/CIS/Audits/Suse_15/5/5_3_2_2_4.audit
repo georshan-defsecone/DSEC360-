@@ -1,0 +1,66 @@
+audit_id: "5.3.2.2.4"
+audit_name: "Ensure password complexity is configured"
+audit_script: """
+{
+a_output=(); a_output2=()
+declare -A values
+
+# Expected policy thresholds
+expected_minclass=4
+expected_credit=-1
+
+# 1. Check pam-config if available
+if command -v pam-config &>/dev/null; then
+    pam_output="$(pam-config --query --cracklib 2>/dev/null)"
+    if [[ -n "$pam_output" ]]; then
+        [[ "$pam_output" =~ minclass[=[:space:]]*([0-9]+) ]] && values[minclass]="${BASH_REMATCH[1]}"
+        for credit in d u o l; do
+            [[ "$pam_output" =~ ${credit}credit[=[:space:]]*(-?[0-9]+) ]] && values[${credit}credit]="${BASH_REMATCH[1]}"
+        done
+    fi
+fi
+
+# 2. If pam-config didn't define values, check pwquality.conf/d
+for file in /etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf; do
+    [ -f "$file" ] || continue
+    while IFS= read -r line; do
+        [[ "$line" =~ ^[[:space:]]*minclass[[:space:]]*=[[:space:]]*([0-9]+) ]] && values[minclass]="${BASH_REMATCH[1]}"
+        for credit in d u o l; do
+            [[ "$line" =~ ^[[:space:]]*${credit}credit[[:space:]]*=[[:space:]]*(-?[0-9]+) ]] && values[${credit}credit]="${BASH_REMATCH[1]}"
+        done
+    done < "$file"
+done
+
+# 3. Evaluate all values
+if [[ -n "${values[minclass]}" ]]; then
+    if [[ "${values[minclass]}" -ge "$expected_minclass" ]]; then
+        a_output+=("minclass = ${values[minclass]}")
+    else
+        a_output2+=("minclass = ${values[minclass]} is less than required $expected_minclass")
+    fi
+else
+    a_output2+=("minclass setting not found")
+fi
+
+for credit in d u o l; do
+    val="${values[${credit}credit]}"
+    if [[ -n "$val" ]]; then
+        if [[ "$val" -le "$expected_credit" ]]; then
+            a_output+=("${credit}credit = $val")
+        else
+            a_output2+=("${credit}credit = $val is weaker than required $expected_credit")
+        fi
+    else
+        a_output2+=("${credit}credit setting not found")
+    fi
+done
+
+# 4. Output result
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+    [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "" "- Correctly set:" "${a_output[@]}"
+fi
+}
+""""

@@ -1,0 +1,38 @@
+audit_id: "5.1.16"
+audit_name: "Ensure sshd MaxAuthTries is configured"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+  l_warning=""
+
+  # Get the value of MaxAuthTries
+  l_val="$(sshd -T 2>/dev/null | awk '$1 == "maxauthtries" {print $2}')"
+
+  # Validate it's a number
+  if [[ "$l_val" =~ ^[0-9]+$ ]]; then
+    if [ "$l_val" -le 4 ]; then
+      l_output=" - MaxAuthTries is set to \"$l_val\""
+    else
+      l_output2=" - MaxAuthTries is set to \"$l_val\" (should be 4 or less)"
+    fi
+  else
+    l_output2=" - Could not determine MaxAuthTries value"
+  fi
+
+  # Check for Match blocks
+  if grep -Piq '^\s*Match\b' /etc/ssh/sshd_config; then
+    l_warning=" - Match blocks detected in sshd_config. They may override this setting.\n - To verify for a specific user: sshd -T -C user=<username> | grep maxauthtries"
+  fi
+
+  # Audit Result
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+
+  # Print warning if applicable
+  [ -n "$l_warning" ] && echo -e "\n ** WARNING **\n$l_warning"
+}
+"""

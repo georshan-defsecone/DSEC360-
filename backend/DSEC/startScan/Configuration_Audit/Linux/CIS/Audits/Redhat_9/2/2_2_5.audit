@@ -1,0 +1,23 @@
+audit_id: "2.2.5"
+audit_name: "Ensure tftp client is not installed"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check if tftp package is installed
+if rpm -q tftp > /dev/null 2>&1; then
+    l_output2="$l_output2\n - Package 'tftp' is installed"
+else
+    l_output="$l_output\n - Package 'tftp' is not installed"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+}
+
+"""

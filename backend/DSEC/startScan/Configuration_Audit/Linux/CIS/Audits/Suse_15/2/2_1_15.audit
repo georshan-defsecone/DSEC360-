@@ -1,0 +1,25 @@
+audit_id: "2.1.15"
+audit_name: "Ensure snmp services are not in use"
+audit_script: """
+{
+pkg_status=$(rpm -q net-snmp 2>/dev/null)
+
+if [[ "$pkg_status" == "package net-snmp is not installed" ]]; then
+    echo "** PASS **"
+    echo "- The 'net-snmp' package is not installed."
+else
+    enabled_units=$(systemctl is-enabled snmpd.service 2>/dev/null | grep 'enabled')
+    active_units=$(systemctl is-active snmpd.service 2>/dev/null | grep '^active')
+
+    if [[ -z "$enabled_units" && -z "$active_units" ]]; then
+        echo "** PASS **"
+        echo "- The 'net-snmp' package is installed but snmpd.service is disabled and inactive."
+    else
+        echo "** FAIL **"
+        echo "- The 'net-snmp' package is installed."
+        [[ -n "$enabled_units" ]] && echo "- Service 'snmpd.service' is enabled."
+        [[ -n "$active_units" ]] && echo "- Service 'snmpd.service' is active."
+    fi
+fi
+}
+""""

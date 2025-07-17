@@ -1,0 +1,55 @@
+audit_id: "5.3.1.3"
+audit_name: "Ensure latest version of libpwquality is installed"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+  required_version="1.4.4-8"
+
+  # Get installed version (if package exists)
+  installed=$(rpm -q --qf '%{VERSION}-%{RELEASE}\n' libpwquality 2>/dev/null)
+
+  if [[ $? -ne 0 || -z "$installed" ]]; then
+    l_output2=" - libpwquality package not found or rpm query failed"
+  else
+    if command -v rpmdev-vercmp &>/dev/null; then
+      rpmdev-vercmp "$installed" "$required_version" &>/dev/null
+      case $? in
+        11|0) l_output=" - libpwquality version ($installed) is compliant" ;;
+        12) l_output2=" - libpwquality version ($installed) is below required minimum ($required_version)" ;;
+        *) l_output2=" - Unable to determine libpwquality version compliance" ;;
+      esac
+    else
+      # Manual fallback comparison
+      ver_inst="${installed%%-*}"
+      rel_inst="${installed##*-}"
+      ver_req="${required_version%%-*}"
+      rel_req="${required_version##*-}"
+
+      # Strip suffix like .el9 or .fc38 from release
+      rel_inst_num=$(echo "$rel_inst" | sed -E 's/[^0-9]+.*$//')
+      rel_req_num=$(echo "$rel_req" | sed -E 's/[^0-9]+.*$//')
+
+      # Convert version strings to comparable integers
+      ver_compare() {
+        printf "%03d%03d%03d" $(echo "$1" | tr '.' ' ')
+      }
+
+      vi=$(ver_compare "$ver_inst")
+      vr=$(ver_compare "$ver_req")
+
+      if [[ "$vi" -gt "$vr" ]] || { [[ "$vi" == "$vr" ]] && (( rel_inst_num >= rel_req_num )); }; then
+        l_output=" - libpwquality version ($installed) is compliant"
+      else
+        l_output2=" - libpwquality version ($installed) is below required minimum ($required_version)"
+      fi
+    fi
+  fi
+
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+}
+"""
