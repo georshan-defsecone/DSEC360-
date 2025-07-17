@@ -1,0 +1,14 @@
+audit_id: "1.5.3"
+audit_name: "Ensure prelink is disabled"
+audit_script: """
+{
+if rpm -q prelink &>/dev/null; then
+    version=$(rpm -q prelink)
+    echo -e "\n** FAIL **"
+    echo " - prelink is installed: $version"
+else
+    echo -e "\n** PASS **"
+    echo " - prelink package is not installed"
+fi
+}
+"""

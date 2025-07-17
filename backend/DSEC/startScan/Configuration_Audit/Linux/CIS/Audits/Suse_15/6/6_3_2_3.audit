@@ -1,0 +1,42 @@
+audit_id: "6.3.2.3"
+audit_name: "Ensure system is disabled when audit logs are full"
+audit_script: """
+{
+config_file="/etc/audit/auditd.conf"
+l_output="" l_output2=""
+
+# Check disk_full_action
+if grep -Pq '^\h*disk_full_action\h*=\h*(halt|single)\b' "$config_file"; then
+  value=$(grep -Po '^\h*disk_full_action\h*=\h*\S+' "$config_file" | awk -F= '{print $2}' | tr -d ' ')
+  l_output="$l_output\n - disk_full_action is set to: \"$value\" (compliant)"
+else
+  actual=$(grep -Po '^\h*disk_full_action\h*=\h*\S+' "$config_file" | awk -F= '{print $2}' | tr -d ' ')
+  if [ -n "$actual" ]; then
+    l_output2="$l_output2\n - disk_full_action is set to: \"$actual\" but should be \"halt\" or \"single\""
+  else
+    l_output2="$l_output2\n - disk_full_action is not set"
+  fi
+fi
+
+# Check disk_error_action
+if grep -Pq '^\h*disk_error_action\h*=\h*(syslog|single|halt)\b' "$config_file"; then
+  value=$(grep -Po '^\h*disk_error_action\h*=\h*\S+' "$config_file" | awk -F= '{print $2}' | tr -d ' ')
+  l_output="$l_output\n - disk_error_action is set to: \"$value\" (compliant)"
+else
+  actual=$(grep -Po '^\h*disk_error_action\h*=\h*\S+' "$config_file" | awk -F= '{print $2}' | tr -d ' ')
+  if [ -n "$actual" ]; then
+    l_output2="$l_output2\n - disk_error_action is set to: \"$actual\" but should be \"syslog\", \"single\" or \"halt\""
+  else
+    l_output2="$l_output2\n - disk_error_action is not set"
+  fi
+fi
+
+# Final output
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **$l_output\n"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n * Reasons for audit failure * :$l_output2"
+  [ -n "$l_output" ] && echo -e "\n- Correctly configured:\n$l_output\n"
+fi
+}
+""""

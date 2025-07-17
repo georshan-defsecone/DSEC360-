@@ -1,0 +1,22 @@
+audit_id: "2.2.2"
+audit_name: "Ensure ldap client is not installed"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check if openldap-clients package is installed
+if rpm -q openldap-clients > /dev/null 2>&1; then
+    l_output2="$l_output2\n - Package 'openldap-clients' is installed"
+else
+    l_output="$l_output\n - Package 'openldap-clients' is not installed"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+}
+"""

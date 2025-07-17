@@ -1,0 +1,53 @@
+audit_id: "6.3.3.11"
+audit_name: "Ensure session initiation information is collected"
+audit_script: """
+{
+echo "### Audit Check: Session Log File Audit Rules"
+expected_rules=(
+  "-w /var/run/utmp -p wa -k session"
+  "-w /var/log/wtmp -p wa -k session"
+  "-w /var/log/btmp -p wa -k session"
+)
+
+missing_disk=()
+on_disk=$(awk '
+  /^\s*-w/ &&
+  (/\/var\/run\/utmp/ || /\/var\/log\/wtmp/ || /\/var\/log\/btmp/) &&
+  /-p\s*wa/ &&
+  (/key=| -k /)
+' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+for rule in "${expected_rules[@]}"; do
+  grep -qF -- "$rule" <<< "$on_disk" || missing_disk+=("$rule")
+done
+
+if [ "${#missing_disk[@]}" -eq 0 ]; then
+  echo -e "\n- On-Disk Audit Result:"
+  echo " ** PASS **"
+  echo " - All expected on-disk audit rules for session logging files are present."
+
+else
+  echo -e "\n- On-Disk Audit Result:"
+  echo " ** FAIL **"
+  echo " - Missing on-disk rules:"
+  printf '   %s\n' "${missing_disk[@]}"
+fi
+
+missing_runtime=()
+running=$(auditctl -l 2>/dev/null)
+
+for rule in "${expected_rules[@]}"; do
+  grep -qF -- "$rule" <<< "$running" || missing_runtime+=("$rule")
+done
+
+if [ "${#missing_runtime[@]}" -eq 0 ]; then
+  echo -e "\n- Runtime Audit Result:"
+  echo "PASS"
+  echo " - All expected runtime audit rules for session logging files are present."
+else
+  echo "FAIL:"
+  echo " - Missing running rules:"
+  printf '   %s\n' "${missing_runtime[@]}"
+fi
+}
+""""

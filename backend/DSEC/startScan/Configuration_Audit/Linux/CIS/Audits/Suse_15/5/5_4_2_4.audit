@@ -1,0 +1,16 @@
+audit_id: "5.4.2.4"
+audit_name: "Ensure root account access is controlled"
+audit_script: """
+{
+status=$(passwd -S root 2>/dev/null | awk '$2 ~ /^(P|L)/ {print $2}')
+
+if [[ "$status" == "P" || "$status" == "L" ]]; then
+    printf '\n%s\n' " ** PASS **" \
+    "User: \"root\" Password is status: $status"
+else
+    actual_status=$(passwd -S root 2>/dev/null | awk '{print $2}')
+    printf '\n%s\n' " ** FAIL **" \
+    "User: \"root\" has unexpected password status: $actual_status"
+fi
+}
+""""

@@ -1,0 +1,37 @@
+audit_id: "1.6.6"
+audit_name: "Ensure access to /etc/issue.net is configured"
+audit_script: """
+{
+# If /etc/issue.net doesn't exist, that's acceptable (PASS)
+[ ! -e /etc/issue.net ] && {
+    echo "** PASS ** /etc/issue.net does not exist"
+    exit 0
+}
+
+# Get permission, UID, and GID info
+output=$(stat -Lc 'Access: (%#a/%A) Uid: (%u/%U) Gid: (%g/%G)' /etc/issue.net 2>/dev/null)
+
+# Extract numeric permission, UID, and GID
+perm=$(stat -Lc '%a' /etc/issue.net)
+uid=$(stat -Lc '%u' /etc/issue.net)
+gid=$(stat -Lc '%g' /etc/issue.net)
+
+# Check if permissions are 644 or more restrictive
+if [ "$perm" -gt 644 ]; then
+    echo "** FAIL ** /etc/issue.net has permissions that are too permissive: $perm"
+    echo "$output"
+    exit 1
+fi
+
+# Check ownership
+if [ "$uid" -ne 0 ] || [ "$gid" -ne 0 ]; then
+    echo "** FAIL ** /etc/issue.net is not owned by root:root"
+    echo "$output"
+    exit 1
+fi
+
+# All checks passed
+echo "** PASS ** /etc/issue.net has correct permissions and ownership"
+echo "$output"
+}
+"""

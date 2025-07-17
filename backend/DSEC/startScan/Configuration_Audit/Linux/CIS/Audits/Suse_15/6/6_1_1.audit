@@ -1,0 +1,12 @@
+audit_id: "6.1.1"
+audit_name: "Ensure AIDE is installed"
+audit_script: """
+{
+if rpm -q aide &>/dev/null; then
+    version=$(rpm -q aide)
+    echo -e "\n** PASS **\n - AIDE is installed: $version"
+else
+    echo -e "\n** FAIL **\n - AIDE is not installed"
+fi
+}
+""""

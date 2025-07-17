@@ -1,0 +1,29 @@
+audit_id: "2.1.5"
+audit_name: "Ensure dnsmasq services are not in use"
+audit_script: """
+{
+# Audit: Ensure 'dnsmasq' is not installed or dnsmasq.service is disabled and inactive
+
+echo "### Audit: Verify dnsmasq is not installed or dnsmasq.service is disabled and inactive ###"
+
+if rpm -q dnsmasq &>/dev/null; then
+    echo "- The 'dnsmasq' package is installed."
+
+    is_enabled=$(systemctl is-enabled dnsmasq.service 2>/dev/null | grep 'enabled')
+    is_active=$(systemctl is-active dnsmasq.service 2>/dev/null | grep '^active')
+
+    if [ -n "$is_enabled" ] || [ -n "$is_active" ]; then
+        echo -e "\n** FAIL **"
+        echo "- dnsmasq is installed, and 'dnsmasq.service' is either enabled or active."
+        [ -n "$is_enabled" ] && echo "- Service is ENABLED: dnsmasq.service"
+        [ -n "$is_active" ] && echo "- Service is ACTIVE: dnsmasq.service"
+    else
+        echo -e "\n** PASS **"
+        echo "- dnsmasq is installed, but 'dnsmasq.service' is both disabled and inactive."
+    fi
+else
+    echo -e "\n** PASS **"
+    echo "- The 'dnsmasq' package is not installed."
+fi
+}
+""""

@@ -1,0 +1,32 @@
+audit_id: "6.2.3.1.2"
+audit_name: "Ensure rsyslog is not configured to receive logs from a remote client"
+audit_script: """
+{
+l_output2=""
+
+# Check advanced format (rsyslog v7+)
+if grep -Psiq -- '^\h*module\(load="?imtcp"?\)' /etc/rsyslog.conf /etc/rsyslog.d/*.conf 2>/dev/null; then
+  l_output2="$l_output2\n - Advanced format: module(load=\"imtcp\") found"
+fi
+
+if grep -Psiq -- '^\h*input\(type="?imtcp"?\b' /etc/rsyslog.conf /etc/rsyslog.d/*.conf 2>/dev/null; then
+  l_output2="$l_output2\n - Advanced format: input(type=\"imtcp\" ...) found"
+fi
+
+# Check obsolete legacy format
+if grep -Psiq -- '^\h*\$ModLoad\h+imtcp\b' /etc/rsyslog.conf /etc/rsyslog.d/*.conf 2>/dev/null; then
+  l_output2="$l_output2\n - Legacy format: \$ModLoad imtcp found"
+fi
+
+if grep -Psiq -- '^\h*\$InputTCPServerRun\b' /etc/rsyslog.conf /etc/rsyslog.d/*.conf 2>/dev/null; then
+  l_output2="$l_output2\n - Legacy format: \$InputTCPServerRun found"
+fi
+
+# Output results
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **\n - Rsyslog is not configured to accept incoming logs\n"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n - * Reasons for audit failure *:$l_output2\n"
+fi
+}
+""""

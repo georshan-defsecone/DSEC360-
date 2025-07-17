@@ -1,0 +1,33 @@
+audit_id: "6.2.3.7"
+audit_name: "Ensure rsyslog is not configured to receive logs from a remote client"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check for advanced input configuration (modern format)
+adv1=$(grep -Psi -- '^\h*module\(load="?imtcp"?\)' /etc/rsyslog.conf /etc/rsyslog.d/*.conf 2>/dev/null)
+adv2=$(grep -Psi -- '^\h*input\(type="?imtcp"?' /etc/rsyslog.conf /etc/rsyslog.d/*.conf 2>/dev/null)
+
+# Check for legacy input configuration
+legacy1=$(grep -Psi -- '^\h*\$ModLoad\h+imtcp\b' /etc/rsyslog.conf /etc/rsyslog.d/*.conf 2>/dev/null)
+legacy2=$(grep -Psi -- '^\h*\$InputTCPServerRun\b' /etc/rsyslog.conf /etc/rsyslog.d/*.conf 2>/dev/null)
+
+# Evaluate results
+if [ -n "$adv1" ] || [ -n "$adv2" ] || [ -n "$legacy1" ] || [ -n "$legacy2" ]; then
+    l_output2+="\n - The system is configured to accept incoming logs via TCP."
+    [ -n "$adv1" ] && l_output2+="\n   Found: $adv1"
+    [ -n "$adv2" ] && l_output2+="\n   Found: $adv2"
+    [ -n "$legacy1" ] && l_output2+="\n   Found: $legacy1"
+    [ -n "$legacy2" ] && l_output2+="\n   Found: $legacy2"
+else
+    l_output+="\n - No configuration found that enables acceptance of remote logs via TCP."
+fi
+
+# Print result
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **$l_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **$l_output2"
+fi
+}
+"""

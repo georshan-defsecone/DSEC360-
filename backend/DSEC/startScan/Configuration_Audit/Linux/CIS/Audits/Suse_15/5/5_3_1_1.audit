@@ -1,0 +1,14 @@
+audit_id: "5.3.1.1"
+audit_name: "Ensure latest version of pam is installed"
+audit_script: """
+{
+if rpm -q pam &>/dev/null; then
+  pam_ver=$(rpm -q pam)
+  echo -e "\n- Audit Result:\n ** PASS **"
+  echo " - PAM is installed: $pam_ver"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  echo " - PAM package is not installed"
+fi
+}
+""""

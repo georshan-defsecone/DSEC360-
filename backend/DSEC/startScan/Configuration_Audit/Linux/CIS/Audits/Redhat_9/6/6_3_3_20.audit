@@ -1,0 +1,17 @@
+audit_id: "6.3.3.20"
+audit_name: "Ensure the audit configuration is immutable"
+audit_script: """
+{
+echo "### Checking Audit Rule for -e 2 ###"
+
+last_e2=$(grep -Ph -- '^\h*-e\h+2\b' /etc/audit/rules.d/*.rules | tail -1)
+
+if [[ "$last_e2" == "-e 2" ]]; then
+  echo "** PASS **"
+else
+  echo "** FAIL **"
+  echo "Reason: Missing or incorrect '-e 2' directive at the end of audit rules"
+  [[ -n "$last_e2" ]] && echo "Found instead: $last_e2"
+fi
+}
+"""

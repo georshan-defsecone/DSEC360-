@@ -1,0 +1,29 @@
+audit_id: "6.3.1.2"
+audit_name: "Ensure auditing for processes that start prior to auditd is enabled"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check if audit=1 is set in grub boot entries
+if grubby --info=ALL | grep -Pq '\baudit=1\b'; then
+    l_output="$l_output\n - 'audit=1' is set in current GRUB boot entries"
+else
+    l_output2="$l_output2\n - 'audit=1' is NOT set in current GRUB boot entries"
+fi
+
+# Check if audit=1 is set in /etc/default/grub
+if grep -Psoi -- '^\h*GRUB_CMDLINE_LINUX="([^"#\n\r]+\h+)?audit=1\b' /etc/default/grub; then
+    l_output="$l_output\n - 'audit=1' is set in /etc/default/grub"
+else
+    l_output2="$l_output2\n - 'audit=1' is NOT set in /etc/default/grub"
+fi
+
+# Final result
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **$l_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **$l_output2"
+    [ -n "$l_output" ] && echo -e "\n - Correctly configured:\n$l_output"
+fi
+}
+"""

@@ -1,0 +1,14 @@
+audit_id: "1.6.2"
+audit_name: "Ensure local login warning banner is configured properly"
+audit_script: """
+{
+# Fail if this command returns any output
+if grep -E -i "(\\\\v|\\\\r|\\\\m|\\\\s|$(grep '^ID=' /etc/os-release | cut -d= -f2 | sed -e 's/\\"//g'))" /etc/issue | grep -q .; then
+    echo "** FAIL ** /etc/issue contains dynamic system information or OS identifier"
+    grep -E -i "(\\\\v|\\\\r|\\\\m|\\\\s|$(grep '^ID=' /etc/os-release | cut -d= -f2 | sed -e 's/\\"//g'))" /etc/issue
+    exit 1
+fi
+
+echo "** PASS ** /etc/issue contains no dynamic information"
+}
+"""

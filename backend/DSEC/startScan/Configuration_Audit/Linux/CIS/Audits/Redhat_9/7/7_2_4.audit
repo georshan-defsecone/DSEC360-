@@ -1,0 +1,21 @@
+audit_id: "7.2.4"
+audit_name: "Ensure no duplicate UIDs exist"
+audit_script: """
+{
+l_output="" l_output2=""
+
+while read -r count uid; do
+  if [ "$count" -gt 1 ]; then
+    users=$(awk -F: -v n="$uid" '($3 == n) { print $1 }' /etc/passwd | xargs)
+    l_output2="$l_output2\n - Duplicate UID: \"$uid\" is used by users: \"$users\""
+  fi
+done < <(cut -d: -f3 /etc/passwd | sort -n | uniq -c)
+
+if [ -z "$l_output2" ]; then
+  l_output="\n - No duplicate UIDs found on the system."
+  echo -e "\n- Audit Result:\n ** PASS **$l_output\n"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+fi
+}
+"""

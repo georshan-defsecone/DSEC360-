@@ -1,0 +1,15 @@
+audit_id: "1.7.3"
+audit_name: "Ensure GDM disable-user-list option is enabled"
+audit_script: """
+# Check if disable-user-list option is enabled
+enabled=$(gsettings get org.gnome.login-screen disable-user-list 2>/dev/null)
+
+if [ "$enabled" != "true" ]; then
+    echo "** FAIL ** GDM disable-user-list option is not enabled"
+    echo "disable-user-list = $enabled"
+    exit 1
+else
+    echo "** PASS ** GDM disable-user-list option is enabled"
+    echo "disable-user-list = $enabled"
+fi
+"""

@@ -1,0 +1,68 @@
+audit_id: "2.4.2.1"
+audit_name: "Ensure access to at is configured"
+audit_script: """
+{
+failures=()
+pass_notes=()
+
+# Check if 'at' package is installed
+if ! rpm -q at &>/dev/null; then
+    echo -e "\n- Audit Result:"
+    echo " ** PASS **"
+    echo " - 'at' package is not installed; audit not applicable"
+    exit 0
+fi
+
+# === Check /etc/at.allow ===
+at_allow="/etc/at.allow"
+if [ ! -e "$at_allow" ]; then
+    failures+=("- $at_allow is missing.")
+else
+    perm=$(stat -Lc '%a' "$at_allow")
+    owner=$(stat -Lc '%U' "$at_allow")
+    group=$(stat -Lc '%G' "$at_allow")
+
+    [ "$perm" -gt 640 ] && failures+=("- $at_allow has permission $perm, should be 0640 or more restrictive.")
+    [ "$owner" != "root" ] && failures+=("- $at_allow owner is $owner, expected root.")
+    if [[ "$group" != "root" && "$group" != "daemon" ]]; then
+        failures+=("- $at_allow group is $group, expected root or daemon.")
+    fi
+
+    if [ "${#failures[@]}" -eq 0 ]; then
+        pass_notes+=("- $at_allow is correctly configured (perm: $perm, owner: $owner, group: $group)")
+    fi
+fi
+
+# === Check /etc/at.deny ===
+at_deny="/etc/at.deny"
+if [ -e "$at_deny" ]; then
+    perm=$(stat -Lc '%a' "$at_deny")
+    owner=$(stat -Lc '%U' "$at_deny")
+    group=$(stat -Lc '%G' "$at_deny")
+
+    [ "$perm" -gt 640 ] && failures+=("- $at_deny has permission $perm, should be 0640 or more restrictive.")
+    [ "$owner" != "root" ] && failures+=("- $at_deny owner is $owner, expected root.")
+    if [[ "$group" != "root" && "$group" != "daemon" ]]; then
+        failures+=("- $at_deny group is $group, expected root or daemon.")
+    fi
+
+    if [ "${#failures[@]}" -eq 0 ]; then
+        pass_notes+=("- $at_deny is correctly configured (perm: $perm, owner: $owner, group: $group)")
+    fi
+else
+    pass_notes+=("- $at_deny does not exist, which is acceptable")
+fi
+
+# === Output result ===
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:"
+    echo " ** PASS **"
+    for note in "${pass_notes[@]}"; do echo " $note"; done
+else
+    echo -e "\n- Audit Result:"
+    echo " ** FAIL **"
+    for issue in "${failures[@]}"; do echo " $issue"; done
+    [ "${#pass_notes[@]}" -gt 0 ] && echo -e "\n- Correctly configured:" && for note in "${pass_notes[@]}"; do echo " $note"; done
+fi
+}
+""""

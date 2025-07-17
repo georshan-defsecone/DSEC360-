@@ -1,0 +1,37 @@
+audit_id: "6.3.3.1"
+audit_name: "Ensure changes to system administration scope (sudoers) is collected"
+audit_script: """
+{
+l_output=""
+l_output2=""
+
+expected_rule1='-w /etc/sudoers -p wa -k scope'
+expected_rule2='-w /etc/sudoers.d -p wa -k scope'
+
+# Check on-disk rules
+on_disk_matches=$(awk '/^ *-w/ && /\/etc\/sudoers/ && / +-p *wa/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+if echo "$on_disk_matches" | grep -Fxq "$expected_rule1" && echo "$on_disk_matches" | grep -Fxq "$expected_rule2"; then
+    l_output+="\n - On-disk audit rules are correctly configured"
+else
+    l_output2+="\n - On-disk audit rules for /etc/sudoers or /etc/sudoers.d are missing or incorrect"
+fi
+
+# Check loaded rules
+loaded_matches=$(auditctl -l 2>/dev/null | awk '/^ *-w/ && /\/etc\/sudoers/ && / +-p *wa/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)')
+
+if echo "$loaded_matches" | grep -Fxq "$expected_rule1" && echo "$loaded_matches" | grep -Fxq "$expected_rule2"; then
+    l_output+="\n - Running audit rules are correctly loaded"
+else
+    l_output2+="\n - Running audit rules for /etc/sudoers or /etc/sudoers.d are missing or incorrect"
+fi
+
+# Final audit result
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **$l_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **$l_output2"
+    [ -n "$l_output" ] && echo -e "\n - Correctly set:$l_output"
+fi
+}
+"""

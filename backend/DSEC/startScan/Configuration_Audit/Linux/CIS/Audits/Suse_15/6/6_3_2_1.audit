@@ -1,0 +1,28 @@
+audit_id: "6.3.2.1"
+audit_name: "Ensure audit log storage size is configured"
+audit_script: """
+{
+l_output="" l_output2=""
+expected_max=8  # Replace this with your actual site policy value in MB
+
+# Extract actual configured value
+if grep -Po -- '^\h*max_log_file\h*=\h*\d+\b' /etc/audit/auditd.conf &>/dev/null; then
+  actual_val=$(grep -Po -- '^\h*max_log_file\h*=\h*\d+\b' /etc/audit/auditd.conf | awk -F= '{print $2}' | tr -d ' ')
+  
+  if [[ "$actual_val" -ge "$expected_max" ]]; then
+    l_output=" - max_log_file is set to: $actual_val MB (compliant)"
+  else
+    l_output2=" - max_log_file is set to: $actual_val MB (less than recommended $expected_max MB)"
+  fi
+else
+  l_output2=" - max_log_file setting not found in /etc/audit/auditd.conf"
+fi
+
+# Final output
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n * Reason(s) for audit failure * :\n$l_output2\n"
+fi
+}
+""""

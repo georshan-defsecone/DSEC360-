@@ -1,0 +1,20 @@
+audit_id: "7.2.7"
+audit_name: "Ensure no duplicate group names exist"
+audit_script: """
+{
+  l_output2=""
+
+  while read -r l_count l_group; do
+    if [ "$l_count" -gt 1 ]; then
+      l_dup_groups=$(awk -F: -v n="$l_group" '($1 == n) { print $1 }' /etc/group | xargs)
+      l_output2+="\n - Duplicate group name: \"$l_group\" found: \"$l_dup_groups\""
+    fi
+  done < <(cut -f1 -d":" /etc/group | sort | uniq -c)
+
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n - No duplicate group names found in /etc/group"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **$l_output2"
+  fi
+}
+""""

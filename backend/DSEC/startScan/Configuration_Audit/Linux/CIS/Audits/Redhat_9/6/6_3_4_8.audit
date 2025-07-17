@@ -1,0 +1,42 @@
+audit_id: "6.3.4.8"
+audit_name: "Ensure audit tools mode is configured"
+audit_script: """
+{
+perm_mask="0022"
+max_perm="$(printf '%o' $(( 0777 & ~$perm_mask )) )"
+
+audit_tools=(
+  "/sbin/auditctl"
+  "/sbin/aureport"
+  "/sbin/ausearch"
+  "/sbin/autrace"
+  "/sbin/auditd"
+  "/sbin/augenrules"
+)
+
+fail_output=""
+pass_output=""
+
+for tool in "${audit_tools[@]}"; do
+  if [ -e "$tool" ]; then
+    mode=$(stat -Lc '%#a' "$tool")
+    if [ $(( mode & perm_mask )) -gt 0 ]; then
+      fail_output+="\n - Audit tool \"$tool\" is mode: \"$mode\" (should be \"$max_perm\" or more restrictive)"
+    else
+      pass_output+="\n - Audit tool \"$tool\" is correctly configured with mode: \"$mode\""
+    fi
+  else
+    fail_output+="\n - Audit tool \"$tool\" not found"
+  fi
+done
+
+if [ -z "$fail_output" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **$pass_output"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **$fail_output"
+  [ -n "$pass_output" ] && echo -e "\n- Other tools correctly configured:$pass_output"
+fi
+
+unset audit_tools
+}
+"""

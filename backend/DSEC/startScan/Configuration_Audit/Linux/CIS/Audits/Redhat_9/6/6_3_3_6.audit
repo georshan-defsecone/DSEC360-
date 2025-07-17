@@ -1,0 +1,59 @@
+audit_id: "6.3.3.6"
+audit_name: "Ensure use of privileged commands are collected"
+audit_script: """
+{
+echo -e "\n### On-Disk Audit Rule Verification for Privileged Files ###"
+
+fail_disk=()
+while IFS= read -r partition; do
+  while IFS= read -r privileged; do
+    if grep -qrF -- "$privileged" /etc/audit/rules.d; then
+      echo "OK: '$privileged' found in auditing rules."
+    else
+      echo "Warning: '$privileged' not found in on-disk configuration."
+      fail_disk+=("$privileged")
+    fi
+  done < <(find "$partition" -xdev -perm /6000 -type f 2>/dev/null)
+done < <(findmnt -n -l -k -it "$(awk '/nodev/ { print $2 }' /proc/filesystems | paste -sd,)" \
+         | grep -Pv "noexec|nosuid" | awk '{print $1}')
+
+# --- Running Rules Verification ---
+echo -e "\n### Running Audit Rule Verification for Privileged Files ###"
+
+fail_runtime=()
+RUNNING=$(auditctl -l 2>/dev/null)
+if [ -z "$RUNNING" ]; then
+  echo "ERROR: auditctl returned no rules. Is the auditd service running?"
+  exit 1
+fi
+
+while IFS= read -r partition; do
+  while IFS= read -r privileged; do
+    if grep -qF -- "$privileged" <<< "$RUNNING"; then
+      echo "OK: '$privileged' found in running audit rules."
+    else
+      echo "Warning: '$privileged' not found in running configuration."
+      fail_runtime+=("$privileged")
+    fi
+  done < <(find "$partition" -xdev -perm /6000 -type f 2>/dev/null)
+done < <(findmnt -n -l -k -it "$(awk '/nodev/ { print $2 }' /proc/filesystems | paste -sd,)" \
+         | grep -Pv "noexec|nosuid" | awk '{print $1}')
+
+# --- Summary ---
+echo -e "\n### Audit Results ###"
+if [ "${#fail_disk[@]}" -eq 0 ] && [ "${#fail_runtime[@]}" -eq 0 ]; then
+  echo "** PASS **"
+  echo " - All privileged files are properly covered in both on-disk and running audit rules."
+else
+  echo "** FAIL **"
+  [ "${#fail_disk[@]}" -ne 0 ] && {
+    echo -e "\n - Missing in on-disk configuration:"
+    printf "   - %s\n" "${fail_disk[@]}"
+  }
+  [ "${#fail_runtime[@]}" -ne 0 ] && {
+    echo -e "\n - Missing in running configuration:"
+    printf "   - %s\n" "${fail_runtime[@]}"
+  }
+fi
+}
+"""

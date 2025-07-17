@@ -1,0 +1,49 @@
+audit_id: "5.3.3.1.3"
+audit_name: "Ensure password failed attempts lockout includes root account"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  faillock_file="/etc/security/faillock.conf"
+  pam_files=("/etc/pam.d/system-auth" "/etc/pam.d/password-auth")
+
+  # Check 1: Ensure even_deny_root and/or root_unlock_time is present in faillock.conf
+  if [ -f "$faillock_file" ]; then
+    if grep -Pq '^\h*(even_deny_root|root_unlock_time\h*=\h*\d+)\b' "$faillock_file"; then
+      l_output="$l_output\n - even_deny_root or root_unlock_time is configured in $faillock_file"
+    else
+      l_output2="$l_output2\n - Neither even_deny_root nor root_unlock_time found in $faillock_file"
+    fi
+  else
+    l_output2="$l_output2\n - File not found: $faillock_file"
+  fi
+
+  # Check 2: root_unlock_time in faillock.conf must not be < 60
+  if grep -Pq '^\h*root_unlock_time\h*=\h*([1-9]|[1-5][0-9])\b' "$faillock_file"; then
+    l_output2="$l_output2\n - root_unlock_time in $faillock_file is set below 60 seconds"
+  else
+    l_output="$l_output\n - root_unlock_time in $faillock_file is compliant or not set"
+  fi
+
+  # Check 3: root_unlock_time in PAM lines must not be < 60
+  for file in "${pam_files[@]}"; do
+    if [ -f "$file" ]; then
+      if grep -Pq '^\h*auth\h+([^#\n\r]+\h+)?pam_faillock\.so\h+([^#\n\r]+\h+)?root_unlock_time\h*=\h*([1-9]|[1-5][0-9])\b' "$file"; then
+        l_output2="$l_output2\n - root_unlock_time in pam_faillock.so line of $file is below 60 seconds"
+      else
+        l_output="$l_output\n - root_unlock_time setting in $file is compliant or not set"
+      fi
+    else
+      l_output2="$l_output2\n - File not found: $file"
+    fi
+  done
+
+  # Final Result
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:$l_output2"
+  fi
+}
+"""

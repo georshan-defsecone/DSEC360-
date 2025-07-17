@@ -1,0 +1,43 @@
+audit_id: "5.1.17"
+audit_name: "Ensure sshd MaxStartups is configured"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+  l_warning=""
+
+  # Fetch the MaxStartups value
+  l_line="$(sshd -T 2>/dev/null | awk '$1 == "maxstartups" {print $2}')"
+
+  if [ -z "$l_line" ]; then
+    l_output2=" - MaxStartups directive not found"
+  else
+    IFS=":" read -r start rate full <<< "$l_line"
+    start="${start:-10}"
+    rate="${rate:-30}"
+    full="${full:-60}"
+
+    # Check if any value is less restrictive than 10:30:60
+    if [ "$start" -gt 10 ] || [ "$rate" -gt 30 ] || [ "$full" -gt 60 ]; then
+      l_output2=" - MaxStartups is set to \"$l_line\" (should be 10:30:60 or more restrictive)"
+    else
+      l_output=" - MaxStartups is set to \"$l_line\""
+    fi
+  fi
+
+  # Check for Match blocks
+  if grep -Piq '^\s*Match\b' /etc/ssh/sshd_config; then
+    l_warning=" - Match blocks detected in sshd_config. They may override this setting.\n - To verify for a specific user: sshd -T -C user=<username> | grep maxstartups"
+  fi
+
+  # Audit Result
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+
+  # Print warning if applicable
+  [ -n "$l_warning" ] && echo -e "\n ** WARNING **\n$l_warning"
+}
+"""

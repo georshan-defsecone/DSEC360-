@@ -1,0 +1,37 @@
+audit_id: "4.3.3"
+audit_name: "Ensure nftables default deny firewall policy"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Ensure nftables is enabled
+if systemctl is-enabled nftables.service &>/dev/null; then
+  echo -e "\n - NFTables is in use on the system"
+
+  # Check for INPUT hook missing DROP policy
+  if nft list ruleset | grep 'hook input' | grep -vq 'policy drop'; then
+    l_output2+="\n - Base chain with 'hook input' does NOT have 'policy drop'"
+  else
+    l_output+="\n - Base chain with 'hook input' correctly uses 'policy drop'"
+  fi
+
+  # Check for FORWARD hook missing DROP policy
+  if nft list ruleset | grep 'hook forward' | grep -vq 'policy drop'; then
+    l_output2+="\n - Base chain with 'hook forward' does NOT have 'policy drop'"
+  else
+    l_output+="\n - Base chain with 'hook forward' correctly uses 'policy drop'"
+  fi
+else
+  echo -e "\n - ERROR: NFTables is not enabled on the system"
+  exit 1
+fi
+
+# Final Result
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s):$l_output2"
+  [ -n "$l_output" ] && echo -e "\n- Correctly set:\n$l_output"
+fi
+}
+"""

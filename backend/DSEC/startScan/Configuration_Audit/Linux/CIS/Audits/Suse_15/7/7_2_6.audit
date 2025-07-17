@@ -1,0 +1,20 @@
+audit_id: "7.2.6"
+audit_name: "Ensure no duplicate user names exist"
+audit_script: """
+{
+  l_output2=""
+
+  while read -r l_count l_user; do
+    if [ "$l_count" -gt 1 ]; then
+      l_dup_users=$(awk -F: -v n="$l_user" '($1 == n) { print $1 }' /etc/passwd | xargs)
+      l_output2+="\n - Duplicate username: \"$l_user\" found: \"$l_dup_users\""
+    fi
+  done < <(cut -f1 -d":" /etc/passwd | sort | uniq -c)
+
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n - No duplicate usernames found in /etc/passwd"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **$l_output2"
+  fi
+}
+""""

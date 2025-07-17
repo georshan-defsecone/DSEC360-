@@ -1,0 +1,41 @@
+audit_id: "5.1.5"
+audit_name: "Ensure sshd KexAlgorithms is configured"
+audit_script: """
+{
+l_output=""
+l_output2=""
+
+# Get the KEX algorithms line from sshd config
+kex_line=$(sshd -T 2>/dev/null | grep -Pi '^kexalgorithms\s+')
+
+# If the line exists, check for weak algorithms
+if [[ -n "$kex_line" ]]; then
+  kex_algs=$(echo "$kex_line" | awk '{$1=""; print $0}' | sed 's/^ *//;s/ *$//')
+  weak_kex=()
+  IFS=',' read -ra kex_array <<< "$kex_algs"
+  for kex in "${kex_array[@]}"; do
+    case "$kex" in
+      diffie-hellman-group1-sha1|diffie-hellman-group14-sha1|diffie-hellman-group-exchange-sha1)
+        weak_kex+=("$kex")
+        ;;
+    esac
+  done
+
+  if [ "${#weak_kex[@]}" -gt 0 ]; then
+    l_output2="\n - The following weak Key Exchange Algorithms are in use:\n   ${weak_kex[*]}"
+  else
+    l_output="\n - No weak Key Exchange Algorithms are configured in sshd."
+  fi
+else
+  l_output="\n - No KexAlgorithms line found in sshd -T output (default configuration assumed)."
+fi
+
+# Final audit result
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **$l_output"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **$l_output2"
+  [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output"
+fi
+}
+""""

@@ -1,0 +1,32 @@
+audit_id: "5.1.6"
+audit_name: "Ensure sshd MACs are configured"
+audit_script: """
+#!/usr/bin/env bash
+{
+l_output="" l_output2=""
+
+# Define weak MAC regex
+weak_mac_regex='macs\h+([^#\n\r]+,)?(hmac-md5|hmac-md5-96|hmac-ripemd160|hmac-sha1-96|umac-64@openssh\.com|hmac-md5-etm@openssh\.com|hmac-md5-96-etm@openssh\.com|hmac-ripemd160-etm@openssh\.com|hmac-sha1-96-etm@openssh\.com|umac-64-etm@openssh\.com|umac-128-etm@openssh\.com)\b'
+
+# Run sshd -T and capture weak MACs
+weak_macs=$(sshd -T 2>/dev/null | grep -Pi -- "$weak_mac_regex")
+
+if [ -n "$weak_macs" ]; then
+    l_output2=" - Weak MACs found in sshd configuration:\n$weak_macs"
+
+    # Check for CVE-2023-48795-relevant MACs
+    if echo "$weak_macs" | grep -qi 'etm@openssh\.com'; then
+        l_output2="$l_output2\n - Note: Encrypt-Then-MAC (etm@openssh.com) algorithms are vulnerable unless patched (CVE-2023-48795)"
+    fi
+else
+    l_output=" - No weak MACs found in sshd configuration."
+fi
+
+# Output audit result
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - * Reasons for audit failure *:\n$l_output2\n"
+fi
+}
+"""

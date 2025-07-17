@@ -1,0 +1,30 @@
+audit_id: "6.3.2.3"
+audit_name: "Ensure system is disabled when audit logs are full"
+audit_script: """
+{
+l_output=""
+l_output2=""
+
+# Check disk_full_action
+if grep -Pq '^\h*disk_full_action\h*=\h*(halt|single)\b' /etc/audit/auditd.conf; then
+    l_output+="\n - disk_full_action is correctly set to halt or single"
+else
+    l_output2+="\n - disk_full_action is NOT set to halt or single or is missing"
+fi
+
+# Check disk_error_action
+if grep -Pq '^\h*disk_error_action\h*=\h*(syslog|single|halt)\b' /etc/audit/auditd.conf; then
+    l_output+="\n - disk_error_action is correctly set to syslog, single, or halt"
+else
+    l_output2+="\n - disk_error_action is NOT set to syslog, single, or halt or is missing"
+fi
+
+# Output result
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **$l_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **$l_output2"
+    [ -n "$l_output" ] && echo -e "\n - Correctly set:$l_output"
+fi
+}
+"""

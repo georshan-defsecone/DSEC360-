@@ -1,0 +1,56 @@
+audit_id: "6.3.3.3"
+audit_name: "Ensure events that modify the sudo log file are collected"
+audit_script: """
+{
+l_output=""
+l_output2=""
+
+# Extract sudo logfile path
+SUDO_LOG_FILE=$(grep -r logfile /etc/sudoers* 2>/dev/null | \
+  sed -e 's/.*logfile=//' -e 's/,.*//' -e 's/"//g' | head -n 1)
+
+# Exit with FAIL if SUDO_LOG_FILE is not set
+if [ -z "$SUDO_LOG_FILE" ]; then
+  echo -e "\n- Audit Result:\n ** FAIL **\n - SUDO_LOG_FILE is not configured in /etc/sudoers or /etc/sudoers.d/*"
+  exit 1
+fi
+
+# Normalize path for pattern match
+SUDO_LOG_FILE_PATTERN=$(echo "$SUDO_LOG_FILE" | sed 's|/|\\/|g')
+
+expected_rule="-w $SUDO_LOG_FILE -p wa -k sudo_log_file"
+
+# Check on-disk rules
+on_disk_rules=$(awk "/^ *-w/ && /$SUDO_LOG_FILE_PATTERN/ && / +-p *wa/ && (/ key= *[!-~]* *\$|/ -k *[!-~]* *\$)/" /etc/audit/rules.d/*.rules 2>/dev/null | sed -e 's/  */ /g' -e 's/^ *//' -e 's/ *$//')
+
+# Check loaded rules
+live_rules=$(auditctl -l 2>/dev/null | awk "/^ *-w/ && /$SUDO_LOG_FILE_PATTERN/ && / +-p *wa/ && (/ key= *[!-~]* *\$|/ -k *[!-~]* *\$)/" | sed -e 's/  */ /g' -e 's/^ *//' -e 's/ *$//')
+
+# Normalize expected rule for comparison
+normalize() {
+  echo "$1" | sed -e 's/  */ /g' -e 's/^ *//' -e 's/ *$//'
+}
+
+n_expected=$(normalize "$expected_rule")
+
+if echo "$on_disk_rules" | grep --fixed-strings --quiet -- "$n_expected"; then
+  l_output+="\n - On-disk sudo log file audit rule is correctly configured"
+else
+  l_output2+="\n - Missing or incorrect on-disk audit rule for sudo log file: $SUDO_LOG_FILE"
+fi
+
+if echo "$live_rules" | grep --fixed-strings --quiet -- "$n_expected"; then
+  l_output+="\n - Loaded sudo log file audit rule is active"
+else
+  l_output2+="\n - Missing or incorrect running audit rule for sudo log file: $SUDO_LOG_FILE"
+fi
+
+# Final result
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **$l_output"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **$l_output2"
+  [ -n "$l_output" ] && echo -e "\n - Correctly configured:$l_output"
+fi
+}
+"""

@@ -1,0 +1,42 @@
+audit_id: "5.4.2.5"
+audit_name: "Ensure root path integrity"
+audit_script: """
+{
+  l_output2=""
+  l_pmask="0022"
+  l_maxperm="$(printf '%o' $((0777 & ~$l_pmask)))"
+
+  # Get root's PATH
+  l_root_path="$(sudo -Hiu root env | grep '^PATH' | cut -d= -f2)"
+  IFS=":" read -ra a_path_loc <<< "$l_root_path"
+
+  # Check for PATH misconfigurations
+  grep -q "::" <<< "$l_root_path" && l_output2+="\n - Root's path contains an empty directory (::)"
+  grep -Pq ":\s*$" <<< "$l_root_path" && l_output2+="\n - Root's path contains a trailing colon (:)"
+  grep -Pq '(^|:)\.\s*(:|$)' <<< "$l_root_path" && l_output2+="\n - Root's path contains current working directory (.)"
+
+  # Validate each directory in PATH
+  for l_path in "${a_path_loc[@]}"; do
+    if [ -d "$l_path" ]; then
+      read -r l_fmode l_fown <<< "$(stat -Lc '%#a %U' "$l_path")"
+
+      if [ "$l_fown" != "root" ]; then
+        l_output2+="\n - Directory \"$l_path\" is owned by \"$l_fown\" but should be owned by \"root\""
+      fi
+
+      if (( (l_fmode & l_pmask) > 0 )); then
+        l_output2+="\n - Directory \"$l_path\" has mode \"$l_fmode\"; should be \"$l_maxperm\" or more restrictive"
+      fi
+    else
+      l_output2+="\n - \"$l_path\" is not a directory"
+    fi
+  done
+
+  # Output audit result
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n - Root's path is correctly configured"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:$l_output2"
+  fi
+}
+"""

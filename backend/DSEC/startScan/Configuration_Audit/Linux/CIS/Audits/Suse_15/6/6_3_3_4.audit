@@ -1,0 +1,77 @@
+audit_id: "6.3.3.4"
+audit_name: "Ensure events that modify date and time information are collected"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+# Expected time-change rules
+expected_rules_disk=(
+  "-a always,exit -F arch=b64 -S adjtimex,settimeofday -k time-change"
+  "-a always,exit -F arch=b32 -S adjtimex,settimeofday -k time-change"
+  "-a always,exit -F arch=b64 -S clock_settime -F a0=0x0 -k time-change"
+  "-a always,exit -F arch=b32 -S clock_settime -F a0=0x0 -k time-change"
+  "-w /etc/localtime -p wa -k time-change"
+)
+
+expected_rules_runtime=(
+  "-a always,exit -F arch=b64 -S adjtimex,settimeofday -F key=time-change"
+  "-a always,exit -F arch=b32 -S settimeofday,adjtimex -F key=time-change"
+  "-a always,exit -F arch=b64 -S clock_settime -F a0=0x0 -F key=time-change"
+  "-a always,exit -F arch=b32 -S clock_settime -F a0=0x0 -F key=time-change"
+  "-w /etc/localtime -p wa -k time-change"
+)
+
+# Check on-disk rules
+disk_output=$(
+awk '
+  /^ *-a *always,exit/ && / -F *arch=b(32|64)/ && / -S/ &&
+  (/adjtimex/ || /settimeofday/ || /clock_settime/) &&
+  (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)
+' /etc/audit/rules.d/*.rules 2>/dev/null
+
+awk '
+  /^ *-w/ && /\/etc\/localtime/ && / +-p *wa/ &&
+  (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)
+' /etc/audit/rules.d/*.rules 2>/dev/null
+)
+
+for rule in "${expected_rules_disk[@]}"; do
+  if ! grep -Pq -- "$(echo "$rule" | sed 's/[][().*^$]/\\&/g')" <<< "$disk_output"; then
+    a_output2+=(" - Missing on-disk rule: $rule")
+  else
+    a_output+=(" - Found on-disk rule: $rule")
+  fi
+done
+
+# Check loaded audit rules
+runtime_output=$(
+auditctl -l 2>/dev/null | awk '
+  /^ *-a *always,exit/ && / -F *arch=b(32|64)/ && / -S/ &&
+  (/adjtimex/ || /settimeofday/ || /clock_settime/) &&
+  (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)
+'
+auditctl -l 2>/dev/null | awk '
+  /^ *-w/ && /\/etc\/localtime/ && / +-p *wa/ &&
+  (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)
+'
+)
+
+for rule in "${expected_rules_runtime[@]}"; do
+  if ! grep -Pq -- "$(echo "$rule" | sed 's/[][().*^$]/\\&/g')" <<< "$runtime_output"; then
+    a_output2+=(" - Missing loaded rule: $rule")
+  else
+    a_output+=(" - Found loaded rule: $rule")
+  fi
+done
+
+# Final Audit Result
+if [ "${#a_output2[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${a_output[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${a_output2[@]}"
+  [ "${#a_output[@]}" -gt 0 ] && printf '\n- Correctly set:\n%s\n' "${a_output[@]}"
+fi
+}
+""""

@@ -1,0 +1,38 @@
+audit_id: "6.3.3.3"
+audit_name: "Ensure events that modify the sudo log file are collected"
+audit_script: """
+{
+a_output=(); a_output2=(); a_expected="-w /var/log/sudo.log -p wa -k sudo_log_file"
+
+# Get the path of the sudo log file
+SUDO_LOG_FILE="$(grep -r logfile /etc/sudoers* 2>/dev/null | \
+  sed -E 's/.*logfile=//;s/,.*//;s/"//g' | head -n1)"
+
+if [ -z "$SUDO_LOG_FILE" ]; then
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  echo " - Variable 'SUDO_LOG_FILE' is unset. Sudo log file not defined in /etc/sudoers or /etc/sudoers.d/"
+  exit 1
+fi
+
+# Escape slashes for use in grep patterns
+SUDO_LOG_FILE_ESCAPED="$(echo "$SUDO_LOG_FILE" | sed 's|/|\\/|g')"
+
+# Check on-disk audit rules
+disk_found=$(awk '/^ *-w/ && /'"${SUDO_LOG_FILE_ESCAPED}"'/ && / +-p *wa/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules 2>/dev/null)
+[ -n "$disk_found" ] && a_output+=(" - Found in rules.d: $disk_found") || a_output2+=(" - Missing or incorrect rule in /etc/audit/rules.d/*.rules")
+
+# Check runtime rules
+runtime_found=$(auditctl -l 2>/dev/null | awk '/^ *-w/ && /'"${SUDO_LOG_FILE_ESCAPED}"'/ && / +-p *wa/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)')
+[ -n "$runtime_found" ] && a_output+=(" - Found in loaded rules: $runtime_found") || a_output2+=(" - Missing or incorrect rule in auditctl -l output")
+
+# Audit Result
+if [ "${#a_output2[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${a_output[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${a_output2[@]}"
+  [ "${#a_output[@]}" -gt 0 ] && printf '\n- Correctly set:\n%s\n' "${a_output[@]}"
+fi
+}
+""""

@@ -1,0 +1,49 @@
+audit_id: "6.3.3.16"
+audit_name: "Ensure successful and unsuccessful attempts to use the setfacl command are collected"
+audit_script: """
+{
+echo -e "\n### Checking Audit Rule for /usr/bin/setfacl Execution ###"
+
+EXPECTED_RULE='-a always,exit -F path=/usr/bin/setfacl -F perm=x -F auid>=1000 -F auid!=unset -k perm_chng'
+EXPECTED_RUNTIME_RULE='-a always,exit -S all -F path=/usr/bin/setfacl -F perm=x -F auid>=1000 -F auid!=-1 -F key=perm_chng'
+
+ondisk_status="FAIL"
+runtime_status="FAIL"
+
+echo -e "\n-- On-Disk Rules Check --"
+UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+
+if [[ -z "$UID_MIN" ]]; then
+    echo "ERROR: Variable 'UID_MIN' is unset."
+else
+    for file in /etc/audit/rules.d/*.rules; do
+        grep -Fx "$EXPECTED_RULE" "$file" > /dev/null 2>&1
+        if [[ $? -eq 0 ]]; then
+            ondisk_status="PASS"
+            break
+        fi
+    done
+
+    if [[ "$ondisk_status" == "FAIL" ]]; then
+        echo "Missing on-disk rule: $EXPECTED_RULE"
+    fi
+fi
+
+echo -e "\n-- Running Configuration Check --"
+auditctl -l > /tmp/auditctl_setfacl.txt 2>/dev/null
+
+grep -Fx "$EXPECTED_RUNTIME_RULE" /tmp/auditctl_setfacl.txt > /dev/null 2>&1
+[[ $? -eq 0 ]] && runtime_status="PASS" || echo "Missing running rule: $EXPECTED_RUNTIME_RULE"
+
+rm -f /tmp/auditctl_setfacl.txt
+
+echo -e "\n### Audit Results ###"
+if [[ "$ondisk_status" == "PASS" && "$runtime_status" == "PASS" ]]; then
+    echo "** PASS **"
+else
+    echo "** FAIL **"
+    [[ "$ondisk_status" == "FAIL" ]] && echo " - Missing rule in /etc/audit/rules.d/"
+    [[ "$runtime_status" == "FAIL" ]] && echo " - Missing rule in auditctl loaded configuration"
+fi
+}
+"""

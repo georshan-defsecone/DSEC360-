@@ -1,0 +1,25 @@
+audit_id: "2.1.12"
+audit_name: "Ensure print server services are not in use"
+audit_script: """
+{
+cups_pkg_status=$(rpm -q cups 2>/dev/null)
+
+if [[ "$cups_pkg_status" == "package cups is not installed" ]]; then
+    echo "** PASS **"
+    echo "- The 'cups' package is not installed."
+else
+    enabled_units=$(systemctl is-enabled cups.socket cups.service 2>/dev/null | grep 'enabled')
+    active_units=$(systemctl is-active cups.socket cups.service 2>/dev/null | grep '^active')
+
+    if [[ -z "$enabled_units" && -z "$active_units" ]]; then
+        echo "** PASS **"
+        echo "- The 'cups' package is installed but both cups.socket and cups.service are disabled and inactive."
+    else
+        echo "** FAIL **"
+        echo "- The 'cups' package is installed."
+        [[ -n "$enabled_units" ]] && echo "- The following services are enabled:" && echo "$enabled_units"
+        [[ -n "$active_units" ]] && echo "- The following services are active:" && echo "$active_units"
+    fi
+fi
+}
+""""

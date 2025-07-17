@@ -1,0 +1,40 @@
+audit_id: "5.1.18"
+audit_name: "Ensure sshd MaxSessions is configured"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+  l_warning=""
+
+  # Get the effective MaxSessions value
+  l_maxsessions="$(sshd -T 2>/dev/null | awk '$1 == "maxsessions" {print $2}')"
+
+  if [ -z "$l_maxsessions" ]; then
+    l_output2=" - MaxSessions directive not found"
+  elif [ "$l_maxsessions" -gt 10 ]; then
+    l_output2=" - MaxSessions is set to \"$l_maxsessions\" (should be 10 or less)"
+  else
+    l_output=" - MaxSessions is set to \"$l_maxsessions\""
+  fi
+
+  # Check the config files for explicitly set weak values
+  l_files_check="$(grep -Psi -- '^\h*MaxSessions\h+\"?(1[1-9]|[2-9][0-9]|[1-9][0-9][0-9]+)\b' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null)"
+  if [ -n "$l_files_check" ]; then
+    l_output2="$l_output2\n - Weak MaxSessions setting found in config:\n$l_files_check"
+  fi
+
+  # Check for Match blocks
+  if grep -Piq '^\s*Match\b' /etc/ssh/sshd_config; then
+    l_warning=" - Match blocks detected in sshd_config. They may override MaxSessions.\n - To verify for a specific user: sshd -T -C user=<username> | grep maxsessions"
+  fi
+
+  # Final result
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+
+  [ -n "$l_warning" ] && echo -e "\n ** WARNING **\n$l_warning"
+}
+"""

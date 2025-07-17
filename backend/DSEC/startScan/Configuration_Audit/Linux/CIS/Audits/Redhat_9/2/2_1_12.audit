@@ -1,0 +1,51 @@
+audit_id: "2.1.12"
+audit_name: "Ensure rpcbind services are not in use"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check if rpcbind is installed
+if rpm -q rpcbind > /dev/null 2>&1; then
+    l_output="$l_output\n - Package 'rpcbind' is installed"
+
+    # Check if rpcbind.socket is enabled
+    if systemctl is-enabled rpcbind.socket 2>/dev/null | grep -q '^enabled'; then
+        l_output2="$l_output2\n - rpcbind.socket is enabled"
+    else
+        l_output="$l_output\n - rpcbind.socket is not enabled"
+    fi
+
+    # Check if rpcbind.service is enabled
+    if systemctl is-enabled rpcbind.service 2>/dev/null | grep -q '^enabled'; then
+        l_output2="$l_output2\n - rpcbind.service is enabled"
+    else
+        l_output="$l_output\n - rpcbind.service is not enabled"
+    fi
+
+    # Check if rpcbind.socket is active
+    if systemctl is-active rpcbind.socket 2>/dev/null | grep -q '^active'; then
+        l_output2="$l_output2\n - rpcbind.socket is active"
+    else
+        l_output="$l_output\n - rpcbind.socket is not active"
+    fi
+
+    # Check if rpcbind.service is active
+    if systemctl is-active rpcbind.service 2>/dev/null | grep -q '^active'; then
+        l_output2="$l_output2\n - rpcbind.service is active"
+    else
+        l_output="$l_output\n - rpcbind.service is not active"
+    fi
+else
+    l_output="$l_output\n - Package 'rpcbind' is not installed"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+}
+
+"""

@@ -1,0 +1,37 @@
+audit_id: "5.3.1.1"
+audit_name: "Ensure latest version of pam is installed"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  required_version="1.5.1-19"
+  installed=$(rpm -q --qf '%{VERSION}-%{RELEASE}\n' pam 2>/dev/null)
+
+  if [[ $? -ne 0 || -z "$installed" ]]; then
+    l_output2=" - PAM package not found or rpm command failed"
+  else
+    # Compare versions using rpmdev-vercmp if available, fallback to rpm
+    rpmdev_vercmp_installed=$(command -v rpmdev-vercmp)
+    if [[ -n "$rpmdev_vercmp_installed" ]]; then
+      result=$(rpmdev-vercmp "$installed" "$required_version" 2>/dev/null)
+      if echo "$result" | grep -q "is newer"; then
+        l_output=" - PAM version ($installed) is greater than or equal to required version ($required_version)"
+      else
+        l_output2=" - PAM version ($installed) is older than required version ($required_version)"
+      fi
+    else
+      # Fallback: use rpm for version comparison
+      rpm -q --qf "%{VERSION}-%{RELEASE}\n" pam | grep -Pq '^1\.5\.1-(1[9-9]|[2-9][0-9])|1\.[5-9]\.' && \
+        l_output=" - PAM version ($installed) is compliant" || \
+        l_output2=" - PAM version ($installed) is below required minimum ($required_version)"
+    fi
+  fi
+
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+}
+"""

@@ -1,0 +1,39 @@
+audit_id: "1.7.5"
+audit_name: "Ensure access to /etc/issue is configured "
+audit_script: """
+{
+l_output="" l_output2=""
+
+if [ -e /etc/issue ]; then
+    read -r l_mode l_uid l_user l_gid l_group <<< "$(stat -Lc '%a %u %U %g %G' /etc/issue)"
+
+    if [ "$l_uid" -ne 0 ] || [ "$l_user" != "root" ]; then
+        l_output2="$l_output2\n - /etc/issue is owned by user \"$l_user\" (UID $l_uid), expected: root (UID 0)"
+    else
+        l_output="$l_output\n - /etc/issue is correctly owned by user: root"
+    fi
+
+    if [ "$l_gid" -ne 0 ] || [ "$l_group" != "root" ]; then
+        l_output2="$l_output2\n - /etc/issue is group-owned by \"$l_group\" (GID $l_gid), expected: root (GID 0)"
+    else
+        l_output="$l_output\n - /etc/issue is correctly group-owned by: root"
+    fi
+
+    if [ "$l_mode" -gt 644 ]; then
+        l_output2="$l_output2\n - /etc/issue has permissions \"$l_mode\", expected: 644 or more restrictive"
+    else
+        l_output="$l_output\n - /etc/issue has acceptable permissions: \"$l_mode\""
+    fi
+else
+    l_output=" - /etc/issue does not exist"
+fi
+
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n$l_output2"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:\n$l_output\n"
+fi
+}
+
+"""

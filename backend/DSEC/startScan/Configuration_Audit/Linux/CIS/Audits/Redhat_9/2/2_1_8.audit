@@ -1,0 +1,48 @@
+audit_id: "2.1.8"
+audit_name: "Ensure message access server services are not in use"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check if dovecot or cyrus-imapd is installed
+rpm -q dovecot > /dev/null 2>&1
+dovecot_installed=$?
+
+rpm -q cyrus-imapd > /dev/null 2>&1
+cyrus_installed=$?
+
+if [ $dovecot_installed -eq 0 ] || [ $cyrus_installed -eq 0 ]; then
+    [ $dovecot_installed -eq 0 ] && l_output="$l_output\n - Package 'dovecot' is installed"
+    [ $cyrus_installed -eq 0 ] && l_output="$l_output\n - Package 'cyrus-imapd' is installed"
+
+    # Check if any of the relevant services are enabled
+    for svc in dovecot.socket dovecot.service cyrus-imapd.service; do
+        if systemctl is-enabled "$svc" 2>/dev/null | grep -q '^enabled'; then
+            l_output2="$l_output2\n - $svc is enabled"
+        else
+            l_output="$l_output\n - $svc is not enabled"
+        fi
+    done
+
+    # Check if any of the relevant services are active
+    for svc in dovecot.socket dovecot.service cyrus-imapd.service; do
+        if systemctl is-active "$svc" 2>/dev/null | grep -q '^active'; then
+            l_output2="$l_output2\n - $svc is active"
+        else
+            l_output="$l_output\n - $svc is not active"
+        fi
+    done
+else
+    l_output="$l_output\n - Packages 'dovecot' and 'cyrus-imapd' are not installed"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+}
+
+"""

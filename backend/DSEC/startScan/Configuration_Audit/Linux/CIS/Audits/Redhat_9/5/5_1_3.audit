@@ -1,0 +1,56 @@
+audit_id: "5.1.3"
+audit_name: "Ensure permissions on SSH public host key files are configured"
+audit_script: """
+{
+l_output=""
+l_output2=""
+
+# Set permission mask and expected max permissions
+l_pmask="0133"
+l_maxperm="$(printf '%o' $((0777 & ~$l_pmask)))"
+
+FILE_CHK() {
+  while IFS=: read -r l_file_mode l_file_owner l_file_group; do
+    l_out2=""
+
+    # Check file mode
+    if [ $((l_file_mode & l_pmask)) -gt 0 ]; then
+      l_out2+="\n - Mode: \"$l_file_mode\" should be: \"$l_maxperm\" or more restrictive"
+    fi
+
+    # Check owner
+    if [ "$l_file_owner" != "root" ]; then
+      l_out2+="\n - Owned by: \"$l_file_owner\" should be owned by \"root\""
+    fi
+
+    # Check group
+    if [ "$l_file_group" != "root" ]; then
+      l_out2+="\n - Group owned by: \"$l_file_group\" should be \"root\""
+    fi
+
+    # Append output
+    if [ -n "$l_out2" ]; then
+      l_output2+="\n - File: \"$l_file\"$l_out2"
+    else
+      l_output+="\n - File: \"$l_file\"\n   - Correct: mode: \"$l_file_mode\", owner: \"$l_file_owner\", group: \"$l_file_group\""
+    fi
+  done < <(stat -Lc '%#a:%U:%G' "$l_file")
+}
+
+# Find all OpenSSH public key files and audit them
+while IFS= read -r -d $'\0' l_file; do
+  if ssh-keygen -lf &>/dev/null "$l_file"; then
+    file "$l_file" | grep -Piq '\bopenssh\h+([^#\n\r]+\h+)?public\h+key\b' && FILE_CHK
+  fi
+done < <(find -L /etc/ssh -xdev -type f -print0 2>/dev/null)
+
+# Final output
+if [ -z "$l_output2" ]; then
+  [ -z "$l_output" ] && l_output="\n - No OpenSSH public keys found"
+  echo -e "\n- Audit Result:\n ** PASS **\n - * Correctly configured *:$l_output"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n - * Reasons for audit failure *:$l_output2"
+  [ -n "$l_output" ] && echo -e "\n - * Correctly configured *:$l_output"
+fi
+}
+"""

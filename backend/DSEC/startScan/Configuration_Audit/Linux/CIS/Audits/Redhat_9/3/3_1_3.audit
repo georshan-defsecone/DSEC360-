@@ -1,0 +1,35 @@
+audit_id: "3.1.3"
+audit_name: "Ensure bluetooth services are not in use"
+audit_script: """
+{
+# Check if bluez is installed; if installed, check if service is enabled or active
+l_output="" l_output2=""
+
+if rpm -q bluez > /dev/null 2>&1; then
+    l_output2="$l_output2\n - Package 'bluez' is installed"
+
+    if systemctl is-enabled bluetooth.service 2>/dev/null | grep -q '^enabled'; then
+        l_output2="$l_output2\n - bluetooth.service is enabled"
+    else
+        l_output="$l_output\n - bluetooth.service is not enabled"
+    fi
+
+    if systemctl is-active bluetooth.service 2>/dev/null | grep -q '^active'; then
+        l_output2="$l_output2\n - bluetooth.service is active"
+    else
+        l_output="$l_output\n - bluetooth.service is not active"
+    fi
+else
+    l_output=" - Package 'bluez' is not installed"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+
+}
+"""

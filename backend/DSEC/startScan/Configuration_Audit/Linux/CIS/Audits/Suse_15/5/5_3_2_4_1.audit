@@ -1,0 +1,19 @@
+audit_id: "5.3.2.4.1"
+audit_name: "Ensure pam_unix does not include nullok"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+if pam-config --query --unix --unix-nullok | grep -q .; then
+    a_output2+=("pam_unix.so is configured with the nullok option via pam-config")
+else
+    a_output+=("nullok is not set for pam_unix.so in pam-config")
+fi
+
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+fi
+}
+""""

@@ -1,0 +1,25 @@
+audit_id: "5.3.2.4.3"
+audit_name: "Ensure pam_unix includes a strong password hashing algorithm"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+output=$(pam-config --query --unix 2>/dev/null)
+
+if [ -z "$output" ]; then
+    a_output2+=("pam-config returned no output; pam_unix.so hashing configuration could not be verified")
+else
+    if echo "$output" | grep -Piq '\b(sha512|yescrypt)\b'; then
+        a_output+=("pam_unix.so module is configured to use a strong hashing algorithm: sha512 or yescrypt")
+    else
+        a_output2+=("pam_unix.so module is not configured to use sha512 or yescrypt")
+    fi
+fi
+
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+fi
+}
+""""

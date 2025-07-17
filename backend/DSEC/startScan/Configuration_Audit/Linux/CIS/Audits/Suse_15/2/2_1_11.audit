@@ -1,0 +1,41 @@
+audit_id: "2.1.11"
+audit_name: "Ensure nis server services are not in use"
+audit_script: """
+{
+status=""
+details=""
+
+# Check if the package is installed
+if rpm -q ypserv &>/dev/null; then
+  details+=" - Package 'ypserv' is installed\n"
+  
+  # Check if the service is enabled
+  if systemctl is-enabled ypserv.service 2>/dev/null | grep -q 'enabled'; then
+    status="FAIL"
+    details+=" - Service 'ypserv.service' is enabled (should be disabled)\n"
+  else
+    details+=" - Service 'ypserv.service' is not enabled\n"
+  fi
+
+  # Check if the service is active
+  if systemctl is-active ypserv.service 2>/dev/null | grep -q '^active'; then
+    status="FAIL"
+    details+=" - Service 'ypserv.service' is active (should be inactive)\n"
+  else
+    details+=" - Service 'ypserv.service' is not active\n"
+  fi
+else
+  status="PASS"
+  details+=" - Package 'ypserv' is not installed\n"
+fi
+
+echo -e "\n### Audit Result ###"
+if [[ "$status" == "FAIL" ]]; then
+  echo -e " ** FAIL **"
+  echo -e "$details"
+else
+  echo -e " ** PASS **"
+  echo -e "$details"
+fi
+}
+""""

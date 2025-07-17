@@ -1,0 +1,16 @@
+audit_id: "2.2.1"
+audit_name: "Ensure ftp client is not installed"
+audit_script: """
+{
+output=$(rpm -q ftp 2>&1)
+
+if echo "$output" | grep -q "is not installed"; then
+    echo "** PASS **"
+    echo "- Package 'ftp' is not installed."
+else
+    echo "** FAIL **"
+    echo "- Package 'ftp' is installed:"
+    echo "$output"
+fi
+}
+""""

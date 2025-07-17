@@ -1,0 +1,22 @@
+audit_id: "5.3.3.3.2"
+audit_name: "Ensure password history is enforced for the root user"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  # Check if enforce_for_root is present in /etc/security/pwhistory.conf
+  if grep -Pi -- '^\h*enforce_for_root\b' /etc/security/pwhistory.conf 2>/dev/null | grep -qvE '^\s*#'; then
+    l_output=" - enforce_for_root is set in /etc/security/pwhistory.conf"
+  else
+    l_output2=" - enforce_for_root is not set in /etc/security/pwhistory.conf"
+  fi
+
+  # Final audit result
+  if [[ -z "$l_output2" ]]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+}
+"""

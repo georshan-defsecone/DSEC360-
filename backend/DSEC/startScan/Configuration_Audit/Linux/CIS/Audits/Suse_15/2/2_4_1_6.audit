@@ -1,0 +1,45 @@
+audit_id: "2.4.1.6"
+audit_name: "Ensure access to /etc/cron.monthly is configured"
+audit_script: """
+{
+cron_bin=$(command -v cron || command -v crond)
+
+if [ -z "$cron_bin" ]; then
+    echo -e "\n- Audit Result:"
+    echo " ** PASS **"
+    echo " - Cron is not installed; audit not applicable"
+    exit 0
+fi
+
+target_dir="/etc/cron.monthly/"
+
+if [ ! -d "$target_dir" ]; then
+    echo -e "\n- Audit Result:"
+    echo " ** FAIL **"
+    echo " - Directory \"$target_dir\" does not exist"
+    exit 1
+fi
+
+perm=$(stat -Lc '%a' "$target_dir")
+uid=$(stat -Lc '%u' "$target_dir")
+gid=$(stat -Lc '%g' "$target_dir")
+
+failures=()
+
+[ "$perm" -gt 700 ] && failures+=("Permissions are too permissive: ($perm). Expected 700 or more restrictive.")
+[ "$uid" -ne 0 ] && failures+=("Owner UID is $uid (expected 0).")
+[ "$gid" -ne 0 ] && failures+=("Group GID is $gid (expected 0).")
+
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:"
+    echo " ** PASS **"
+    echo " - $target_dir has permissions 700 and is owned by UID 0 and GID 0 (root:root)"
+else
+    echo -e "\n- Audit Result:"
+    echo " ** FAIL **"
+    for reason in "${failures[@]}"; do
+        echo " - $reason"
+    done
+fi
+}
+""""

@@ -1,0 +1,34 @@
+audit_id: "6.3.3.1"
+audit_name: "Ensure changes to system administration scope (sudoers) is collected"
+audit_script: """
+{
+l_output=""; l_output2=""
+expected1='-w /etc/sudoers -p wa -k scope'
+expected2='-w /etc/sudoers.d -p wa -k scope'
+
+found1=$(awk '/^ *-w/ && /\/etc\/sudoers/ && / +-p *wa/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules)
+found2=$(awk '/^ *-w/ && /\/etc\/sudoers.d/ && / +-p *wa/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules)
+
+# Normalize spaces for comparison
+normalize() {
+  echo "$1" | sed -E 's/[[:space:]]+/ /g' | sed 's/^ *//;s/ *$//'
+}
+
+n_found1=$(normalize "$found1")
+n_found2=$(normalize "$found2")
+n_expected1=$(normalize "$expected1")
+n_expected2=$(normalize "$expected2")
+
+# Check if both expected rules are present
+[[ "$n_found1" == "$n_expected1" ]] && l_output="$l_output\n - Found rule: $n_expected1" || l_output2="$l_output2\n - Missing or incorrect rule for /etc/sudoers"
+[[ "$n_found2" == "$n_expected2" ]] && l_output="$l_output\n - Found rule: $n_expected2" || l_output2="$l_output2\n - Missing or incorrect rule for /etc/sudoers.d"
+
+# Final audit result
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **$l_output\n"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n * Reasons for audit failure *:$l_output2"
+  [ -n "$l_output" ] && echo -e "\n- Correctly configured:$l_output\n"
+fi
+}
+""""

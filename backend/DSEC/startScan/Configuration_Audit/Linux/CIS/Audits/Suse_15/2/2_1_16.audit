@@ -1,0 +1,25 @@
+audit_id: "2.1.16"
+audit_name: "Ensure telnet server services are not in use"
+audit_script: """
+{
+pkg_status=$(rpm -q telnet-server 2>/dev/null)
+
+if [[ "$pkg_status" == "package telnet-server is not installed" ]]; then
+    echo "** PASS **"
+    echo "- The 'telnet-server' package is not installed."
+else
+    enabled_units=$(systemctl is-enabled telnet.socket 2>/dev/null | grep 'enabled')
+    active_units=$(systemctl is-active telnet.socket 2>/dev/null | grep '^active')
+
+    if [[ -z "$enabled_units" && -z "$active_units" ]]; then
+        echo "** PASS **"
+        echo "- The 'telnet-server' package is installed but telnet.socket is disabled and inactive."
+    else
+        echo "** FAIL **"
+        echo "- The 'telnet-server' package is installed."
+        [[ -n "$enabled_units" ]] && echo "- Socket 'telnet.socket' is enabled."
+        [[ -n "$active_units" ]] && echo "- Socket 'telnet.socket' is active."
+    fi
+fi
+}
+""""

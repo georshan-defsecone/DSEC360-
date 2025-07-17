@@ -1,0 +1,52 @@
+audit_id: "2.1.2"
+audit_name: "Ensure avahi daemon services are not in use"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check if avahi package is installed
+if rpm -q avahi > /dev/null 2>&1; then
+    l_output="$l_output\n - Package 'avahi' is installed"
+
+    # Check if avahi-daemon.socket is enabled
+    if systemctl is-enabled avahi-daemon.socket 2>/dev/null | grep -q '^enabled'; then
+        l_output2="$l_output2\n - avahi-daemon.socket is enabled"
+    else
+        l_output="$l_output\n - avahi-daemon.socket is not enabled"
+    fi
+
+    # Check if avahi-daemon.service is enabled
+    if systemctl is-enabled avahi-daemon.service 2>/dev/null | grep -q '^enabled'; then
+        l_output2="$l_output2\n - avahi-daemon.service is enabled"
+    else
+        l_output="$l_output\n - avahi-daemon.service is not enabled"
+    fi
+
+    # Check if avahi-daemon.socket is active
+    if systemctl is-active avahi-daemon.socket 2>/dev/null | grep -q '^active'; then
+        l_output2="$l_output2\n - avahi-daemon.socket is active"
+    else
+        l_output="$l_output\n - avahi-daemon.socket is not active"
+    fi
+
+    # Check if avahi-daemon.service is active
+    if systemctl is-active avahi-daemon.service 2>/dev/null | grep -q '^active'; then
+        l_output2="$l_output2\n - avahi-daemon.service is active"
+    else
+        l_output="$l_output\n - avahi-daemon.service is not active"
+    fi
+else
+    l_output="$l_output\n - Package 'avahi' is not installed"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+
+}
+
+"""

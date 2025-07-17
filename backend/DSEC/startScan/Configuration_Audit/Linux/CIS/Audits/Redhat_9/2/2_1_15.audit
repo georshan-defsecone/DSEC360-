@@ -1,0 +1,37 @@
+audit_id: "2.1.15"
+audit_name: "Ensure telnet server services are not in use"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check if telnet-server package is installed
+if rpm -q telnet-server > /dev/null 2>&1; then
+    l_output="$l_output\n - Package 'telnet-server' is installed"
+
+    # Check if telnet.socket is enabled
+    if systemctl is-enabled telnet.socket 2>/dev/null | grep -q '^enabled'; then
+        l_output2="$l_output2\n - telnet.socket is enabled"
+    else
+        l_output="$l_output\n - telnet.socket is not enabled"
+    fi
+
+    # Check if telnet.socket is active
+    if systemctl is-active telnet.socket 2>/dev/null | grep -q '^active'; then
+        l_output2="$l_output2\n - telnet.socket is active"
+    else
+        l_output="$l_output\n - telnet.socket is not active"
+    fi
+else
+    l_output="$l_output\n - Package 'telnet-server' is not installed"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+}
+
+"""

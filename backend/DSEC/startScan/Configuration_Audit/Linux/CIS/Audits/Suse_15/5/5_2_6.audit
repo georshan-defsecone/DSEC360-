@@ -1,0 +1,36 @@
+audit_id: "5.2.6"
+audit_name: "Ensure sudo authentication timeout is configured correctly"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+# Collect all explicitly configured timeout values
+timeout_entries=$(grep -roP 'timestamp_timeout=\K-?[0-9]+' /etc/sudoers* 2>/dev/null)
+
+# If any custom timeouts are defined
+if [[ -n "$timeout_entries" ]]; then
+  while IFS= read -r timeout; do
+    if [[ "$timeout" -eq -1 || "$timeout" -gt 15 ]]; then
+      a_output2+=(" - Found timestamp_timeout=$timeout, which exceeds 15 minutes or disables the timeout")
+    fi
+  done <<< "$timeout_entries"
+else
+  # No explicit value: Check default via sudo -V
+  default_timeout=$(sudo -V | grep -Po 'Authentication timestamp timeout:\s*\K[0-9-]+')
+  if [[ "$default_timeout" -eq -1 || "$default_timeout" -gt 15 ]]; then
+    a_output2+=(" - No explicit timestamp_timeout set. Default is $default_timeout minutes, which exceeds 15 or disables the timeout")
+  else
+    a_output+=(" - No explicit timestamp_timeout set. Default is $default_timeout minutes and is compliant")
+  fi
+fi
+
+# Print audit result
+if [ "${#a_output2[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${a_output[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${a_output2[@]}"
+fi
+}
+""""

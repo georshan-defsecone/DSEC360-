@@ -1,0 +1,56 @@
+audit_id: "3.1.2"
+audit_name: "Ensure wireless interfaces are disabled"
+audit_script: """
+{
+l_output="" l_output2=""
+
+module_chk() {
+    # Check how module will be loaded
+    l_loadable="$(modprobe -n -v "$l_mname")"
+    if grep -Pq -- '^\h*install\s+/bin/(true|false)' <<< "$l_loadable"; then
+        l_output="$l_output\n - Module: \"$l_mname\" is not loadable: \"$l_loadable\""
+    else
+        l_output2="$l_output2\n - Module: \"$l_mname\" is loadable: \"$l_loadable\""
+    fi
+
+    # Check if the module is currently loaded
+    if ! lsmod | grep -q "^$l_mname\b"; then
+        l_output="$l_output\n - Module: \"$l_mname\" is not loaded"
+    else
+        l_output2="$l_output2\n - Module: \"$l_mname\" is currently loaded"
+    fi
+
+    # Check if the module is denylisted
+    if modprobe --showconfig | grep -Pq -- "^\h*blacklist\s+$l_mname\b"; then
+        deny_file="$(grep -Pl -- "^\h*blacklist\s+$l_mname\b" /etc/modprobe.d/* 2>/dev/null | paste -sd ', ')"
+        l_output="$l_output\n - Module: \"$l_mname\" is denylisted in: $deny_file"
+    else
+        l_output2="$l_output2\n - Module: \"$l_mname\" is not denylisted"
+    fi
+}
+
+# Main logic
+if [ -n "$(find /sys/class/net/*/ -type d -name wireless 2>/dev/null)" ]; then
+    l_dname=$(for driverdir in $(find /sys/class/net/*/ -type d -name wireless -print0 | xargs -0 dirname); do
+        basename "$(readlink -f "$driverdir/device/driver/module")"
+    done | sort -u)
+
+    for l_mname in $l_dname; do
+        module_chk
+    done
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    if [ -z "$l_output" ]; then
+        echo -e "\n - System has no wireless NICs installed\n"
+    else
+        echo -e "$l_output\n"
+    fi
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:\n$l_output\n"
+fi
+}
+"""

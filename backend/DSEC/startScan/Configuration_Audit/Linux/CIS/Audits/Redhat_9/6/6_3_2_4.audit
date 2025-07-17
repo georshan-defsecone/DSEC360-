@@ -1,0 +1,30 @@
+audit_id: "6.3.2.4"
+audit_name: "Ensure system warns when audit logs are low on space"
+audit_script: """
+{
+l_output=""
+l_output2=""
+
+# Check space_left_action
+if grep -Pq '^\h*space_left_action\h*=\h*(email|exec|single|halt)\b' /etc/audit/auditd.conf; then
+    l_output+="\n - space_left_action is correctly set to email, exec, single, or halt"
+else
+    l_output2+="\n - space_left_action is NOT set to email, exec, single, or halt or is missing"
+fi
+
+# Check admin_space_left_action
+if grep -Pq '^\h*admin_space_left_action\h*=\h*(single|halt)\b' /etc/audit/auditd.conf; then
+    l_output+="\n - admin_space_left_action is correctly set to single or halt"
+else
+    l_output2+="\n - admin_space_left_action is NOT set to single or halt or is missing"
+fi
+
+# Output result
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **$l_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **$l_output2"
+    [ -n "$l_output" ] && echo -e "\n - Correctly set:$l_output"
+fi
+}
+"""

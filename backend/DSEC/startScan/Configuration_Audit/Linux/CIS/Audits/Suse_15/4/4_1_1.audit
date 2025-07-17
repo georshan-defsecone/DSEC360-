@@ -1,0 +1,39 @@
+audit_id: "4.1.1"
+audit_name: "Ensure a single firewall configuration utility is in use"
+audit_script: """
+#!/usr/bin/env bash
+{
+active_firewall=()
+firewalls=("firewalld" "susefirewall2")
+
+# Determine which firewall is in use
+for firewall in "${firewalls[@]}"; do
+    case $firewall in
+        firewalld|susefirewall2)
+            cmd=$firewall
+            ;;
+        *)
+            continue
+            ;;
+    esac
+
+    if command -v "$cmd" &> /dev/null && \
+       systemctl is-enabled --quiet "$firewall" && \
+       systemctl is-active --quiet "$firewall"; then
+        active_firewall+=("$firewall")
+    fi
+done
+
+# Display audit results
+if [ ${#active_firewall[@]} -eq 1 ]; then
+    printf '%s\n' "" "Audit Results:" " ** PASS **" \
+    " - A single firewall is in use: ${active_firewall[0]}. Follow the recommendation in the ${active_firewall[0]} subsection ONLY."
+elif [ ${#active_firewall[@]} -eq 0 ]; then
+    printf '%s\n' "" "Audit Results:" " ** FAIL **" \
+    " - No firewall is in use or unable to determine firewall status."
+else
+    printf '%s\n' "" "Audit Results:" " ** FAIL **" \
+    " - Multiple firewalls are in use: ${active_firewall[*]}"
+fi
+}
+""""

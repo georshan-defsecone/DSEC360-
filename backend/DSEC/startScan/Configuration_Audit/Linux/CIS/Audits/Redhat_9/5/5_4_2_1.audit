@@ -1,0 +1,17 @@
+audit_id: "5.4.2.1"
+audit_name: "Ensure root is the only UID 0 account"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+  root_users=($(awk -F: '($3 == 0) { print $1 }' /etc/passwd))
+
+  if [[ "${#root_users[@]}" -eq 1 && "${root_users[0]}" == "root" ]]; then
+    l_output=" - Only 'root' user has UID 0"
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    l_output2=" - Additional users with UID 0 found: ${root_users[*]}"
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+}
+"""

@@ -1,0 +1,50 @@
+audit_id: "2.4.1.5"
+audit_name: "Ensure permissions on /etc/cron.weekly are configured"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check if cron is installed
+if rpm -q cronie > /dev/null 2>&1 || rpm -q vixie-cron > /dev/null 2>&1; then
+    if [ -d /etc/cron.weekly/ ]; then
+        l_perm=$(stat -Lc '%a' /etc/cron.weekly/)
+        l_uid=$(stat -Lc '%u' /etc/cron.weekly/)
+        l_gid=$(stat -Lc '%g' /etc/cron.weekly/)
+
+        # Check permissions
+        if [ "$l_perm" -eq 700 ]; then
+            l_output="$l_output\n - /etc/cron.weekly/ permissions are 700"
+        else
+            l_output2="$l_output2\n - /etc/cron.weekly/ permissions are not 700 (found $l_perm)"
+        fi
+
+        # Check UID
+        if [ "$l_uid" -eq 0 ]; then
+            l_output="$l_output\n - /etc/cron.weekly/ is owned by UID 0"
+        else
+            l_output2="$l_output2\n - /etc/cron.weekly/ is not owned by UID 0 (found $l_uid)"
+        fi
+
+        # Check GID
+        if [ "$l_gid" -eq 0 ]; then
+            l_output="$l_output\n - /etc/cron.weekly/ is owned by GID 0"
+        else
+            l_output2="$l_output2\n - /etc/cron.weekly/ is not owned by GID 0 (found $l_gid)"
+        fi
+    else
+        l_output2="$l_output2\n - /etc/cron.weekly/ directory does not exist"
+    fi
+else
+    l_output=" - Cron is not installed on the system"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+}
+
+"""

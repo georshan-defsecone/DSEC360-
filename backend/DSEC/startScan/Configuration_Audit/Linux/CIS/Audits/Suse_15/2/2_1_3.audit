@@ -1,0 +1,27 @@
+audit_id: "2.1.3"
+audit_name: "Ensure dhcp server services are not in use"
+audit_script: """
+{
+# Audit: Ensure DHCP Server is not installed or is disabled and inactive
+
+if rpm -q dhcp-server &>/dev/null; then
+    echo "- The 'dhcp-server' package is installed."
+
+    enabled_units=$(systemctl is-enabled dhcpd.service dhcpd6.service 2>/dev/null | grep 'enabled')
+    active_units=$(systemctl is-active dhcpd.service dhcpd6.service 2>/dev/null | grep '^active')
+
+    if [ -n "$enabled_units" ] || [ -n "$active_units" ]; then
+        echo -e "\n** FAIL **"
+        echo "- DHCP Server is installed, and one or more services are enabled or running."
+        [ -n "$enabled_units" ] && echo "- Enabled units: $enabled_units"
+        [ -n "$active_units" ] && echo "- Active units: $active_units"
+    else
+        echo -e "\n** PASS **"
+        echo "- DHCP Server is installed, but both 'dhcpd.service' and 'dhcpd6.service' are disabled and inactive."
+    fi
+else
+    echo -e "\n** PASS **"
+    echo "- The 'dhcp-server' package is not installed."
+fi
+}
+""""

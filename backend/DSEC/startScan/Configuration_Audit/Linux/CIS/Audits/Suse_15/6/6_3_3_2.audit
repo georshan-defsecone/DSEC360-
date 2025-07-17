@@ -1,0 +1,64 @@
+audit_id: "6.3.3.2"
+audit_name: "Ensure actions as another user are always logged"
+audit_script: """
+{
+l_output1=""; l_output2=""; l_fail1=""; l_fail2=""
+
+expected_b64_disk='-a always,exit -F arch=b64 -C euid!=uid -F auid!=unset -S execve -k user_emulation'
+expected_b32_disk='-a always,exit -F arch=b32 -C euid!=uid -F auid!=unset -S execve -k user_emulation'
+
+expected_b64_runtime='-a always,exit -F arch=b64 -S execve -C uid!=euid -F auid!=-1 -F key=user_emulation'
+expected_b32_runtime='-a always,exit -F arch=b32 -S execve -C uid!=euid -F auid!=-1 -F key=user_emulation'
+
+normalize() {
+  echo "$1" | sed -E 's/[[:space:]]+/ /g' | sed 's/^ *//;s/ *$//'
+}
+
+# On-disk check
+disk_found=$(awk '
+  /^ *-a *always,exit/ &&
+  / -F *arch=b(32|64)/ &&
+  (/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) &&
+  (/ -C *euid!=uid/ || / -C *uid!=euid/) &&
+  / -S *execve/ &&
+  (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)
+' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+disk_found_n=$(normalize "$disk_found")
+exp1_n=$(normalize "$expected_b64_disk")
+exp2_n=$(normalize "$expected_b32_disk")
+
+grep -qF "$exp1_n" <<< "$disk_found_n" && l_output1="$l_output1\n - Found: $exp1_n" || l_fail1="$l_fail1\n - Missing or incorrect rule: $exp1_n"
+grep -qF "$exp2_n" <<< "$disk_found_n" && l_output1="$l_output1\n - Found: $exp2_n" || l_fail1="$l_fail1\n - Missing or incorrect rule: $exp2_n"
+
+# Runtime check
+runtime_found=$(auditctl -l 2>/dev/null | awk '
+  /^ *-a *always,exit/ &&
+  / -F *arch=b(32|64)/ &&
+  (/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) &&
+  (/ -C *euid!=uid/ || / -C *uid!=euid/) &&
+  / -S *execve/ &&
+  (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)
+')
+
+runtime_found_n=$(normalize "$runtime_found")
+exp3_n=$(normalize "$expected_b64_runtime")
+exp4_n=$(normalize "$expected_b32_runtime")
+
+grep -qF "$exp3_n" <<< "$runtime_found_n" && l_output2="$l_output2\n - Found: $exp3_n" || l_fail2="$l_fail2\n - Missing or incorrect rule: $exp3_n"
+grep -qF "$exp4_n" <<< "$runtime_found_n" && l_output2="$l_output2\n - Found: $exp4_n" || l_fail2="$l_fail2\n - Missing or incorrect rule: $exp4_n"
+
+# Result output
+if [ -z "$l_fail1" ] && [ -z "$l_fail2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  echo -e "\n- On-disk rules:$l_output1"
+  echo -e "\n- Runtime rules:$l_output2"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  [ -n "$l_fail1" ] && echo -e "\n * On-disk rules issue(s):$l_fail1"
+  [ -n "$l_fail2" ] && echo -e "\n * Runtime rules issue(s):$l_fail2"
+  [ -n "$l_output1" ] && echo -e "\n- Correct on-disk rules:$l_output1"
+  [ -n "$l_output2" ] && echo -e "\n- Correct runtime rules:$l_output2"
+fi
+}
+""""

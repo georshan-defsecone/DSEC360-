@@ -1,0 +1,46 @@
+audit_id: "6.3.4.4"
+audit_name: "Ensure audit log files group owner is configured"
+audit_script: """
+{
+fail_output=""
+pass_output=""
+audit_conf="/etc/audit/auditd.conf"
+
+if [ -e "$audit_conf" ]; then
+    audit_log_path=$(awk -F= '/^\s*log_file\s*/ { print $2 }' "$audit_conf" | xargs)
+    audit_log_dir=$(dirname "$audit_log_path")
+    audit_log_group=$(awk -F= '/^\s*log_group\s*/ { print $2 }' "$audit_conf" | xargs)
+
+    # Validate log_group setting
+    if grep -Pq '^\s*(root|audit)\s*$' <<< "$audit_log_group"; then
+        pass_output+="\n - Log file group correctly set to \"$audit_log_group\" in \"$audit_conf\""
+    else
+        fail_output+="\n - Log file group is set to \"$audit_log_group\" in \"$audit_conf\"\n   (should be \"root\" or \"audit\")"
+    fi
+
+    # Validate group ownership of audit log files
+    if [ -d "$audit_log_dir" ]; then
+        while IFS= read -r -d '' file; do
+            group=$(stat -Lc '%G' "$file")
+            fail_output+="\n - File: \"$file\" is group-owned by \"$group\" (should be \"root\" or \"audit\")"
+        done < <(find "$audit_log_dir" -maxdepth 1 -type f \( ! -group root -a ! -group audit \) -print0)
+
+        if [ -z "$fail_output" ]; then
+            pass_output+="\n - All files in \"$audit_log_dir\" are group-owned by \"root\" or \"audit\""
+        fi
+    else
+        fail_output+="\n - Audit log directory \"$audit_log_dir\" does not exist"
+    fi
+else
+    fail_output+="\n - File \"$audit_conf\" not found.\n - Verify auditd is installed."
+fi
+
+# Output final audit result
+if [ -z "$fail_output" ]; then
+    echo -e "\n** PASS **$pass_output"
+else
+    echo -e "\n** FAIL **$fail_output"
+    [ -n "$pass_output" ] && echo -e "\n✔️  Valid configuration detected:$pass_output"
+fi
+}
+""""

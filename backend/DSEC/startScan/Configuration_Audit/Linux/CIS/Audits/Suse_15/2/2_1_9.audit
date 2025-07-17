@@ -1,0 +1,67 @@
+audit_id: "2.1.9"
+audit_name: "Ensure message access server services are not in use"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+fail=false
+pkg_installed=()
+
+# Check if dovecot or cyrus-imapd is installed
+if rpm -q dovecot &>/dev/null; then
+    echo "- Package 'dovecot' is installed."
+    pkg_installed+=("dovecot")
+else
+    echo "- Package 'dovecot' is NOT installed."
+fi
+
+if rpm -q cyrus-imapd &>/dev/null; then
+    echo "- Package 'cyrus-imapd' is installed."
+    pkg_installed+=("cyrus-imapd")
+else
+    echo "- Package 'cyrus-imapd' is NOT installed."
+fi
+
+# If any are installed, check their service status
+if [ ${#pkg_installed[@]} -gt 0 ]; then
+    echo "- Detected installed package(s): ${pkg_installed[*]}"
+    echo "- Checking associated services..."
+
+    services=(
+        dovecot.socket
+        dovecot.service
+        cyrus-imapd.service
+    )
+
+    for svc in "${services[@]}"; do
+        enabled=$(systemctl is-enabled "$svc" 2>/dev/null | grep 'enabled')
+        active=$(systemctl is-active "$svc" 2>/dev/null | grep '^active')
+
+        if [ -n "$enabled" ]; then
+            echo "- Service ENABLED: $svc"
+            fail=true
+        else
+            echo "- Service is not enabled: $svc"
+        fi
+
+        if [ -n "$active" ]; then
+            echo "- Service ACTIVE: $svc"
+            fail=true
+        else
+            echo "- Service is not active: $svc"
+        fi
+    done
+
+    if $fail; then
+        echo -e "\n** FAIL **"
+        echo "- One or more services related to dovecot or cyrus-imapd are enabled or active."
+    else
+        echo -e "\n** PASS **"
+        echo "- Installed package(s) have all associated services disabled and inactive."
+    fi
+else
+    echo -e "\n** PASS **"
+    echo "- Neither dovecot nor cyrus-imapd packages are installed."
+fi
+}
+""""

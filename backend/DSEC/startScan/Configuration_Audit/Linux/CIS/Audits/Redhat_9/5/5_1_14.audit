@@ -1,0 +1,41 @@
+audit_id: "5.1.14"
+audit_name: "Ensure sshd LoginGraceTime is configured"
+audit_script: """
+#!/usr/bin/env bash
+{
+  l_output=""
+  l_output2=""
+  l_warning=""
+
+  # Get the LoginGraceTime value (assumes value is in seconds or a number)
+  l_val="$(sshd -T 2>/dev/null | awk '$1 == "logingracetime" {print $2}')"
+
+  # Normalize value (e.g., 30s -> 30)
+  if [[ "$l_val" =~ ^([0-9]+)[sS]?$ ]]; then
+    l_num="${BASH_REMATCH[1]}"
+    if (( l_num >= 1 && l_num <= 60 )); then
+      l_output=" - LoginGraceTime is set to \"$l_val\" (within recommended range)"
+    else
+      l_output2=" - LoginGraceTime is set to \"$l_val\" (outside recommended range of 1–60 seconds)"
+    fi
+  else
+    l_output2=" - Unable to determine numeric value of LoginGraceTime: \"$l_val\""
+  fi
+
+  # Warn if Match blocks exist
+  if grep -Piq '^\s*Match\b' /etc/ssh/sshd_config; then
+    l_warning=" - Match blocks detected in sshd_config. They may override this setting.\n - To verify for a specific user: sshd -T -C user=<username> | grep logingracetime"
+  fi
+
+  # Output audit result
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+
+  # Output warning
+  [ -n "$l_warning" ] && echo -e "\n ** WARNING **\n$l_warning"
+}
+
+"""

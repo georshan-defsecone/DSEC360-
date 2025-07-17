@@ -1,0 +1,47 @@
+audit_id: "5.3.3.2.6"
+audit_name: "Ensure password dictionary check is enabled"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  # --- CONFIGURATION FILE CHECK ---
+  config_files=(/etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf)
+  for file in "${config_files[@]}"; do
+    if [ -f "$file" ]; then
+      bad_lines=$(grep -Psi -- '^\h*dictcheck\h*=\h*0\b' "$file")
+      if [[ -n "$bad_lines" ]]; then
+        while IFS= read -r line; do
+          l_output2="$l_output2\n - dictcheck disabled in $file: $(echo "$line" | cut -d: -f2-)"
+        done <<< "$bad_lines"
+      else
+        l_output="$l_output\n - dictcheck not disabled in $file"
+      fi
+    fi
+  done
+
+  # --- PAM FILE CHECK FOR OVERRIDES ---
+  pam_files=(/etc/pam.d/system-auth /etc/pam.d/password-auth)
+  for file in "${pam_files[@]}"; do
+    if [ -f "$file" ]; then
+      bad_lines=$(grep -Psi -- '^\h*password\h+(requisite|required|sufficient)\h+pam_pwquality\.so\h+([^#\n\r]+\h+)?dictcheck\h*=\h*0\b' "$file")
+      if [[ -n "$bad_lines" ]]; then
+        while IFS= read -r line; do
+          l_output2="$l_output2\n - dictcheck=0 override found in $file: $(echo "$line" | cut -d: -f2-)"
+        done <<< "$bad_lines"
+      else
+        l_output="$l_output\n - No dictcheck=0 override found in $file"
+      fi
+    else
+      l_output2="$l_output2\n - PAM file not found: $file"
+    fi
+  done
+
+  # --- FINAL OUTPUT ---
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:$l_output2"
+  fi
+}
+"""

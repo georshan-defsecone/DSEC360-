@@ -1,0 +1,35 @@
+audit_id: "6.3.4.6"
+audit_name: "Ensure audit configuration files owner is configured"
+audit_script: """
+{
+perm_mask="0137"
+max_perm="$(printf '%o' $((0777 & ~perm_mask)) )"
+fail_perm=""
+fail_owner=""
+
+while IFS= read -r -d '' file; do
+    mode=$(stat -Lc '%#a' "$file")
+    owner=$(stat -Lc '%U:%G' "$file")
+
+    # Check permissions
+    if [ $((mode & perm_mask)) -ne 0 ]; then
+        fail_perm+="\n - File: \"$file\" has permissions \"$mode\" (should be \"$max_perm\" or more restrictive)"
+    fi
+
+    # Check ownership
+    if [ "$owner" != "root:root" ]; then
+        fail_owner+="\n - File: \"$file\" is owned by \"$owner\" (should be \"root:root\")"
+    fi
+done < <(find /etc/audit/ -type f \( -name "*.conf" -o -name "*.rules" \) -print0)
+
+# Result output
+if [ -z "$fail_perm" ] && [ -z "$fail_owner" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - All audit configuration files are mode \"$max_perm\" or more restrictive and owned by root:root"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    [ -n "$fail_perm" ] && echo -e "$fail_perm"
+    [ -n "$fail_owner" ] && echo -e "$fail_owner"
+fi
+}
+"""

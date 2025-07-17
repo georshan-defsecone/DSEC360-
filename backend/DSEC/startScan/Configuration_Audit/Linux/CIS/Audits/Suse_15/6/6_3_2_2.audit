@@ -1,0 +1,26 @@
+audit_id: "6.3.2.2"
+audit_name: "Ensure audit logs are not automatically deleted"
+audit_script: """
+{
+expected_action="keep_logs"
+config_file="/etc/audit/auditd.conf"
+l_output="" l_output2=""
+
+if grep -Pq '^\h*max_log_file_action\h*=\h*\S+' "$config_file"; then
+  actual_action=$(grep -Po '^\h*max_log_file_action\h*=\h*\S+' "$config_file" | awk -F= '{print $2}' | tr -d ' ')
+  if [[ "$actual_action" == "$expected_action" ]]; then
+    l_output=" - max_log_file_action is set to: \"$actual_action\" (compliant)"
+  else
+    l_output2=" - max_log_file_action is set to: \"$actual_action\" but should be \"$expected_action\""
+  fi
+else
+  l_output2=" - max_log_file_action not found in $config_file"
+fi
+
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n * Reason(s) for audit failure * :\n$l_output2\n"
+fi
+}
+""""

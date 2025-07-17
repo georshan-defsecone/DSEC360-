@@ -1,0 +1,51 @@
+audit_id: "5.3.2.2.2"
+audit_name: "Ensure password number of changed characters is configured"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+# All config files to check
+config_files=(/etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf)
+
+# Check for pam-config (SUSE systems)
+if command -v pam-config &>/dev/null; then
+    pam_difok="$(pam-config --query --cracklib --cracklib-difok 2>/dev/null | grep -Pi 'difok\s*=\s*\d+' | awk -F= '{print $2}' | tr -d ' ')"
+    if [[ -n "$pam_difok" ]]; then
+        if [[ "$pam_difok" -ge 2 ]]; then
+            a_output+=("pam-config is used: difok is set to $pam_difok")
+        else
+            a_output2+=("pam-config is used: difok is set to $pam_difok, which is less than 2")
+        fi
+    fi
+fi
+
+# Check for difok in config files (highest precedence wins)
+found_difok=""
+for file in "${config_files[@]}"; do
+    [ -f "$file" ] || continue
+    while IFS= read -r line; do
+        [[ "$line" =~ ^[[:space:]]*difok[[:space:]]*=[[:space:]]*([0-9]+) ]] || continue
+        val="${BASH_REMATCH[1]}"
+        found_difok="$val"
+    done < "$file"
+done
+
+if [[ -n "$found_difok" ]]; then
+    if [[ "$found_difok" -ge 2 ]]; then
+        a_output+=("pwquality config sets difok = $found_difok (valid)")
+    else
+        a_output2+=("pwquality config sets difok = $found_difok (should be >= 2)")
+    fi
+elif [[ -z "$pam_difok" ]]; then
+    a_output2+=("No difok setting found in pam-config or pwquality configs")
+fi
+
+# Output audit results
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+    [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "" "- Correctly set:" "${a_output[@]}"
+fi
+}
+""""

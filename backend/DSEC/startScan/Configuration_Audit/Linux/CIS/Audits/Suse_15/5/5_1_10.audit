@@ -1,0 +1,26 @@
+audit_id: "5.1.10"
+audit_name: "Ensure sshd DisableForwarding is enabled"
+audit_script: """
+{
+l_output=""
+l_output2=""
+l_match_warning=""
+
+# Check for Match blocks
+if grep -Piq '^\s*match\s+' /etc/ssh/sshd_config; then
+  l_match_warning=" - Match blocks are present in sshd_config. Use 'sshd -T -C user=<username>' to verify DisableForwarding is not overridden."
+fi
+
+# Fetch effective setting
+l_value="$(sshd -T 2>/dev/null | awk '$1 == "disableforwarding" {print $2}')"
+
+if [[ "$l_value" == "yes" ]]; then
+  echo -e "\n- Audit Result:\n ** PASS **\n - disableforwarding is correctly set to \"yes\""
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n - disableforwarding is not set to \"yes\". Current value: \"${l_value:-not set}\""
+fi
+
+# Warn if Match blocks exist
+[[ -n "$l_match_warning" ]] && echo -e "\n ** WARNING **\n$l_match_warning"
+}
+""""

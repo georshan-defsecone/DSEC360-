@@ -1,0 +1,22 @@
+audit_id: "2.2.2"
+audit_name: "Ensure ldap client is not installed"
+audit_script: """
+{
+pkg_check=$(rpm -q openldap2-client openldap2_5 2>&1)
+fail_output=""
+
+while IFS= read -r line; do
+    if ! echo "$line" | grep -q "is not installed"; then
+        fail_output="$fail_output\n- $line"
+    fi
+done <<< "$pkg_check"
+
+if [ -z "$fail_output" ]; then
+    echo "** PASS **"
+    echo "- Packages 'openldap2-client' and 'openldap2_5' are not installed."
+else
+    echo "** FAIL **"
+    echo "- The following packages are installed:$fail_output"
+fi
+}
+""""

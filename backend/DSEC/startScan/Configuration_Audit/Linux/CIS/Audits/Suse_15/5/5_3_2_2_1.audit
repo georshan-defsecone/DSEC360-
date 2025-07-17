@@ -1,0 +1,31 @@
+audit_id: "5.3.2.2.1"
+audit_name: "Ensure password dictionary check is enabled"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+config_files=(/etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf)
+config_found=false
+
+for file in "${config_files[@]}"; do
+    [ -f "$file" ] && grep -q '\S' "$file" && config_found=true && break
+done
+
+if $config_found; then
+    if grep -Piqs '^\s*dictcheck\s*=\s*0\b' "${config_files[@]}"; then
+        a_output2+=("pam_pwquality configuration file exists and dictcheck is disabled (dictcheck = 0)")
+    else
+        a_output+=("pam_pwquality configuration file exists and dictcheck is not disabled")
+    fi
+else
+    a_output2+=("pam_pwquality configuration file does not exist or is empty")
+fi
+
+# Output results
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+fi
+}
+""""

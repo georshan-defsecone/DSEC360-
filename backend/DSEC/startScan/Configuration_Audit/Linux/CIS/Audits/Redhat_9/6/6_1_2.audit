@@ -1,0 +1,31 @@
+audit_id: "6.1.2"
+audit_name: "Ensure filesystem integrity is regularly checked"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check for cron job running aide
+l_cron_match="$(grep -Ers '^([^#]+\s+)?(\/usr\/s?bin\/|^\s*)aide(\.wrapper)?\s(--?\S+\s)*(--(check|update)|\$AIDEARGS)\b' /etc/cron.* /etc/crontab /var/spool/cron/ 2>/dev/null)"
+
+# Check if aidecheck.service and aidecheck.timer are enabled and running
+l_service_status="$(systemctl is-enabled aidecheck.service 2>/dev/null)"
+l_timer_status="$(systemctl is-enabled aidecheck.timer 2>/dev/null)"
+l_timer_active="$(systemctl is-active aidecheck.timer 2>/dev/null)"
+
+# Determine result
+if [ -n "$l_cron_match" ]; then
+  l_output="$l_output\n - AIDE is scheduled via cron:\n$l_cron_match"
+elif [ "$l_service_status" = "enabled" ] && [ "$l_timer_status" = "enabled" ] && [ "$l_timer_active" = "active" ]; then
+  l_output="$l_output\n - AIDE is scheduled via systemd timer (aidecheck.timer is enabled and active)"
+else
+  l_output2="$l_output2\n - No AIDE cron job or systemd timer is configured for periodic checks"
+fi
+
+# Final output
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n$l_output2\n"
+fi
+}
+"""

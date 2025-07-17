@@ -1,0 +1,67 @@
+audit_id: "1.1.1.5"
+audit_name: "Ensure jffs2 kernel module is not available"
+audit_script: """
+{
+l_output3=""
+l_dl=""
+
+unset a_output
+unset a_output2
+
+l_mod_name="jffs2"
+l_mod_type="fs"
+l_mod_path="$(readlink -f /lib/modules/**/kernel/$l_mod_type | sort -u)"
+
+f_module_chk() {
+    l_dl="y"
+    a_showconfig=()
+
+    while IFS= read -r l_showconfig; do
+        a_showconfig+=("$l_showconfig")
+    done < <(modprobe --showconfig | grep -P -- '\b(install|blacklist)\h+'"${l_mod_name//-/_}"'\b')
+
+    if ! lsmod | grep -q "$l_mod_name"; then
+        a_output+=(" - kernel module: \"$l_mod_name\" is not loaded")
+    else
+        a_output2+=(" - kernel module: \"$l_mod_name\" is loaded")
+    fi
+
+    if grep -Pq -- '\binstall\h+'"${l_mod_name//-/_}"'\h+\/bin\/(true|false)\b' <<< "${a_showconfig[*]}"; then
+        a_output+=(" - kernel module: \"$l_mod_name\" is not loadable")
+    else
+        a_output2+=(" - kernel module: \"$l_mod_name\" is loadable")
+    fi
+
+    if grep -Pq -- '\bblacklist\h+'"${l_mod_name//-/_}"'\b' <<< "${a_showconfig[*]}"; then
+        a_output+=(" - kernel module: \"$l_mod_name\" is deny listed")
+    else
+        a_output2+=(" - kernel module: \"$l_mod_name\" is not deny listed")
+    fi
+}
+
+for l_mod_base_directory in $l_mod_path; do
+    mod_dir="$l_mod_base_directory/${l_mod_name//-//}"
+
+    if [ -d "$mod_dir" ] && [ -n "$(ls -A "$mod_dir")" ]; then
+        l_output3+="\n - \"$l_mod_base_directory\""
+        [[ "$l_mod_name" =~ overlay ]] && l_mod_name="${l_mod_name::-2}"
+        [ "$l_dl" != "y" ] && f_module_chk
+    else
+        a_output+=(" - kernel module: \"$l_mod_name\" doesn't exist in \"$l_mod_base_directory\"")
+    fi
+done
+
+if [ -n "$l_output3" ]; then
+    echo -e "\n\n -- INFO --\n - module: \"$l_mod_name\" exists in:$l_output3"
+fi
+
+if [ "${#a_output2[@]}" -le 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for audit failure:" "${a_output2[@]}"
+    if [ "${#a_output[@]}" -gt 0 ]; then
+        printf '%s\n' "- Correctly set:" "${a_output[@]}"
+    fi
+fi
+}
+"""

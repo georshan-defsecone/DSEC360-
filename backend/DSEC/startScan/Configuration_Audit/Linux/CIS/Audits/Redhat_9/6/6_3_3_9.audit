@@ -1,0 +1,59 @@
+audit_id: "6.3.3.9"
+audit_name: "Ensure discretionary access control permission modification events are collected"
+audit_script: """
+{
+echo -e "\n### Checking Audit Rules for Permission Modification (perm_mod) ###"
+
+UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+if [[ -z "$UID_MIN" ]]; then
+    echo "** FAIL **"
+    echo " - UID_MIN could not be determined from /etc/login.defs"
+    exit 1
+fi
+
+required_syscall_groups=(
+  "chmod,fchmod,fchmodat"
+  "chown,fchown,lchown,fchownat"
+  "setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr"
+)
+
+arches=("b64" "b32")
+ondisk_rules=$(awk '/^ *-a *always,exit/ && /-F *arch=b(32|64)/ && /-S/ &&
+(/chmod|fchmod|fchmodat|chown|fchown|fchownat|lchown|setxattr|lsetxattr|fsetxattr|removexattr|lremovexattr|fremovexattr/) &&
+(/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) &&
+/ -F *auid>='"$UID_MIN"'/ &&
+(/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+running_rules=$(auditctl -l 2>/dev/null | awk '/^ *-a *always,exit/ && /-F *arch=b(32|64)/ && /-S/ &&
+(/chmod|fchmod|fchmodat|chown|fchown|fchownat|lchown|setxattr|lsetxattr|fsetxattr|removexattr|lremovexattr|fremovexattr/) &&
+(/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) &&
+/ -F *auid>='"$UID_MIN"'/ &&
+(/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)')
+
+ondisk_fail=0
+runtime_fail=0
+
+for arch in "${arches[@]}"; do
+  for group in "${required_syscall_groups[@]}"; do
+    if ! echo "$ondisk_rules" | grep -Pq "arch=$arch" | grep -Pq "\-S\s*(${group//,/|})"; then
+      echo "Missing on-disk rule for arch=$arch -S $group"
+      ondisk_fail=1
+    fi
+    if ! echo "$running_rules" | grep -Pq "arch=$arch" | grep -Pq "\-S\s*(${group//,/|})"; then
+      echo "Missing running rule for arch=$arch -S $group"
+      runtime_fail=1
+    fi
+  done
+done
+
+echo -e "\n### Audit Results ###"
+if [[ $ondisk_fail -eq 0 && $runtime_fail -eq 0 ]]; then
+  echo "** PASS **"
+  echo " - All required permission modification syscall rules are present."
+else
+  echo "** FAIL **"
+  [[ $ondisk_fail -ne 0 ]] && echo " - Missing one or more on-disk rules."
+  [[ $runtime_fail -ne 0 ]] && echo " - Missing one or more running rules."
+fi
+}
+"""

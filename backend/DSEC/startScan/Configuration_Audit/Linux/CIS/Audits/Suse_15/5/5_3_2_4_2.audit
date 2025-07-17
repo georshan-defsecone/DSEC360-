@@ -1,0 +1,25 @@
+audit_id: "5.3.2.4.2"
+audit_name: "Ensure pam_unix does not include remember"
+audit_script: """
+{
+a_output=(); a_output2=()
+matches=$(grep -Pi '^\h*password\h+([^#\n\r]+\h+)?pam_unix\.so\b' /etc/pam.d/* 2>/dev/null)
+
+if [ -z "$matches" ]; then
+    a_output+=("No pam_unix.so password lines found in /etc/pam.d/")
+else
+    while IFS= read -r line; do
+        if echo "$line" | grep -Piq '\bremember\s*='; then
+            a_output2+=("Line includes remember= and should not: $line")
+        fi
+    done <<< "$matches"
+fi
+
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    a_output+=("No pam_unix.so password lines include remember=")
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+fi
+}
+""""

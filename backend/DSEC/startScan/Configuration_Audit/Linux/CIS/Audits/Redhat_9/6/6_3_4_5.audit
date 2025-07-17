@@ -1,0 +1,26 @@
+audit_id: "6.3.4.5"
+audit_name: "Ensure audit configuration files mode is configured"
+audit_script: """
+{
+perm_mask="0137"
+max_perm="$(printf '%o' $((0777 & ~perm_mask)) )"
+fail_output=""
+
+# Find all .conf and .rules files under /etc/audit
+while IFS= read -r -d '' file; do
+    mode=$(stat -Lc '%#a' "$file")
+    if [ $((mode & perm_mask)) -ne 0 ]; then
+        fail_output+="\n - File: \"$file\" is mode: \"$mode\" (should be \"$max_perm\" or more restrictive)"
+    fi
+done < <(find /etc/audit/ -type f \( -name "*.conf" -o -name "*.rules" \) -print0)
+
+# Output the result
+if [ -z "$fail_output" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - All audit configuration files are mode: \"$max_perm\" or more restrictive"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    echo -e "$fail_output"
+fi
+}
+"""

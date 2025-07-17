@@ -1,0 +1,40 @@
+audit_id: "5.4.2.4"
+audit_name: "Ensure root account access is controlled"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  passwd_status=$(passwd -S root 2>/dev/null)
+
+  if [[ $? -ne 0 ]]; then
+    l_output2=" - Failed to retrieve password status for root"
+  else
+    status_field=$(echo "$passwd_status" | awk '{print $2}')
+
+    if [[ "$status_field" == "P" ]]; then
+      # Password is set. Now check the hash algorithm used in /etc/shadow
+      root_hash=$(awk -F: '$1=="root"{print $2}' /etc/shadow)
+
+      if [[ "$root_hash" =~ ^\$6\$ ]]; then
+        l_output=" - Root password is set using SHA512"
+      elif [[ "$root_hash" =~ ^\$y\$ ]]; then
+        l_output=" - Root password is set using YESCRYPT"
+      else
+        l_output2=" - Root password is set but uses an unsupported hash format"
+      fi
+
+    elif [[ "$status_field" == "L" ]]; then
+      l_output=" - Root account is locked"
+    else
+      l_output2=" - Unexpected root password status: $status_field"
+    fi
+  fi
+
+  if [[ -n "$l_output2" ]]; then
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  else
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  fi
+}
+"""

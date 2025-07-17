@@ -1,0 +1,59 @@
+audit_id: "6.3.3.10"
+audit_name: "Ensure successful file system mounts are collected"
+audit_script: """
+{
+echo -e "\n### Checking Audit Rules for 'mount' Syscall ###"
+
+UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+if [[ -z "$UID_MIN" ]]; then
+    echo "** FAIL **"
+    echo " - UID_MIN could not be determined from /etc/login.defs"
+    exit 1
+fi
+
+arches=("b64" "b32")
+ondisk_fail=0
+runtime_fail=0
+
+# On-disk check
+ondisk_rules=$(awk '/^ *-a *always,exit/ &&
+/-F *arch=b(32|64)/ &&
+(/-F *auid!=unset/||/-F *auid!=-1/||/-F *auid!=4294967295/) &&
+/-F *auid>='"$UID_MIN"'/ &&
+/-S/ &&
+/mount/ &&
+(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+# Running check
+running_rules=$(auditctl -l 2>/dev/null | awk '/^ *-a *always,exit/ &&
+/-F *arch=b(32|64)/ &&
+(/-F *auid!=unset/||/-F *auid!=-1/||/-F *auid!=4294967295/) &&
+/-F *auid>='"$UID_MIN"'/ &&
+/-S/ &&
+/mount/ &&
+(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)')
+
+for arch in "${arches[@]}"; do
+  # On-disk rule check
+  if ! echo "$ondisk_rules" | grep -Pq "arch=$arch" | grep -q -P "\-S\s*mount"; then
+    echo "Missing on-disk rule: -S mount for arch=$arch"
+    ondisk_fail=1
+  fi
+  # Running rule check
+  if ! echo "$running_rules" | grep -Pq "arch=$arch" | grep -q -P "\-S\s*mount"; then
+    echo "Missing running rule: -S mount for arch=$arch"
+    runtime_fail=1
+  fi
+done
+
+echo -e "\n### Audit Results ###"
+if [[ $ondisk_fail -eq 0 && $runtime_fail -eq 0 ]]; then
+  echo "** PASS **"
+  echo " - All required 'mount' syscall audit rules are present."
+else
+  echo "** FAIL **"
+  [[ $ondisk_fail -ne 0 ]] && echo " - One or more on-disk rules missing for mount."
+  [[ $runtime_fail -ne 0 ]] && echo " - One or more running rules missing for mount."
+fi
+}
+"""

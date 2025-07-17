@@ -1,0 +1,36 @@
+audit_id: "5.4.1.1"
+audit_name: "Ensure password expiration is configured"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  # Check /etc/login.defs
+  max_days=$(grep -Pi '^\h*PASS_MAX_DAYS\h+\d+\b' /etc/login.defs | awk '{print $2}')
+  if [[ -z "$max_days" ]]; then
+    l_output2+=" - PASS_MAX_DAYS not set in /etc/login.defs\n"
+  elif (( max_days > 365 )); then
+    l_output2+=" - PASS_MAX_DAYS in /etc/login.defs is $max_days (should be ≤ 365)\n"
+  else
+    l_output+=" - PASS_MAX_DAYS in /etc/login.defs is $max_days\n"
+  fi
+
+  # Check each user's max days in /etc/shadow
+  while IFS=: read -r user pass _ _ maxdays _; do
+    [[ "$pass" =~ ^\$.+\$ ]] || continue
+    if [[ "$maxdays" =~ ^[0-9]+$ ]]; then
+      if (( maxdays > 365 || maxdays < 1 )); then
+        l_output2+=" - User: $user has PASS_MAX_DAYS: $maxdays\n"
+      fi
+    else
+      l_output2+=" - User: $user has invalid PASS_MAX_DAYS: $maxdays\n"
+    fi
+  done < /etc/shadow
+
+  if [[ -z "$l_output2" ]]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+}
+"""

@@ -1,0 +1,51 @@
+audit_id: "2.1.16"
+audit_name: "Ensure tftp server services are not in use"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check if tftp-server package is installed
+if rpm -q tftp-server > /dev/null 2>&1; then
+    l_output="$l_output\n - Package 'tftp-server' is installed"
+
+    # Check if tftp.socket is enabled
+    if systemctl is-enabled tftp.socket 2>/dev/null | grep -q '^enabled'; then
+        l_output2="$l_output2\n - tftp.socket is enabled"
+    else
+        l_output="$l_output\n - tftp.socket is not enabled"
+    fi
+
+    # Check if tftp.service is enabled
+    if systemctl is-enabled tftp.service 2>/dev/null | grep -q '^enabled'; then
+        l_output2="$l_output2\n - tftp.service is enabled"
+    else
+        l_output="$l_output\n - tftp.service is not enabled"
+    fi
+
+    # Check if tftp.socket is active
+    if systemctl is-active tftp.socket 2>/dev/null | grep -q '^active'; then
+        l_output2="$l_output2\n - tftp.socket is active"
+    else
+        l_output="$l_output\n - tftp.socket is not active"
+    fi
+
+    # Check if tftp.service is active
+    if systemctl is-active tftp.service 2>/dev/null | grep -q '^active'; then
+        l_output2="$l_output2\n - tftp.service is active"
+    else
+        l_output="$l_output\n - tftp.service is not active"
+    fi
+else
+    l_output="$l_output\n - Package 'tftp-server' is not installed"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+}
+
+"""

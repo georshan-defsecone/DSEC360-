@@ -1,0 +1,48 @@
+audit_id: "7.1.10"
+audit_name: "Ensure permissions on /etc/security/opasswd are configured"
+audit_script: """
+{
+l_output="" l_output2=""
+
+check_file() {
+  local file="$1"
+  if [ -e "$file" ]; then
+    perms=$(stat -Lc '%a' "$file")
+    uid=$(stat -Lc '%u' "$file")
+    gid=$(stat -Lc '%g' "$file")
+
+    # Check permissions (600 or more restrictive)
+    if [ "$perms" -le 600 ]; then
+      l_output="$l_output\n - $file permissions are $perms (OK: 600 or stricter)"
+    else
+      l_output2="$l_output2\n - $file permissions are $perms (FAIL: must be 600 or stricter)"
+    fi
+
+    # Check UID
+    if [ "$uid" -eq 0 ]; then
+      l_output="$l_output\n - $file UID is 0 (root)"
+    else
+      l_output2="$l_output2\n - $file UID is $uid (FAIL: must be 0/root)"
+    fi
+
+    # Check GID
+    if [ "$gid" -eq 0 ]; then
+      l_output="$l_output\n - $file GID is 0 (root)"
+    else
+      l_output2="$l_output2\n - $file GID is $gid (FAIL: must be 0/root)"
+    fi
+  fi
+}
+
+check_file "/etc/security/opasswd"
+check_file "/etc/security/opasswd.old"
+
+# Final output
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n$l_output2"
+  [ -n "$l_output" ] && echo -e "\n- Correctly set:\n$l_output"
+fi
+}
+"""

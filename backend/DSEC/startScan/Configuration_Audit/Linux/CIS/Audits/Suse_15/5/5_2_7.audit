@@ -1,0 +1,40 @@
+audit_id: "5.2.7"
+audit_name: "Ensure access to the su command is restricted"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+# Match the pam_wheel.so line with use_uid and group=...
+pam_line=$(grep -Pi '^\h*auth\h+(required|requisite)\h+pam_wheel\.so\h+.*\buse_uid\b.*\bgroup=\H+\b' /etc/pam.d/su)
+
+if [[ -n "$pam_line" ]]; then
+  # Extract group name
+  group_name=$(echo "$pam_line" | grep -Po 'group=\K\H+')
+
+  if grep -q "^$group_name:" /etc/group; then
+    group_entry=$(grep "^$group_name:" /etc/group)
+    users_in_group=$(echo "$group_entry" | awk -F: '{print $4}')
+    
+    if [[ -z "$users_in_group" ]]; then
+      a_output+=(" - pam_wheel.so is configured correctly: \"$pam_line\"")
+      a_output+=(" - Group \"$group_name\" exists and has no users")
+    else
+      a_output2+=(" - Group \"$group_name\" contains users: \"$users_in_group\"")
+    fi
+  else
+    a_output2+=(" - Group \"$group_name\" does not exist in /etc/group")
+  fi
+else
+  a_output2+=(" - Missing required pam_wheel.so line in /etc/pam.d/su")
+fi
+
+# Print result
+if [ "${#a_output2[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${a_output[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${a_output2[@]}"
+fi
+}
+""""

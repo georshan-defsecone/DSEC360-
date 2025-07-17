@@ -1,0 +1,74 @@
+audit_id: "6.3.3.7"
+audit_name: "Ensure unsuccessful file access attempts are collected"
+audit_script: """
+{
+echo "### Audit Check: Unsuccessful file access attempts"
+
+# Define expected audit rules
+expected_patterns=(
+  "-a always,exit -F arch=b64 -S creat,open,openat,truncate,ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=unset -k access"
+  "-a always,exit -F arch=b64 -S creat,open,openat,truncate,ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=unset -k access"
+  "-a always,exit -F arch=b32 -S creat,open,openat,truncate,ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=unset -k access"
+  "-a always,exit -F arch=b32 -S creat,open,openat,truncate,ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=unset -k access"
+)
+
+missing_ondisk=0
+missing_runtime=0
+
+echo -e "\n🔍 Checking On-Disk Audit Rules..."
+UID_MIN=$(awk '/^\s*UID_MIN/ {print $2}' /etc/login.defs)
+
+if [[ -z "$UID_MIN" ]]; then
+  echo "ERROR: UID_MIN is unset"
+  exit 1
+fi
+
+ondisk_rules=$(awk "/^ *-a *always,exit/ \
+  &&/ -F *arch=b(32|64)/ \
+  &&(/ -F *auid!=unset/||/ -F *auid!=-1/||/ -F *auid!=4294967295/) \
+  &&/ -F *auid>=${UID_MIN}/ \
+  &&(/ -F *exit=-EACCES/||/ -F *exit=-EPERM/) \
+  &&/ -S/ \
+  &&/creat/ \
+  &&/open/ \
+  &&/truncate/ \
+  &&(/ key= *[!-~]* *\$| -k *[!-~]* *\$)/" /etc/audit/rules.d/*.rules 2>/dev/null)
+
+for pattern in "${expected_patterns[@]}"; do
+  echo "$ondisk_rules" | grep -Fq -- "$pattern"
+  if [[ $? -eq 0 ]]; then
+    echo "✔ Found on-disk rule: $pattern"
+  else
+    echo "✘ Missing on-disk rule: $pattern"
+    missing_ondisk=1
+  fi
+done
+
+echo -e "\n🔍 Checking Running Audit Rules..."
+runtime_rules=$(auditctl -l 2>/dev/null)
+
+for pattern in "${expected_patterns[@]}"; do
+  echo "$runtime_rules" | grep -Fq -- "$pattern"
+  if [[ $? -eq 0 ]]; then
+    echo "✔ Found running rule: $pattern"
+  else
+    echo "✘ Missing running rule: $pattern"
+    missing_runtime=1
+  fi
+done
+
+echo -e "\n========== Audit Result =========="
+
+if [[ "$missing_ondisk" -eq 0 ]]; then
+  echo "** PASS ** All required on-disk audit rules are present."
+else
+  echo "** FAIL ** One or more on-disk audit rules are missing."
+fi
+
+if [[ "$missing_runtime" -eq 0 ]]; then
+  echo "   PASS: All required runtime audit rules are present."
+else
+  echo "   FAIL: One or more runtime audit rules are missing."
+fi
+}
+""""

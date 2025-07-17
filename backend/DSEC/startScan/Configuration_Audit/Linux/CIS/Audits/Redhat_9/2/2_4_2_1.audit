@@ -1,0 +1,76 @@
+audit_id: "2.4.2.1"
+audit_name: "Ensure at is restricted to authorized users"
+audit_script: """
+{
+l_output="" l_output2=""
+
+# Check if at is installed
+if rpm -q at > /dev/null 2>&1; then
+
+    # Check /etc/at.allow
+    if [ -f /etc/at.allow ]; then
+        perm=$(stat -Lc '%a' /etc/at.allow)
+        owner=$(stat -Lc '%U' /etc/at.allow)
+        group=$(stat -Lc '%G' /etc/at.allow)
+
+        if [ "$perm" -le 640 ]; then
+            l_output="$l_output\n - /etc/at.allow permissions are $perm (OK)"
+        else
+            l_output2="$l_output2\n - /etc/at.allow permissions are $perm (too permissive)"
+        fi
+
+        if [ "$owner" = "root" ]; then
+            l_output="$l_output\n - /etc/at.allow is owned by root"
+        else
+            l_output2="$l_output2\n - /etc/at.allow is not owned by root (found $owner)"
+        fi
+
+        if [ "$group" = "daemon" ] || [ "$group" = "root" ]; then
+            l_output="$l_output\n - /etc/at.allow group is $group (OK)"
+        else
+            l_output2="$l_output2\n - /etc/at.allow group is not daemon/root (found $group)"
+        fi
+    else
+        l_output2="$l_output2\n - /etc/at.allow does not exist"
+    fi
+
+    # Check /etc/at.deny (if exists)
+    if [ -f /etc/at.deny ]; then
+        perm=$(stat -Lc '%a' /etc/at.deny)
+        owner=$(stat -Lc '%U' /etc/at.deny)
+        group=$(stat -Lc '%G' /etc/at.deny)
+
+        if [ "$perm" -le 640 ]; then
+            l_output="$l_output\n - /etc/at.deny permissions are $perm (OK)"
+        else
+            l_output2="$l_output2\n - /etc/at.deny permissions are $perm (too permissive)"
+        fi
+
+        if [ "$owner" = "root" ]; then
+            l_output="$l_output\n - /etc/at.deny is owned by root"
+        else
+            l_output2="$l_output2\n - /etc/at.deny is not owned by root (found $owner)"
+        fi
+
+        if [ "$group" = "daemon" ] || [ "$group" = "root" ]; then
+            l_output="$l_output\n - /etc/at.deny group is $group (OK)"
+        else
+            l_output2="$l_output2\n - /etc/at.deny group is not daemon/root (found $group)"
+        fi
+    else
+        l_output="$l_output\n - /etc/at.deny does not exist (OK)"
+    fi
+
+else
+    l_output=" - at is not installed on the system"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+}
+"""

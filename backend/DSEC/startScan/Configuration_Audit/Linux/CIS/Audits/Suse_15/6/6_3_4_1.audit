@@ -1,0 +1,65 @@
+audit_id: "6.3.4.1"
+audit_name: "Ensure the audit log file directory mode is configured"
+audit_script: """
+{
+perm_mask="0027"
+
+if [ -e "/etc/audit/auditd.conf" ]; then
+    audit_log_path=$(awk -F= '/^\s*log_file\s*/ { print $2 }' /etc/audit/auditd.conf | xargs)
+    audit_log_dir=$(dirname "$audit_log_path")
+
+    if [ -d "$audit_log_dir" ]; then
+        required_mode=$(printf '%o' $((0777 & ~$((8#$perm_mask)))))  # 750
+        actual_mode=$(stat -Lc '%a' "$audit_log_dir")
+
+        if (( (8#$actual_mode & 8#$perm_mask) > 0 )); then
+            echo -e "\n** FA#!/usr/bin/env bash
+{
+perm_mask="0027"
+
+if [ -e "/etc/audit/auditd.conf" ]; then
+    audit_log_path=$(awk -F= '/^\s*log_file\s*/ { print $2 }' /etc/audit/auditd.conf | xargs)
+    audit_log_dir=$(dirname "$audit_log_path")
+
+    if [ -d "$audit_log_dir" ]; then
+        required_mode=$(printf '%o' $((0777 & ~$((8#$perm_mask)))))  # 750
+        actual_mode=$(stat -Lc '%a' "$audit_log_dir")
+
+        if (( (8#$actual_mode & 8#$perm_mask) > 0 )); then
+            echo -e "\n** FAIL **"
+            echo " - Audit log directory \"$audit_log_dir\" has mode: $actual_mode"
+            echo " - Expected mode: $required_mode or more restrictive"
+        else
+            echo -e "\n** PASS **"
+            echo " - Audit log directory \"$audit_log_dir\" has mode: $actual_mode"
+            echo " - Meets required permissions: $required_mode or more restrictive"
+        fi
+    else
+        echo -e "\n** FAIL **"
+        echo " - Log file directory \"$audit_log_dir\" does not exist"
+    fi
+else
+    echo -e "\n** FAIL **"
+    echo " - File \"/etc/audit/auditd.conf\" not found"
+    echo " - Verify auditd is installed"
+fi
+}
+IL **"
+            echo " - Audit log directory \"$audit_log_dir\" has mode: $actual_mode"
+            echo " - Expected mode: $required_mode or more restrictive"
+        else
+            echo -e "\n** PASS **"
+            echo " - Audit log directory \"$audit_log_dir\" has mode: $actual_mode"
+            echo " - Meets required permissions: $required_mode or more restrictive"
+        fi
+    else
+        echo -e "\n** FAIL **"
+        echo " - Log file directory \"$audit_log_dir\" does not exist"
+    fi
+else
+    echo -e "\n** FAIL **"
+    echo " - File \"/etc/audit/auditd.conf\" not found"
+    echo " - Verify auditd is installed"
+fi
+}
+""""

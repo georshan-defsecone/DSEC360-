@@ -1,0 +1,27 @@
+audit_id: "5.1.7"
+audit_name: "Ensure sshd access is configured"
+audit_script: """
+{
+l_output=""
+l_output2=""
+l_warn=""
+
+# Get allow/deny directives from effective sshd config
+l_check=$(sshd -T 2>/dev/null | grep -Pi '^\s*(allow|deny)(users|groups)\s+\S+')
+
+# Detect Match blocks directly in sshd_config (warn only)
+if grep -Piq '^\s*match\s+' /etc/ssh/sshd_config; then
+  l_warn=" - Match blocks are present in sshd_config. If any AllowUsers/DenyUsers/etc. are set inside a Match block, use 'sshd -T -C user=<username>' to verify effective configuration."
+fi
+
+# If no allow/deny directives are found, fail
+if [[ -z "$l_check" ]]; then
+  echo -e "\n- Audit Result:\n ** FAIL **\n - No allow/deny users or groups directives are configured in sshd output.\n - Expected one of: AllowUsers, AllowGroups, DenyUsers, or DenyGroups."
+else
+  echo -e "\n- Audit Result:\n ** PASS **\n - Found the following directive(s):\n$l_check"
+fi
+
+# Show warning if match blocks were found
+[ -n "$l_warn" ] && echo -e "\n ** WARNING **\n$l_warn"
+}
+""""

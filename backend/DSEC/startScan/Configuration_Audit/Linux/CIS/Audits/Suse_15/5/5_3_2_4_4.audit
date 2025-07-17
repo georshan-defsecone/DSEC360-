@@ -1,0 +1,27 @@
+audit_id: "5.3.2.4.4"
+audit_name: "Ensure pam_unix includes use_authtok"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+matches=$(grep -P -- '^\h*password\h+[^#\n\r]+\h+pam_unix\.so\b.*\buse_authtok\b' /etc/pam.d/common* 2>/dev/null)
+all_matches=$(grep -Pi '^\h*password\h+[^#\n\r]+\h+pam_unix\.so\b' /etc/pam.d/common* 2>/dev/null)
+
+if [ -z "$all_matches" ]; then
+    a_output2+=("No pam_unix.so password lines found in /etc/pam.d/common* files")
+else
+    while IFS= read -r line; do
+        if ! echo "$line" | grep -Pq '\buse_authtok\b'; then
+            a_output2+=("Missing 'use_authtok' in line: $line")
+        fi
+    done <<< "$all_matches"
+fi
+
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    a_output+=("All pam_unix.so password lines contain 'use_authtok'")
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+fi
+}
+""""

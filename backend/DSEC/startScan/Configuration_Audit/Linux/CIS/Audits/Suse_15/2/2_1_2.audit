@@ -1,0 +1,27 @@
+audit_id: "2.1.2"
+audit_name: "Ensure avahi daemon services are not in use"
+audit_script: """
+{
+# Audit: Ensure Avahi is not installed or is disabled and inactive
+
+if rpm -q avahi &>/dev/null; then
+    echo "- The 'avahi' package is installed."
+
+    enabled_units=$(systemctl is-enabled avahi-daemon.socket avahi-daemon.service 2>/dev/null | grep -E 'enabled')
+    active_units=$(systemctl is-active avahi-daemon.socket avahi-daemon.service 2>/dev/null | grep -E '^active')
+
+    if [ -n "$enabled_units" ] || [ -n "$active_units" ]; then
+        echo -e "\n** FAIL **"
+        echo "- Avahi is installed, and one or more related services are enabled or running."
+        [ -n "$enabled_units" ] && echo "- Enabled units: $enabled_units"
+        [ -n "$active_units" ] && echo "- Active units: $active_units"
+    else
+        echo -e "\n** PASS **"
+        echo "- Avahi is installed, but both 'avahi-daemon.service' and 'avahi-daemon.socket' are disabled and inactive."
+    fi
+else
+    echo -e "\n** PASS **"
+    echo "- The 'avahi' package is not installed."
+fi
+}
+""""

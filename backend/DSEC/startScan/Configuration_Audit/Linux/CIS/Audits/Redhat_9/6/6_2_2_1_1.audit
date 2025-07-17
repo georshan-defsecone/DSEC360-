@@ -1,0 +1,21 @@
+audit_id: "6.2.2.1.1"
+audit_name: "Ensure systemd-journal-remote is installed"
+audit_script: """
+{
+l_output=""
+l_output2=""
+
+if rpm -q systemd-journal-remote >/dev/null 2>&1; then
+    l_ver="$(rpm -q systemd-journal-remote)"
+    l_output=" - systemd-journal-remote is installed: $l_ver"
+else
+    l_output2=" - systemd-journal-remote package is not installed"
+fi
+
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n$l_output2"
+fi
+}
+"""

@@ -1,0 +1,40 @@
+audit_id: "5.1.8"
+audit_name: "Ensure sshd Banner is configured"
+audit_script: """
+{
+l_output=""
+l_output2=""
+l_output3=""
+
+# Get banner path from sshd config
+banner_path="$(sshd -T 2>/dev/null | awk '$1 == "banner" {print $2}')"
+
+if [[ -n "$banner_path" && -e "$banner_path" ]]; then
+    l_output+=" - Banner is set to: $banner_path"
+
+    # Check banner content for prohibited escape sequences or OS info
+    os_id="$(grep '^ID=' /etc/os-release | cut -d= -f2 | sed -e 's/\"//g')"
+    if grep -Psiq -- "(\\\v|\\\r|\\\m|\\\s|\b${os_id}\b)" "$banner_path"; then
+        l_output2+=" - Banner at \"$banner_path\" contains prohibited escape sequences or OS identification"
+    fi
+else
+    l_output2+=" - SSH banner is not set or file does not exist"
+fi
+
+# Check if sshd_config contains Match blocks (potentially overrides global Banner)
+if grep -Piq '^\s*Match\b' /etc/ssh/sshd_config; then
+    l_output3+=" - Match blocks detected in sshd_config. Banner setting may be overridden.\n - Use: sshd -T -C user=<username> to validate actual applied configuration"
+fi
+
+# Final output
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+    [ -n "$l_output" ] && echo -e "\n$l_output"
+fi
+
+# Show warning about Match blocks if found
+[ -n "$l_output3" ] && echo -e "\n ** WARNING **\n$l_output3"
+}
+"""

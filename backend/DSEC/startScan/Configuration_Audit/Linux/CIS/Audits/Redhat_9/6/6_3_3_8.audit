@@ -1,0 +1,70 @@
+audit_id: "6.3.3.8"
+audit_name: "Ensure events that modify user/group information are collected"
+audit_script: """
+{
+required_rules=(
+  "-w /etc/group -p wa -k identity"
+  "-w /etc/passwd -p wa -k identity"
+  "-w /etc/gshadow -p wa -k identity"
+  "-w /etc/shadow -p wa -k identity"
+  "-w /etc/security/opasswd -p wa -k identity"
+  "-w /etc/nsswitch.conf -p wa -k identity"
+  "-w /etc/pam.conf -p wa -k identity"
+  "-w /etc/pam.d -p wa -k identity"
+)
+
+echo -e "\n### Checking On-Disk Audit Rules ###"
+ondisk_rules=$(awk '/^ *-w/ \
+&&(/\/etc\/group/ \
+||/\/etc\/passwd/ \
+||/\/etc\/gshadow/ \
+||/\/etc\/shadow/ \
+||/\/etc\/security\/opasswd/ \
+||/\/etc\/nsswitch.conf/ \
+||/\/etc\/pam.conf/ \
+||/\/etc\/pam.d/) \
+&&/ +-p *wa/ \
+&&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+echo "$ondisk_rules"
+ondisk_fail=0
+for rule in "${required_rules[@]}"; do
+  echo "$ondisk_rules" | grep -Fq -- "$rule" || {
+    echo "Missing on-disk rule: $rule"
+    ondisk_fail=1
+  }
+done
+
+echo -e "\n### Checking Running Audit Rules ###"
+running_rules=$(auditctl -l 2>/dev/null | awk '/^ *-w/ \
+&&(/\/etc\/group/ \
+||/\/etc\/passwd/ \
+||/\/etc\/gshadow/ \
+||/\/etc\/shadow/ \
+||/\/etc\/security\/opasswd/ \
+||/\/etc\/nsswitch.conf/ \
+||/\/etc\/pam.conf/ \
+||/\/etc\/pam.d/) \
+&&/ +-p *wa/ \
+&&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)')
+
+echo "$running_rules"
+runtime_fail=0
+for rule in "${required_rules[@]}"; do
+  echo "$running_rules" | grep -Fq -- "$rule" || {
+    echo "Missing running rule: $rule"
+    runtime_fail=1
+  }
+done
+
+echo -e "\n### Audit Results ###"
+if [[ $ondisk_fail -eq 0 && $runtime_fail -eq 0 ]]; then
+  echo "** PASS **"
+  echo " - All identity-related audit rules are present in both on-disk and running configurations."
+else
+  echo "** FAIL **"
+  [[ $ondisk_fail -ne 0 ]] && echo " - Missing rules in /etc/audit/rules.d/"
+  [[ $runtime_fail -ne 0 ]] && echo " - Missing rules in auditctl loaded configuration"
+fi
+}
+"""

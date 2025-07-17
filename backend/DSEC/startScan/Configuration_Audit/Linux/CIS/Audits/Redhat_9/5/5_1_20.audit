@@ -1,0 +1,35 @@
+audit_id: "5.1.20"
+audit_name: "Ensure sshd PermitRootLogin is disabled"
+audit_script: """
+#!/usr/bin/env bash
+{
+  l_output=""
+  l_output2=""
+  l_warning=""
+
+  # Check the effective PermitRootLogin setting
+  l_setting="$(sshd -T 2>/dev/null | awk '$1 == "permitrootlogin" {print $2}')"
+
+  if [ -z "$l_setting" ]; then
+    l_output2=" - PermitRootLogin directive not found"
+  elif [[ "$l_setting" != "no" ]]; then
+    l_output2=" - PermitRootLogin is set to \"$l_setting\" (should be \"no\")"
+  else
+    l_output=" - PermitRootLogin is set to \"$l_setting\""
+  fi
+
+  # Check for presence of Match blocks
+  if grep -Piq '^\s*Match\b' /etc/ssh/sshd_config; then
+    l_warning=" - Match blocks detected in sshd_config. They may override PermitRootLogin.\n - To verify for a specific user: sshd -T -C user=<username> | grep permitrootlogin"
+  fi
+
+  # Output results
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+
+  [ -n "$l_warning" ] && echo -e "\n ** WARNING **\n$l_warning"
+}
+"""

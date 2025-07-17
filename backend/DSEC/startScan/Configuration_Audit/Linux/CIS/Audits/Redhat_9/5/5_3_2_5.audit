@@ -1,0 +1,42 @@
+audit_id: "5.3.2.5"
+audit_name: "Ensure pam_unix module is enabled"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+  files=("password-auth" "system-auth")
+  stages=("auth sufficient" "account required" "password sufficient" "session required")
+  expected=(
+    "auth sufficient pam_unix.so"
+    "account required pam_unix.so"
+    "password sufficient pam_unix.so.*sha512.*shadow.*use_authtok"
+    "session required pam_unix.so"
+  )
+
+  for file in "${files[@]}"; do
+    path="/etc/pam.d/$file"
+    if [ ! -f "$path" ]; then
+      l_output2="$l_output2\n - File not found: $path"
+      continue
+    fi
+
+    for ((i = 0; i < ${#stages[@]}; i++)); do
+      stage="${stages[$i]}"
+      regex="^${stage// /\\s+}\\s+pam_unix\\.so\\b"
+      [[ "$stage" == "password sufficient" ]] && regex="$regex.*sha512.*shadow.*use_authtok"
+
+      if grep -Pq "$regex" "$path"; then
+        l_output="$l_output\n - Found: '$stage pam_unix.so' in $path"
+      else
+        l_output2="$l_output2\n - Missing expected line in $path: $stage pam_unix.so"
+      fi
+    done
+  done
+
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:$l_output2"
+  fi
+}
+"""

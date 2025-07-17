@@ -1,0 +1,44 @@
+audit_id: "2.3.3.1"
+audit_name: "Ensure chrony is configured"
+audit_script: """
+{
+    config_file="/etc/chrony.conf"
+    sysconfig_file="/etc/sysconfig/chronyd"
+
+    fail_reasons=()
+
+    # Check chrony.conf for server or pool lines
+    if [ -f "$config_file" ]; then
+        server_lines=$(grep -E "^(server|pool)" "$config_file" | grep -vE '^\s*#')
+        if [ -n "$server_lines" ]; then
+            remote_servers=$(echo "$server_lines" | awk '{print $2}')
+        else
+            fail_reasons+=("- No 'server' or 'pool' entries found in $config_file")
+        fi
+    else
+        fail_reasons+=("- $config_file not found")
+    fi
+
+    # Check for correct OPTIONS in sysconfig
+    if [ -f "$sysconfig_file" ]; then
+        options_line=$(grep ^OPTIONS "$sysconfig_file")
+        if echo "$options_line" | grep -q -- '-u[[:space:]]*chrony'; then
+            : # pass
+        else
+            fail_reasons+=("- OPTIONS does not include '-u chrony' in $sysconfig_file")
+        fi
+    else
+        fail_reasons+=("- $sysconfig_file not found")
+    fi
+
+    # Output result
+    if [ ${#fail_reasons[@]} -eq 0 ]; then
+        echo -e "\n** PASS **"
+        echo " - Chrony is configured with remote server(s): $remote_servers"
+        echo " - OPTIONS in $sysconfig_file includes '-u chrony'"
+    else
+        echo -e "\n** FAIL **"
+        printf " - %s\n" "${fail_reasons[@]}"
+    fi
+}
+""""

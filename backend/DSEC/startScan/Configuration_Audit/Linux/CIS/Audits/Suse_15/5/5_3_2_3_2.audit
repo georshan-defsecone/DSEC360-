@@ -1,0 +1,20 @@
+audit_id: "5.3.2.3.2"
+audit_name: "Ensure password history is enforced for the root user"
+audit_script: """
+{
+a_output=(); a_output2=()
+if command -v pam-config &>/dev/null; then
+    output="$(pam-config --query --pwhistory --pwhistory-enforce_for_root 2>/dev/null)"
+    if echo "$output" | grep -Piq 'enforce_for_root'; then
+        a_output+=("pam-config: enforce_for_root is enabled under pwhistory")
+        printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+    else
+        a_output2+=("pam-config: enforce_for_root is not enabled under pwhistory")
+        printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+    fi
+else
+    a_output2+=("pam-config is not installed on the system")
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+fi
+}
+""""

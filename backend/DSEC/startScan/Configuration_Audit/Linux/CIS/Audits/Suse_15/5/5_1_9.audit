@@ -1,0 +1,37 @@
+audit_id: "5.1.9"
+audit_name: "Ensure sshd ClientAliveInterval and ClientAliveCountMax are configured"
+audit_script: """
+{
+l_output=""
+l_output2=""
+l_match_warning=""
+
+# Check for presence of Match blocks
+if grep -Piq '^\s*match\s+' /etc/ssh/sshd_config; then
+  l_match_warning=" - Match blocks are present in sshd_config. Use 'sshd -T -C user=<username>' to verify ClientAliveInterval and ClientAliveCountMax per user context."
+fi
+
+# Get values
+l_alive_interval=$(sshd -T 2>/dev/null | awk '$1 == "clientaliveinterval" {print $2}')
+l_alive_count=$(sshd -T 2>/dev/null | awk '$1 == "clientalivecountmax" {print $2}')
+
+# Validate values
+if [[ -z "$l_alive_interval" || "$l_alive_interval" -le 0 ]]; then
+  l_output2+=" - clientaliveinterval is not set or is zero.\n"
+fi
+
+if [[ -z "$l_alive_count" || "$l_alive_count" -le 0 ]]; then
+  l_output2+=" - clientalivecountmax is not set or is zero.\n"
+fi
+
+# Output result
+if [[ -n "$l_output2" ]]; then
+  echo -e "\n- Audit Result:\n ** FAIL **\n$l_output2"
+else
+  echo -e "\n- Audit Result:\n ** PASS **\n - clientaliveinterval is set to \"$l_alive_interval\"\n - clientalivecountmax is set to \"$l_alive_count\""
+fi
+
+# Warn if Match blocks exist
+[[ -n "$l_match_warning" ]] && echo -e "\n ** WARNING **\n$l_match_warning"
+}
+""""

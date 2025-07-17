@@ -1,0 +1,67 @@
+audit_id: "6.3.3.7"
+audit_name: "Ensure unsuccessful file access attempts are collected"
+audit_script: """
+{
+UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+
+if [ -z "$UID_MIN" ]; then
+  echo -e "\n- Audit Results:\n ** FAIL **\n - UID_MIN is unset in /etc/login.defs"
+  exit 1
+fi
+
+expected_rules=(
+  "-a always,exit -F arch=b64 -S creat,open,openat,truncate,ftruncate -F exit=-EACCES -F auid>=$UID_MIN -F auid!=unset -k access"
+  "-a always,exit -F arch=b64 -S creat,open,openat,truncate,ftruncate -F exit=-EPERM  -F auid>=$UID_MIN -F auid!=unset -k access"
+  "-a always,exit -F arch=b32 -S creat,open,openat,truncate,ftruncate -F exit=-EACCES -F auid>=$UID_MIN -F auid!=unset -k access"
+  "-a always,exit -F arch=b32 -S creat,open,openat,truncate,ftruncate -F exit=-EPERM  -F auid>=$UID_MIN -F auid!=unset -k access"
+)
+
+echo -e "\n### Checking On-Disk Audit Rules ###"
+ondisk_matches=$(awk "/^ *-a *always,exit/ \
+  && /-F *arch=b(32|64)/ \
+  && (/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) \
+  && /-F *auid>=$UID_MIN/ \
+  && (/ -F *exit=-EACCES/ || / -F *exit=-EPERM/) \
+  && /-S/ && /creat/ && /open/ && /truncate/ \
+  && (/ key= *[!-~]* *$/ || /-k *[!-~]* *$/)" /etc/audit/rules.d/*.rules 2>/dev/null)
+
+echo "$ondisk_matches"
+
+ondisk_fail=0
+for rule in "${expected_rules[@]}"; do
+  echo "$ondisk_matches" | grep -Eq -- "$rule" || {
+    echo "Missing on-disk rule: $rule"
+    ondisk_fail=1
+  }
+done
+
+echo -e "\n### Checking Running Audit Rules ###"
+running_matches=$(auditctl -l 2>/dev/null | awk "/^ *-a *always,exit/ \
+  && /-F *arch=b(32|64)/ \
+  && (/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) \
+  && /-F *auid>=$UID_MIN/ \
+  && (/ -F *exit=-EACCES/ || / -F *exit=-EPERM/) \
+  && /-S/ && /creat/ && /open/ && /truncate/ \
+  && (/ key= *[!-~]* *$/ || /-k *[!-~]* *$/)")
+
+echo "$running_matches"
+
+runtime_fail=0
+for rule in "${expected_rules[@]}"; do
+  echo "$running_matches" | grep -Eq -- "$rule" || {
+    echo "Missing running rule: $rule"
+    runtime_fail=1
+  }
+done
+
+echo -e "\n### Audit Results ###"
+if [[ "$ondisk_fail" -eq 0 && "$runtime_fail" -eq 0 ]]; then
+  echo "** PASS **"
+  echo " - All required access audit rules are present in both on-disk and running configuration."
+else
+  echo "** FAIL **"
+  [[ "$ondisk_fail" -ne 0 ]] && echo " - Missing rules in /etc/audit/rules.d"
+  [[ "$runtime_fail" -ne 0 ]] && echo " - Missing rules in auditctl loaded configuration"
+fi
+}
+"""

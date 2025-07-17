@@ -1,0 +1,27 @@
+audit_id: "2.1.6"
+audit_name: "Ensure samba file server services are not in use"
+audit_script: """
+{
+# Audit: Ensure 'samba' is not installed or smb.service is disabled and inactive
+
+if rpm -q samba &>/dev/null; then
+    echo "- The 'samba' package is installed."
+
+    is_enabled=$(systemctl is-enabled smb.service 2>/dev/null | grep 'enabled')
+    is_active=$(systemctl is-active smb.service 2>/dev/null | grep '^active')
+
+    if [ -n "$is_enabled" ] || [ -n "$is_active" ]; then
+        echo -e "\n** FAIL **"
+        echo "- samba is installed, and 'smb.service' is either enabled or active."
+        [ -n "$is_enabled" ] && echo "- Service is ENABLED: smb.service"
+        [ -n "$is_active" ] && echo "- Service is ACTIVE: smb.service"
+    else
+        echo -e "\n** PASS **"
+        echo "- samba is installed, but 'smb.service' is both disabled and inactive."
+    fi
+else
+    echo -e "\n** PASS **"
+    echo "- The 'samba' package is not installed."
+fi
+}
+""""

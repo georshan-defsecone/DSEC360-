@@ -1,0 +1,36 @@
+audit_id: "1.4.1"
+audit_name: "Ensure bootloader password is set "
+audit_script: """
+{
+unset a_output
+unset a_output2
+unset l_output
+
+l_grub_password_file="$(find /boot -type f -name 'user.cfg' ! -empty 2>/dev/null)"
+
+if [ -f "$l_grub_password_file" ]; then
+    l_output="$(grep -E '^\s*GRUB2_PASSWORD=grub\.pbkdf2\.sha512' "$l_grub_password_file" 2>/dev/null)"
+    if [ -n "$l_output" ]; then
+        a_output+=(" - GRUB2 password is set in: $l_grub_password_file")
+        a_output+=("   $l_output")
+    else
+        a_output2+=(" - GRUB2 password entry not found or incorrectly formatted in: $l_grub_password_file")
+    fi
+else
+    a_output2+=(" - GRUB2 password file not found or is empty: $l_grub_password_file")
+fi
+
+# Display INFO
+echo -e "\n\n -- INFO --"
+[ -n "$l_output" ] && echo "$l_output" || echo "No valid GRUB2 password entry found."
+
+# Display Audit Result
+if [ "${#a_output2[@]}" -le 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for audit failure:" "${a_output2[@]}"
+    [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "- Correctly set:" "${a_output[@]}"
+fi
+
+}
+"""

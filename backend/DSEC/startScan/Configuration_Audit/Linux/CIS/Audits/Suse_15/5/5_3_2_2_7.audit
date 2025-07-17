@@ -1,0 +1,36 @@
+audit_id: "5.3.2.2.7"
+audit_name: "Ensure password quality is enforced for the root user"
+audit_script: """
+{
+a_output=(); a_output2=()
+flag_found=""
+
+# 1. Check via pam-config if available
+if command -v pam-config &>/dev/null; then
+    output="$(pam-config --query --cracklib --cracklib-enforce_for_root 2>/dev/null)"
+    if grep -qi "enforce_for_root" <<< "$output"; then
+        flag_found="yes"
+        a_output+=("pam-config: enforce_for_root is enabled")
+    fi
+fi
+
+# 2. If not found via pam-config, search pwquality config files
+if [[ -z "$flag_found" ]]; then
+    for file in /etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf; do
+        [ -f "$file" ] || continue
+        if grep -Psiq -- '^\h*enforce_for_root\b' "$file"; then
+            flag_found="yes"
+            a_output+=("$file: enforce_for_root is set")
+        fi
+    done
+fi
+
+# 3. Final result
+if [[ -n "$flag_found" ]]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    a_output2+=("enforce_for_root is not enabled in pam-config or pwquality configuration files")
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+fi
+}
+""""

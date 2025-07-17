@@ -1,0 +1,29 @@
+audit_id: "5.3.3.4.2"
+audit_name: "Ensure pam_unix does not include remember"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  files=(/etc/pam.d/password-auth /etc/pam.d/system-auth)
+
+  for file in "${files[@]}"; do
+    while IFS= read -r line; do
+      [[ "$line" =~ ^\s*# ]] && continue
+      if [[ "$line" =~ ^[[:space:]]*password[[:space:]]+[^#[:space:]]+[[:space:]]+pam_unix\.so ]]; then
+        if echo "$line" | grep -Pq '\bremember=\d+\b'; then
+          l_output2+=" - 'remember=' is present in $file:\n   $line\n"
+        else
+          l_output+=" - pam_unix.so line in $file does not include 'remember='\n"
+        fi
+      fi
+    done < "$file"
+  done
+
+  if [[ -z "$l_output2" ]]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+}
+"""

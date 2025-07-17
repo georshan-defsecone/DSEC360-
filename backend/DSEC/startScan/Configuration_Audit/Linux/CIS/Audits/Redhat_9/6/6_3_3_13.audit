@@ -1,0 +1,58 @@
+audit_id: "6.3.3.13"
+audit_name: "Ensure file deletion events by users are collected"
+audit_script: """
+{
+echo -e "\n### Checking Audit Rules for File Deletion (unlink, rename, etc.) ###"
+
+UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+if [[ -z "$UID_MIN" ]]; then
+    echo "** FAIL **"
+    echo " - ERROR: Variable 'UID_MIN' is unset."
+    exit 1
+fi
+
+EXPECTED_RULES=(
+  "-a always,exit -F arch=b64 -S unlink,unlinkat,rename,renameat -F auid>=${UID_MIN} -F auid!=unset -k delete"
+  "-a always,exit -F arch=b32 -S unlink,unlinkat,rename,renameat -F auid>=${UID_MIN} -F auid!=unset -k delete"
+)
+
+ondisk_status="PASS"
+runtime_status="PASS"
+
+echo -e "\n-- On-Disk Rules Check --"
+for rule in "${EXPECTED_RULES[@]}"; do
+    found=0
+    for file in /etc/audit/rules.d/*.rules; do
+        grep -F -x "$rule" "$file" >/dev/null 2>&1 && found=1 && break
+    done
+    if [[ $found -eq 0 ]]; then
+        echo "Missing on-disk rule: $rule"
+        ondisk_status="FAIL"
+    fi
+done
+
+echo -e "\n-- Running Configuration Check --"
+auditctl -l 2>/dev/null > /tmp/auditctl_output.txt
+
+for rule in "${EXPECTED_RULES[@]}"; do
+    # Replace 'auid!=unset' with 'auid!=-1' for running config match
+    runtime_rule=$(echo "$rule" | sed 's/auid!=unset/auid!=-1/')
+    grep -F -x "$runtime_rule" /tmp/auditctl_output.txt >/dev/null 2>&1
+    if [[ $? -ne 0 ]]; then
+        echo "Missing running rule: $runtime_rule"
+        runtime_status="FAIL"
+    fi
+done
+
+rm -f /tmp/auditctl_output.txt
+
+echo -e "\n### Audit Results ###"
+if [[ "$ondisk_status" == "PASS" && "$runtime_status" == "PASS" ]]; then
+    echo "** PASS **"
+else
+    echo "** FAIL **"
+    [[ "$ondisk_status" == "FAIL" ]] && echo " - Missing rules in /etc/audit/rules.d/"
+    [[ "$runtime_status" == "FAIL" ]] && echo " - Missing rules in auditctl loaded configuration"
+fi
+}
+"""

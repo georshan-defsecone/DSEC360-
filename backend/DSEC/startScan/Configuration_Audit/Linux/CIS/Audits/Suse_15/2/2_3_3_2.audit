@@ -1,0 +1,36 @@
+audit_id: "2.3.3.2"
+audit_name: "Ensure chrony is enabled and running"
+audit_script: """
+{
+fail_reasons=()
+
+# Check if chrony package is installed
+if rpm -q chrony &>/dev/null; then
+    # Check if chronyd.service is enabled
+    if systemctl is-enabled chronyd.service 2>/dev/null | grep -q '^enabled'; then
+        :
+    else
+        fail_reasons+=("- chronyd.service is not enabled")
+    fi
+
+    # Check if chronyd.service is active
+    if systemctl is-active chronyd.service 2>/dev/null | grep -q '^active'; then
+        :
+    else
+        fail_reasons+=("- chronyd.service is not active")
+    fi
+
+    # Final output
+    if [ ${#fail_reasons[@]} -eq 0 ]; then
+        echo -e "\n** PASS **"
+        echo " - chronyd.service is both enabled and active"
+    else
+        echo -e "\n** FAIL **"
+        printf " - %s\n" "${fail_reasons[@]}"
+    fi
+else
+    echo -e "\n** PASS **"
+    echo " - chrony is not installed; audit not applicable"
+fi
+}
+""""

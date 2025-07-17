@@ -1,0 +1,28 @@
+audit_id: "1.2.1.2"
+audit_name: "Ensure gpgcheck is globally activated"
+audit_script: """
+{
+fail_output=""
+
+# Check global zypp.conf setting
+if grep -Pi -- '^\h*gpgcheck\h*=\h*(0|false|no|off)\b' /etc/zypp/zypp.conf &>/dev/null; then
+    fail_output+="\n - Global configuration in /etc/zypp/zypp.conf disables gpgcheck"
+fi
+
+# Check per-repo configuration
+invalid_repo_entries=$(grep -Pris -- '^\h*gpgcheck\h*=\h*(0|[2-9]|[1-9][0-9]+|false|no|off)\b' /etc/zypp/repos.d/ 2>/dev/null)
+
+if [ -n "$invalid_repo_entries" ]; then
+    fail_output+="\n - One or more repo files in /etc/zypp/repos.d/ contain invalid gpgcheck values:\n$invalid_repo_entries"
+fi
+
+# Final result
+if [ -z "$fail_output" ]; then
+    echo -e "\n** PASS **"
+    echo " - gpgcheck is globally enabled and no invalid overrides found in /etc/zypp/repos.d/"
+else
+    echo -e "\n** FAIL **"
+    echo -e "$fail_output"
+fi
+}
+"""

@@ -1,0 +1,62 @@
+audit_id: "7.2.8"
+audit_name: "Ensure local interactive user home directories are configured"
+audit_script: """
+#!/usr/bin/env bash
+{
+l_output="" l_output2=""
+l_heout2="" l_hoout2="" l_haout2=""
+
+# Build pattern for valid login shells (excluding nologin)
+l_valid_shells="^($(awk -F/ '$NF != "nologin" { print }' /etc/shells | sed -rn '/^\//{s,/,\\/,g;p}' | paste -sd '|' -))$"
+
+# Get all local interactive users and their home directories
+unset a_uarr; a_uarr=()
+while read -r user home; do
+    a_uarr+=("$user $home")
+done <<< "$(awk -v pat="$l_valid_shells" -F: '$NF ~ pat { print $1, $(NF-1) }' /etc/passwd)"
+
+# If user count is extremely high, warn
+l_asize="${#a_uarr[@]}"
+if [ "$l_asize" -gt 10000 ]; then
+    echo -e "\n ** INFO **\n - \"$l_asize\" Local interactive users found on the system.\n - This may be a long running check.\n"
+fi
+
+# Permissions mask: 0027 = at most 750
+l_mask='0027'
+l_max="$(printf '%o' $((0777 & ~$l_mask)))"
+
+# Check each user
+for entry in "${a_uarr[@]}"; do
+    user=$(awk '{print $1}' <<< "$entry")
+    home=$(awk '{print $2}' <<< "$entry")
+
+    if [ -d "$home" ]; then
+        read -r owner mode <<< "$(stat -Lc '%U %#a' "$home")"
+        
+        if [ "$user" != "$owner" ]; then
+            l_hoout2="$l_hoout2\n - User: \"$user\" Home \"$home\" is owned by \"$owner\""
+        fi
+        
+        if (( (mode & l_mask) > 0 )); then
+            l_haout2="$l_haout2\n - User: \"$user\" Home \"$home\" has mode \"$mode\"; should be \"$l_max\" or more restrictive"
+        fi
+    else
+        l_heout2="$l_heout2\n - User: \"$user\" Home \"$home\" does not exist"
+    fi
+done
+
+# Collate output
+[ -z "$l_heout2" ] && l_output="$l_output\n - All users have valid home directories" || l_output2+="$l_heout2"
+[ -z "$l_hoout2" ] && l_output="$l_output\n - All users own their home directories" || l_output2+="$l_hoout2"
+[ -z "$l_haout2" ] && l_output="$l_output\n - All home directories are mode \"$l_max\" or more restrictive" || l_output2+="$l_haout2"
+[ -n "$l_output" ] && l_output=" - Local interactive user check:$l_output"
+
+# Final result
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - * Reasons for audit failure *:$l_output2"
+    [ -n "$l_output" ] && echo -e "\n- * Correctly configured *:$l_output\n"
+fi
+}
+"""

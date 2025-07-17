@@ -1,0 +1,32 @@
+audit_id: "6.3.4.3"
+audit_name: "Ensure audit log files owner is configured"
+audit_script: """
+#!/usr/bin/env bash
+{
+fail_output=""
+audit_conf="/etc/audit/auditd.conf"
+
+if [ -e "$audit_conf" ]; then
+    audit_log_path=$(awk -F= '/^\s*log_file\s*/ { print $2 }' "$audit_conf" | xargs)
+    audit_log_dir=$(dirname "$audit_log_path")
+
+    if [ -d "$audit_log_dir" ]; then
+        while IFS= read -r -d '' file; do
+            owner=$(stat -Lc '%U' "$file")
+            fail_output+="\n - File: \"$file\" is owned by user: \"$owner\" (should be owned by: \"root\")"
+        done < <(find "$audit_log_dir" -maxdepth 1 -type f ! -user root -print0)
+
+        if [ -z "$fail_output" ]; then
+            echo -e "\n** PASS **\n - All files in \"$audit_log_dir\" are owned by user: \"root\""
+        else
+            echo -e "\n** FAIL **$fail_output"
+        fi
+    else
+        echo -e "\n** FAIL **\n - Log file directory \"$audit_log_dir\" not found or not set in \"$audit_conf\""
+    fi
+else
+    echo -e "\n** FAIL **\n - File \"$audit_conf\" not found\n - Verify auditd is installed."
+fi
+}
+
+""""

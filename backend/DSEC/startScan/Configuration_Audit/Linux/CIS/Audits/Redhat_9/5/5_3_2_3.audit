@@ -1,0 +1,29 @@
+audit_id: "5.3.2.3"
+audit_name: "Ensure pam_pwquality module is enabled"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+  files=("/etc/pam.d/password-auth" "/etc/pam.d/system-auth")
+  pattern='password\s+requisite\s+pam_pwquality\.so'
+
+  for file in "${files[@]}"; do
+    if [ ! -f "$file" ]; then
+      l_output2="$l_output2\n - File not found: $file"
+      continue
+    fi
+
+    if grep -Pq "$pattern" "$file"; then
+      l_output="$l_output\n - Found 'password requisite pam_pwquality.so' in $file"
+    else
+      l_output2="$l_output2\n - Missing expected line in $file matching: $pattern"
+    fi
+  done
+
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:$l_output2"
+  fi
+}
+"""

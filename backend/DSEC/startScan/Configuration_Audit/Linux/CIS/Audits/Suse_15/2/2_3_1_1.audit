@@ -1,0 +1,40 @@
+audit_id: "2.3.1.1"
+audit_name: "Ensure a single time synchronization daemon is in use"
+audit_script: """
+{
+    active_enabled_service=()
+    services=("systemd-timesyncd.service" "chrony.service" "chronyd.service")
+
+    # Determine which time synchronization daemon is in use
+    for service in "${services[@]}"; do
+        if systemctl is-enabled "$service" 2>/dev/null | grep -q '^enabled' &&
+           systemctl is-active "$service" 2>/dev/null | grep -q '^active'; then
+            active_enabled_service+=("$service")
+        fi
+    done
+
+    # Display audit results
+    if [ ${#active_enabled_service[@]} -eq 1 ]; then
+        printf '%s\n' "" "Audit Results:" " ** PASS **" \
+            " - A single time synchronization daemon is in use: ${active_enabled_service[0]}"
+    elif [ ${#active_enabled_service[@]} -eq 0 ]; then
+        printf '%s\n' "" "Audit Results:" " ** FAIL **" \
+            " - No time synchronization daemon in use or unable to determine time synchronization daemon status"
+    else
+        printf '%s\n' "" "Audit Results:" " ** FAIL **" \
+            " - Multiple services are in use: ${active_enabled_service[*]}"
+    fi
+}
+""""
+
+depended_audits: "2.3.2.1, 2.3.2.2, 2.3.3.1, 2.3.3.2"
+condition:
+  match: output_regex
+  cases:
+    - value: 'systemd-timesyncd.service'
+      run: ["2.3.2.1", "2.3.2.2"]
+    - value: 'chrony.service'
+      run: ["2.3.3.1", "2.3.3.2"]
+  default:
+    action: skip
+    status: PASS

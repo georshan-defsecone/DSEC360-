@@ -1,0 +1,31 @@
+audit_id: "5.3.2.1.1"
+audit_name: "Ensure password failed attempts lockout is configured"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+# Check for the 'deny' setting in /etc/security/faillock.conf
+deny_val=$(awk -F= '/^\s*deny\s*=/ {
+    gsub(/ /, "", $2); print $2
+}' /etc/security/faillock.conf | head -n1)
+
+# Determine result
+if [[ -z "$deny_val" ]]; then
+    a_output2+=(" - 'deny' is not set in /etc/security/faillock.conf")
+elif ! [[ "$deny_val" =~ ^[0-9]+$ ]]; then
+    a_output2+=(" - 'deny' is set to a non-numeric value: \"$deny_val\"")
+elif [ "$deny_val" -gt 5 ]; then
+    a_output2+=(" - 'deny' is set to \"$deny_val\" which exceeds the maximum of 5")
+else
+    a_output+=(" - 'deny' is correctly set to \"$deny_val\"")
+fi
+
+# Output result
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for audit failure:" "${a_output2[@]}"
+    [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "- Correctly set:" "${a_output[@]}"
+fi
+}
+""""

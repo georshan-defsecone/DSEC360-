@@ -1,0 +1,46 @@
+audit_id: "2.4.1.1"
+audit_name: "Ensure cron daemon is enabled and active"
+audit_script: """
+{
+l_output="" l_output2=""
+l_cron_service=""
+
+# Detect if cron or crond is installed
+if rpm -q cronie > /dev/null 2>&1 || rpm -q vixie-cron > /dev/null 2>&1; then
+    # Check which service file exists: cron.service or crond.service
+    if systemctl list-unit-files | grep -q '^cron\.service'; then
+        l_cron_service="cron.service"
+    elif systemctl list-unit-files | grep -q '^crond\.service'; then
+        l_cron_service="crond.service"
+    fi
+
+    if [ -n "$l_cron_service" ]; then
+        # Check if the service is enabled
+        if [ "$(systemctl list-unit-files | awk -v svc="$l_cron_service" '$1 == svc {print $2}')" = "enabled" ]; then
+            l_output="$l_output\n - $l_cron_service is enabled"
+        else
+            l_output2="$l_output2\n - $l_cron_service is not enabled"
+        fi
+
+        # Check if the service is active
+        if [ "$(systemctl list-units --type=service | awk -v svc="$l_cron_service" '$1 == svc {print $3}')" = "active" ]; then
+            l_output="$l_output\n - $l_cron_service is active"
+        else
+            l_output2="$l_output2\n - $l_cron_service is not active"
+        fi
+    else
+        l_output2="$l_output2\n - Neither cron.service nor crond.service is found"
+    fi
+else
+    l_output=" - Cron is not installed on the system"
+fi
+
+# Report results
+if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:$l_output2\n"
+    [ -n "$l_output" ] && echo -e "\n- Correctly set:$l_output\n"
+fi
+}
+"""

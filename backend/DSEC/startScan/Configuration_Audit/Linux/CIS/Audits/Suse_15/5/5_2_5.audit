@@ -1,0 +1,26 @@
+audit_id: "5.2.5"
+audit_name: "Ensure re-authentication for privilege escalation is not disabled globally"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+# Search for uncommented lines with !authenticate
+unauth_lines=$(grep -rP '^[^#].*!authenticate' /etc/sudoers* 2>/dev/null)
+
+if [[ -n "$unauth_lines" ]]; then
+  a_output2+=(" - The following entries disable sudo authentication:")
+  a_output2+=("$unauth_lines")
+else
+  a_output+=(" - No !authenticate entries found; sudo requires re-authentication")
+fi
+
+# Print audit result
+if [ "${#a_output2[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${a_output[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${a_output2[@]}"
+fi
+}
+""""

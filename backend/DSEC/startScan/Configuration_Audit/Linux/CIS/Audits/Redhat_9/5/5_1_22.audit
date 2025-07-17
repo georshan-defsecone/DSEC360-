@@ -1,0 +1,31 @@
+audit_id: "5.1.22"
+audit_name: "Ensure sshd UsePAM is enabled"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+  l_warning=""
+
+  l_setting="$(sshd -T 2>/dev/null | awk 'tolower($1) == "usepam" {print tolower($2)}')"
+
+  if [ -z "$l_setting" ]; then
+    l_output2=" - UsePAM directive not found"
+  elif [[ "$l_setting" != "yes" ]]; then
+    l_output2=" - UsePAM is set to \"$l_setting\" (should be \"yes\")"
+  else
+    l_output=" - UsePAM is set to \"$l_setting\""
+  fi
+
+  if grep -Piq '^\s*Match\b' /etc/ssh/sshd_config; then
+    l_warning=" - Match blocks detected in sshd_config. They may override UsePAM.\n - To verify for a specific user: sshd -T -C user=<username> | grep -i usepam"
+  fi
+
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+
+  [ -n "$l_warning" ] && echo -e "\n ** WARNING **\n$l_warning"
+}
+"""

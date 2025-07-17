@@ -1,0 +1,31 @@
+audit_id: "5.4.1.5"
+audit_name: "Ensure inactive password lock is configured"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  # Check default INACTIVE from useradd -D
+  default_inactive=$(useradd -D | grep -i 'inactive' | awk -F= '{print $2}')
+
+  if [[ -z "$default_inactive" || "$default_inactive" -lt 0 || "$default_inactive" -gt 45 ]]; then
+    l_output2+=" - Default INACTIVE value is '$default_inactive' (should be between 0 and 45)\n"
+  else
+    l_output+=" - Default INACTIVE value is $default_inactive"
+  fi
+
+  # Check /etc/shadow entries
+  noncompliant_users=$(awk -F: '($2~/^\$.+\$/) {if($7 > 45 || $7 < 0)print "User: " $1 " INACTIVE: " $7}' /etc/shadow)
+
+  if [[ -n "$noncompliant_users" ]]; then
+    l_output2+=" - Found users with invalid INACTIVE values:\n$noncompliant_users"
+  fi
+
+  # Final output
+  if [[ -z "$l_output2" ]]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:\n$l_output2"
+  fi
+}
+"""

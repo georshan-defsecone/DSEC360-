@@ -1,0 +1,37 @@
+audit_id: "2.4.1.1"
+audit_name: "Ensure cron daemon is enabled and active"
+audit_script: """
+{
+cron_bin=$(command -v cron || command -v crond)
+
+if [ -z "$cron_bin" ]; then
+    echo -e "\n- Audit Result:"
+    echo " ** PASS **"
+    echo " - Cron daemon is not installed on the system"
+    exit 0
+fi
+
+service_name=$(systemctl list-unit-files | awk '$1 ~ /^crond?\.service$/ {print $1}' | head -n 1)
+
+if [ -z "$service_name" ]; then
+    echo -e "\n- Audit Result:"
+    echo " ** FAIL **"
+    echo " - Cron is installed but no matching service unit file was found"
+    exit 1
+fi
+
+is_enabled=$(systemctl is-enabled "$service_name" 2>/dev/null)
+is_active=$(systemctl is-active "$service_name" 2>/dev/null)
+
+if [[ "$is_enabled" == "enabled" && "$is_active" == "active" ]]; then
+    echo -e "\n- Audit Result:"
+    echo " ** PASS **"
+    echo " - $service_name is enabled and active as required"
+else
+    echo -e "\n- Audit Result:"
+    echo " ** FAIL **"
+    [ "$is_enabled" != "enabled" ] && echo " - $service_name is not enabled (status: $is_enabled)"
+    [ "$is_active" != "active" ] && echo " - $service_name is not active (status: $is_active)"
+fi
+}
+""""

@@ -1,0 +1,42 @@
+audit_id: "6.3.2.4"
+audit_name: "Ensure system warns when audit logs are low on space"
+audit_script: """
+{
+config_file="/etc/audit/auditd.conf"
+l_output="" l_output2=""
+
+# Check space_left_action (allowed: email, exec, single, halt)
+if grep -Pq '^\h*space_left_action\h*=\h*(email|exec|single|halt)\b' "$config_file"; then
+  value=$(grep -Po '^\h*space_left_action\h*=\h*\S+' "$config_file" | awk -F= '{print $2}' | tr -d ' ')
+  l_output="$l_output\n - space_left_action is set to: \"$value\" (compliant)"
+else
+  actual=$(grep -Po '^\h*space_left_action\h*=\h*\S+' "$config_file" | awk -F= '{print $2}' | tr -d ' ')
+  if [ -n "$actual" ]; then
+    l_output2="$l_output2\n - space_left_action is set to: \"$actual\" but should be one of: email, exec, single, halt"
+  else
+    l_output2="$l_output2\n - space_left_action is not set"
+  fi
+fi
+
+# Check admin_space_left_action (allowed: single, halt)
+if grep -Pq '^\h*admin_space_left_action\h*=\h*(single|halt)\b' "$config_file"; then
+  value=$(grep -Po '^\h*admin_space_left_action\h*=\h*\S+' "$config_file" | awk -F= '{print $2}' | tr -d ' ')
+  l_output="$l_output\n - admin_space_left_action is set to: \"$value\" (compliant)"
+else
+  actual=$(grep -Po '^\h*admin_space_left_action\h*=\h*\S+' "$config_file" | awk -F= '{print $2}' | tr -d ' ')
+  if [ -n "$actual" ]; then
+    l_output2="$l_output2\n - admin_space_left_action is set to: \"$actual\" but should be: single or halt"
+  else
+    l_output2="$l_output2\n - admin_space_left_action is not set"
+  fi
+fi
+
+# Final audit result
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **$l_output\n"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n * Reasons for audit failure * :$l_output2"
+  [ -n "$l_output" ] && echo -e "\n- Correctly configured:\n$l_output\n"
+fi
+}
+""""

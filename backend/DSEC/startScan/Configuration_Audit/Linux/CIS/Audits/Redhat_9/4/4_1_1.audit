@@ -1,0 +1,21 @@
+audit_id: "4.1.1"
+audit_name: "Ensure nftables is installed"
+audit_script: """
+{
+l_output="" l_output2=""
+
+if rpm -q nftables &>/dev/null; then
+  nft_ver=$(rpm -q nftables)
+  l_output="\n - nftables is installed: $nft_ver"
+else
+  l_output2="\n - nftables is NOT installed on the system"
+fi
+
+# Final output
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **$l_output"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **$l_output2"
+fi
+}
+"""

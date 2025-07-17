@@ -1,0 +1,14 @@
+audit_id: "6.2.2.1.1"
+audit_name: "Ensure systemd-journal-remote is installed"
+audit_script: """
+{
+pkg_name="systemd-journal-remote"
+pkg_check=$(rpm -q "$pkg_name" 2>&1)
+
+if [[ "$pkg_check" =~ ^${pkg_name}-[0-9] ]]; then
+  echo -e "\n- Audit Result:\n ** PASS **\n - $pkg_check is installed\n"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **\n - $pkg_name is not installed or not found by rpm\n - rpm output: $pkg_check\n"
+fi
+}
+""""

@@ -1,0 +1,48 @@
+audit_id: "5.3.2.2.3"
+audit_name: "Ensure password length is configured"
+audit_script: """
+{
+a_output=(); a_output2=()
+
+# 1. Check pam-config if available (SUSE)
+if command -v pam-config &>/dev/null; then
+    pam_minlen="$(pam-config --query --cracklib --cracklib-minlen 2>/dev/null | awk -F= '/minlen/ {gsub(/[[:space:]]*/, "", $2); print $2}')"
+    if [[ -n "$pam_minlen" ]]; then
+        if [[ "$pam_minlen" -ge 14 ]]; then
+            a_output+=("pam-config is used: minlen is set to $pam_minlen")
+        else
+            a_output2+=("pam-config is used: minlen is set to $pam_minlen, which is less than 14")
+        fi
+    fi
+fi
+
+# 2. Check pwquality configs (use last matching value for precedence)
+minlen_found=""
+for file in /etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf; do
+    [ -f "$file" ] || continue
+    while IFS= read -r line; do
+        [[ "$line" =~ ^[[:space:]]*minlen[[:space:]]*=[[:space:]]*([0-9]+) ]] || continue
+        val="${BASH_REMATCH[1]}"
+        minlen_found="$val"
+    done < "$file"
+done
+
+if [[ -n "$minlen_found" ]]; then
+    if [[ "$minlen_found" -ge 14 ]]; then
+        a_output+=("pwquality config sets minlen = $minlen_found (valid)")
+    else
+        a_output2+=("pwquality config sets minlen = $minlen_found (should be >= 14)")
+    fi
+elif [[ -z "$pam_minlen" ]]; then
+    a_output2+=("No minlen setting found in pam-config or pwquality configs")
+fi
+
+# Final output
+if [ "${#a_output2[@]}" -eq 0 ]; then
+    printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+else
+    printf '%s\n' "" "- Audit Result:" " ** FAIL **" "- Reason(s) for audit failure:" "${a_output2[@]}"
+    [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "" "- Correctly set:" "${a_output[@]}"
+fi
+}
+""""

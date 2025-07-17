@@ -1,0 +1,71 @@
+audit_id: "6.3.3.2"
+audit_name: "Ensure actions as another user are always logged"
+audit_script: """
+#!/usr/bin/env bash
+{
+l_output=""
+l_output2=""
+
+expected_disk_rule1='-a always,exit -F arch=b64 -C euid!=uid -F auid!=unset -S execve -k user_emulation'
+expected_disk_rule2='-a always,exit -F arch=b32 -C euid!=uid -F auid!=unset -S execve -k user_emulation'
+
+expected_live_rule1='-a always,exit -F arch=b64 -S execve -C uid!=euid -F auid!=-1 -F key=user_emulation'
+expected_live_rule2='-a always,exit -F arch=b32 -S execve -C uid!=euid -F auid!=-1 -F key=user_emulation'
+
+# Normalize a line (collapse whitespace, trim edges)
+normalize_line() {
+  echo "$1" | sed -e 's/  */ /g' -e 's/^ *//' -e 's/ *$//'
+}
+
+# Canonicalized expected rules
+n_disk_rule1=$(normalize_line "$expected_disk_rule1")
+n_disk_rule2=$(normalize_line "$expected_disk_rule2")
+n_live_rule1=$(normalize_line "$expected_live_rule1")
+n_live_rule2=$(normalize_line "$expected_live_rule2")
+
+# On-disk rules
+on_disk_rules=$(awk '
+  /^ *-a *always,exit/ &&
+  / -F *arch=b(32|64)/ &&
+  (/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) &&
+  (/ -C *euid!=uid/ || / -C *uid!=euid/) &&
+  / -S *execve/ &&
+  (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)
+' /etc/audit/rules.d/*.rules 2>/dev/null | sed -e 's/  */ /g' -e 's/^ *//' -e 's/ *$//')
+
+# Loaded rules
+loaded_rules=$(auditctl -l 2>/dev/null | awk '
+  /^ *-a *always,exit/ &&
+  / -F *arch=b(32|64)/ &&
+  (/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) &&
+  (/ -C *euid!=uid/ || / -C *uid!=euid/) &&
+  / -S *execve/ &&
+  (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)
+' | sed -e 's/  */ /g' -e 's/^ *//' -e 's/ *$//')
+
+# Check on-disk
+if echo "$on_disk_rules" | grep --fixed-strings --quiet -- "$n_disk_rule1" &&
+   echo "$on_disk_rules" | grep --fixed-strings --quiet -- "$n_disk_rule2"; then
+  l_output+="\n - On-disk user emulation audit rules are correctly configured"
+else
+  l_output2+="\n - On-disk user emulation audit rules are missing or incorrect"
+fi
+
+# Check loaded
+if echo "$loaded_rules" | grep --fixed-strings --quiet -- "$n_live_rule1" &&
+   echo "$loaded_rules" | grep --fixed-strings --quiet -- "$n_live_rule2"; then
+  l_output+="\n - Loaded user emulation audit rules are correctly active"
+else
+  l_output2+="\n - Loaded user emulation audit rules are missing or incorrect"
+fi
+
+# Final result
+if [ -z "$l_output2" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **$l_output"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **$l_output2"
+  [ -n "$l_output" ] && echo -e "\n - Correctly set:$l_output"
+fi
+}
+
+"""

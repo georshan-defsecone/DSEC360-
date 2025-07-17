@@ -1,0 +1,48 @@
+audit_id: "5.3.3.2.2"
+audit_name: "Ensure password length is configured"
+audit_script: """
+{
+  l_output=""
+  l_output2=""
+
+  # --- CONFIGURATION FILE CHECK ---
+  config_files=(/etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf)
+  found_valid_minlen=false
+  for file in "${config_files[@]}"; do
+    if [ -f "$file" ]; then
+      minlen_line=$(grep -Psi -- '^\h*minlen\h*=\h*(1[4-9]|[2-9][0-9]|[1-9][0-9]{2,})\b' "$file")
+      if [[ -n "$minlen_line" ]]; then
+        l_output="$l_output\n - Valid minlen found in $file: $(echo "$minlen_line" | cut -d: -f2-)"
+        found_valid_minlen=true
+        break  # Stop at first valid config (highest precedence)
+      fi
+    fi
+  done
+
+  if ! $found_valid_minlen; then
+    l_output2="$l_output2\n - No valid minlen setting (>=14) found in pwquality configuration files"
+  fi
+
+  # --- PAM FILE CHECK FOR OVERRIDES ---
+  pam_files=(/etc/pam.d/system-auth /etc/pam.d/password-auth)
+  for file in "${pam_files[@]}"; do
+    if [ -f "$file" ]; then
+      bad_minlen=$(grep -Psi -- '^\h*password\h+(requisite|required|sufficient)\h+pam_pwquality\.so\h+([^#\n\r]+\h+)?minlen\h*=\h*([0-9]|1[0-3])\b' "$file")
+      if [[ -n "$bad_minlen" ]]; then
+        l_output2="$l_output2\n - Invalid minlen override in $file: $(echo "$bad_minlen" | cut -d: -f2-)"
+      else
+        l_output="$l_output\n - No invalid minlen override found in $file"
+      fi
+    else
+      l_output2="$l_output2\n - PAM file not found: $file"
+    fi
+  done
+
+  # --- FINAL OUTPUT ---
+  if [ -z "$l_output2" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n$l_output"
+  else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - Reason for audit failure:$l_output2"
+  fi
+}
+"""

@@ -1,0 +1,56 @@
+audit_id: "2.1.7"
+audit_name: "Ensure ldap server services are not in use"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+pkg_installed=false
+fail=false
+
+# Check if packages are installed
+if rpm -q openldap2 &>/dev/null; then
+    echo "- Package 'openldap2' is installed."
+    pkg_installed=true
+else
+    echo "- Package 'openldap2' is NOT installed."
+fi
+
+if rpm -q openldap2_5 &>/dev/null; then
+    echo "- Package 'openldap2_5' is installed."
+    pkg_installed=true
+else
+    echo "- Package 'openldap2_5' is NOT installed."
+fi
+
+# If any package is installed, check service status
+if $pkg_installed; then
+    is_enabled=$(systemctl is-enabled slapd.service 2>/dev/null | grep 'enabled')
+    is_active=$(systemctl is-active slapd.service 2>/dev/null | grep '^active')
+
+    if [ -n "$is_enabled" ]; then
+        echo "- Service is ENABLED: slapd.service"
+        fail=true
+    else
+        echo "- Service is NOT enabled: slapd.service"
+    fi
+
+    if [ -n "$is_active" ]; then
+        echo "- Service is ACTIVE: slapd.service"
+        fail=true
+    else
+        echo "- Service is NOT active: slapd.service"
+    fi
+
+    if $fail; then
+        echo -e "\n** FAIL **"
+        echo "- openldap2/openldap2_5 is installed and slapd.service is either enabled or active."
+    else
+        echo -e "\n** PASS **"
+        echo "- openldap2/openldap2_5 is installed, but slapd.service is both disabled and inactive."
+    fi
+else
+    echo -e "\n** PASS **"
+    echo "- Neither openldap2 nor openldap2_5 is installed."
+fi
+}
+""""
