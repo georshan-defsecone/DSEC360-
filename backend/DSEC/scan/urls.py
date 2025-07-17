@@ -34,6 +34,7 @@ urlpatterns = [
     path('scans/create-scan/', views.create_scan, name='create_scan'),
     path('scans/scan-result/<str:project_name>/<str:scan_name>/',views.get_scan_result_view,name='scan-result'),
     path("scans/<str:scan_id>/audit/<str:audit_id>/", views.update_scan_result, name="update_audit_status"),
+    path('scans/upload/<str:scan_id>/', views.upload_scan_output, name='upload_scan_output'),
    
 
 ]

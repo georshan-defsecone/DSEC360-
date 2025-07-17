@@ -8,6 +8,7 @@ import ScanPieChart from "@/components/ScanPieChart";
 
 import { Card, CardContent } from "@/components/ui/card";
 import ReactECharts from "echarts-for-react";
+import { UploadCloud } from "lucide-react";
 
 const ProjectScans = () => {
   const { project_id } = useParams();
@@ -16,35 +17,36 @@ const ProjectScans = () => {
   const [scans, setScans] = useState([]);
   const [projectName, setProjectName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
 
   const [scanTypeFilters, setScanTypeFilters] = useState<string[]>([]);
   const [selectedScanTypes, setSelectedScanTypes] = useState<string[]>([]);
 
+  const fetchScans = async () => {
+    try {
+      const response = await api.get(`scans/project/${project_id}/`);
+      setScans(response.data);
+
+      const allTypes = [
+        ...new Set(response.data.map((scan: any) => scan.scan_type)),
+      ];
+      setScanTypeFilters(allTypes);
+      setSelectedScanTypes(allTypes);
+    } catch (err) {
+      console.error("Failed to fetch scans", err);
+    }
+  };
+
+  const fetchProjectName = async () => {
+    try {
+      const response = await api.get(`project/${project_id}/`);
+      setProjectName(response.data.project_name);
+    } catch (err) {
+      console.error("Failed to fetch project name", err);
+    }
+  };
+
   useEffect(() => {
-    const fetchScans = async () => {
-      try {
-        const response = await api.get(`scans/project/${project_id}/`);
-        setScans(response.data);
-
-        const allTypes = [
-          ...new Set(response.data.map((scan: any) => scan.scan_type)),
-        ];
-        setScanTypeFilters(allTypes);
-        setSelectedScanTypes(allTypes);
-      } catch (err) {
-        console.error("Failed to fetch scans", err);
-      }
-    };
-
-    const fetchProjectName = async () => {
-      try {
-        const response = await api.get(`project/${project_id}/`);
-        setProjectName(response.data.project_name);
-      } catch (err) {
-        console.error("Failed to fetch project name", err);
-      }
-    };
-
     fetchProjectName();
     fetchScans();
   }, [project_id]);
@@ -155,6 +157,7 @@ const ProjectScans = () => {
         itemStyle: {
           color: "#4ade80",
         },
+        barWidth: scanBarGraphData.length === 1 ? 20 : "60%", // 👈 Set bar width conditionally
       },
       {
         name: "Failed",
@@ -170,6 +173,7 @@ const ProjectScans = () => {
         itemStyle: {
           color: "#f87171",
         },
+        barWidth: Math.min(40, 100 / scanBarGraphData.length + "%"), // 👈 Match width with the first series
       },
     ],
   };
@@ -211,6 +215,12 @@ const ProjectScans = () => {
         </Header>
 
         <div className="w-full px-6 mt-4 space-y-8">
+          {uploadSuccess && (
+            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded text-sm">
+              {uploadSuccess}
+            </div>
+          )}
+
           <div className="bg-white border border-gray-200 shadow p-4 relative">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
               Scan Results Overview
@@ -248,6 +258,7 @@ const ProjectScans = () => {
                   <h2 className="text-xl font-semibold text-gray-800">
                     Scan List
                   </h2>
+
                   <input
                     type="text"
                     placeholder="Search..."
@@ -336,29 +347,57 @@ const ProjectScans = () => {
                                       <input
                                         type="file"
                                         accept="*"
+                                        id={`file-upload-${scan.scan_id}`}
                                         style={{ display: "none" }}
-                                        id={`file-upload-${scan.id}`}
-                                        onClick={(e) => e.stopPropagation()}
-                                        onChange={(e) => {
+                                        onChange={async (e) => {
                                           e.stopPropagation();
                                           const file = e.target.files?.[0];
-                                          if (file) {
-                                            console.log("Selected file:", file);
-                                            // TODO: upload logic here
+                                          if (!file) return;
+
+                                          const formData = new FormData();
+                                          formData.append("file", file);
+
+                                          try {
+                                            const res = await api.post(
+                                              `/scans/upload/${scan.scan_id}/`,
+                                              formData,
+                                              {
+                                                headers: {
+                                                  "Content-Type":
+                                                    "multipart/form-data",
+                                                },
+                                              }
+                                            );
+
+                                            setUploadSuccess(
+                                              "Scan result uploaded successfully ✅"
+                                            );
+                                            fetchScans();
+                                            setTimeout(
+                                              () => setUploadSuccess(null),
+                                              3000
+                                            );
+                                          } catch (err) {
+                                            console.error(
+                                              "Upload failed:",
+                                              err
+                                            );
                                           }
                                         }}
                                       />
+
                                       <button
-                                        className="text-xs bg-blue-600 cursor-pointer text-white px-2 py-1 rounded hover:bg-blue-700"
+                                        title="Upload Result"
+                                        className="text-blue-600 hover:text-blue-800 cursor-pointer transition-all duration-200"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           const input = document.getElementById(
-                                            `file-upload-${scan.id}`
+                                            `file-upload-${scan.scan_id}`
                                           ) as HTMLInputElement;
                                           input?.click();
                                         }}
                                       >
-                                        Upload
+                                        <UploadCloud className="w-5 h-5" />
                                       </button>
                                     </>
                                   )}

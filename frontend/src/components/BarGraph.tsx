@@ -56,6 +56,7 @@ const BarGraph: React.FC<BarGraphProps> = ({ data }) => {
             radius={0}
             barSize={14}
             isAnimationActive={true}
+            maxBarSize={10}
           >
             {data.map((entry, index) => (
               <Cell

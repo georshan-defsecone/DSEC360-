@@ -39,6 +39,9 @@ import mimetypes
 from django.shortcuts import get_object_or_404
 from startScan.Configuration_Audit.Database.ORACLE import oraclevalidate as oraclevalidator
 
+def sanitize(name):
+    return re.sub(r'\W+', '', name).lower()
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -538,13 +541,10 @@ def sync_excel_with_db_csv(scan) -> str:
 
     return str(excel_file_path)
 
-@csrf_exempt  # Remove if CSRF is handled on frontend
+@csrf_exempt
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def upload_scan_output(request, scan_id):
-    """
-    Uploads a file and saves it in startScan/Projects/<project_name>/<scan_name>/
-    under the backend/DSEC directory (relative to this file).
-    """
     scan = get_object_or_404(Scan, scan_id=scan_id)
     project = scan.project
 
@@ -552,25 +552,58 @@ def upload_scan_output(request, scan_id):
     if not uploaded_file:
         return JsonResponse({"error": "No file uploaded."}, status=400)
 
-    # Manually resolve base_dir: backend/DSEC (adjust according to actual structure)
-    base_dir = Path(__file__).resolve().parent.parent  # Points to backend/DSEC
+    base_dir = Path(__file__).resolve().parent.parent
     target_dir = base_dir / 'startScan' / 'Projects' / project.project_name / scan.scan_name
-
-    # Ensure directory exists
     os.makedirs(target_dir, exist_ok=True)
 
-    # Full file path
     file_path = target_dir / uploaded_file.name
-
-    # Save uploaded file
     with open(file_path, 'wb+') as destination:
         for chunk in uploaded_file.chunks():
             destination.write(chunk)
 
+    if file_path.stat().st_size == 0:
+        return JsonResponse({"error": "Uploaded file is empty."}, status=400)
+
+    try:
+        scan_data = scan.scan_data or {}
+        flavour = scan_data.get('flavour', '')
+        compliance_standard = scan_data.get('complianceSecurityStandard', '')
+
+        safe_flavour = sanitize(flavour)
+        safe_standard = sanitize(compliance_standard)
+        safe_project_name = sanitize(project.project_name)
+        safe_scan_name = sanitize(scan.scan_name)
+
+        dynamic_filename = f"{safe_flavour}_{safe_standard}_{safe_project_name}_{safe_scan_name}.csv"
+        output_report_path = target_dir / dynamic_filename
+
+        if safe_flavour == 'oracle':
+            csv_file_path = base_dir / 'startScan' / 'Configuration_Audit' / 'Database' / 'ORACLE' / 'CIS' / 'Validators' / 'check.csv'
+            if not csv_file_path.exists():
+                return JsonResponse({"error": f"CSV file not found at: {csv_file_path}"}, status=400)
+
+            expected_dict = oraclevalidator.load_csv(csv_file_path)
+            oraclevalidator.validate(file_path, expected_dict, output_report_path)
+
+        else:
+            return JsonResponse({"error": f"Validation for flavour '{flavour}' is not implemented."}, status=400)
+
+        # ✅ Save raw CSV text into scan_result
+        with open(output_report_path, 'r', encoding='utf-8',errors="replace") as f:
+            scan.scan_result = f.read()
+        scan.save()
+
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({"error": f"Validation failed: {str(e)}"}, status=500)
+
     return JsonResponse({
-        "message": "File uploaded successfully.",
-        "file_path": str(file_path)
+        "message": "File uploaded, validated, and scan_result saved as text.",
+        "uploaded_file": str(file_path),
+        "validation_report_csv": str(output_report_path),
+        "validation_report_xlsx": str(output_report_path.with_suffix('.xlsx'))
     }, status=200)
+
 
 
 

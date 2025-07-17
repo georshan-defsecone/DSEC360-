@@ -68,69 +68,131 @@ const ScanPieChart = ({ data }) => {
         Audit Summary
       </h2>
 
-      <div className="relative w-full h-[240px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={chartData}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              outerRadius={75}
-              innerRadius={40}
-              labelLine={false}
-              stroke="#fff"
-              strokeWidth={1}
-              isAnimationActive={true}
-              animationDuration={800}
-              animationEasing="ease-out"
-            >
-              {chartData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={
-                    isPassFail
-                      ? PASS_FAIL_COLORS[entry.name] || "#999"
-                      : COLORS[index % COLORS.length]
-                  }
-                  style={{
-                    filter: "drop-shadow(1px 1px 2px rgba(0,0,0,0.15))",
-                    transition: "transform 0.3s ease",
-                  }}
-                />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-          </PieChart>
-        </ResponsiveContainer>
+      {isPassFail ? (
+        // Horizontal layout for PASS/FAIL
+        <div className="flex items-center justify-center gap-6">
+          <div className="relative w-[180px] h-[180px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={75}
+                  innerRadius={40}
+                  labelLine={false}
+                  stroke="#fff"
+                  strokeWidth={1}
+                  isAnimationActive={true}
+                  animationDuration={800}
+                  animationEasing="ease-out"
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={PASS_FAIL_COLORS[entry.name] || "#999"}
+                      style={{
+                        filter: "drop-shadow(1px 1px 2px rgba(0,0,0,0.15))",
+                        transition: "transform 0.3s ease",
+                      }}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
 
-        {/* Total Scans in the center */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-          <div className="text-lg font-semibold text-gray-700">{total}</div>
-          <div className="text-xs text-gray-500">Total Scans</div>
-        </div>
-      </div>
-
-      {/* Legend with aligned values */}
-      <div className="mt-5 w-full px-6 text-sm text-gray-700">
-        {chartData.map((entry, index) => (
-          <div key={index} className="flex items-center mb-1.5">
-            <div
-              className="w-3 h-3 rounded-full mr-2"
-              style={{
-                backgroundColor: isPassFail
-                  ? PASS_FAIL_COLORS[entry.name] || "#999"
-                  : COLORS[index % COLORS.length],
-              }}
-            />
-            <div className="flex w-full">
-              <span className="w-28 font-medium">{entry.name}</span>
-              <span className="text-gray-600">{entry.value}</span>
+            {/* Total Scans in the center */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+              <div className="text-lg font-semibold text-gray-700">{total}</div>
+              <div className="text-xs text-gray-500">Total</div>
             </div>
           </div>
-        ))}
-      </div>
+
+          {/* Legend to the right */}
+          <div className="text-sm text-gray-700 space-y-2">
+            {chartData.map((entry, index) => (
+              <div key={index} className="flex items-center">
+                <div
+                  className="w-3 h-3 rounded-full mr-2"
+                  style={{
+                    backgroundColor: PASS_FAIL_COLORS[entry.name] || "#999",
+                  }}
+                />
+                <div className="flex gap-3">
+                  <span className="w-16 font-medium">{entry.name}</span>
+                  <span className="text-gray-600">{entry.value}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        // Vertical layout for multiple categories
+        <>
+          <div className="relative w-full h-[240px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={75}
+                  innerRadius={40}
+                  labelLine={false}
+                  stroke="#fff"
+                  strokeWidth={1}
+                  isAnimationActive={true}
+                  animationDuration={800}
+                  animationEasing="ease-out"
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                      style={{
+                        filter: "drop-shadow(1px 1px 2px rgba(0,0,0,0.15))",
+                        transition: "transform 0.3s ease",
+                      }}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+
+            {/* Total Scans in the center */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+              <div className="text-lg font-semibold text-gray-700">{total}</div>
+              <div className="text-xs text-gray-500">Total Scans</div>
+            </div>
+          </div>
+
+          {/* Centered legend below for other types */}
+          <div className="mt-2 flex justify-center w-full text-sm text-gray-700">
+            <div className="space-y-1.5">
+              {chartData.map((entry, index) => (
+                <div key={index} className="flex items-center">
+                  <div
+                    className="w-3 h-3 rounded-full mr-2"
+                    style={{
+                      backgroundColor: COLORS[index % COLORS.length],
+                    }}
+                  />
+                  <div className="flex gap-3">
+                    <span className="w-28 font-medium">{entry.name}</span>
+                    <span className="text-gray-600">{entry.value}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

@@ -436,6 +436,7 @@ const ScanCADatabases = () => {
 
         complianceCategory: formData.complianceCategory,
         complianceSecurityStandard: formData.complianceSecurityStandard,
+        flavour: formData.selectedFlavour,
 
         schedule: formData.schedule,
         scheduleFrequency: formData.scheduleFrequency,
@@ -537,6 +538,7 @@ const ScanCADatabases = () => {
 
           complianceCategory: formData.complianceCategory,
           complianceSecurityStandard: formData.complianceSecurityStandard,
+          flavour: formData.selectedFlavour,
 
           schedule: formData.schedule,
           scheduleFrequency: formData.scheduleFrequency,

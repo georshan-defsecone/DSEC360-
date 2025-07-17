@@ -171,11 +171,7 @@ const ScanResult = () => {
     <div className="flex h-screen text-black pt-24">
       <Sidebar settings={false} scanSettings={false} homeSettings={true} />
       <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
-        <Header
-          title={`Project: ${projectName ?? "Unknown"} / Scan: ${
-            scanName ?? "Unnamed"
-          }`}
-        />
+        <Header title={`${scanName}`} />
 
         {loading ? (
           <p>Loading...</p>
@@ -183,9 +179,10 @@ const ScanResult = () => {
           <p className="text-red-600 mt-4">{error}</p>
         ) : (
           <>
+            {/* Scan Info + Pie Chart */}
             <div className="flex gap-6 mt-8 items-start">
-              <div className="w-1/3">
-                <Card className="p-6 space-y-4 shadow-2xl border border-blue-300 border-l-4 mt-15 rounded-none">
+              <div className="w-[45%]">
+                <Card className="p-6 space-y-4 shadow-2xl border border-blue-300 border-l-4 rounded-none min-h-[280px]">
                   <h3 className="text-lg font-bold text-blue-400">
                     Scan Information
                   </h3>
@@ -235,8 +232,8 @@ const ScanResult = () => {
                 </Card>
               </div>
 
-              <div className="w-2/3">
-                <Card className="p-6 shadow-2xl border border-blue-300 border-l-4 rounded-none">
+              <div className="w-[55%]">
+                <Card className="p-6 shadow-2xl border border-blue-300 border-l-4 rounded-none min-h-[282px] flex items-center justify-center">
                   <ScanPieChart data={summary} />
                 </Card>
               </div>
@@ -256,6 +253,7 @@ const ScanResult = () => {
               </button>
             </div>
 
+            {/* Audit Table */}
             <Card className="w-full mt-2 shadow-lg border border-gray-200 bg-white rounded-none">
               <div className="p-5">
                 <div className="flex justify-between items-center mb-2">
@@ -353,7 +351,7 @@ const ScanResult = () => {
 
                                           const newStatus = rawInput
                                             .trim()
-                                            .toUpperCase(); // Convert to ALL CAPS
+                                            .toUpperCase();
 
                                           try {
                                             await api.put(
@@ -363,7 +361,6 @@ const ScanResult = () => {
                                               }
                                             );
 
-                                            // Update local scan state
                                             const updatedScan = {
                                               ...scanDetails,
                                             };
@@ -374,13 +371,12 @@ const ScanResult = () => {
                                               );
 
                                             if (indexToUpdate !== -1) {
-                                              updatedScan.parsed_scan_result[
+                                              updatedScan.parsed_scan_result[ 
                                                 indexToUpdate
                                               ].Status = newStatus;
                                               setScanDetails(updatedScan);
                                             }
 
-                                            // Recalculate PASS / FAIL counts (optional, based on actual lowercase comparison)
                                             const updatedPassed =
                                               updatedScan.parsed_scan_result.filter(
                                                 (entry: any) =>
