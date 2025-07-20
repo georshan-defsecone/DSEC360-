@@ -4,12 +4,12 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
 from rest_framework.response import Response
 from .models import Project, Scan
-from .serializers import ProjectSerializer, ScanSerializer
+from .serializers import ProjectSerializer, ScanSerializer, ScanVersionSerializer
 #from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import AllowAny
 from django.http import JsonResponse
 import uuid
-from io import BytesIO
+from io import BytesIO,StringIO
 import os
 from pathlib import Path
 import csv
@@ -374,7 +374,6 @@ def post_scan_file(request):
             
     return Response({'error': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_scan_result_view(request, project_name, scan_name):
@@ -391,13 +390,15 @@ def get_scan_result_view(request, project_name, scan_name):
         else:
             scan = Scan.objects.get(scan_name=scan_name, project=project, scan_author=user.username, trash=False)
     except Scan.DoesNotExist:
-        return Response({'error': 'Scan not found'}, status=status.HTTP_404_NOT_FOUND)
-
-    if not scan.scan_result or not scan.scan_result.strip():
-        return Response({'error': 'Scan result is empty or missing.'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'error': 'Scan not found or you do not have permission to view it.'}, status=status.HTTP_404_NOT_FOUND)
 
     serializer = ScanSerializer(scan)
+    
+    # Return the entire serialized scan data, which includes parsed_scan_result
+    # This aligns with the frontend's expectation of `response.data` having `parsed_scan_result`
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 
 
 @api_view(['PUT'])
@@ -424,43 +425,66 @@ def update_scan_result(request, scan_id, audit_id):
 
         scan = get_object_or_404(Scan, scan_id=scan_id)
 
-        # Parse scan_result (CSV stored as text)
-        csv_file = io.StringIO(scan.scan_result)
-        reader = csv.DictReader(csv_file)
-        parsed_result = list(reader)
+        # 1. Get the current latest version data (which is a list of dicts from JSONField)
+        if not scan.scan_result or scan.scan_result_version == 0:
+            return Response({"error": "No scan results available to update."}, status=status.HTTP_404_NOT_FOUND)
 
-        updated = False
-        for entry in parsed_result:
-            if str(entry.get("CIS.NO")) == str(audit_id):
-                entry["Status"] = new_status
-                updated = True
+        latest_version_key = f'v{scan.scan_result_version}'
+        parsed_result_current_version = scan.scan_result.get(latest_version_key)
+
+        # Ensure the retrieved data is a list; handle old CSV string format if encountered
+        if not isinstance(parsed_result_current_version, list):
+            if isinstance(parsed_result_current_version, str):
+                try:
+                    csv_file = StringIO(parsed_result_current_version)
+                    reader = csv.DictReader(csv_file)
+                    parsed_result_current_version = list(reader)
+                    print(f"[DEBUG] Converted old CSV string from DB for version {latest_version_key}")
+                except Exception as e:
+                    print(f"\n🔥 Internal Server Error (Parsing old CSV in PUT): {e}")
+                    traceback.print_exc()
+                    return Response({"error": "Failed to parse existing scan result CSV for update."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            else:
+                print(f"\n🔥 Internal Server Error (Unexpected type in PUT): {type(parsed_result_current_version)}")
+                return Response({"error": f"Unexpected format for current scan result in version {latest_version_key}."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Now, `parsed_result_current_version` is guaranteed to be a list of dictionaries.
+        updated_in_memory = False
+        for entry in parsed_result_current_version:
+            # Check for "CIS.NO" (from CSV) OR "name" (from new JSON format)
+            identifier = entry.get("CIS.NO") or entry.get("name")
+            if str(identifier) == str(audit_id):
+                entry["Status"] = new_status # Update the status in the in-memory list
+                updated_in_memory = True
                 break
 
-        if not updated:
-            return Response({"error": "Audit ID not found in DB scan_result."}, status=404)
+        if not updated_in_memory:
+            return Response({"error": "Audit ID not found in the current scan result version."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Re-dump to CSV text
-        output_csv = io.StringIO()
-        writer = csv.DictWriter(output_csv, fieldnames=reader.fieldnames)
-        writer.writeheader()
-        writer.writerows(parsed_result)
-        scan.scan_result = output_csv.getvalue()
-        scan.save()
+        # 2. Update the JSONField in the model for the *same* version key
+        # We are modifying the content of the existing latest version in place.
+        scan.scan_result[latest_version_key] = parsed_result_current_version
+        
+        # Save the scan instance. No version increment as we are updating in place.
+        scan.save(update_fields=['scan_result']) # Only save the scan_result JSONField
+        print(f"[DEBUG] Scan {scan_id} - Version {latest_version_key} updated in DB.")
 
-        updated_excel_path = sync_excel_with_db_csv(scan)
-
-        # ✅ Update Excel
-        updated_file_path = update_excel_status(scan, audit_id, new_status)
-
+        # 3. Update the corresponding Excel and CSV files on disk to reflect the change
+        # `sync_excel_with_db_csv` now receives the *parsed list of dicts* directly
+        updated_excel_path = sync_excel_with_db_csv(scan, parsed_result_current_version)
+        
         return Response({
             "message": "Audit status updated successfully.",
-            "excel_updated_path": updated_file_path
+            "excel_updated_path": updated_excel_path,
+            # Optionally, you might want to return the updated item or whole scan:
+            # "updated_item": entry 
         })
 
     except Exception as e:
-        print("\n🔥 Internal Server Error:")
+        print("\n🔥 Internal Server Error in update_scan_result:")
         traceback.print_exc()
-        return Response({"error": str(e)}, status=500)
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 def update_excel_status(scan, audit_id: str, new_status: str) -> str:
     """
@@ -507,24 +531,28 @@ def update_excel_status(scan, audit_id: str, new_status: str) -> str:
     return str(excel_file_path)
 
 
-def sync_excel_with_db_csv(scan) -> str:
+def sync_excel_with_db_csv(scan: Scan, parsed_scan_data: list[dict]) -> str:
     """
-    Writes the scan.scan_result (CSV string from DB) to the CSV file on disk,
-    then regenerates the Excel file with updated formatting.
+    Synchronizes the Excel file and its corresponding CSV on disk
+    with the provided parsed scan data (list of dicts) for a specific scan version.
     Returns the Excel file path.
     """
     project_name = scan.project.project_name
     scan_name = scan.scan_name
 
+    # Determine filename with version for both CSV and Excel
+    # The version number comes from scan.scan_result_version (the latest version in DB)
+    version_num = scan.scan_result_version
+    
     compliance_name = scan.scan_data.get("complianceCategory", "").strip().lower().replace(" ", "")
-    compliance_category = scan.scan_data.get("complianceSecurityStandard", "").strip().lower()
+    compliance_standard = scan.scan_data.get("complianceSecurityStandard", "").strip().lower()
 
     # Construct file paths
-    base_dir = Path(__file__).resolve().parent.parent  # Points to backend/DSEC
+    base_dir = Path(__file__).resolve().parent.parent 
     project_dir = base_dir / "startScan" / "Projects" / project_name / scan_name
 
-    csv_file_name = f"{compliance_name}_{compliance_category}_{project_name}_{scan_name}.csv"
-    excel_file_name = f"{compliance_name}_{compliance_category}_{project_name}_{scan_name}.xlsx"
+    csv_file_name = f"{compliance_name}_{compliance_standard}_{project_name}_{scan_name}_v{version_num}.csv"
+    excel_file_name = f"{compliance_name}_{compliance_standard}_{project_name}_{scan_name}_v{version_num}.xlsx"
 
     csv_file_path = project_dir / csv_file_name
     excel_file_path = project_dir / excel_file_name
@@ -532,14 +560,36 @@ def sync_excel_with_db_csv(scan) -> str:
     # ✅ Ensure folder exists
     project_dir.mkdir(parents=True, exist_ok=True)
 
-    # ✅ Write the CSV string from DB to disk
+    # Convert the parsed_scan_data (list of dicts) back to CSV string
+    if not parsed_scan_data: # Handle empty data case
+        csv_text_to_write = ""
+        fieldnames = ["CIS.NO", "Subject", "Description", "Current Settings", "Status", "Remediation"] # Default headers
+    else:
+        # Assuming all dicts in the list have the same keys, take from the first one
+        fieldnames = list(parsed_scan_data[0].keys())
+        output_csv = StringIO()
+        writer = csv.DictWriter(output_csv, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(parsed_scan_data)
+        csv_text_to_write = output_csv.getvalue()
+
+    # ✅ Write the generated CSV string to the .csv file on disk
     with open(csv_file_path, "w", encoding="utf-8") as f:
-        f.write(scan.scan_result)
+        f.write(csv_text_to_write)
+    print(f"[DEBUG] CSV file updated on disk: {csv_file_path}")
 
-    # ✅ Rebuild Excel from new CSV
-    convert_csv_to_excel(str(csv_file_path), str(excel_file_path))
+    # ✅ Rebuild (or update) the Excel file from the CSV file
+    # This ensures consistency between CSV and Excel.
+    convert_csv_to_excel(str(csv_file_path), str(excel_file_path)) # Uses the helper `convert_csv_to_excel`
 
-    return str(excel_file_path)
+    return str(excel_file_path) # Return path to the updated Excel
+
+
+# --- update_excel_status (DEPRECATED or REMOVED/REFACTORED) ---
+# This function is no longer needed as a standalone entry point.
+# Its functionality is now integrated into `sync_excel_with_db_csv`.
+# If you still have calls to this, you should replace them with calls to sync_excel_with_db_csv.
+# For clarity, you should remove this function from your views.py entirely if it's unused.
 
 @csrf_exempt
 @api_view(['POST'])
@@ -612,12 +662,12 @@ def upload_scan_output(request, scan_id):
 @permission_classes([AllowAny])
 def create_scan(request):
     print("entered create scan")
-    data = request.data.copy()
-    print(data)
+    request_data = request.data.copy()
+    print(request_data)
 
-    project_name = data.get("project_name")
-    scan_author = data.get("scan_author", "unknown")
-    scan_name = data.get("scan_name")  
+    project_name = request_data.get("project_name")
+    scan_author = request_data.get("scan_author", "unknown")
+    scan_name = request_data.get("scan_name")
 
     if not project_name:
         return Response({"error": "project_name is required."}, status=status.HTTP_400_BAD_REQUEST)
@@ -634,92 +684,132 @@ def create_scan(request):
         }
     )
 
-    if Scan.objects.filter(scan_name=scan_name, project=project, trash=False).exists():
-        return Response(
-            {"error": f"Scan with name '{scan_name}' already exists in project '{project_name}'."},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    scan_instance = None
+    is_new_scan = False
 
-    data["project"] = project.pk
-    data["scan_id"] = str(uuid.uuid4())
+    existing_scan_query = Scan.objects.filter(scan_name=scan_name, project=project, trash=False)
 
-    serializer = ScanSerializer(data=data)
+    if existing_scan_query.exists():
+        scan_instance = existing_scan_query.first()
+        print(f"Scan with name '{scan_name}' found. Preparing to execute and add a new result version.")
+    else:
+        is_new_scan = True
+        request_data["scan_id"] = str(uuid.uuid4())
+        request_data["project"] = project.pk
+        print(f"Creating new scan with ID: {request_data['scan_id']} (initial version v1 expected).")
 
-    if serializer.is_valid():
-        serializer.save()
+        serializer = ScanSerializer(data=request_data)
+        if serializer.is_valid():
+            scan_instance = serializer.save() # Saves with scan_result_version=0 initially
+        else:
+            print("[!] Serializer Errors for new scan creation:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        scan_data = data.get("scan_data", {})
-        try:
-            result = launch_scan(data)
-            if result is None:
-                print("[!] launch_scan() returned None")
-                return Response({"error": "Scan execution failed"}, status=500)
+    if scan_instance is None:
+        return Response({"error": "Failed to create or retrieve scan instance."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            file_path, output_json_path = result
-            print("[DEBUG] Returned file_path:", file_path)
-            print("[DEBUG] file exists:", os.path.exists(file_path))
-        except Exception as e:
-            print("[!] launch_scan() failed:", e)
-            return Response({"error": "Scan execution failed", "details": str(e)}, status=500)
-
-        category = scan_data.get("category", "").strip().lower()
-        audit_method = scan_data.get("auditMethod", "").strip().lower()
-        scan_instance = Scan.objects.get(scan_id=data["scan_id"])
-
-        if output_json_path and os.path.exists(output_json_path):
-            with open(output_json_path, "r", encoding="utf-8") as f:
-                try:
-                    output_data = json.load(f)
-                    scan_instance.scan_output = output_data
-                    scan_instance.save()
-                except json.JSONDecodeError:
-                    print("[!] Failed to decode output.json")
-
-        if file_path and os.path.exists(file_path):
-            if audit_method == "agent" and category == "linux":
-                version = scan_data.get("complianceCategory", "").strip().replace(" ", "_")
-                filename = f"{version}_audit_script.sh"
-            else:
-                filename = os.path.basename(file_path)
-
-            if audit_method != "agent":
-                print("not agent")
-                with open(file_path, "r", encoding="utf-8", errors="replace") as f:
-                    csv_text = f.read()
-
-                scan_instance.scan_result = csv_text
-
-            # ✅ Set scan status as 'complete'
-            scan_instance.scan_status = "complete"
+    scan_data_for_execution = request_data.get("scan_data", {})
+    
+    file_path = None
+    output_json_path = None
+    try:
+        result = launch_scan(request_data) 
+        if result is None:
+            print("[!] launch_scan() returned None")
+            scan_instance.scan_status = "failed"
             scan_instance.save()
+            return Response({"error": "Scan execution failed"}, status=500)
 
-            if audit_method != "agent":
-                csv_stream = BytesIO(csv_text.encode("utf-8"))
-                return FileResponse(csv_stream, content_type="text/csv")
+        file_path, output_json_path = result
+        print("[DEBUG] Returned file_path:", file_path)
+        print("[DEBUG] file exists:", os.path.exists(file_path))
+    except Exception as e:
+        print("[!] launch_scan() failed:", e)
+        scan_instance.scan_status = "failed"
+        scan_instance.save()
+        return Response({"error": "Scan execution failed", "details": str(e)}, status=500)
 
-            else:
-                mime_type, _ = mimetypes.guess_type(file_path)
-                mime_type = mime_type or "application/octet-stream"
+    if output_json_path and os.path.exists(output_json_path):
+        with open(output_json_path, "r", encoding="utf-8") as f:
+            try:
+                output_data = json.load(f)
+                scan_instance.scan_output = output_data
+            except json.JSONDecodeError:
+                print("[!] Failed to decode output.json")
 
-                return FileResponse(
-                    open(file_path, "rb"),
-                    as_attachment=True,
-                    filename=filename,
-                    content_type=mime_type
-                )
+    scan_result_content_to_store = None
+    response_file = None 
 
-        # ✅ Even if file_path not present, mark status complete
-        scan_instance.scan_status = "complete"
+    if file_path and os.path.exists(file_path):
+        audit_method = scan_data_for_execution.get("auditMethod", "").strip().lower()
+        category = scan_data_for_execution.get("category", "").strip().lower()
+
+        filename = os.path.basename(file_path)
+        
+        if filename.lower().endswith('.csv'):
+            print("Processing scan result (CSV).")
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                csv_text = f.read()
+            
+            try:
+                csv_file = StringIO(csv_text)
+                reader = csv.DictReader(csv_file)
+                scan_result_content_to_store = list(reader)
+            except Exception as e:
+                print(f"[!] Failed to parse CSV from {file_path}: {e}")
+                scan_instance.scan_status = "failed_csv_parse"
+                scan_instance.save()
+                return Response({"error": "Failed to parse scan result as CSV."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            # --- CRITICAL FIX START ---
+            scan_instance.update_scan_result(scan_result_content_to_store) 
+            # update_scan_result internally calls scan_instance.save()
+            # After this, scan_instance's Python object is NOT automatically refreshed with DB values.
+            # We need to re-fetch it to get the latest scan_result_version and scan_result JSONField content.
+            
+            # Re-fetch the scan_instance to get its most updated state from DB
+            scan_instance = Scan.objects.get(pk=scan_instance.pk) # Refresh from DB
+            print(f"[DEBUG_VIEW] Refreshed scan_instance. New version: {scan_instance.scan_result_version}")
+            # --- CRITICAL FIX END ---
+
+            response_file = FileResponse(BytesIO(csv_text.encode("utf-8")), content_type="text/csv")
+            response_file['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        elif audit_method == "agent" and category == "linux":
+            print("Processing agent script file.")
+            filename = f"{scan_data_for_execution.get('complianceCategory', '').strip().replace(' ', '_')}_audit_script.sh"
+            mime_type, _ = mimetypes.guess_type(file_path)
+            mime_type = mime_type or "application/octet-stream"
+            response_file = FileResponse(
+                open(file_path, "rb"),
+                as_attachment=True,
+                filename=filename,
+                content_type=mime_type
+            )
+        else:
+            print(f"[!] Unknown file type or handling for: {file_path}")
+            scan_instance.scan_status = "failed_unknown_file_type"
+            scan_instance.save()
+            return Response({"error": "Unknown scan result file type."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+    else:
+        print("[!] No scan_result file generated or found.")
+        scan_instance.scan_status = "completed_no_result_file"
         scan_instance.save()
 
+
+    if scan_result_content_to_store is None:
+         scan_instance.scan_status = "complete"
+         scan_instance.save()
+
+    # The final serialization must use the refreshed scan_instance
+    if response_file:
+        return response_file
+    else:
         return Response({
-            "message": "Scan created successfully.",
-            "scan": serializer.data
-        }, status=status.HTTP_201_CREATED)
-
-    print("[!] Serializer Errors:", serializer.errors)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+            "message": "Scan initiated and processed successfully.",
+            "scan": ScanSerializer(scan_instance).data # Use the refreshed scan_instance
+        }, status=status.HTTP_201_CREATED if is_new_scan else status.HTTP_200_OK)
 
 
 

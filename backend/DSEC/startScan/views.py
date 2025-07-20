@@ -71,9 +71,16 @@ def database_config_audit(data):
             safe_project_name = project_name
             safe_scan_name = scan_name
 
-            # Construct dynamic filename
-            dynamic_filename = f"{safe_compliance_name}_{safe_standard}_{safe_project_name}_{safe_scan_name}.csv"
+            base_dynamic_filename = f"{safe_compliance_name}_{safe_standard}_{safe_project_name}_{safe_scan_name}"
+            dynamic_filename_extension = ".csv"
+            dynamic_filename = f"{base_dynamic_filename}{dynamic_filename_extension}"
             result_csv = os.path.join(project_folder, dynamic_filename)
+            version = 1
+            while os.path.exists(result_csv):
+                  version += 1
+                  dynamic_filename = f"{base_dynamic_filename}_v{version}{dynamic_filename_extension}"
+                  result_csv = os.path.join(project_folder, dynamic_filename)
+        # --- MODIFICATION END ---
 
             json_output = os.path.join(project_folder, "output.json")
 
