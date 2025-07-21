@@ -42,6 +42,29 @@ def database_config_audit(data):
     normalized_standard = re.sub(r'[\W_]+', '', standard)
     print(f"[DEBUG] normalized_compliance: {normalized_compliance}")
     unchecked_items = scan_data.get("uncheckedComplianceItems", [])
+    project_name = (data.get("project_name") or "unknown_project").strip().replace(" ", "_")
+    scan_name = (data.get("scan_name") or "unknown_scan").strip().replace(" ", "_")
+    safe_compliance_name = normalized_compliance or "unknown_compliance"
+    safe_standard = normalized_standard or "unknown_standard"
+    safe_project_name = project_name
+    safe_scan_name = scan_name
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    project_folder = os.path.join(
+                                base_dir,
+                                "Projects",
+                                project_name,
+                                scan_name
+                            )
+
+    base_dynamic_filename = f"{safe_compliance_name}_{safe_standard}_{safe_project_name}_{safe_scan_name}"
+    dynamic_filename_extension = ".csv"
+    dynamic_filename = f"{base_dynamic_filename}{dynamic_filename_extension}"
+    result_csv = os.path.join(project_folder, dynamic_filename)
+    version = 1
+    while os.path.exists(result_csv):
+            version += 1
+            dynamic_filename = f"{base_dynamic_filename}_v{version}{dynamic_filename_extension}"
+            result_csv = os.path.join(project_folder, dynamic_filename)
 
     if normalized_compliance == "oracle_12c" or normalized_compliance == "oracle12c":
         try:
@@ -71,9 +94,16 @@ def database_config_audit(data):
             safe_project_name = project_name
             safe_scan_name = scan_name
 
-            # Construct dynamic filename
-            dynamic_filename = f"{safe_compliance_name}_{safe_standard}_{safe_project_name}_{safe_scan_name}.csv"
+            base_dynamic_filename = f"{safe_compliance_name}_{safe_standard}_{safe_project_name}_{safe_scan_name}"
+            dynamic_filename_extension = ".csv"
+            dynamic_filename = f"{base_dynamic_filename}{dynamic_filename_extension}"
             result_csv = os.path.join(project_folder, dynamic_filename)
+            version = 1
+            while os.path.exists(result_csv):
+                  version += 1
+                  dynamic_filename = f"{base_dynamic_filename}_v{version}{dynamic_filename_extension}"
+                  result_csv = os.path.join(project_folder, dynamic_filename)
+        # --- MODIFICATION END ---
 
             json_output = os.path.join(project_folder, "output.json")
 
@@ -132,6 +162,8 @@ def database_config_audit(data):
             domain_name = scan_data.get("domain") or ""
             db_access_method = scan_data.get("auditMethod")
             database_name=scan_data.get("database") or 'mysql'
+            project_name = (data.get("project_name") or "unknown_project").strip().replace(" ", "_")
+            scan_name = (data.get("scan_name") or "unknown_scan").strip().replace(" ", "_")
             print(f"[DEBUG] excluded_audit: {excluded_audit}, user_name: {user_name},password:{password_name}, host_name: {host_name}, port_number: {port_number}, domain_name: {domain_name}, db_access_method: {db_access_method}")
             # Check which version of MariaDB to run
 
@@ -141,7 +173,7 @@ def database_config_audit(data):
                 sql_commands = os.path.join(Maria_dir, "CIS", "MariaDB_10_6_cis_query.sql")
                 linux_file = os.path.join(Maria_dir, "CIS", "MariaDB_10_6_linux_commands.sh")
                 try:
-                  remote.mariadb_connection(excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
+                  remote.mariadb_connection(result_csv,excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
                 except SystemExit as e:
                   print(f"Validation caused exit with code: {e.code}")
                 
@@ -152,14 +184,14 @@ def database_config_audit(data):
                     return path_for_script,None
                 if db_access_method == "remoteAccess":
                     path_for_json = os.path.join(Maria_dir, "CIS", "mariaDB_10_6_query_result.json")
-                    path_for_csv= os.path.join(Maria_dir, "CIS", "MariaDB_10_6_report.csv")
+                    path_for_csv= result_csv
                     return path_for_csv,path_for_json
                     
             if normalized_compliance == "mariadb1011":
                 input_csv_path = os.path.join(Maria_dir, "CIS", "Queries", "MariaDB_10_11_query.csv")
                 sql_commands = os.path.join(Maria_dir, "CIS", "MariaDB_10_11_cis_query.sql")
                 linux_file = os.path.join(Maria_dir, "CIS", "MariaDB_10_11_linux_commands.sh")
-                remote.mariadb_connection(excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
+                remote.mariadb_connection(result_csv,excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
                 if db_access_method == "agent":
                     path_for_sql = os.path.join(Maria_dir, "CIS", "MariaDB_10_11_cis_query.sql")
                     path_for_script= download_script(path_for_sql)
@@ -167,7 +199,7 @@ def database_config_audit(data):
                     return path_for_script,None
                 if db_access_method=="remoteAccess":
                     path_for_json = os.path.join(Maria_dir, "CIS", "mariaDB_10_11_query_result.json")
-                    path_for_csv= os.path.join(Maria_dir, "CIS", "MariaDB_10_11_report.csv")
+                    path_for_csv= result_csv
                     return path_for_csv,path_for_json
         except Exception as e:
             print(f"[!] Exception running Oracle audit: {e}")
@@ -193,46 +225,46 @@ def database_config_audit(data):
 
             if normalized_compliance == "microsoftsqlserver2019":
                 print("testing mssql connection for 2019")
-                remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
+                remote.mssql_connection(result_csv,excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
                 if db_access_method == "agent":
                     path_for_sql=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2019_cis_query.sql")
                     path_for_script= download_script(path_for_sql)
                     return path_for_script,None
                 if db_access_method == "remoteAccess":
                     path_for_json=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2019_query_result.json")
-                    path_for_csv=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2019_report_final.csv")
+                    path_for_csv=result_csv
                     return path_for_csv,path_for_json
             elif normalized_compliance == "microsoftsqlserver2017":
-                remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
+                remote.mssql_connection(result_csv,excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
                 if db_access_method == "agent":
                     path_for_sql=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2017_cis_query.sql")
                     path_for_script= download_script(path_for_sql)
                     return path_for_script,None
                 if db_access_method == "remoteAccess":
                     path_for_json=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2017_query_result.json")
-                    path_for_csv=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2017_report_final.csv")
+                    path_for_csv=result_csv
                     return path_for_csv,path_for_json
 
             elif normalized_compliance == "microsoftsqlserver2016":
-                remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
+                remote.mssql_connection(result_csv,excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
                 if db_access_method == "agent":
                     path_for_sql=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2016_cis_query.sql")
                     path_for_script= download_script(path_for_sql)
                     return path_for_script,None
                 if db_access_method == "remoteAccess":
                     path_for_json=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2016_query_result.json")
-                    path_for_csv=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2016_report_final.csv")
+                    path_for_csv=result_csv
                     return path_for_csv,path_for_json
 
             elif normalized_compliance == "microsoftsqlserver2022":
-                remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
+                remote.mssql_connection(result_csv,excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
                 if db_access_method == "agent":
                     path_for_sql=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2022_cis_query.sql")
                     path_for_script= download_script(path_for_sql)
                     return path_for_script,None
                 if db_access_method == "remoteAccess":
                     path_for_json=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2022_query_result.json")
-                    path_for_csv=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2022_report_final.csv")
+                    path_for_csv=result_csv
                     return path_for_csv,path_for_json
 
         except Exception as e:

@@ -76,7 +76,7 @@ def oracle_connection(sql_file, connection_info, output_json_path, result_csv_pa
         print(f"\n❌ Failed to connect or execute SQL: {e}")
 
 
-def mariadb_connection(excluded_audit, user_name, password_name, host_name, port_number,
+def mariadb_connection(result_csv,excluded_audit, user_name, password_name, host_name, port_number,
                       database_name, domain_name, db_access_method,maria_db_csv_path,sql_commands,linux_file,normalized_compliance):
     name=[]
     for i in excluded_audit:
@@ -117,11 +117,11 @@ def mariadb_connection(excluded_audit, user_name, password_name, host_name, port
                 if normalized_compliance== "mariadb106":
                     validate_csv = os.path.join(base_dir,"Configuration_Audit","Database","MARIA", "CIS","Validators","MariaDB_10_6_validate.csv")
                     json_path= os.path.join(base_dir,"Configuration_Audit","Database","MARIA", "CIS", "mariaDB_10_6_query_result.json")  # ⬅️ adjust filename as needed
-                    report_csv = os.path.join(base_dir,"Configuration_Audit","Database","MARIA" ,"CIS","MariaDB_10_6_report.csv")
+                    report_csv = result_csv
                 elif normalized_compliance == "mariadb1011":
                     validate_csv = os.path.join(base_dir,"Configuration_Audit","Database","MARIA", "CIS","Validators","MariaDB_10_11_validate.csv")
                     json_path= os.path.join(base_dir,"Configuration_Audit","Database","MARIA", "CIS", "mariaDB_10_11_query_result.json")
-                    report_csv = os.path.join(base_dir, "Configuration_Audit","Database","MARIA","CIS","MariaDB_10_11_report.csv")
+                    report_csv = result_csv
                      # ⬅️ adjust filename as needed
                 validate.validate_maria_db(json_path, validate_csv, report_csv)
 
@@ -131,7 +131,7 @@ def mariadb_connection(excluded_audit, user_name, password_name, host_name, port
         # Add local execution logic if needed
 
 
-def mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance):
+def mssql_connection(result_csv,excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance):
     if db_access_method == "remoteAccess":
         name=excluded_audit
         if normalized_compliance == "microsoftsqlserver2019":
@@ -190,22 +190,22 @@ def mssql_connection(excluded_audit, user_name, password_name, host_name, port_n
             if normalized_compliance == "microsoftsqlserver2019":
                 output_sql_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"Configuration_Audit","Database","MSSQL", "CIS", "microsoft_sql_server_2019_query_result.json")
                 validate_csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"Configuration_Audit","Database","MSSQL", "CIS","Result_Validators","microsoft_sql_server_2019_validator.csv")
-                output_csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),"Configuration_Audit","Database","MSSQL", "CIS", "microsoft_sql_server_2019_report.csv")
+                output_csv_path = result_csv
                 validate_result.validate_mssql(output_sql_path,validate_csv_path,output_csv_path)
             if normalized_compliance == "microsoftsqlserver2017":
                 output_sql_path =os.path.join(os.path.dirname(os.path.abspath(__file__)),"Configuration_Audit","Database","MSSQL", "CIS", "microsoft_sql_server_2017_query_result.json")
                 validate_csv_path =os.path.join(os.path.dirname(os.path.abspath(__file__)),"Configuration_Audit","Database","MSSQL", "CIS","Result_Validators","microsoft_sql_server_2017_validator.csv")
-                output_csv_path =os.path.join(os.path.dirname(os.path.abspath(__file__)),"Configuration_Audit","Database","MSSQL", "CIS", "microsoft_sql_server_2017_report.csv")
+                output_csv_path =result_csv
                 validate_result.validate_mssql(output_sql_path,validate_csv_path,output_csv_path)
             if normalized_compliance == "microsoftsqlserver2016":       
                 output_sql_path =os.path.join(os.path.dirname(os.path.abspath(__file__)),"Configuration_Audit","Database","MSSQL", "CIS", "microsoft_sql_server_2016_query_result.json")
                 validate_csv_path =os.path.join(os.path.dirname(os.path.abspath(__file__)),"Configuration_Audit","Database","MSSQL", "CIS","Result_Validators","microsoft_sql_server_2016_validator.csv")
-                output_csv_path =os.path.join(os.path.dirname(os.path.abspath(__file__)),"Configuration_Audit","Database","MSSQL", "CIS", "microsoft_sql_server_2016_report.csv")
+                output_csv_path =result_csv
                 validate_result.validate_mssql(output_sql_path,validate_csv_path,output_csv_path)
             if normalized_compliance == "microsoftsqlserver2022":
                 output_sql_path =os.path.join(os.path.dirname(os.path.abspath(__file__)),"Configuration_Audit","Database","MSSQL", "CIS", "microsoft_sql_server_2022_query_result.json")
                 validate_csv_path =os.path.join(os.path.dirname(os.path.abspath(__file__)),"Configuration_Audit","Database","MSSQL", "CIS","Result_Validators","microsoft_sql_server_2022_validator.csv")
-                output_csv_path =os.path.join(os.path.dirname(os.path.abspath(__file__)),"Configuration_Audit","Database","MSSQL", "CIS", "microsoft_sql_server_2022_report.csv")
+                output_csv_path =result_csv
                 validate_result.validate_mssql(output_sql_path,validate_csv_path,output_csv_path)
 
     elif db_access_method == "agent":
