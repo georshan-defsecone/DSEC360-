@@ -27,36 +27,6 @@ SELECT '2_12_Ensure_Only_Approved_Ciphers_are_Used_Automated_' AS Name,
     SELECT JSON_ARRAYAGG(JSON_OBJECT('VARIABLE_NAME', VARIABLE_NAME, 'VARIABLE_VALUE', VARIABLE_VALUE)) FROM (SELECT VARIABLE_NAME, VARIABLE_VALUE FROM information_schema.global_variables WHERE VARIABLE_NAME = 'ssl_cipher') t
   ) AS Result
 UNION ALL
-SELECT '3_1_Ensure_datadir_Has_Appropriate_Permissions_Automated_' AS Name,
-  (
-    SELECT JSON_ARRAYAGG(JSON_OBJECT('VARIABLE_NAME', VARIABLE_NAME, 'VARIABLE_VALUE', VARIABLE_VALUE)) FROM (SELECT VARIABLE_NAME, VARIABLE_VALUE FROM information_schema.global_variables WHERE VARIABLE_NAME = 'datadir') t
-  ) AS Result
-UNION ALL
-SELECT '3_2_Ensure_log_bin_basename_Files_Have_Appropriate_Permissions_Automated_' AS Name,
-  (
-    SELECT JSON_ARRAYAGG(JSON_OBJECT('VARIABLE_NAME', VARIABLE_NAME, 'VARIABLE_VALUE', VARIABLE_VALUE)) FROM (SELECT VARIABLE_NAME, VARIABLE_VALUE FROM information_schema.global_variables WHERE VARIABLE_NAME LIKE 'log_bin_basename') t
-  ) AS Result
-UNION ALL
-SELECT '3_3_Ensure_log_error_Has_Appropriate_Permissions_Automated_' AS Name,
-  (
-    SELECT JSON_ARRAYAGG(JSON_OBJECT('VARIABLE_NAME', VARIABLE_NAME, 'VARIABLE_VALUE', VARIABLE_VALUE)) FROM (SELECT VARIABLE_NAME, VARIABLE_VALUE FROM information_schema.global_variables WHERE VARIABLE_NAME LIKE 'log_error') t
-  ) AS Result
-UNION ALL
-SELECT '3_4_Ensure_slow_query_log_Has_Appropriate_Permissions_Automated_' AS Name,
-  (
-    SELECT JSON_ARRAYAGG(JSON_OBJECT('VARIABLE_NAME', VARIABLE_NAME, 'VARIABLE_VALUE', VARIABLE_VALUE)) FROM (SELECT VARIABLE_NAME, VARIABLE_VALUE FROM information_schema.global_variables WHERE VARIABLE_NAME LIKE 'slow_query_log') t
-  ) AS Result
-UNION ALL
-SELECT '3_5_Ensure_relay_log_basename_Files_Have_Appropriate_Permissions_Automated_' AS Name,
-  (
-    SELECT JSON_ARRAYAGG(JSON_OBJECT('VARIABLE_NAME', VARIABLE_NAME, 'VARIABLE_VALUE', VARIABLE_VALUE)) FROM (SELECT VARIABLE_NAME, VARIABLE_VALUE FROM information_schema.global_variables WHERE VARIABLE_NAME LIKE 'relay_log_basename') t
-  ) AS Result
-UNION ALL
-SELECT '3_8_Ensure_Plugin_Directory_Has_Appropriate_Permissions_Automated_' AS Name,
-  (
-    SELECT JSON_ARRAYAGG(JSON_OBJECT('VARIABLE_NAME', VARIABLE_NAME, 'VARIABLE_VALUE', VARIABLE_VALUE)) FROM (SELECT VARIABLE_NAME, VARIABLE_VALUE FROM information_schema.global_variables WHERE VARIABLE_NAME = 'plugin_dir') t
-  ) AS Result
-UNION ALL
 SELECT '4_6_Ensure_Symbolic_Links_are_Disabled_Automated_' AS Name,
   (
     SELECT JSON_ARRAYAGG(JSON_OBJECT('VARIABLE_NAME', VARIABLE_NAME, 'VARIABLE_VALUE', VARIABLE_VALUE)) FROM (SELECT VARIABLE_NAME, VARIABLE_VALUE FROM information_schema.global_variables WHERE VARIABLE_NAME LIKE 'have_symlink') t
