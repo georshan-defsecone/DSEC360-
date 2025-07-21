@@ -40,6 +40,7 @@ from django.shortcuts import get_object_or_404
 from startScan.Configuration_Audit.Database.ORACLE import oraclevalidate as oraclevalidator
 from startScan.Configuration_Audit.Database.MARIA import validate as mariavalidator
 from startScan.Configuration_Audit.Database.MSSQL import validate_result as mssqlvalidator
+from startScan.Configuration_Audit.Linux import validate as linuxvalidator
 
 def sanitize(name):
     return re.sub(r'\W+', '', name).lower()
@@ -679,6 +680,18 @@ def upload_scan_output(request, scan_id):
 
             mssqlvalidator.validate_mssql(file_path, csv_file_path , output_report_path)
 
+        elif safe_flavour == 'linux':
+            # Construct the path to the Linux metadata CSV file
+            # This path is based on the pattern from your generate.py script
+            csv_metadata_path = base_dir / 'startScan' / 'Configuration_Audit' / 'Linux' / compliance_standard / (compliance_category + '.csv')
+            
+            if not csv_metadata_path.exists():
+                return JsonResponse({"error": f"Linux metadata CSV not found at: {csv_metadata_path}"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Call the Linux validator function
+            # It takes the uploaded file (json/tsv), the metadata file, and the output path
+            linuxvalidator.validateResult(json_path=file_path, csv_path=csv_metadata_path, output_csv_path=output_report_path)
+        
         else:
             return JsonResponse({"error": f"Validation for flavour '{flavour}' is not implemented."}, status=status.HTTP_400_BAD_REQUEST)
 

@@ -274,26 +274,68 @@ def database_config_audit(data):
         print(f"[-] Unsupported compliance type: {normalized_compliance}")
         return None,None
 
+# In views.py
+
 def linux_config_audit(data):
     print("[*] Entered linux_config_audit()")
     from .Configuration_Audit.Linux.generate import ubuntu
     import os
     scan_data = data.get("scan_data", {})
 
+    # Get standard, version, and method
     standard = scan_data.get("complianceSecurityStandard", "CIS").strip()
     version = scan_data.get("complianceCategory", "").strip().replace(" ", "_")
     method = scan_data.get("auditMethod", "remote").strip().lower()
     excluded = scan_data.get("uncheckedComplianceItems", [])
+
+    # Get project and scan names for dynamic paths
+    project_name = (data.get("project_name") or "unknown_project").strip().replace(" ", "_")
+    scan_name = (data.get("scan_name") or "unknown_scan").strip().replace(" ", "_")
     
+    # Define base directory and create dynamic project/scan folder
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    project_folder = os.path.join(base_dir, "Projects", project_name, scan_name)
+    os.makedirs(project_folder, exist_ok=True)
+
+    # --- START of MODIFICATIONS ---
+
+    # Create base names for the files
+    base_script_name = f"combined_{standard}_{version}"
+    base_json_name = f"results_{standard}_{version}"
+    base_csv_name = f"results_{standard}_{version}"
+
+    # Generate initial, non-versioned file paths
+    script_path = os.path.join(project_folder, f"{base_script_name}.sh")
+    json_path = os.path.join(project_folder, f"{base_json_name}.json")
+    csv_path = os.path.join(project_folder, f"{base_csv_name}.csv")
+
+    # Add versioning logic for rescans
+    scan_version = 1
+    # Check if the primary result file (CSV) already exists
+    while os.path.exists(csv_path):
+        scan_version += 1
+        # Create new versioned filenames for all related files
+        versioned_script_name = f"{base_script_name}_v{scan_version}.sh"
+        versioned_json_name = f"{base_json_name}_v{scan_version}.json"
+        versioned_csv_name = f"{base_csv_name}_v{scan_version}.csv"
+        
+        # Update the full paths with the new versioned names
+        script_path = os.path.join(project_folder, versioned_script_name)
+        json_path = os.path.join(project_folder, versioned_json_name)
+        csv_path = os.path.join(project_folder, versioned_csv_name)
+
+    # --- END of MODIFICATIONS ---
+    
+    # SSH connection info
     target = scan_data.get("target", "")
-    port = scan_data.get("port", 22)  # default port for SSH
+    port = scan_data.get("port", 22)
     ip = target
 
     ssh_info = {
         "username": scan_data.get("username"),
         "password": scan_data.get("password"),
         "ip": ip,
-        "port": port,
+        "port": int(port),
     }
 
     try:
@@ -301,31 +343,26 @@ def linux_config_audit(data):
             print("[-] Unsupported audit method for Linux.")
             return None, None
 
+        # Pass the final (potentially versioned) paths to the ubuntu function
         ubuntu(
             standard=standard,
             version=version,
             exclude_audits=excluded,
             method=method,
-            ssh_info=ssh_info if method == "remote" else None
+            ssh_info=ssh_info if method == "remote" else None,
+            output_file=script_path,
+            json_path=json_path,
+            csv_path=csv_path
         )
 
-        # File names
-        script_path = f"./combined_{standard}_{version}.sh"
-        json_path = os.path.join(os.path.dirname(__file__), "results_" + standard + "_" + version + ".json")
-        json_path = os.path.abspath(json_path)
-        csv_path = os.path.join(os.path.dirname(__file__), "Configuration_Audit", "Linux", "results_" + standard + "_" + version + ".csv")
-
-        #  Only validate in remote mode
         if method == "remote":
             return csv_path, json_path if os.path.exists(json_path) else None
 
-        #  For agent mode, just return the script
         return script_path, None
 
     except Exception as e:
         print(f"[!] Linux audit failed: {e}")
         return None, None
-
 
 def windows_config_audit(data):
     print("[*] Entered windows_config_audit()")
