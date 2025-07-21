@@ -147,7 +147,6 @@ def database_config_audit(data):
         except Exception as e:
             print(f"[!] Exception running Oracle audit: {e}")
             return None,None
-
     elif normalized_compliance=="mariadb106" or normalized_compliance=="mariadb1011":
         try:
             print(f"[DEBUG] Running MariaDB audit for compliance: {normalized_compliance}")

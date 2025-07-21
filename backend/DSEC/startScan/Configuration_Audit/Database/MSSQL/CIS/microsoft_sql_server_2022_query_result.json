@@ -1,0 +1,202 @@
+[
+    {
+        "Name": "1.1 Ensure Latest SQL Server Cumulative and Security Updates are Installed (Manual)",
+        "Result": [
+            {
+                "SP_installed": "RTM",
+                "Version": "16.0.1000.6",
+                "ProductUpdate_Level": null,
+                "KB_Number": null
+            }
+        ]
+    },
+    {
+        "Name": "2.1 Ensure 'Ad Hoc Distributed Queries' Server Configuration Option is set to '0' (Automated)",
+        "Result": [
+            {
+                "name": "Ad Hoc Distributed Queries",
+                "value_configured": 0,
+                "value_in_use": 0
+            }
+        ]
+    },
+    {
+        "Name": "2.2 Ensure 'CLR Enabled' Server Configuration Option is set to '0' (Automated)",
+        "Result": [
+            {
+                "name": "clr enabled",
+                "value_configured": 0,
+                "value_in_use": 0
+            }
+        ]
+    },
+    {
+        "Name": "2.3 Ensure 'Cross DB Ownership Chaining' Server Configuration Option is set to '0' (Automated)",
+        "Result": [
+            {
+                "name": "cross db ownership chaining",
+                "value_configured": 0,
+                "value_in_use": 0
+            }
+        ]
+    },
+    {
+        "Name": "2.4 Ensure 'Database Mail XPs' Server Configuration Option is set to '0' (Automated)",
+        "Result": [
+            {
+                "name": "Database Mail XPs",
+                "value_configured": 0,
+                "value_in_use": 0
+            }
+        ]
+    },
+    {
+        "Name": "2.5 Ensure 'Ole Automation Procedures' Server Configuration Option is set to '0' (Automated)",
+        "Result": [
+            {
+                "name": "Ole Automation Procedures",
+                "value_configured": 0,
+                "value_in_use": 0
+            }
+        ]
+    },
+    {
+        "Name": "2.6 Ensure 'Remote Access' Server Configuration Option is set to '0' (Automated)",
+        "Result": [
+            {
+                "name": "remote access",
+                "value_configured": 1,
+                "value_in_use": 1
+            }
+        ]
+    },
+    {
+        "Name": "2.7 Ensure 'Remote Admin Connections' Server Configuration Option is set to '0' (Automated)",
+        "Result": [
+            {
+                "name": "remote admin connections",
+                "value_configured": 0,
+                "value_in_use": 0
+            }
+        ]
+    },
+    {
+        "Name": "2.8 Ensure 'Scan For Startup Procs' Server Configuration Option is set to '0' (Automated)",
+        "Result": [
+            {
+                "name": "scan for startup procs",
+                "value_configured": 0,
+                "value_in_use": 0
+            }
+        ]
+    },
+    {
+        "Name": "2.9 Ensure 'Trustworthy' Database Property is set to 'Off' (Automated)",
+        "Result": null
+    },
+    {
+        "Name": "2.11 Ensure SQL Server is configured to use non-standard ports (Automated)",
+        "Result": [
+            {
+                "Port1433Count": 0
+            }
+        ]
+    },
+    {
+        "Name": "2.13 Ensure the 'sa' Login Account is set to 'Disabled' (Automated)",
+        "Result": null
+    },
+    {
+        "Name": "2.15 Ensure 'AUTO_CLOSE' is set to 'OFF' on contained databases (Automated)",
+        "Result": null
+    },
+    {
+        "Name": "2.16 Ensure no login exists with the name 'sa' (Automated)",
+        "Result": [
+            {
+                "principal_id": 1,
+                "name": "sa"
+            }
+        ]
+    },
+    {
+        "Name": "2.17 Ensure 'clr strict security' Server Configuration Option is set to '1' (Automated)",
+        "Result": [
+            {
+                "name": "clr strict security",
+                "value_configured": 1,
+                "value_in_use": 1
+            }
+        ]
+    },
+    {
+        "Name": "3.1 Ensure 'Server Authentication' Property is set to 'Windows Authentication Mode' (Automated)",
+        "Result": [
+            {
+                "login_mode": 0
+            }
+        ]
+    },
+    {
+        "Name": "3.4 Ensure SQL Authentication is not used in contained databases (Automated)",
+        "Result": null
+    },
+    {
+        "Name": "3.8 Ensure only the default permissions specified by Microsoft are granted to the public server role (Automated)",
+        "Result": null
+    },
+    {
+        "Name": "3.10 Ensure Windows local groups are not SQL Logins (Automated)",
+        "Result": null
+    },
+    {
+        "Name": "4.3 Ensure 'CHECK_POLICY' Option is set to 'ON' for All SQL Authenticated Logins (Automated)",
+        "Result": null
+    },
+    {
+        "Name": "5.2 Ensure 'Default Trace Enabled' Server Configuration Option is set to '1' (Automated)",
+        "Result": [
+            {
+                "name": "default trace enabled",
+                "value_configured": 1,
+                "value_in_use": 1
+            }
+        ]
+    },
+    {
+        "Name": "7.3 Ensure Database Backups are Encrypted (Automated)",
+        "Result": null
+    },
+    {
+        "Name": "7.5 Ensure Databases are Encrypted with TDE (Automated)",
+        "Result": null
+    },
+    {
+        "Name": "3.11 Ensure the public role in the msdb database is not granted access to SQL Agent proxies (Automated)",
+        "Result": null
+    },
+    {
+        "Name": "3.13 Ensure membership in admin roles in MSDB database is limited (Automated)",
+        "Result": [
+            {
+                "Count": 0
+            }
+        ]
+    },
+    {
+        "Name": "2.12 Ensure 'Hide Instance' option is set to 'Yes' for Production SQL Server instances (Automated)",
+        "Result": [
+            {
+                "hideinstance": 0
+            }
+        ]
+    },
+    {
+        "Name": "5.1 Ensure 'Maximum number of error log files' is set to greater than or equal to '12' (Automated)",
+        "Result": [
+            {
+                "NumberOfLogFiles": -1
+            }
+        ]
+    }
+]
