@@ -55,6 +55,8 @@ interface ScanDetailsBackend {
 }
 
 type SortDirection = "none" | string;
+type NotificationType = { type: 'success' | 'error', message: string } | null;
+
 
 const ScanResult = () => {
   const { projectName, scanName } = useParams<{
@@ -71,7 +73,7 @@ const ScanResult = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>("none");
   const [isRescanning, setIsRescanning] = useState(false);
   const [selectedVersionKey, setSelectedVersionKey] = useState<string | null>(null);
-  const [uploadMessage, setUploadMessage] = useState<string | null>(null);
+  const [notificationMessage, setNotificationMessage] = useState<NotificationType>(null); // Renamed from uploadMessage
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingValue, setEditingValue] = useState<string>("");
 
@@ -82,6 +84,16 @@ const ScanResult = () => {
   const [isDragging, setIsDragging] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Effect to clear notification message after a few seconds
+  useEffect(() => {
+    if (notificationMessage) {
+      const timer = setTimeout(() => {
+        setNotificationMessage(null);
+      }, 5000); // Notification disappears after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [notificationMessage]);
 
   const getStatusForItem = useCallback((item: AuditResultItem): string => {
     if (item.status_type === 'script_generated') {
@@ -233,7 +245,7 @@ const ScanResult = () => {
   
   const handleConfirmDownload = useCallback(async () => {
     if (!projectName) {
-      alert("Project name is missing!");
+      alert("Project name is missing!"); // Keeping this alert as it's client-side validation, not part of the primary request
       return;
     }
     try {
@@ -249,7 +261,7 @@ const ScanResult = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Failed to download project excels:", error);
-      alert("Failed to download the file.");
+      alert("Failed to download the file."); // Keeping this alert for now
     } finally {
         setShowDownloadModal(false);
     }
@@ -258,24 +270,22 @@ const ScanResult = () => {
   const handleAgentRescan = useCallback(async () => {
     if (!scanDetails?.scan_id || !fileToUpload) return;
     setIsRescanning(true);
-    setUploadMessage("Uploading file...");
+    setNotificationMessage({ type: 'success', message: "Uploading file..." }); // Initial upload message
     setError("");
     const formData = new FormData();
     formData.append("file", fileToUpload);
     try {
       await api.post(`/scans/upload/${scanDetails.scan_id}/`, formData, { headers: { "Content-Type": "multipart/form-data" } });
-      setUploadMessage("Scan result uploaded successfully ✅");
-      alert("Scan result uploaded successfully!");
+      setNotificationMessage({ type: 'success', message: "Scan result uploaded successfully! ✅" }); // Success message
       await fetchScanData();
     } catch (err: any) {
       const errorMsg = err.response?.data?.error || `Server Error: ${err.response?.status}` || "Network error.";
-      setUploadMessage(`Upload failed: ${errorMsg}`);
+      setNotificationMessage({ type: 'error', message: `Upload failed: ${errorMsg}` }); // Error message
       setError(errorMsg);
     } finally {
       setIsRescanning(false);
       setShowRescanModal(false);
       setFileToUpload(null);
-      setTimeout(() => setUploadMessage(null), 5000);
     }
   }, [scanDetails, fetchScanData, fileToUpload]);
 
@@ -287,11 +297,12 @@ const ScanResult = () => {
       const payload = { project_name: scanDetails.project_name, scan_name: scanDetails.scan_name, scan_author: scanDetails.scan_author, scan_type: scanDetails.scan_type, scan_data: scanDetails.scan_data };
       const response = await api.post('/scans/create-scan/', payload);
       const newVersion = response.data.scan?.scan_result_version;
-      alert(newVersion ? `Rescan initiated! New version created: v${newVersion}` : "Rescan initiated successfully.");
+      setNotificationMessage({ type: 'success', message: newVersion ? `Rescan initiated! New version created: v${newVersion}` : "Rescan initiated successfully." }); // Success message
       await fetchScanData();
     } catch (err: any) {
       const errorMsg = err.response?.data?.error?.detail || err.response?.data?.error || `Server Error: ${err.response?.status}` || "Network error.";
-      setError(`Rescan failed: ${errorMsg}`);
+      setNotificationMessage({ type: 'error', message: `Rescan failed: ${errorMsg}` }); // Error message
+      setError(errorMsg);
     } finally {
       setIsRescanning(false);
       setShowRescanModal(false);
@@ -312,10 +323,10 @@ const ScanResult = () => {
     if (editingIndex === null) return;
     const item = sortedResults[editingIndex];
     const newStatus = editingValue.trim().toUpperCase();
-    if (!newStatus) return alert("Status cannot be empty.");
+    if (!newStatus) return alert("Status cannot be empty."); // Keeping this alert for now
     const isNew = 'name' in item && 'results' in item;
     const id = isNew && item.name ? item.name : item["CIS.NO"];
-    if (!id) return alert("Cannot update item without a valid identifier.");
+    if (!id) return alert("Cannot update item without a valid identifier."); // Keeping this alert for now
     try {
         await api.put(`/scans/${scanDetails?.scan_id}/audit/${id}/`, { status: newStatus });
         const updatedDetails = { ...scanDetails! };
@@ -336,7 +347,7 @@ const ScanResult = () => {
             setSummary({ Passed: passed, Failed: failed });
         }
     } catch (error) {
-        alert("Error updating status.");
+        alert("Error updating status."); // Keeping this alert for now
     } finally {
         handleCancelEdit();
     }
@@ -376,6 +387,14 @@ const ScanResult = () => {
         <div className="flex-1 flex flex-col pr-8 pl-8 ml-64">
           <Header title={`${scanName}`} />
 
+          {/* Notification Message */}
+          {notificationMessage && (
+            <div className={`fixed top-24 right-8 z-50 flex items-center gap-2 px-6 py-3 rounded-lg shadow-lg text-white transition-all duration-300 transform ${notificationMessage.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
+              {notificationMessage.type === "success" ? <CircleCheck size={20} /> : <CircleX size={20} />}
+              <span>{notificationMessage.message}</span>
+            </div>
+          )}
+
           {loading ? <p className="text-center mt-8">Loading...</p> : error ? <p className="text-red-600 mt-4">{error}</p> : (
             <>
               <div className="flex gap-6 mt-8 items-start">
@@ -399,13 +418,12 @@ const ScanResult = () => {
                 </div>
               </div>
               <div className="border-t-2 border-gray-300 my-8" />
-              {uploadMessage && <div className={`mt-4 px-4 py-2 rounded text-sm ${uploadMessage.includes("success") ? "bg-green-100 text-green-700 border border-green-400" : "bg-red-100 text-red-700 border border-red-400"}`}>{uploadMessage}</div>}
               <div className="flex justify-start mb-2 gap-2">
                 <Button onClick={() => setShowDownloadModal(true)} className="flex items-center justify-center w-32 px-4 py-2 bg-black text-white cursor-pointer hover:bg-gray-800 transition rounded-none"><Download size={16} className="mr-2"/> Download</Button>
                 <Button onClick={() => setShowRescanModal(true)} disabled={isRescanning} className="flex items-center justify-center w-32 px-4 py-2 bg-black text-white cursor-pointer hover:bg-gray-800 transition rounded-none disabled:opacity-50 disabled:cursor-not-allowed"><RefreshCw size={16} className="mr-2"/> {isRescanning ? "Rescanning..." : "Rescan"}</Button>
                 {scanDetails?.available_result_versions && scanDetails.available_result_versions.length > 0 && (
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild><Button variant="outline" className="px-4 py-2 bg-gray-100 text-black hover:bg-gray-200 transition rounded-none"><span>Version: {selectedVersionKey ? selectedVersionKey.substring(1) : 'Latest'}</span></Button></DropdownMenuTrigger>
+                    <DropdownMenuTrigger asChild><Button variant="outline" className="px-4 py-2 bg-gray-100 text-black hover:bg-gray-200 transition rounded-none cursor-pointer"><span>Version: {selectedVersionKey ? selectedVersionKey.substring(1) : 'Latest'}</span></Button></DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-40">
                       {scanDetails.available_result_versions.map((versionKey) => <DropdownMenuItem key={versionKey} onClick={() => handleVersionChange(versionKey)} className={selectedVersionKey === versionKey ? "bg-blue-100 text-blue-700 font-semibold" : ""}>Version {versionKey.substring(1)} {versionKey === `v${scanDetails.scan_result_version}` && "(Latest)"}</DropdownMenuItem>)}
                     </DropdownMenuContent>
@@ -497,4 +515,3 @@ const ScanResult = () => {
 };
 
 export default ScanResult;
-
