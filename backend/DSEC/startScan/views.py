@@ -42,6 +42,29 @@ def database_config_audit(data):
     normalized_standard = re.sub(r'[\W_]+', '', standard)
     print(f"[DEBUG] normalized_compliance: {normalized_compliance}")
     unchecked_items = scan_data.get("uncheckedComplianceItems", [])
+    project_name = (data.get("project_name") or "unknown_project").strip().replace(" ", "_")
+    scan_name = (data.get("scan_name") or "unknown_scan").strip().replace(" ", "_")
+    safe_compliance_name = normalized_compliance or "unknown_compliance"
+    safe_standard = normalized_standard or "unknown_standard"
+    safe_project_name = project_name
+    safe_scan_name = scan_name
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    project_folder = os.path.join(
+                                base_dir,
+                                "Projects",
+                                project_name,
+                                scan_name
+                            )
+
+    base_dynamic_filename = f"{safe_compliance_name}_{safe_standard}_{safe_project_name}_{safe_scan_name}"
+    dynamic_filename_extension = ".csv"
+    dynamic_filename = f"{base_dynamic_filename}{dynamic_filename_extension}"
+    result_csv = os.path.join(project_folder, dynamic_filename)
+    version = 1
+    while os.path.exists(result_csv):
+            version += 1
+            dynamic_filename = f"{base_dynamic_filename}_v{version}{dynamic_filename_extension}"
+            result_csv = os.path.join(project_folder, dynamic_filename)
 
     if normalized_compliance == "oracle_12c" or normalized_compliance == "oracle12c":
         try:
@@ -71,9 +94,16 @@ def database_config_audit(data):
             safe_project_name = project_name
             safe_scan_name = scan_name
 
-            # Construct dynamic filename
-            dynamic_filename = f"{safe_compliance_name}_{safe_standard}_{safe_project_name}_{safe_scan_name}.csv"
+            base_dynamic_filename = f"{safe_compliance_name}_{safe_standard}_{safe_project_name}_{safe_scan_name}"
+            dynamic_filename_extension = ".csv"
+            dynamic_filename = f"{base_dynamic_filename}{dynamic_filename_extension}"
             result_csv = os.path.join(project_folder, dynamic_filename)
+            version = 1
+            while os.path.exists(result_csv):
+                  version += 1
+                  dynamic_filename = f"{base_dynamic_filename}_v{version}{dynamic_filename_extension}"
+                  result_csv = os.path.join(project_folder, dynamic_filename)
+        # --- MODIFICATION END ---
 
             json_output = os.path.join(project_folder, "output.json")
 
@@ -132,6 +162,8 @@ def database_config_audit(data):
             domain_name = scan_data.get("domain") or ""
             db_access_method = scan_data.get("auditMethod")
             database_name=scan_data.get("database") or 'mysql'
+            project_name = (data.get("project_name") or "unknown_project").strip().replace(" ", "_")
+            scan_name = (data.get("scan_name") or "unknown_scan").strip().replace(" ", "_")
             print(f"[DEBUG] excluded_audit: {excluded_audit}, user_name: {user_name},password:{password_name}, host_name: {host_name}, port_number: {port_number}, domain_name: {domain_name}, db_access_method: {db_access_method}")
             # Check which version of MariaDB to run
 
@@ -141,7 +173,7 @@ def database_config_audit(data):
                 sql_commands = os.path.join(Maria_dir, "CIS", "MariaDB_10_6_cis_query.sql")
                 linux_file = os.path.join(Maria_dir, "CIS", "MariaDB_10_6_linux_commands.sh")
                 try:
-                  remote.mariadb_connection(excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
+                  remote.mariadb_connection(result_csv,excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
                 except SystemExit as e:
                   print(f"Validation caused exit with code: {e.code}")
                 
@@ -152,14 +184,14 @@ def database_config_audit(data):
                     return path_for_script,None
                 if db_access_method == "remoteAccess":
                     path_for_json = os.path.join(Maria_dir, "CIS", "mariaDB_10_6_query_result.json")
-                    path_for_csv= os.path.join(Maria_dir, "CIS", "MariaDB_10_6_report.csv")
+                    path_for_csv= result_csv
                     return path_for_csv,path_for_json
                     
             if normalized_compliance == "mariadb1011":
                 input_csv_path = os.path.join(Maria_dir, "CIS", "Queries", "MariaDB_10_11_query.csv")
                 sql_commands = os.path.join(Maria_dir, "CIS", "MariaDB_10_11_cis_query.sql")
                 linux_file = os.path.join(Maria_dir, "CIS", "MariaDB_10_11_linux_commands.sh")
-                remote.mariadb_connection(excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
+                remote.mariadb_connection(result_csv,excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
                 if db_access_method == "agent":
                     path_for_sql = os.path.join(Maria_dir, "CIS", "MariaDB_10_11_cis_query.sql")
                     path_for_script= download_script(path_for_sql)
@@ -167,7 +199,7 @@ def database_config_audit(data):
                     return path_for_script,None
                 if db_access_method=="remoteAccess":
                     path_for_json = os.path.join(Maria_dir, "CIS", "mariaDB_10_11_query_result.json")
-                    path_for_csv= os.path.join(Maria_dir, "CIS", "MariaDB_10_11_report.csv")
+                    path_for_csv= result_csv
                     return path_for_csv,path_for_json
         except Exception as e:
             print(f"[!] Exception running Oracle audit: {e}")
@@ -193,46 +225,46 @@ def database_config_audit(data):
 
             if normalized_compliance == "microsoftsqlserver2019":
                 print("testing mssql connection for 2019")
-                remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
+                remote.mssql_connection(result_csv,excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
                 if db_access_method == "agent":
                     path_for_sql=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2019_cis_query.sql")
                     path_for_script= download_script(path_for_sql)
                     return path_for_script,None
                 if db_access_method == "remoteAccess":
                     path_for_json=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2019_query_result.json")
-                    path_for_csv=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2019_report_final.csv")
+                    path_for_csv=result_csv
                     return path_for_csv,path_for_json
             elif normalized_compliance == "microsoftsqlserver2017":
-                remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
+                remote.mssql_connection(result_csv,excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
                 if db_access_method == "agent":
                     path_for_sql=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2017_cis_query.sql")
                     path_for_script= download_script(path_for_sql)
                     return path_for_script,None
                 if db_access_method == "remoteAccess":
                     path_for_json=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2017_query_result.json")
-                    path_for_csv=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2017_report_final.csv")
+                    path_for_csv=result_csv
                     return path_for_csv,path_for_json
 
             elif normalized_compliance == "microsoftsqlserver2016":
-                remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
+                remote.mssql_connection(result_csv,excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
                 if db_access_method == "agent":
                     path_for_sql=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2016_cis_query.sql")
                     path_for_script= download_script(path_for_sql)
                     return path_for_script,None
                 if db_access_method == "remoteAccess":
                     path_for_json=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2016_query_result.json")
-                    path_for_csv=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2016_report_final.csv")
+                    path_for_csv=result_csv
                     return path_for_csv,path_for_json
 
             elif normalized_compliance == "microsoftsqlserver2022":
-                remote.mssql_connection(excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
+                remote.mssql_connection(result_csv,excluded_audit, user_name, password_name, host_name, port_number, database_name, domain_name, db_access_method, normalized_compliance)
                 if db_access_method == "agent":
                     path_for_sql=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2022_cis_query.sql")
                     path_for_script= download_script(path_for_sql)
                     return path_for_script,None
                 if db_access_method == "remoteAccess":
                     path_for_json=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2022_query_result.json")
-                    path_for_csv=os.path.join(mssql_dir,"CIS","microsoft_sql_server_2022_report_final.csv")
+                    path_for_csv=result_csv
                     return path_for_csv,path_for_json
 
         except Exception as e:
@@ -242,26 +274,68 @@ def database_config_audit(data):
         print(f"[-] Unsupported compliance type: {normalized_compliance}")
         return None,None
 
+# In views.py
+
 def linux_config_audit(data):
     print("[*] Entered linux_config_audit()")
     from .Configuration_Audit.Linux.generate import ubuntu
     import os
     scan_data = data.get("scan_data", {})
 
+    # Get standard, version, and method
     standard = scan_data.get("complianceSecurityStandard", "CIS").strip()
     version = scan_data.get("complianceCategory", "").strip().replace(" ", "_")
     method = scan_data.get("auditMethod", "remote").strip().lower()
     excluded = scan_data.get("uncheckedComplianceItems", [])
+
+    # Get project and scan names for dynamic paths
+    project_name = (data.get("project_name") or "unknown_project").strip().replace(" ", "_")
+    scan_name = (data.get("scan_name") or "unknown_scan").strip().replace(" ", "_")
     
+    # Define base directory and create dynamic project/scan folder
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    project_folder = os.path.join(base_dir, "Projects", project_name, scan_name)
+    os.makedirs(project_folder, exist_ok=True)
+
+    # --- START of MODIFICATIONS ---
+
+    # Create base names for the files
+    base_script_name = f"combined_{standard}_{version}"
+    base_json_name = f"results_{standard}_{version}"
+    base_csv_name = f"results_{standard}_{version}"
+
+    # Generate initial, non-versioned file paths
+    script_path = os.path.join(project_folder, f"{base_script_name}.sh")
+    json_path = os.path.join(project_folder, f"{base_json_name}.json")
+    csv_path = os.path.join(project_folder, f"{base_csv_name}.csv")
+
+    # Add versioning logic for rescans
+    scan_version = 1
+    # Check if the primary result file (CSV) already exists
+    while os.path.exists(csv_path):
+        scan_version += 1
+        # Create new versioned filenames for all related files
+        versioned_script_name = f"{base_script_name}_v{scan_version}.sh"
+        versioned_json_name = f"{base_json_name}_v{scan_version}.json"
+        versioned_csv_name = f"{base_csv_name}_v{scan_version}.csv"
+        
+        # Update the full paths with the new versioned names
+        script_path = os.path.join(project_folder, versioned_script_name)
+        json_path = os.path.join(project_folder, versioned_json_name)
+        csv_path = os.path.join(project_folder, versioned_csv_name)
+
+    # --- END of MODIFICATIONS ---
+    
+    # SSH connection info
     target = scan_data.get("target", "")
-    port = scan_data.get("port", 22)  # default port for SSH
+    port = scan_data.get("port", 22)
     ip = target
 
     ssh_info = {
         "username": scan_data.get("username"),
         "password": scan_data.get("password"),
         "ip": ip,
-        "port": port,
+        "port": int(port),
     }
 
     try:
@@ -269,31 +343,26 @@ def linux_config_audit(data):
             print("[-] Unsupported audit method for Linux.")
             return None, None
 
+        # Pass the final (potentially versioned) paths to the ubuntu function
         ubuntu(
             standard=standard,
             version=version,
             exclude_audits=excluded,
             method=method,
-            ssh_info=ssh_info if method == "remote" else None
+            ssh_info=ssh_info if method == "remote" else None,
+            output_file=script_path,
+            json_path=json_path,
+            csv_path=csv_path
         )
 
-        # File names
-        script_path = f"./combined_{standard}_{version}.sh"
-        json_path = os.path.join(os.path.dirname(__file__), "results_" + standard + "_" + version + ".json")
-        json_path = os.path.abspath(json_path)
-        csv_path = os.path.join(os.path.dirname(__file__), "Configuration_Audit", "Linux", "results_" + standard + "_" + version + ".csv")
-
-        #  Only validate in remote mode
         if method == "remote":
             return csv_path, json_path if os.path.exists(json_path) else None
 
-        #  For agent mode, just return the script
         return script_path, None
 
     except Exception as e:
         print(f"[!] Linux audit failed: {e}")
         return None, None
-
 
 def windows_config_audit(data):
     print("[*] Entered windows_config_audit()")

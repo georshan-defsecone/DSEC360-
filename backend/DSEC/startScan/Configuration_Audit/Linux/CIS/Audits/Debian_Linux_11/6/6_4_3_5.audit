@@ -1,0 +1,94 @@
+audit_id: "6.4.3.5"
+audit_name: "Ensure events that modify the system's network environment are collected"
+audit_script: """
+{
+failures=()
+
+# Expected audit rules
+expected_rules=(
+  "-a always,exit -F arch=b64 -S sethostname,setdomainname -k system-locale"
+  "-a always,exit -F arch=b32 -S sethostname,setdomainname -k system-locale"
+  "-w /etc/issue -p wa -k system-locale"
+  "-w /etc/issue.net -p wa -k system-locale"
+  "-w /etc/hosts -p wa -k system-locale"
+  "-w /etc/networks -p wa -k system-locale"
+  "-w /etc/network -p wa -k system-locale"
+  "-w /etc/netplan -p wa -k system-locale"
+)
+
+# Normalize rule for reliable matching
+normalize_rule() {
+  echo "$1" |
+    sed -E 's/\s+/ /g' |
+    sed -E 's/-F key=/-k /; s/-F a0=0x0/-a0=0x0/' |
+    tr -s ' ' | tr '[:upper:]' '[:lower:]'
+}
+
+# Compare expected vs actual rule sets
+check_rules() {
+  local type="$1"
+  local rule_dump
+
+  if [[ "$type" == "disk" ]]; then
+    rule_dump=$(awk '
+      /^ *-a *always,exit/ && / -F *arch=b(32|64)/ && / -S/ &&
+      (/sethostname/ || /setdomainname/) && (/ key=| -k /)
+    ' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+    rule_dump+=$'\n'
+    rule_dump+=$(awk '
+      /^ *-w/ && (/\/etc\/issue/ || /\/etc\/issue.net/ || /\/etc\/hosts/ ||
+      /\/etc\/network/ || /\/etc\/netplan/ || /\/etc\/networks/) &&
+      / +-p *wa/ && (/ key=| -k /)
+    ' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+  else
+    rule_dump=$(auditctl -l 2>/dev/null | awk '
+      /^ *-a *always,exit/ && / -F *arch=b(32|64)/ && / -S/ &&
+      (/sethostname/ || /setdomainname/) && (/ key=| -k /)
+    ')
+
+    rule_dump+=$'\n'
+    rule_dump+=$(auditctl -l 2>/dev/null | awk '
+      /^ *-w/ && (/\/etc\/issue/ || /\/etc\/issue.net/ || /\/etc\/hosts/ ||
+      /\/etc\/network/ || /\/etc\/netplan/ || /\/etc\/networks/) &&
+      / +-p *wa/ && (/ key=| -k /)
+    ')
+  fi
+
+  for expected in "${expected_rules[@]}"; do
+    found=0
+    norm_expected=$(normalize_rule "$expected")
+    while read -r line; do
+      [[ -z "$line" ]] && continue
+      norm_line=$(normalize_rule "$line")
+      if [[ "$norm_line" == *"$norm_expected"* ]]; then
+        found=1
+        break
+      fi
+    done <<< "$rule_dump"
+
+    if [ "$found" -eq 0 ]; then
+      source_label="On-disk"
+      [ "$type" = "live" ] && source_label="Active"
+      failures+=(" - $source_label audit rule missing or incorrect: $expected")
+    fi
+  done
+}
+
+# Perform both checks
+check_rules disk
+check_rules live
+
+# Final report
+if [ "${#failures[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  echo " - All system locale audit rules are correctly configured."
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  echo " - Reason(s) for audit failure:"
+  printf '%s\n' "${failures[@]}"
+fi
+}
+
+"""

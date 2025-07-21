@@ -1,0 +1,37 @@
+audit_id: "1.6.5"
+audit_name: "Ensure access to /etc/issue is configured"
+audit_script: """
+{
+# If /etc/issue doesn't exist, that's acceptable (PASS)
+[ ! -e /etc/issue ] && {
+    echo "** PASS ** /etc/issue does not exist"
+    exit 0
+}
+
+# Get permission, UID, and GID info
+output=$(stat -Lc 'Access: (%#a/%A) Uid: (%u/%U) Gid: (%g/%G)' /etc/issue 2>/dev/null)
+
+# Extract numeric permission, UID, and GID
+perm=$(stat -Lc '%a' /etc/issue)
+uid=$(stat -Lc '%u' /etc/issue)
+gid=$(stat -Lc '%g' /etc/issue)
+
+# Check if permissions are 644 or more restrictive
+if [ "$perm" -gt 644 ]; then
+    echo "** FAIL ** /etc/issue has permissions that are too permissive: $perm"
+    echo "$output"
+    exit 1
+fi
+
+# Check ownership
+if [ "$uid" -ne 0 ] || [ "$gid" -ne 0 ]; then
+    echo "** FAIL ** /etc/issue is not owned by root:root"
+    echo "$output"
+    exit 1
+fi
+
+# All checks passed
+echo "** PASS ** /etc/issue has correct permissions and ownership"
+echo "$output"
+}
+"""

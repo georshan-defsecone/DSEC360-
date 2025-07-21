@@ -1,0 +1,39 @@
+audit_id: "5.3.3.2.7"
+audit_name: "Ensure password quality checking is enforced"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# --- 1. Check pwquality configuration files for enforcing=0 ---
+config_files=(/etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf)
+
+for file in "${config_files[@]}"; do
+    [ -f "$file" ] || continue
+    if grep -PHsiq '^\s*enforcing\s*=\s*0\b' "$file"; then
+        failures+=(" - enforcing=0 found in $file (password quality enforcement disabled)")
+    fi
+done
+
+# --- 2. Check pam_pwquality.so for enforcing=0 ---
+pam_file="/etc/pam.d/common-password"
+if [ -f "$pam_file" ]; then
+    if grep -PHsiq '^\s*password\s+[^#\n\r]+\s+pam_pwquality\.so\s+[^#\n\r]*\benforcing=0\b' "$pam_file"; then
+        failures+=(" - pam_pwquality.so in $pam_file sets enforcing=0 (soft enforcement enabled)")
+    fi
+fi
+
+# --- Final Output ---
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - enforcing is not set to 0 anywhere (password enforcement is active)"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

@@ -1,0 +1,20 @@
+audit_id: "1.7.1"
+audit_name: "Ensure GDM login banner is configured"
+audit_script: """
+{
+# Run dpkg-query for gdm3
+output=$(dpkg-query -W -f='${binary:Package}\\t${Status}\\t${db:Status-Status}\\n' gdm3 2>&1)
+
+# Expected output when not installed
+expected_output="gdm3\tunknown ok not-installed\tnot-installed"
+
+# Compare output
+if echo "$output" | grep -q "^$expected_output\$"; then
+    echo "** PASS ** gdm3 is not installed"
+else
+    echo "** FAIL ** gdm3 appears to be installed or partially installed"
+    echo "$output"
+    exit 1
+fi
+}
+"""

@@ -1,0 +1,32 @@
+audit_id: "5.3.3.3.2"
+audit_name: "Ensure password history is enforced for the root user"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+pam_file="/etc/pam.d/common-password"
+
+if [ -f "$pam_file" ]; then
+    # Search for enforce_for_root on a line with pam_pwhistory.so
+    if grep -Psiq '^\s*password\s+[^#\n\r]+\s+pam_pwhistory\.so\s+[^#\n\r]*\benforce_for_root\b' "$pam_file"; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - enforce_for_root is present on pam_pwhistory.so line"
+        echo "- End List"
+    else
+        failures+=(" - pam_pwhistory.so does not include enforce_for_root in $pam_file")
+    fi
+else
+    failures+=(" - $pam_file not found")
+fi
+
+# If there were any failures, print them
+if [ "${#failures[@]}" -gt 0 ]; then
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

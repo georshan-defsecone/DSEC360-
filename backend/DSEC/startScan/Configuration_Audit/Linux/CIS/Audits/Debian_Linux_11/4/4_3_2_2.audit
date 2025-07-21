@@ -1,0 +1,31 @@
+audit_id: "4.3.2.2"
+audit_name: "Ensure iptables loopback traffic is configured"
+audit_script: """
+{
+
+failures=()
+
+# Check for INPUT rule: ACCEPT all on lo
+if ! iptables -L INPUT -v -n | grep -qE '\bACCEPT\b.*\blo\b.*0\.0\.0\.0/0\s+0\.0\.0\.0/0'; then
+    failures+=(" - Missing: ACCEPT all traffic on loopback interface (INPUT chain)")
+fi
+
+# Check for INPUT rule: DROP all traffic to 127.0.0.0/8
+if ! iptables -L INPUT -v -n | grep -qE '\bDROP\b.*127\.0\.0\.0/8\s+0\.0\.0\.0/0'; then
+    failures+=(" - Missing: DROP traffic to 127.0.0.0/8 on non-loopback interfaces (INPUT chain)")
+fi
+
+# Check for OUTPUT rule: ACCEPT all traffic from lo
+if ! iptables -L OUTPUT -v -n | grep -qE '\bACCEPT\b.*\blo\b.*0\.0\.0\.0/0\s+0\.0\.0\.0/0'; then
+    failures+=(" - Missing: ACCEPT all traffic from loopback interface (OUTPUT chain)")
+fi
+
+if [ ${#failures[@]} -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n - Loopback traffic is properly configured in iptables\n- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+}
+"""

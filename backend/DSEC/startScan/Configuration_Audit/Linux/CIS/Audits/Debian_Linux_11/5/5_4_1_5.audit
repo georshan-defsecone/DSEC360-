@@ -1,0 +1,39 @@
+audit_id: "5.4.1.5"
+audit_name: "Ensure inactive password lock is configured"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# Step 1: Check system default INACTIVE setting
+default_inactive=$(useradd -D | grep -i 'INACTIVE' | awk -F= '{print $2}')
+
+if [ -z "$default_inactive" ]; then
+    failures+=(" - INACTIVE not set in useradd defaults")
+elif [ "$default_inactive" -gt 45 ]; then
+    failures+=(" - Default INACTIVE is $default_inactive (must be ≤ 45)")
+fi
+
+# Step 2: Check each real user’s INACTIVE field in /etc/shadow
+while IFS=: read -r user pass _ _ _ _ inactive _; do
+    if [[ "$pass" =~ ^\$.*\$ ]]; then
+        if [ -z "$inactive" ] || [ "$inactive" -gt 45 ] || [ "$inactive" -lt 0 ]; then
+            failures+=(" - User: $user has INACTIVE=${inactive:-unset} (must be 0–45)")
+        fi
+    fi
+done < /etc/shadow
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - INACTIVE policy is compliant (≤ 45 days)"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

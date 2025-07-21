@@ -1,0 +1,50 @@
+audit_id: "5.4.3.3"
+audit_name: "Ensure default user umask is configured"
+audit_script: """
+{
+    good_output=""
+    bad_output=""
+
+    check_umask_in_file() {
+        local file="$1"
+
+        # Secure umask: 027, 077, symbolic equivalent like u=rw,g=r,o=
+        if grep -Psiq -- '^\s*umask\s+(0?[0-7][2-7]7|u=rw[x]?,g=r,o=)\b' "$file"; then
+            good_output+="\n - Secure umask found in \"$file\""
+        elif grep -Psiq -- '^\s*umask\s+(([0-7]{3,4})|(u=[rwx]{1,3},)?(g=[wrx]{1,3},)?o=[wrx]{1,3})\b' "$file"; then
+            bad_output+="\n - Insecure umask found in \"$file\""
+        fi
+    }
+
+    # Check all relevant shell profile files
+    while IFS= read -r -d '' file; do
+        check_umask_in_file "$file"
+    done < <(find /etc/profile.d/ -type f -name '*.sh' -print0)
+
+    for f in /etc/profile /etc/bashrc /etc/bash.bashrc /etc/login.defs /etc/default/login; do
+        [ -f "$f" ] && check_umask_in_file "$f"
+    done
+
+    # Check pam_umask in /etc/pam.d/postlogin
+    if [ -f /etc/pam.d/postlogin ]; then
+        if grep -Psiq -- '^\s*session\s+[^#\n]+\s+pam_umask\.so\s+[^#\n]*umask=(0?[0-7][2-7]7)\b' /etc/pam.d/postlogin; then
+            good_output+="\n - Secure umask set via pam_umask in /etc/pam.d/postlogin"
+        elif grep -Psiq -- '^\s*session\s+[^#\n]+\s+pam_umask\.so\s+[^#\n]*umask=([0-7]{3,4})\b' /etc/pam.d/postlogin; then
+            bad_output+="\n - Insecure umask set via pam_umask in /etc/pam.d/postlogin"
+        fi
+    fi
+
+    # If no secure or insecure settings were found, flag it
+    if [[ -z "$good_output" && -z "$bad_output" ]]; then
+        bad_output+="\n - umask is not explicitly configured"
+    fi
+
+    # Final report
+    if [ -z "$bad_output" ]; then
+        echo -e "\n- Audit Result:\n ** PASS **\n - * Correctly configured * :$good_output\n"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **\n - * Reasons for audit failure * :$bad_output"
+        [ -n "$good_output" ] && echo -e "\n- * Correctly configured * :$good_output\n"
+    fi
+}
+"""

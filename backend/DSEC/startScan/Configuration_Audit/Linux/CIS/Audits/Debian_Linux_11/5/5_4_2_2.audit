@@ -1,0 +1,31 @@
+audit_id: "5.4.2.2"
+audit_name: "Ensure root is the only GID 0 account"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+while IFS=: read -r username _ _ gid _; do
+    if [ "$gid" -eq 0 ]; then
+        case "$username" in
+            root) continue ;;
+            sync|shutdown|halt|operator) continue ;;
+            *) failures+=(" - User \"$username\" has GID 0 (not allowed)") ;;
+        esac
+    fi
+done < /etc/passwd
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - Only root (and allowed exceptions) have GID 0"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

@@ -1,0 +1,41 @@
+audit_id: "6.4.3.12"
+audit_name: "Ensure login and logout events are collected"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+expected_rules=(
+  "-w /var/log/lastlog -p wa -k logins"
+  "-w /var/run/faillock -p wa -k logins"
+)
+
+# Check on-disk rules
+ondisk=$(awk '/^ *-w/ \
+&&(/\/var\/log\/lastlog/ || /\/var\/run\/faillock/) \
+&&/ +-p *wa/ \
+&&(/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules 2>/dev/null)
+
+# Check runtime rules
+runtime=$(auditctl -l | awk '/^ *-w/ \
+&&(/\/var\/log\/lastlog/ || /\/var\/run\/faillock/) \
+&&/ +-p *wa/ \
+&&(/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)')
+
+# Compare expected rules with actual output
+for rule in "${expected_rules[@]}"; do
+  grep -Fq -- "$rule" <<< "$ondisk" || failures+=(" - On-disk rule missing or incorrect: $rule")
+  grep -Fq -- "$rule" <<< "$runtime" || failures+=(" - Active audit rule missing or incorrect: $rule")
+done
+
+# Output results
+if [ "${#failures[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  echo " - Audit rules for login tracking files are correctly configured"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${failures[@]}"
+fi
+
+}
+"""

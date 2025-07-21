@@ -1,0 +1,15 @@
+audit_id: "1.1.2.2.1"
+audit_name: "Ensure /dev/shm is a separate partition"
+audit_script: """
+{
+output=$(findmnt -kn /dev/shm)
+
+if [[ -n "$output" ]]; then
+    echo "** PASS ** /dev/shm is mounted as a separate filesystem"
+    return 0
+else
+    echo "** FAIL **/dev/shm is not mounted separately"
+    return 1
+fi
+}
+"""

@@ -1,0 +1,30 @@
+audit_id: "5.3.2.3"
+audit_name: "Ensure pam_pwquality module is enabled"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+file="/etc/pam.d/common-password"
+
+# Check for pam_pwquality.so in the common-password file
+if grep -Pq '\bpam_pwquality\.so\b' "$file"; then
+    :
+else
+    failures+=(" - pam_pwquality.so not found in $file")
+fi
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - pam_pwquality.so is present in $file"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

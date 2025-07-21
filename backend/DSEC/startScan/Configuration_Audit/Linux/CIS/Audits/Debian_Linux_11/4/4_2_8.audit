@@ -1,0 +1,40 @@
+audit_id: "4.2.8"
+audit_name: "Ensure nftables default deny firewall policy"
+audit_script: """
+{
+failures=()
+input_line="$(nft list ruleset 2>/dev/null | grep 'hook input')"
+forward_line="$(nft list ruleset 2>/dev/null | grep 'hook forward')"
+output_line="$(nft list ruleset 2>/dev/null | grep 'hook output')"
+
+# Check INPUT chain
+if grep -q 'hook input' <<< "$input_line" && grep -q 'policy drop' <<< "$input_line"; then
+    echo " - INPUT chain has 'policy drop'"
+else
+    failures+=(" - INPUT chain is missing or does not have 'policy drop'")
+fi
+
+# Check FORWARD chain
+if grep -q 'hook forward' <<< "$forward_line" && grep -q 'policy drop' <<< "$forward_line"; then
+    echo " - FORWARD chain has 'policy drop'"
+else
+    failures+=(" - FORWARD chain is missing or does not have 'policy drop'")
+fi
+
+# Check OUTPUT chain
+if grep -q 'hook output' <<< "$output_line" && grep -q 'policy drop' <<< "$output_line"; then
+    echo " - OUTPUT chain has 'policy drop'"
+else
+    failures+=(" - OUTPUT chain is missing or does not have 'policy drop'")
+fi
+
+# Audit Result
+if [ ${#failures[@]} -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+fi
+
+}
+"""

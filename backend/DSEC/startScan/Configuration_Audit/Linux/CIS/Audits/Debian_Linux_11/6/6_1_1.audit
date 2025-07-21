@@ -1,0 +1,45 @@
+audit_id: "6.1.1"
+audit_name: "Ensure AIDE is installed"
+audit_script: """
+{
+failures=()
+passes=()
+
+# Check for aide
+if dpkg-query -s aide &>/dev/null; then
+  passes+=(" - aide is installed")
+else
+  failures+=(" - aide package is NOT installed")
+fi
+
+# Check for aide-common
+if dpkg-query -s aide-common &>/dev/null; then
+  passes+=(" - aide-common is installed")
+else
+  failures+=(" - aide-common package is NOT installed")
+fi
+
+# Final output
+if [ ${#failures[@]} -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${passes[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${failures[@]}"
+  if [ ${#passes[@]} -gt 0 ]; then
+    echo -e "\n- Correctly configured:"
+    printf '%s\n' "${passes[@]}"
+  fi
+fi
+}
+"""
+
+depended_audits: "6.3.2, 6.3.3"
+condition:
+  match: output_regex
+  cases:
+    - value: 'aide is installed'
+      run: ["6.3.2", "6.3.3"]
+  default:
+    action: skip
+    status: FAIL

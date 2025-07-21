@@ -1,0 +1,67 @@
+audit_id: "5.1.2"
+audit_name: "Ensure permissions on SSH private host key files are configured"
+audit_script: """
+{
+    a_output=()
+    a_output2=()
+
+    # Get possible SSH-related group name (e.g., ssh_keys or _ssh)
+    l_ssh_group_name="$(awk -F: '($1 ~ /^(ssh_keys|_?ssh)$/) {print $1}' /etc/group)"
+
+    f_file_chk() {
+        while IFS=: read -r l_file_mode l_file_owner l_file_group; do
+            a_out2=()
+
+            if [ "$l_file_group" = "$l_ssh_group_name" ]; then
+                l_pmask="0137"
+            else
+                l_pmask="0177"
+            fi
+
+            l_maxperm="$(printf '%o' $((0777 & ~$l_pmask)))"
+
+            if [ $((l_file_mode & l_pmask)) -gt 0 ]; then
+                a_out2+=(" - Mode: \"$l_file_mode\" should be \"$l_maxperm\" or more restrictive")
+            fi
+
+            if [ "$l_file_owner" != "root" ]; then
+                a_out2+=(" - Owned by: \"$l_file_owner\" should be owned by \"root\"")
+            fi
+
+            if [[ ! "$l_file_group" =~ ($l_ssh_group_name|root) ]]; then
+                a_out2+=(" - Group owned by: \"$l_file_group\" should be \"$l_ssh_group_name\" or \"root\"")
+            fi
+
+            if [ "${#a_out2[@]}" -gt 0 ]; then
+                a_output2+=(" - File: \"$l_file\":" "${a_out2[@]}")
+            else
+                a_output+=(
+                    " - File: \"$l_file\":"
+                    "   Correct: mode ($l_file_mode), owner ($l_file_owner), group ($l_file_group)"
+                )
+            fi
+        done < <(stat -Lc '%#a:%U:%G' "$l_file")
+    }
+
+    # Scan for files under /etc/ssh that look like OpenSSH private keys
+    while IFS= read -r -d $'\0' l_file; do
+        if ssh-keygen -lf "$l_file" &>/dev/null; then
+            if file "$l_file" | grep -Piq -- '\bopenssh\h+([^#\n\r]+\h+)?private\h+key\b'; then
+                f_file_chk
+            fi
+        fi
+    done < <(find -L /etc/ssh -xdev -type f -print0 2>/dev/null)
+
+    # Final audit result
+    if [ "${#a_output2[@]}" -eq 0 ]; then
+        printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}" "- End List"
+    else
+        printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for audit failure:" "${a_output2[@]}"
+        if [ "${#a_output[@]}" -gt 0 ]; then
+            printf '%s\n' "" "- Correctly set:" "${a_output[@]}" "- End List"
+        else
+            echo "- End List"
+        fi
+    fi
+}
+"""

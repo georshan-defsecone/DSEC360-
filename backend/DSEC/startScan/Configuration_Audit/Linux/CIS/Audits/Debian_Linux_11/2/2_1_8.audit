@@ -1,0 +1,38 @@
+audit_id: "2.1.9"
+audit_name: "Ensure message access server services are not in use"
+audit_script: """
+#!/usr/bin/env bash
+
+# Track whether any Dovecot-related package is installed
+installed=0
+
+# Check if dovecot-imapd is installed
+if dpkg-query -s dovecot-imapd &>/dev/null; then
+    echo "- dovecot-imapd is installed"
+    installed=1
+fi
+
+# Check if dovecot-pop3d is installed
+if dpkg-query -s dovecot-pop3d &>/dev/null; then
+    echo "- dovecot-pop3d is installed"
+    installed=1
+fi
+
+# If any package is installed, check services
+if [ "$installed" -eq 1 ]; then
+    if systemctl is-enabled dovecot.socket dovecot.service 2>/dev/null | grep -q '^enabled'; then
+        echo "** FAIL ** dovecot.socket or dovecot.service is enabled"
+        exit 1
+    fi
+
+    if systemctl is-active dovecot.socket dovecot.service 2>/dev/null | grep -q '^active'; then
+        echo "** FAIL ** dovecot.socket or dovecot.service is active"
+        exit 1
+    fi
+
+    echo "** PASS ** dovecot-* is installed but services are neither enabled nor active"
+else
+    echo "** PASS ** dovecot-imapd and dovecot-pop3d are not installed"
+fi
+
+"""

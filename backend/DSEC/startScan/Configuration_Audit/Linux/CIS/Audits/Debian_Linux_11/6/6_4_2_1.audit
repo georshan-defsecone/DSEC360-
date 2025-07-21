@@ -1,0 +1,24 @@
+audit_id: "6.4.2.1"
+audit_name: "Ensure audit log storage size is configured"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# Check if max_log_file is defined and has a numeric value
+if ! grep -Pq '^\s*max_log_file\s*=\s*\d+\b' /etc/audit/auditd.conf; then
+    failures+=(" - 'max_log_file' is not set or does not have a numeric value in /etc/audit/auditd.conf")
+fi
+
+# Output audit results
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - 'max_log_file' is properly set in /etc/audit/auditd.conf"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    echo " - Reason(s) for audit failure:"
+    printf '%s\n' "${failures[@]}"
+fi
+}
+"""

@@ -1,0 +1,53 @@
+audit_id: "5.1.20"
+audit_name: "Ensure sshd PermitRootLogin is disabled"
+audit_script: """
+{
+failures=()
+users_failed=()
+
+# Check for Match block usage
+match_present=$(grep -iE '^match\s' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null)
+
+# Validation function
+check_permit_root_login() {
+    local val="$1"
+    [[ "$val" =~ ^permitrootlogin[[:space:]]+no$ ]]
+}
+
+if [ -z "$match_present" ]; then
+    # Global config check
+    config=$(sudo sshd -T 2>/dev/null | grep -i '^permitrootlogin')
+    if check_permit_root_login "$config"; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - PermitRootLogin is set to 'no' globally"
+        echo "- End List"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        echo " - PermitRootLogin is not set to 'no'"
+        [ -n "$config" ] && echo "   Actual value: $config" || echo "   Directive not found"
+        echo "- End List"
+    fi
+else
+    # Check Match block overrides per real user
+    while IFS=: read -r username _ uid _ _ _ shell; do
+        if [[ "$uid" -ge 1000 && "$shell" != *nologin && "$shell" != *false ]]; then
+            config=$(sudo sshd -T -C user="$username" 2>/dev/null | grep -i '^permitrootlogin')
+            if ! check_permit_root_login "$config"; then
+                users_failed+=("$username")
+            fi
+        fi
+    done < /etc/passwd
+
+    if [ "${#users_failed[@]}" -eq 0 ]; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - All users have PermitRootLogin set to 'no'"
+        echo "- End List"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        echo " - The following users do NOT have PermitRootLogin set to 'no':"
+        printf '   %s\n' "${users_failed[@]}"
+        echo "- End List"
+    fi
+fi
+}
+"""

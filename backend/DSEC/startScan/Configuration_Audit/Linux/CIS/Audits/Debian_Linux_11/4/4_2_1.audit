@@ -1,0 +1,11 @@
+audit_id: "4.2.1"
+audit_name: "Ensure nftables is installed"
+audit_script: """
+{
+if dpkg-query -s nftables &>/dev/null; then
+    echo -e "\n- Audit Result:\n ** PASS **\n- nftables is installed\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n- nftables is not installed\n"
+fi
+}
+"""

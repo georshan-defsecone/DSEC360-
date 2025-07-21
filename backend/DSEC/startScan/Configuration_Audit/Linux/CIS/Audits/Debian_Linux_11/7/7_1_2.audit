@@ -1,0 +1,41 @@
+audit_id: "7.1.2"
+audit_name: "Ensure permissions on /etc/passwd- are configured"
+audit_script: """
+{
+failures=()
+
+# Check if file exists
+if [ ! -e /etc/passwd- ]; then
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    echo " - File \"/etc/passwd-\" does not exist."
+    exit 1
+fi
+
+# Get file metadata
+read -r mode perms uid user gid group <<< "$(stat -Lc '%a %A %u %U %g %G' /etc/passwd-)"
+
+# Check permissions
+if (( mode > 644 )); then
+    failures+=(" - Incorrect permissions: $mode ($perms), should be 644 or more restrictive")
+fi
+
+# Check user ownership
+if [[ "$uid" -ne 0 || "$user" != "root" ]]; then
+    failures+=(" - Incorrect owner: UID=$uid ($user), should be root")
+fi
+
+# Check group ownership
+if [[ "$gid" -ne 0 || "$group" != "root" ]]; then
+    failures+=(" - Incorrect group: GID=$gid ($group), should be root")
+fi
+
+# Output result
+if [ ${#failures[@]} -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - /etc/passwd- is securely configured (mode: $mode, owner: $user, group: $group)"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+fi
+}
+"""

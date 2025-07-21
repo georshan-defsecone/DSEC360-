@@ -1,0 +1,26 @@
+audit_id: "4.3.1.1"
+audit_name: "Ensure iptables packages are installed"
+audit_script: """
+{
+failures=()
+
+if dpkg-query -s iptables &>/dev/null; then
+    echo "- iptables is installed"
+else
+    failures+=(" - iptables is not installed")
+fi
+
+if dpkg-query -s iptables-persistent &>/dev/null; then
+    echo "- iptables-persistent is installed"
+else
+    failures+=(" - iptables-persistent is not installed")
+fi
+
+if [ ${#failures[@]} -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+fi
+}
+"""

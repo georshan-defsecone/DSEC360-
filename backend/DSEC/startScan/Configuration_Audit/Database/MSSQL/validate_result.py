@@ -112,7 +112,7 @@ def handle_backup_encryption(current_setting, remediation_in):
 # ──────────────────────────────
 # Core logic
 # ──────────────────────────────
-def validate_mssql(json_path, csv_path, output_path):
+def validate_mssql(json_path, csv_path, output_path): # output_path is now the exact desired path
     try:
         with open(json_path, "r", encoding="utf-8") as f:
             json_data = json.load(f)
@@ -121,12 +121,12 @@ def validate_mssql(json_path, csv_path, output_path):
                 item["Result"] = "NULL"
     except Exception as e:
         print(f"❌ Error reading JSON: {e}")
-        return
+        # sys.exit(1) # Don't sys.exit in a Django context, raise an exception or return
+        raise ValueError(f"Error reading JSON: {e}") # Raise an error instead
 
     try:
         with open(csv_path, newline='', encoding="utf-8") as f:
             reader = csv.DictReader(f)
-            # Normalize field names
             reader.fieldnames = [field.strip().lstrip('\ufeff') for field in reader.fieldnames]
             csv_data = list(reader)
     except UnicodeDecodeError:
@@ -134,8 +134,9 @@ def validate_mssql(json_path, csv_path, output_path):
             reader = csv.DictReader(f)
             reader.fieldnames = [field.strip().lstrip('\ufeff') for field in reader.fieldnames]
             csv_data = list(reader)
-
-    # Clean up column names (handle BOM and strip)
+    except Exception as e:
+        # sys.exit(1)
+        raise ValueError(f"Error reading CSV template: {e}") # Raise error
 
     a_lookup = {}
     for item in json_data:
@@ -198,10 +199,19 @@ def validate_mssql(json_path, csv_path, output_path):
             df[field] = None
 
     df = df[fieldnames]
-    out_file = output_path.replace(".csv", "_final.csv")
+    
+    # --- CRITICAL CHANGE HERE: Use output_path directly without "_final" ---
+    # `output_path` is the argument passed to validate_mssql, which is the desired name.
+    df.to_csv(output_path, index=False, encoding='utf-8')
+    print(f"✅ CSV generated: {output_path}")
+    # --- END CRITICAL CHANGE ---
 
-    try:
-        df.to_csv(out_file, index=False, encoding='utf-8')
-        print(f"✅ CSV generated: {out_file}")
-    except Exception as e:
-        print(f"❌ Error writing CSV: {e}")
+    # If you also want to delete the original uploaded JSON file after processing:
+    # try:
+    #     os.remove(json_path)
+    #     print(f"Removed temporary JSON file: {json_path}")
+    # except OSError as e:
+    #     print(f"Error removing file {json_path}: {e}")
+
+    # You might want to return the actual output path for confirmation
+    return output_path

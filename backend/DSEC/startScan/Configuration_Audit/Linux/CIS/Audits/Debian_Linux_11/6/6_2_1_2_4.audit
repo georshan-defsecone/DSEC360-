@@ -1,0 +1,34 @@
+audit_id: "6.2.1.2.4"
+audit_name: "Ensure systemd-journal-remote service is not in use"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# Check if either unit is enabled
+enabled_units=$(systemctl is-enabled systemd-journal-remote.socket systemd-journal-remote.service 2>/dev/null | grep -P '^enabled')
+if [ -n "$enabled_units" ]; then
+    failures+=(" - The following unit(s) are enabled but should not be:\n$enabled_units")
+fi
+
+# Check if either unit is active
+active_units=$(systemctl is-active systemd-journal-remote.socket systemd-journal-remote.service 2>/dev/null | grep -P '^active')
+if [ -n "$active_units" ]; then
+    failures+=(" - The following unit(s) are active but should not be:\n$active_units")
+fi
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - systemd-journal-remote.service and .socket are neither active nor enabled"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    echo " - Reason(s) for audit failure:"
+    printf '%b\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

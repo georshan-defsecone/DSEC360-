@@ -1,0 +1,54 @@
+audit_id: "5.1.9"
+audit_name: "Ensure sshd GSSAPIAuthentication is disabled"
+audit_script: """
+{
+failures=()
+users_failed=()
+
+match_present=$(grep -iE '^match\s' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null)
+
+check_gssapi_setting() {
+    local config="$1"
+    [[ "$config" =~ ^gssapiauthentication[[:space:]]+no$ ]]
+}
+
+if [ -z "$match_present" ]; then
+    # No Match blocks — check global setting
+    config=$(sudo sshd -T 2>/dev/null | grep -i '^gssapiauthentication')
+    if check_gssapi_setting "$config"; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - GSSAPIAuthentication is set to 'no' globally"
+        echo "- End List"
+    else
+        failures+=(" - GSSAPIAuthentication is not set to 'no'")
+        [ -n "$config" ] && failures+=("   Actual value: $config") || failures+=("   Directive not found")
+
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        printf '%s\n' "${failures[@]}"
+        echo "- End List"
+    fi
+else
+    # Match blocks exist — check per user
+    while IFS=: read -r username _ uid _ _ _ shell; do
+        if [[ "$uid" -ge 1000 && "$shell" != *false && "$shell" != *nologin ]]; then
+            config=$(sudo sshd -T -C user="$username" 2>/dev/null | grep -i '^gssapiauthentication')
+            if ! check_gssapi_setting "$config"; then
+                users_failed+=("$username")
+            fi
+        fi
+    done < /etc/passwd
+
+    if [ "${#users_failed[@]}" -eq 0 ]; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - All users have GSSAPIAuthentication set to 'no'"
+        echo "- End List"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        echo " - The following users do NOT have GSSAPIAuthentication set to 'no':"
+        printf '   %s\n' "${users_failed[@]}"
+        echo "- End List"
+    fi
+fi
+
+}
+"""

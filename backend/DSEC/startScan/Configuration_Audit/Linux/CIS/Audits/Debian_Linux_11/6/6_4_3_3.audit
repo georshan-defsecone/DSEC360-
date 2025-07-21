@@ -1,0 +1,46 @@
+audit_id: "6.4.3.3"
+audit_name: "Ensure events that modify the sudo log file are collected"
+audit_script: """
+{
+failures=()
+
+# Extract sudo log file location from sudoers
+SUDO_LOG_FILE=$(grep -rPi '^\h*Defaults\h+.*logfile=' /etc/sudoers* 2>/dev/null | \
+    sed -e 's/.*logfile=//;s/,.*//' -e 's/"//g' | head -n1)
+
+# If not set, audit passes (nothing to check)
+if [ -z "$SUDO_LOG_FILE" ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  echo " - No sudo logfile defined — audit not applicable"
+  exit 0
+fi
+
+# Escape for regex
+SUDO_LOG_FILE_ESCAPED=$(printf "%s" "$SUDO_LOG_FILE" | sed -e 's|/|\\/|g')
+
+# Check on-disk rules
+ondisk_match=$(awk "/^ *-w/ && /${SUDO_LOG_FILE_ESCAPED}/ && / +-p *wa/ && (/ key=| -k )/" \
+  /etc/audit/rules.d/*.rules 2>/dev/null)
+
+if ! grep -q "${SUDO_LOG_FILE}" <<< "$ondisk_match"; then
+  failures+=(" - On-disk rule missing or incorrect: -w $SUDO_LOG_FILE -p wa -k sudo_log_file")
+fi
+
+# Check active rules
+active_match=$(auditctl -l 2>/dev/null | awk "/^ *-w/ && /${SUDO_LOG_FILE_ESCAPED}/ && / +-p *wa/ && (/ key=| -k )/")
+
+if ! grep -q "${SUDO_LOG_FILE}" <<< "$active_match"; then
+  failures+=(" - Active audit rule missing or incorrect: -w $SUDO_LOG_FILE -p wa -k sudo_log_file")
+fi
+
+# Output results
+if [ "${#failures[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  echo " - Audit rules properly monitor sudo log file: $SUDO_LOG_FILE"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  echo " - Reason(s) for audit failure:"
+  printf '%s\n' "${failures[@]}"
+fi
+}
+"""

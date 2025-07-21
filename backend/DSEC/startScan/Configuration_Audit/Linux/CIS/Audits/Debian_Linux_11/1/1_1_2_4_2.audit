@@ -1,0 +1,20 @@
+audit_id: "1.1.2.4.2"
+audit_name: "Ensure nodev option set on /var partition"
+audit_script: """
+{
+mount_info=$(findmnt -kn /var)
+
+if [[ -z "$mount_info" ]]; then
+    echo "** FAIL ** /var is not a separate mount — this audit is not applicable"
+    return 0
+fi
+
+if echo "$mount_info" | grep -qw nodev; then
+    echo "** PASS ** /var is mounted separately with nodev option"
+    return 0
+else
+    echo "** FAIL ** /var is mounted separately but missing nodev option"
+    return 1
+fi
+}
+"""

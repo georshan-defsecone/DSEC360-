@@ -1,0 +1,28 @@
+audit_id: "1.7.4"
+audit_name: "Ensure GDM screen locks when the user is idle"
+audit_script: """
+{
+# Get lock-delay (in seconds)
+lock_delay_raw=$(gsettings get org.gnome.desktop.screensaver lock-delay 2>/dev/null)
+idle_delay_raw=$(gsettings get org.gnome.desktop.session idle-delay 2>/dev/null)
+
+# Remove 'uint32' and cast to numbers
+lock_delay=$(echo "$lock_delay_raw" | awk '{print $2}')
+idle_delay=$(echo "$idle_delay_raw" | awk '{print $2}')
+
+# Validate idle-delay: must be non-zero and ≤ 900
+if [ -z "$idle_delay" ] || [ "$idle_delay" -eq 0 ] || [ "$idle_delay" -gt 900 ]; then
+    echo "** FAIL ** idle-delay is not set properly (current: $idle_delay_raw)"
+    exit 1
+fi
+
+# Validate lock-delay: must be ≤ 5
+if [ -z "$lock_delay" ] || [ "$lock_delay" -gt 5 ]; then
+    echo "** FAIL ** lock-delay is not set properly (current: $lock_delay_raw)"
+    exit 1
+fi
+
+# All good
+echo "** PASS ** Screen lock activates after idle: idle-delay = $idle_delay seconds, lock-delay = $lock_delay seconds"
+}
+"""

@@ -1,0 +1,40 @@
+audit_id: "2.4.1.8"
+audit_name: "Ensure crontab is restricted to authorized users"
+audit_script: """
+{
+cron_allow="/etc/cron.allow"
+cron_deny="/etc/cron.deny"
+
+# Check /etc/cron.allow
+if [ ! -f "$cron_allow" ]; then
+    echo "** FAIL **: $cron_allow does not exist"
+    exit 1
+fi
+
+# Validate /etc/cron.allow
+stat_output=$(stat -Lc 'Access: (%a/%A) Owner: (%U) Group: (%G)' "$cron_allow")
+perm=$(echo "$stat_output" | awk '{print $2}' | cut -d'(' -f2 | cut -d'/' -f1)
+owner=$(echo "$stat_output" | awk '{print $4}' | cut -d'(' -f2 | tr -d ')')
+group=$(echo "$stat_output" | awk '{print $6}' | cut -d'(' -f2 | tr -d ')')
+
+if [[ "$perm" -gt 640 || "$owner" != "root" || ( "$group" != "root" && "$group" != "crontab" ) ]]; then
+    echo "** FAIL **: $cron_allow permissions or ownership incorrect -> $stat_output"
+    exit 1
+fi
+
+# Check /etc/cron.deny if it exists
+if [ -f "$cron_deny" ]; then
+    stat_output=$(stat -Lc 'Access: (%a/%A) Owner: (%U) Group: (%G)' "$cron_deny")
+    perm=$(echo "$stat_output" | awk '{print $2}' | cut -d'(' -f2 | cut -d'/' -f1)
+    owner=$(echo "$stat_output" | awk '{print $4}' | cut -d'(' -f2 | tr -d ')')
+    group=$(echo "$stat_output" | awk '{print $6}' | cut -d'(' -f2 | tr -d ')')
+
+    if [[ "$perm" -gt 640 || "$owner" != "root" || ( "$group" != "root" && "$group" != "crontab" ) ]]; then
+        echo "** FAIL **: $cron_deny permissions or ownership incorrect -> $stat_output"
+        exit 1
+    fi
+fi
+
+echo "** PASS **: cron.allow and cron.deny permissions and ownership are correct"
+}
+"""

@@ -1,0 +1,25 @@
+audit_id: "2.1.15"
+audit_name: "Ensure snmp services are not in use"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+if dpkg-query -s snmpd &>/dev/null; then
+    echo "- snmpd is installed"
+
+    if systemctl is-enabled snmpd.service 2>/dev/null | grep -q '^enabled'; then
+        echo "** FAIL ** snmpd.service is enabled"
+        exit 1
+    fi
+
+    if systemctl is-active snmpd.service 2>/dev/null | grep -q '^active'; then
+        echo "** FAIL ** snmpd.service is active"
+        exit 1
+    fi
+
+    echo "** PASS ** snmpd is installed but snmpd.service is neither enabled nor active"
+else
+    echo "** PASS ** snmpd is not installed"
+fi
+}
+"""

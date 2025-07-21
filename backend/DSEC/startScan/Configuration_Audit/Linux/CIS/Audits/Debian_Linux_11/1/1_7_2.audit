@@ -1,0 +1,24 @@
+audit_id: "1.7.2"
+audit_name: "Ensure GDM login banner is configured"
+audit_script: """
+{
+# Check if banner message is enabled
+enabled=$(gsettings get org.gnome.login-screen banner-message-enable 2>/dev/null)
+
+if [ "$enabled" != "true" ]; then
+    echo "** FAIL ** GNOME login banner is not enabled"
+    echo "banner-message-enable = $enabled"
+    exit 1
+fi
+
+# Check if banner message text is set and not empty
+banner_text=$(gsettings get org.gnome.login-screen banner-message-text 2>/dev/null | sed -e "s/^'//" -e "s/'$//")
+
+if [ -z "$banner_text" ]; then
+    echo "** FAIL ** GNOME login banner message text is empty"
+    exit 1
+fi
+
+echo "** PASS ** GNOME login banner is enabled and has message: $banner_text"
+}
+"""

@@ -1,0 +1,27 @@
+audit_id: "7.2.1"
+audit_name: "Ensure accounts in /etc/passwd use shadowed passwords"
+audit_script: """
+{
+failures=()
+passes=()
+
+# Run audit
+bad_users=$(awk -F: '($2 != "x") { print "User: \"" $1 "\" is not set to shadowed passwords." }' /etc/passwd)
+
+# Check and report
+if [ -n "$bad_users" ]; then
+  failures+=("$bad_users")
+else
+  passes+=(" - All users in /etc/passwd are using shadowed passwords.")
+fi
+
+# Final output
+if [ ${#failures[@]} -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${passes[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${failures[@]}"
+fi
+}
+"""

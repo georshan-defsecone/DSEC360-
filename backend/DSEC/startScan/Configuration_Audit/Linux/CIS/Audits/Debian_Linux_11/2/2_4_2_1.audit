@@ -1,0 +1,40 @@
+audit_id: ""
+audit_name: ""
+audit_script: """
+{
+at_allow="/etc/at.allow"
+at_deny="/etc/at.deny"
+
+# Check /etc/at.allow
+if [ ! -f "$at_allow" ]; then
+    echo "** FAIL **: $at_allow does not exist"
+    exit 1
+fi
+
+stat_output=$(stat -Lc 'Access: (%a/%A) Owner: (%U) Group: (%G)' "$at_allow")
+perm=$(echo "$stat_output" | awk '{print $2}' | cut -d'(' -f2 | cut -d'/' -f1)
+owner=$(echo "$stat_output" | awk '{print $4}' | cut -d'(' -f2 | tr -d ')')
+group=$(echo "$stat_output" | awk '{print $6}' | cut -d'(' -f2 | tr -d ')')
+
+if [[ "$perm" -gt 640 || "$owner" != "root" || ( "$group" != "root" && "$group" != "daemon" ) ]]; then
+    echo "** FAIL **: $at_allow permissions or ownership incorrect -> $stat_output"
+    exit 1
+fi
+
+# Check /etc/at.deny if it exists
+if [ -f "$at_deny" ]; then
+    stat_output=$(stat -Lc 'Access: (%a/%A) Owner: (%U) Group: (%G)' "$at_deny")
+    perm=$(echo "$stat_output" | awk '{print $2}' | cut -d'(' -f2 | cut -d'/' -f1)
+    owner=$(echo "$stat_output" | awk '{print $4}' | cut -d'(' -f2 | tr -d ')')
+    group=$(echo "$stat_output" | awk '{print $6}' | cut -d'(' -f2 | tr -d ')')
+
+    if [[ "$perm" -gt 640 || "$owner" != "root" || ( "$group" != "root" && "$group" != "daemon" ) ]]; then
+        echo "** FAIL **: $at_deny permissions or ownership incorrect -> $stat_output"
+        exit 1
+    fi
+fi
+
+echo "** PASS **: at.allow and at.deny permissions and ownership are correct"
+
+}
+"""

@@ -1,0 +1,36 @@
+audit_id: "5.4.2.8"
+audit_name: "Ensure accounts without a valid login shell are locked"
+audit_script: """
+{
+    failures=()
+
+    # Build regex of valid login shells (e.g., /bin/bash, /bin/sh)
+    valid_shells="^($(awk -F/ '$NF != "nologin" {print}' /etc/shells | sed -E 's,/,\\/,g' | paste -sd '|' -))$"
+
+    # Loop through accounts that have an invalid shell
+    while IFS=: read -r user _ _ _ _ _ _ shell; do
+        if [ "$user" = "root" ]; then
+            continue
+        fi
+        if ! [[ "$shell" =~ $valid_shells ]]; then
+            # Check if account is locked
+            passwd_status=$(passwd -S "$user" 2>/dev/null)
+            if [[ "$passwd_status" =~ ^$user\ ([^L]) ]]; then
+                failures+=(" - Account \"$user\" does not have a valid login shell and is not locked")
+            fi
+        fi
+    done < /etc/passwd
+
+    # Output audit result
+    if [ "${#failures[@]}" -eq 0 ]; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - All non-root accounts without a valid shell are locked"
+        echo "- End List"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        echo " - Reason(s) for audit failure:"
+        printf '%s\n' "${failures[@]}"
+        echo "- End List"
+    fi
+}
+"""

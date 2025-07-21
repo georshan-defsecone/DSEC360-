@@ -1,0 +1,72 @@
+audit_id: "7.1.11"
+audit_name: "Ensure world writable files and directories are secured"
+audit_script: """
+{
+failures=()
+passes=()
+
+# Sticky bit mask
+sticky_mask="01000"
+
+# Excluded path patterns
+excluded_paths=(
+  -path "/run/user/*" -o
+  -path "/proc/*" -o
+  -path "*/containerd/*" -o
+  -path "*/kubelet/pods/*" -o
+  -path "*/kubelet/plugins/*" -o
+  -path "/sys/*" -o
+  -path "/snap/*"
+)
+
+# Build exclusion expression for find
+exclude_expr=()
+for ((i=0; i<${#excluded_paths[@]}; i+=2)); do
+  exclude_expr+=( \( "${excluded_paths[@]:i:2}" \) -prune -o )
+done
+
+# Scan world-writable files and directories (one pass)
+ww_files=()
+ww_dirs_no_sticky=()
+
+# Search root and mounted filesystems excluding excluded paths
+while IFS= read -r mount; do
+  while IFS= read -r -d $'\0' path; do
+    [ ! -e "$path" ] && continue
+    if [ -f "$path" ]; then
+      ww_files+=("$path")
+    elif [ -d "$path" ]; then
+      mode=$(stat -Lc '%#a' "$path")
+      (( (mode & 01000) == 0 )) && ww_dirs_no_sticky+=("$path")
+    fi
+  done < <(find "$mount" -xdev "${exclude_expr[@]}" \( -type f -o -type d \) -perm -0002 -print0 2>/dev/null)
+done < <(findmnt -n -l -k -t ext4,xfs,btrfs -o TARGET | grep -vE '^/(run|proc|sys|snap)')
+
+# Report world-writable files
+if [ ${#ww_files[@]} -eq 0 ]; then
+  passes+=(" - No world-writable files found")
+else
+  failures+=(" - Found ${#ww_files[@]} world-writable files:\n$(printf '   %s\n' "${ww_files[@]}")")
+fi
+
+# Report world-writable directories without sticky bit
+if [ ${#ww_dirs_no_sticky[@]} -eq 0 ]; then
+  passes+=(" - All world-writable directories have the sticky bit set")
+else
+  failures+=(" - Found ${#ww_dirs_no_sticky[@]} world-writable directories without the sticky bit:\n$(printf '   %s\n' "${ww_dirs_no_sticky[@]}")")
+fi
+
+# Final output
+if [ ${#failures[@]} -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  printf '%s\n' "${passes[@]}"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${failures[@]}"
+  [ ${#passes[@]} -gt 0 ] && {
+    echo -e "\n- Correctly Configured:"
+    printf '%s\n' "${passes[@]}"
+  }
+fi
+}
+"""

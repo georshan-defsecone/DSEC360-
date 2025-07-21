@@ -1,0 +1,62 @@
+audit_id: "6.4.3.8 "
+audit_name: "Ensure events that modify user/group information are collected"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+errors=()
+
+# Step 0: Ensure auditd is installed
+if ! dpkg -s auditd &>/dev/null; then
+    errors+=(" - ERROR: 'auditd' package is not installed. Audit cannot be completed without it.")
+fi
+
+# Proceed only if auditd is present
+if [ ${#errors[@]} -eq 0 ]; then
+    files_to_check=(
+        "/etc/group"
+        "/etc/passwd"
+        "/etc/gshadow"
+        "/etc/shadow"
+        "/etc/security/opasswd"
+        "/etc/nsswitch.conf"
+        "/etc/pam.conf"
+        "/etc/pam.d"
+    )
+
+    for file in "${files_to_check[@]}"; do
+        # Check on-disk rules
+        if ! grep -Pr -- "^-w\s+${file//\//\\/}\s+-p\s+wa\s+(-k\s+identity|key=identity)" /etc/audit/rules.d/ &>/dev/null; then
+            failures+=(" - On-disk rule missing or incorrect: -w $file -p wa -k identity")
+        fi
+
+        # Check active rules
+        if ! command -v auditctl &>/dev/null; then
+            errors+=(" - ERROR: 'auditctl' command not found (is auditd running?).")
+            break
+        fi
+
+        if ! auditctl -l | grep -P -- "^-w\s+${file//\//\\/}\s+-p\s+wa\s+(-k\s+identity|key=identity)" &>/dev/null; then
+            failures+=(" - Active audit rule missing or incorrect: -w $file -p wa -k identity")
+        fi
+    done
+fi
+
+# Output section
+if [ ${#errors[@]} -gt 0 ]; then
+    echo -e "\n- Audit Result:\n ** ERROR **"
+    printf '%s\n' "${errors[@]}"
+    echo "- End List"
+elif [ ${#failures[@]} -gt 0 ]; then
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - All identity audit rules are present in both on-disk and active configuration"
+    echo "- End List"
+fi
+
+}
+"""

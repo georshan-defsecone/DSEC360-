@@ -1,0 +1,26 @@
+audit_id: "2.1.4"
+audit_name: "Ensure dns server services are not in use"
+audit_script: """
+{
+# Check if bind9 package is installed
+if dpkg-query -s bind9 &>/dev/null; then
+    echo "- bind9 is installed"
+
+    # Check if bind9 service is enabled
+    if systemctl is-enabled bind9.service 2>/dev/null | grep -q '^enabled'; then
+        echo "** FAIL ** bind9.service is enabled"
+        exit 1
+    fi
+
+    # Check if bind9 service is active
+    if systemctl is-active bind9.service 2>/dev/null | grep -q '^active'; then
+        echo "** FAIL ** bind9.service is active"
+        exit 1
+    fi
+
+    echo "** PASS ** bind9 is installed but bind9.service is neither enabled nor active"
+else
+    echo "** PASS ** bind9 is not installed"
+fi
+}
+"""

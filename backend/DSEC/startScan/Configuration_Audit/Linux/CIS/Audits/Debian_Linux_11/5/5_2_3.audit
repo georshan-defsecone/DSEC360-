@@ -1,0 +1,34 @@
+audit_id: "5.2.3"
+audit_name: "Ensure sudo log file exists"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# Look for Defaults logfile=<path> in /etc/sudoers or /etc/sudoers.d/*
+logfile_line=$(grep -rPsi '^\s*Defaults\s+([^#]+,\s*)?logfile\s*=\s*("|'\''|)[^"'\'']+\2' /etc/sudoers* 2>/dev/null)
+
+# Extract the configured path if found
+logfile_path=$(echo "$logfile_line" | grep -Poi 'logfile\s*=\s*("?[^" ]+"?|'\''[^'\'']+'\'')' | awk -F= '{print $2}' | tr -d '"'\'' ')
+
+# Validate
+if [ -z "$logfile_path" ]; then
+    failures+=(" - No 'Defaults logfile=' setting found in sudoers configuration")
+elif [ "$logfile_path" != "/var/log/sudo.log" ]; then
+    failures+=(" - 'Defaults logfile=' is set to '$logfile_path', expected: /var/log/sudo.log")
+fi
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - 'Defaults logfile=\"/var/log/sudo.log\"' is correctly set"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

@@ -1,0 +1,11 @@
+audit_id: "4.2.9"
+audit_name: "Ensure nftables service is enabled"
+audit_script: """
+{
+if systemctl is-enabled nftables 2>/dev/null | grep -q '^enabled$'; then
+    echo -e "\n- Audit Result:\n ** PASS **\n - nftables service is enabled"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **\n - nftables service is not enabled"
+fi
+}
+"""
