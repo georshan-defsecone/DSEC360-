@@ -4,6 +4,8 @@ import csv
 import requests
 import time
 
+from datetime import datetime
+from collections import Counter, defaultdict
 # === Config ===
 VT_API_KEY = "1dabfd5ff3f905101b1fe45a41c8a00a93185bedd696c03418dcefd8add2cd53" 
 current_dir = os.getcwd()
@@ -95,7 +97,7 @@ def validate_services_permissions(entries):
         time.sleep(10)
     return results
 
-def validate_download_directory(entries):
+def validate_suspicious_directory(entries):
     results = []
     for entry in entries:
         file_name = entry.get("Name") or "Unknown File"
@@ -255,19 +257,107 @@ def validate_powershell_history(entries):
     return results
 
 
+def validate_windows_events(entries):
+    results = []
+    if isinstance(entries, list):
+        entries = entries[0]  # extract the dict from the list wrapper
+    windows_events = entries.get("Windows Events", entries)
+
+    timestamp_to_dt = lambda ts: datetime.fromtimestamp(int(ts.strip("/Date()")) / 1000)
+
+    # 1. User_Account_Creations: flag if multiple accounts created in short time
+    user_creations = windows_events.get("User_Account_Creations", [])
+    if isinstance(user_creations, dict):
+        user_creations = [user_creations]
+    
+    if len(user_creations) > 3:
+        results.append(["User_Account_Creations", f"{len(user_creations)} accounts created", "Fail"])
+    else:
+        results.append(["User_Account_Creations", f"{len(user_creations)} accounts created", "Pass"])
+
+    # 2. File_Creation_Deletion_Events: flag if same file path deleted/created many times
+    file_events = windows_events.get("File_Creation_Deletion_Events", [])
+    path_counter = Counter()
+
+    for evt in file_events:
+        path = evt.get("Object", "")
+        path_counter[path] += 1
+
+    flagged_paths = [p for p, count in path_counter.items() if count >= 3]
+    if flagged_paths:
+        results.append(["File_Creation_Deletion_Events", f"High activity in: {', '.join(flagged_paths)}", "Fail"])
+    else:
+        results.append(["File_Creation_Deletion_Events", "No suspicious activity", "Pass"])
+
+    # 3. BAT_File_Creation: if any BAT file created, flag it
+    bat_creation = windows_events.get("BAT_File_Creation", {})
+    if isinstance(bat_creation, dict):
+        bat_creation = [bat_creation]
+
+    if bat_creation:
+        results.append(["BAT_File_Creation", "BAT file detected", "Fail"])
+    else:
+        results.append(["BAT_File_Creation", "No BAT files", "Pass"])
+
+    # 4. Failed_Logon_Attempts: repeated failed attempts from same account or IP
+    failed_logons = windows_events.get("Failed_Logon_Attempts", [])
+    if isinstance(failed_logons, dict):
+        failed_logons = [failed_logons]
+
+    acc_counter = Counter()
+    ip_counter = Counter()
+    for evt in failed_logons:
+        acc = evt.get("Account", "")
+        ip = evt.get("IPAddress", "")
+        acc_counter[acc] += 1
+        ip_counter[ip] += 1
+
+    flagged_accounts = [a for a, c in acc_counter.items() if c >= 5]
+    flagged_ips = [ip for ip, c in ip_counter.items() if c >= 5]
+
+    if flagged_accounts or flagged_ips:
+        note = f"Accounts: {flagged_accounts}, IPs: {flagged_ips}"
+        results.append(["Failed_Logon_Attempts", f"Repeated failed attempts → {note}", "Fail"])
+    else:
+        results.append(["Failed_Logon_Attempts", "No repeated failures", "Pass"])
+
+    # 5. After_Hours_Logons: any logon after hours (e.g., before 8 AM or after 6 PM)
+    after_hours = windows_events.get("After_Hours_Logons", [])
+    suspicious_logons = []
+    for evt in after_hours:
+        dt = timestamp_to_dt(evt.get("TimeCreated", "0"))
+        if dt.hour < 8 or dt.hour > 18:
+            suspicious_logons.append(evt.get("UserName", "Unknown"))
+
+    if suspicious_logons:
+        users = ", ".join(set(suspicious_logons))
+        results.append(["After_Hours_Logons", f"After-hours logons detected: {users}", "Fail"])
+    else:
+        results.append(["After_Hours_Logons", "No after-hours logons", "Pass"])
+
+    # 6. Suspicious_Open_Ports: if open ports found during after-hours logons
+    open_ports = windows_events.get("Suspicious_Open_Ports", [])
+    if open_ports and suspicious_logons:
+        results.append(["Suspicious_Open_Ports", "Open ports during after-hours logon", "Fail"])
+    else:
+        results.append(["Suspicious_Open_Ports", "No suspicious ports or logons", "Pass"])
+
+    return results
+
 
 # === Mapping Check Names to Validation Functions ===
 validation_map = {
     "Current Running Process Signed": validate_generic,
     "Current Running Service Signed": validate_services,
     "Check the service Everyone Permission": validate_services_permissions,
-    "Download Directory": validate_download_directory,
+    "Suspicious Directory": validate_suspicious_directory,
     "Visual Basic for Applications": validate_vba_settings,
     "Startup files": validate_startup_files,
     "Living off the Land": validate_lolbins,
     "Configuration Files": validate_config_files,
     "List all user accounts": validate_user_accounts,
-    "PowerShell History" : validate_powershell_history
+    "PowerShell History" : validate_powershell_history,
+    "Windows Events" : validate_windows_events
 
 
 }
@@ -293,7 +383,7 @@ csv_headers_map = {
 
     "Check the service Everyone Write Permission": ["IOC_Control", "Service Name", "Hash", "Status", "Malicious Count", "Everyone Access"],
 
-    "Download Directory": ["IOC_Control", "File Name", "Hash", "Status", "Malicious Count", "Signature Status"],
+    "Suspicious Directory": ["IOC_Control", "File Name", "Hash", "Status", "Malicious Count", "Signature Status"],
 
     "Visual Basic for Applications": ["IOC_Control", "File Name", "Status","Setting Description"],
 
@@ -307,6 +397,7 @@ csv_headers_map = {
 
     "PowerShell History": ["IOC_Control", "Username", "Command", "Status"],
 
+    "Windows Events": ["IOC_Control", "Event Summary", "Status"],
 
 
     "default": ["IOC_Control","Username" "File Name", "Hash", "Status", "Malicious Count", "Vendors Name"]
