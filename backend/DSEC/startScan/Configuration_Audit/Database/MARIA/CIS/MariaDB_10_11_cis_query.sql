@@ -4,10 +4,10 @@ SELECT JSON_ARRAYAGG(JSON_OBJECT('Name', Name, 'Result', Result)) AS AllResults
 FROM (
 SELECT '2_1_5_Point_in_Time_Recovery_Automated_' AS Name,
   (
-    SELECT JSON_ARRAYAGG(JSON_OBJECT('VARIABLE_NAME', VARIABLE_NAME, 'VARIABLE_VALUE', VARIABLE_VALUE, 'Note', Note)) FROM (SELECT VARIABLE_NAME, VARIABLE_VALUE, 'BINLOG - Log Expiration' as Note  FROM information_schema.global_variables where variable_name = 'binlog_expire_logs_seconds') t
+    SELECT JSON_ARRAYAGG(JSON_OBJECT('VARIABLE_NAME', VARIABLE_NAME, 'VARIABLE_VALUE', VARIABLE_VALUE, 'Note', Note)) FROM (SELECT VARIABLE_NAME, VARIABLE_VALUE, 'BINLOG - Log Expiration' as Note FROM information_schema.global_variables where variable_name = 'binlog_expire_logs_seconds') t
   ) AS Result
 UNION ALL
-SELECT '2_9_Ensure_MariaDB_is_Bound_to_an_IP_Address_Automated_' AS Name,
+SELECT '2_9_Ensure_MariaDB_is_Bound_to_One_or_More_Specific_IP_Addresses_Automated_' AS Name,
   (
     SELECT JSON_ARRAYAGG(JSON_OBJECT('VARIABLE_NAME', VARIABLE_NAME, 'VARIABLE_VALUE', VARIABLE_VALUE)) FROM (SELECT VARIABLE_NAME, VARIABLE_VALUE FROM information_schema.global_variables WHERE VARIABLE_NAME = 'bind_address') t
   ) AS Result
@@ -44,7 +44,7 @@ SELECT '3_3_Ensure_log_error_Has_Appropriate_Permissions_Automated_' AS Name,
 UNION ALL
 SELECT '3_4_Ensure_slow_query_log_Has_Appropriate_Permissions_Automated_' AS Name,
   (
-    SELECT JSON_ARRAYAGG(JSON_OBJECT('VARIABLE_NAME', VARIABLE_NAME, 'VARIABLE_VALUE', VARIABLE_VALUE)) FROM (SELECT VARIABLE_NAME, VARIABLE_VALUE FROM information_schema.global_variables WHERE VARIABLE_NAME LIKE 'slow_query_log') t
+    SELECT JSON_ARRAYAGG(JSON_OBJECT('VARIABLE_NAME', VARIABLE_NAME, 'VARIABLE_VALUE', VARIABLE_VALUE)) FROM (SELECT VARIABLE_NAME, VARIABLE_VALUE FROM information_schema.global_variables WHERE VARIABLE_NAME LIKE 'slow_query_log_file') t
   ) AS Result
 UNION ALL
 SELECT '3_5_Ensure_relay_log_basename_Files_Have_Appropriate_Permissions_Automated_' AS Name,

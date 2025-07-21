@@ -419,7 +419,7 @@ const ProjectScans = () => {
 
                                                                                     try {
                                                                                         const res = await api.post(
-                                                                                            `/scans/upload-result/${scan.scan_id}/`,
+                                                                                            `/scans/upload/${scan.scan_id}/`,
                                                                                             formData,
                                                                                             {
                                                                                                 headers: {

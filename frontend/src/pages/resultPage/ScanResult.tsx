@@ -2,8 +2,8 @@ import { useParams } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import api from "../api";
-import { useEffect, useState, useCallback } from "react";
-import { CircleCheck, CircleX, MoreVertical, ChevronDown } from "lucide-react"; 
+import { useEffect, useState, useCallback, useRef } from "react"; // Added useRef
+import { CircleCheck, CircleX, MoreVertical, ChevronDown, UploadCloud } from "lucide-react"; // Added UploadCloud icon
 import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -25,6 +25,10 @@ interface AuditResultItem {
   Remediation?: string;
   name?: string; 
   results?: any; 
+  // Add status_type and script_filename for agent metadata if necessary for display
+  status_type?: string; 
+  script_filename?: string;
+  message?: string; // For general messages in audit item if it's metadata
 }
 
 interface ScanSummary {
@@ -40,7 +44,7 @@ interface ScanDetailsBackend {
   scan_type: string;
   project: string; 
   project_name: string; 
-  scan_data: any; 
+  scan_data: any; // Contains the original scan configuration
   scan_output: any;
   scan_time: string;
   trash: boolean;
@@ -73,9 +77,17 @@ const ScanResult = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>("none");
   const [isRescanning, setIsRescanning] = useState(false);
   const [selectedVersionKey, setSelectedVersionKey] = useState<string | null>(null); 
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null); // For upload success/failure message
+
+  const fileInputRef = useRef<HTMLInputElement>(null); // Ref for hidden file input
 
   // --- Helper to deduce status from AuditResultItem ---
   const getStatusForItem = useCallback((item: AuditResultItem): string => {
+    // If it's the agent metadata placeholder
+    if (item.status_type === 'script_generated') {
+        return 'SCRIPT_GENERATED'; // Or 'PENDING_UPLOAD', or 'INFO'
+    }
+
     if (item.Status) { 
         return item.Status.toLowerCase().trim();
     }
@@ -169,7 +181,7 @@ const ScanResult = () => {
       setLoading(false);
       setIsRescanning(false);
     }
-  }, [projectName, scanName, getStatusForItem]);
+  }, [projectName, scanName, getStatusForItem, setSelectedVersionKey, setIsRescanning, setError]); 
 
 
   useEffect(() => {
@@ -218,7 +230,7 @@ const ScanResult = () => {
     setSummary({ Passed, Failed });
     setExpandedRows([]);
     setSortDirection("none");
-  }, [scanDetails, getStatusForItem]);
+  }, [scanDetails, getStatusForItem, setSelectedVersionKey, setDisplayAuditResults, setSummary, setExpandedRows, setSortDirection]);
 
 
   const getAllStatuses = useCallback((): string[] => {
@@ -241,7 +253,7 @@ const ScanResult = () => {
     const currentIndex = cycleList.findIndex((status) => status === sortDirection);
     const nextIndex = (currentIndex + 1) % cycleList.length;
     setSortDirection(cycleList[nextIndex]);
-  }, [getAllStatuses, sortDirection]);
+  }, [getAllStatuses, sortDirection, setSortDirection]);
 
 
   const getSortedResults = useCallback(() => {
@@ -294,6 +306,58 @@ const ScanResult = () => {
   }, [projectName]);
 
 
+  // --- NEW: handleFileUpload for agent results ---
+  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!scanDetails?.scan_id) {
+      alert("Scan ID missing, cannot upload result.");
+      return;
+    }
+    const file = event.target.files?.[0];
+    if (!file) {
+      setUploadMessage("No file selected.");
+      return;
+    }
+
+    setLoading(true); // Show loading indicator
+    setUploadMessage("Uploading file...");
+    setError(""); // Clear any previous errors
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await api.post(`/scans/upload/${scanDetails.scan_id}/`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      console.log("Upload successful:", response.data);
+      setUploadMessage("Scan result uploaded successfully ✅");
+      alert("Scan result uploaded successfully!");
+      await fetchScanData(); // Re-fetch to display the new version
+
+    } catch (err: any) {
+      console.error("Upload failed:", err);
+      if (err.response && err.response.data) {
+        if (err.response.data.error) {
+          setUploadMessage(`Upload failed: ${err.response.data.error}`);
+          setError(err.response.data.error);
+        } else {
+          setUploadMessage(`Upload failed: Server Error ${err.response.status}`);
+          setError(`Server Error: ${err.response.status} - ${err.response.statusText}`);
+        }
+      } else {
+        setUploadMessage("Upload failed. Network error or unexpected response.");
+        setError("Upload failed. Network error or unexpected response.");
+      }
+    } finally {
+      setLoading(false);
+      // Clear upload message after a short delay
+      setTimeout(() => setUploadMessage(null), 5000); 
+    }
+  }, [scanDetails, fetchScanData, setLoading, setError, setUploadMessage]);
+  // --- END NEW: handleFileUpload ---
+
+
   const handleRescan = useCallback(async () => {
     if (!scanDetails) {
         alert("Scan details not loaded, cannot rescan.");
@@ -303,6 +367,18 @@ const ScanResult = () => {
     setIsRescanning(true);
     setError("");
 
+    const auditMethod = scanDetails.scan_data?.auditMethod;
+
+    if (auditMethod === 'agent') {
+        // For agent, Rescan means triggering an upload of new results
+        if (fileInputRef.current) {
+            fileInputRef.current.click(); // Programmatically click the hidden file input
+        }
+        setIsRescanning(false); // Reset loading state immediately as file dialog opens
+        return; // Exit here, upload is handled by handleFileUpload
+    }
+
+    // For non-agent (remoteAccess) scans, proceed with generating new run
     try {
         const rescanPayload = {
             project_name: scanDetails.project_name,
@@ -316,13 +392,13 @@ const ScanResult = () => {
 
         const newVersion = response.data.scan?.scan_result_version;
         if (newVersion) {
-            console.log("Rescan initiated successfully:", response.data);
-            alert(`Rescan initiated! New version created: v${newVersion}`);
+             console.log("Rescan initiated successfully:", response.data);
+             alert(`Rescan initiated! New version created: v${newVersion}`);
         } else {
-            console.warn("Rescan initiated, but new version not found in response:", response.data);
-            alert("Rescan initiated successfully, but could not determine new version.");
+             console.warn("Rescan initiated, but new version not found in response:", response.data);
+             alert("Rescan initiated successfully, but could not determine new version.");
         }
-        
+       
         await fetchScanData(); 
 
     } catch (err: any) {
@@ -341,7 +417,7 @@ const ScanResult = () => {
         }
         setIsRescanning(false);
     }
-  }, [scanDetails, fetchScanData]);
+  }, [scanDetails, handleFileUpload, setIsRescanning, setError, api, fetchScanData]); // Added handleFileUpload to deps
 
 
   const formatDateWithSuffix = useCallback((date: Date) => {
@@ -420,7 +496,6 @@ const ScanResult = () => {
                       )}
                     </div>
                     <div className="font-semibold">Result Version</div>
-                    {/* Display the number part of the selectedVersion (e.g., '1' from 'v1') */}
                     <div>{selectedVersionKey ? selectedVersionKey.substring(1) : (scanDetails?.scan_result_version || 0)}</div> 
                   </div>
                 </Card>
@@ -435,13 +510,19 @@ const ScanResult = () => {
 
             <div className="border-t-2 border-gray-300 my-8" />
 
+            {uploadMessage && (
+                <div className={`mt-4 px-4 py-2 rounded text-sm ${uploadMessage.includes("success") ? "bg-green-100 text-green-700 border border-green-400" : "bg-red-100 text-red-700 border border-red-400"}`}>
+                    {uploadMessage}
+                </div>
+            )}
+
             <div className="flex justify-start mb-2 gap-2">
-              <button
+              <Button
                 onClick={handleDownloadProjectExcels}
                 className="flex items-center justify-center w-28 px-4 py-2 bg-black text-white  cursor-pointer hover:bg-gray-800 transition rounded-none"
               >
                 Download
-              </button>
+              </Button>
               <Button 
                 onClick={handleRescan}
                 disabled={isRescanning}
@@ -450,16 +531,26 @@ const ScanResult = () => {
                 {isRescanning ? "Rescanning..." : "Rescan"}
               </Button>
 
+              {/* Hidden file input for agent uploads */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                style={{ display: 'none' }} // Keep it hidden
+                accept=".csv,.json" // Restrict to typical report file types
+              />
+
               {/* Version Selector Dropdown */}
               {scanDetails?.available_result_versions && scanDetails.available_result_versions.length > 0 && ( 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    {/* The Button is correctly wrapped by DropdownMenuTrigger with asChild */}
                     <Button 
                       variant="outline" 
-                      className="flex items-center justify-center px-4 py-2 bg-gray-100 text-black hover:bg-gray-200 transition rounded-none"
+                      className=" px-4 py-2 bg-gray-100 text-black hover:bg-gray-200 transition rounded-none"
                     >
-                      View Version: {selectedVersionKey ? selectedVersionKey.substring(1) : 'Latest'} <ChevronDown className="ml-2 h-4 w-4" />
+                      <span>
+                        Version: {selectedVersionKey ? selectedVersionKey.substring(1) : 'Latest'}
+                      </span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-40">
@@ -644,26 +735,26 @@ const ScanResult = () => {
                                       </div>
                                       <div>
                                         {item.Description ? item.Description : 
-                                          (isNewJsonFormatFlag && item.results !== undefined && item.results !== null) ? (
-                                            typeof item.results === 'string' ? (
-                                              item.results
-                                            ) : Array.isArray(item.results) ? (
-                                              <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-2 rounded-md">
-                                                {JSON.stringify(item.results, null, 2)}
-                                              </pre>
-                                            ) : (
-                                              "N/A"
-                                            )
-                                          ) : "No detailed results provided."}
+                                         (isNewJsonFormatFlag && item.results !== undefined && item.results !== null) ? (
+                                          typeof item.results === 'string' ? (
+                                            item.results
+                                          ) : Array.isArray(item.results) ? (
+                                            <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-2 rounded-md">
+                                              {JSON.stringify(item.results, null, 2)}
+                                            </pre>
+                                          ) : (
+                                            "N/A"
+                                          )
+                                        ) : "No detailed results provided."}
                                       </div>
 
                                       <div className="font-semibold">
                                         Remediation:</div>
                                       <div>
                                         {item.Remediation ? item.Remediation : 
-                                          (isNewJsonFormatFlag ? (
-                                              "N/A (Remediation field not directly available in this new JSON structure)"
-                                            ) : "N/A")}
+                                         (isNewJsonFormatFlag ? (
+                                            "N/A (Remediation field not directly available in this new JSON structure)"
+                                        ) : "N/A")}
                                       </div>
                                     </div>
                                   </td>

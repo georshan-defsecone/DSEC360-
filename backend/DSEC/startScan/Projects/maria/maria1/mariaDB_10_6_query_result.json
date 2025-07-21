@@ -1,0 +1,330 @@
+[
+    {
+        "Name": "2_1_5_Point_in_Time_Recovery_Automated_",
+        "Result": [
+            {
+                "VARIABLE_NAME": "BINLOG_EXPIRE_LOGS_SECONDS",
+                "VARIABLE_VALUE": "0",
+                "Note": "BINLOG - Log Expiration"
+            }
+        ]
+    },
+    {
+        "Name": "2_9_Ensure_MariaDB_is_Bound_to_an_IP_Address_Automated_",
+        "Result": [
+            {
+                "VARIABLE_NAME": "BIND_ADDRESS",
+                "VARIABLE_VALUE": "0.0.0.0"
+            }
+        ]
+    },
+    {
+        "Name": "2_10_Limit_Accepted_Transport_Layer_Security_TLS_Versions_Automated_",
+        "Result": [
+            {
+                "value": "TLSv1.2,TLSv1.3"
+            }
+        ]
+    },
+    {
+        "Name": "2_11_Require_Client_Side_Certificates_X_509_Automated_",
+        "Result": [
+            {
+                "user": "",
+                "host": "localhost",
+                "ssl_type": ""
+            },
+            {
+                "user": "",
+                "host": "linux-vm",
+                "ssl_type": ""
+            },
+            {
+                "user": "admin",
+                "host": "localhost",
+                "ssl_type": ""
+            },
+            {
+                "user": "rohinth",
+                "host": "%",
+                "ssl_type": ""
+            }
+        ]
+    },
+    {
+        "Name": "2_12_Ensure_Only_Approved_Ciphers_are_Used_Automated_",
+        "Result": [
+            {
+                "VARIABLE_NAME": "SSL_CIPHER",
+                "VARIABLE_VALUE": ""
+            }
+        ]
+    },
+    {
+        "Name": "4_6_Ensure_Symbolic_Links_are_Disabled_Automated_",
+        "Result": [
+            {
+                "VARIABLE_NAME": "HAVE_SYMLINK",
+                "VARIABLE_VALUE": "YES"
+            }
+        ]
+    },
+    {
+        "Name": "4_7_Ensure_the_secure_file_priv_is_Configured_Correctly_Automated_",
+        "Result": [
+            {
+                "VARIABLE_NAME": "SECURE_FILE_PRIV",
+                "VARIABLE_VALUE": ""
+            }
+        ]
+    },
+    {
+        "Name": "4_8_Ensure_sql_mode_Contains_STRICT_ALL_TABLES_Automated_",
+        "Result": [
+            {
+                "VARIABLE_NAME": "SQL_MODE",
+                "VARIABLE_VALUE": "STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION"
+            }
+        ]
+    },
+    {
+        "Name": "6_1_Ensure_log_error_is_configured_correctly_Automated_",
+        "Result": [
+            {
+                "VARIABLE_NAME": "LOG_ERROR",
+                "VARIABLE_VALUE": "/var/log/mysql/mariadb.err"
+            }
+        ]
+    },
+    {
+        "Name": "6_2_Ensure_Log_Files_are_Stored_on_a_Non_System_Partition_Automated_",
+        "Result": [
+            {
+                "value": "/usr/local/mariadb/data/mariadb-bin"
+            }
+        ]
+    },
+    {
+        "Name": "6_3_Ensure_log_warnings_is_Set_to_2_Automated_",
+        "Result": [
+            {
+                "VARIABLE_NAME": "LOG_WARNINGS",
+                "VARIABLE_VALUE": "2"
+            }
+        ]
+    },
+    {
+        "Name": "6_4_Ensure_Audit_Logging_Is_Enabled_Automated_",
+        "Result": null
+    },
+    {
+        "Name": "6_5_Ensure_the_Audit_Plugin_Can_t_be_Unloaded_Automated_",
+        "Result": null
+    },
+    {
+        "Name": "6_6_Ensure_Binary_and_Relay_Logs_are_Encrypted_Automated_",
+        "Result": [
+            {
+                "VARIABLE_NAME": "INNODB_ENCRYPT_LOG",
+                "VARIABLE_VALUE": "OFF",
+                "Note": "BINLOG - At Rest Encryption"
+            }
+        ]
+    },
+    {
+        "Name": "7_3_Ensure_strong_authentication_is_utilized_for_all_accounts_Automated_",
+        "Result": [
+            {
+                "User": "mariadb.sys",
+                "host": "localhost"
+            },
+            {
+                "User": "root",
+                "host": "localhost"
+            },
+            {
+                "User": "",
+                "host": "localhost"
+            },
+            {
+                "User": "",
+                "host": "linux-vm"
+            },
+            {
+                "User": "admin",
+                "host": "localhost"
+            },
+            {
+                "User": "rohinth",
+                "host": "%"
+            },
+            {
+                "User": "root",
+                "host": "%"
+            }
+        ]
+    },
+    {
+        "Name": "7_5_Ensure_No_Users_Have_Wildcard_Hostnames_Automated_",
+        "Result": [
+            {
+                "user": "rohinth",
+                "host": "%"
+            },
+            {
+                "user": "root",
+                "host": "%"
+            }
+        ]
+    },
+    {
+        "Name": "7_6_Ensure_No_Anonymous_Accounts_Exist_Automated_",
+        "Result": [
+            {
+                "user": "",
+                "host": "linux-vm"
+            },
+            {
+                "user": "",
+                "host": "localhost"
+            }
+        ]
+    },
+    {
+        "Name": "8_2_Ensure_ssl_type_is_Set_to_ANY_X509_or_SPECIFIED_for_All_Remote_Users_Automated_",
+        "Result": [
+            {
+                "user": "",
+                "host": "linux-vm",
+                "ssl_type": ""
+            },
+            {
+                "user": "rohinth",
+                "host": "%",
+                "ssl_type": ""
+            },
+            {
+                "user": "root",
+                "host": "%",
+                "ssl_type": ""
+            }
+        ]
+    },
+    {
+        "Name": "4_4_Harden_Usage_for_local_infile_on_MariaDB_Clients_Automated_",
+        "Result": [
+            {
+                "VARIABLE_NAME": "VERSION",
+                "VARIABLE_VALUE": "10.6.22-MariaDB-log"
+            },
+            {
+                "VARIABLE_NAME": "LOCAL_INFILE",
+                "VARIABLE_VALUE": "ON"
+            }
+        ]
+    },
+    {
+        "Name": "4_9_Enable_data_at_rest_encryption_in_MariaDB_Automated_",
+        "Result": [
+            {
+                "VARIABLE_NAME": "INNODB_ENCRYPT_TEMPORARY_TABLES",
+                "VARIABLE_VALUE": "OFF"
+            },
+            {
+                "VARIABLE_NAME": "INNODB_ENCRYPTION_THREADS",
+                "VARIABLE_VALUE": "0"
+            },
+            {
+                "VARIABLE_NAME": "INNODB_ENCRYPT_LOG",
+                "VARIABLE_VALUE": "OFF"
+            },
+            {
+                "VARIABLE_NAME": "INNODB_ENCRYPTION_ROTATION_IOPS",
+                "VARIABLE_VALUE": "100"
+            },
+            {
+                "VARIABLE_NAME": "INNODB_DEFAULT_ENCRYPTION_KEY_ID",
+                "VARIABLE_VALUE": "1"
+            },
+            {
+                "VARIABLE_NAME": "ENCRYPT_TMP_FILES",
+                "VARIABLE_VALUE": "OFF"
+            },
+            {
+                "VARIABLE_NAME": "INNODB_ENCRYPT_TABLES",
+                "VARIABLE_VALUE": "OFF"
+            },
+            {
+                "VARIABLE_NAME": "ENCRYPT_BINLOG",
+                "VARIABLE_VALUE": "OFF"
+            },
+            {
+                "VARIABLE_NAME": "INNODB_ENCRYPTION_ROTATE_KEY_AGE",
+                "VARIABLE_VALUE": "1"
+            },
+            {
+                "VARIABLE_NAME": "ARIA_ENCRYPT_TABLES",
+                "VARIABLE_VALUE": "OFF"
+            },
+            {
+                "VARIABLE_NAME": "ENCRYPT_TMP_DISK_TABLES",
+                "VARIABLE_VALUE": "OFF"
+            }
+        ]
+    },
+    {
+        "Name": "7_1_Disable_use_of_the_mysql_old_password_plugin_Automated_",
+        "Result": [
+            {
+                "VARIABLE_NAME": "OLD_PASSWORDS",
+                "VARIABLE_VALUE": "OFF"
+            },
+            {
+                "VARIABLE_NAME": "SECURE_AUTH",
+                "VARIABLE_VALUE": "ON"
+            }
+        ]
+    },
+    {
+        "Name": "7_4_Ensure_Password_Complexity_Policies_are_in_Place_Automated_",
+        "Result": [
+            {
+                "PLUGIN_NAME": "REPORT_PASSWORD",
+                "PLUGIN_STATUS": ""
+            },
+            {
+                "PLUGIN_NAME": "MAX_PASSWORD_ERRORS",
+                "PLUGIN_STATUS": "4294967295"
+            },
+            {
+                "PLUGIN_NAME": "DISCONNECT_ON_EXPIRED_PASSWORD",
+                "PLUGIN_STATUS": "OFF"
+            },
+            {
+                "PLUGIN_NAME": "STRICT_PASSWORD_VALIDATION",
+                "PLUGIN_STATUS": "ON"
+            },
+            {
+                "PLUGIN_NAME": "DEFAULT_PASSWORD_LIFETIME",
+                "PLUGIN_STATUS": "0"
+            },
+            {
+                "PLUGIN_NAME": "OLD_PASSWORDS",
+                "PLUGIN_STATUS": "OFF"
+            }
+        ]
+    },
+    {
+        "Name": "8_1_Ensure_require_secure_transport_is_Set_to_ON_and_have_ssl_is_Set_to_YES_Automated_",
+        "Result": [
+            {
+                "VARIABLE_NAME": "REQUIRE_SECURE_TRANSPORT",
+                "VARIABLE_VALUE": "OFF"
+            },
+            {
+                "VARIABLE_NAME": "HAVE_SSL",
+                "VARIABLE_VALUE": "DISABLED"
+            }
+        ]
+    }
+]
