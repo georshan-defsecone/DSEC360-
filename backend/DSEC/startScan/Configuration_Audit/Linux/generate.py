@@ -7,7 +7,7 @@ def extract_script_blocks(audit_file):
     """
     Extracts audit ID, name, script, dependencies, and conditions from an audit file.
     """
-    with open(audit_file, 'r') as f:
+    with open(audit_file, 'r', encoding='utf-8') as f:
         content = f.read()
 
     audit_id = re.search(r'audit_id:\s*"(.*?)"', content)
@@ -51,7 +51,7 @@ def strip_outer_braces(script):
         return '\n'.join(lines[1:-1]).strip()
     return script.strip()
 
-def ubuntu(standard, version, exclude_audits=None, method="agent", ssh_info=None):
+def ubuntu(standard, version, exclude_audits=None, method="agent", ssh_info=None, output_file=None, json_path=None, csv_path=None):
     """
     Generates a shell script for configuration audits based on a given standard and version.
 
@@ -76,8 +76,8 @@ def ubuntu(standard, version, exclude_audits=None, method="agent", ssh_info=None
         print(f" Error: Version '{version}' not found in {standard}/Audits/")
         sys.exit(1)
 
-    output_file = f"combined_{standard}_{version}.sh"
-    result_file = f"results_{standard}_{version}.json" # Default result file name
+    output_file = output_file or f"combined_{standard}_{version}.sh"
+    result_file = os.path.basename(json_path) if json_path else f"results_{standard}_{version}.json"
 
     if exclude_audits is None:
         exclude_audits = set()
@@ -271,7 +271,7 @@ run_{func_name}() {{
         runners.append(runner)
 
     # Write the combined shell script
-    with open(output_file, 'w', newline='\n') as out:
+    with open(output_file, 'w', newline='\n', encoding='utf-8') as out:
         out.write("#!/usr/bin/env bash\n\n")
         out.writelines(func + "\n" for func in functions) # Write all audit functions
         out.writelines(runner + "\n" for runner in runners) # Write all runner functions
@@ -332,40 +332,39 @@ fi
             raise ValueError("Missing SSH info for remote execution")
        
         from ...remote import linux_connection
-        linux_connection(
-            script_name=output_file,
+         # MODIFIED: Capture the return value from linux_connection
+        downloaded_result_path = linux_connection(
+            script_path=output_file,
             username=ssh_info["username"],
             password=ssh_info["password"],
             ip=ssh_info["ip"],
             port=ssh_info["port"],
-            result_name=result_file
+            remote_result_name=result_file,     # Use the base name for the remote file
+            local_result_path=json_path         # Use the full path for the local destination
         )
 
-        # Improved validation with error handling for post-execution processing
-        json_path = os.path.join(os.path.dirname(__file__), "results_CIS_Ubuntu_Linux_24.04.json")
-        csv_path = os.path.join(BASE_DIR, standard, version + ".csv")
+        csv_metadata_path = os.path.join(BASE_DIR, standard, version + ".csv")
+        output_csv_file = csv_path # This path is passed in from views.py
 
-        output_csv_file = os.path.join(os.path.dirname(__file__), f"results_{standard}_{version}.csv")
-       
         try:
-            # Check if required files exist before attempting validation
-            if not os.path.exists(json_path):
-                print(f"Warning: JSON results file not found at {json_path}")
+            # MODIFIED: Check if the download was successful
+            if not downloaded_result_path or not os.path.exists(downloaded_result_path):
+                print(f"Warning: Results file could not be downloaded.")
                 return
-               
-            if not os.path.exists(csv_path):
-                print(f"Warning: CSV metadata file not found at {csv_path}")
-                print(f"Expected location: {csv_path}")
+
+            if not os.path.exists(csv_metadata_path):
+                print(f"Warning: CSV metadata file not found at {csv_metadata_path}")
                 return
-           
-            print(f"Creating Excel report from:")
-            print(f"  JSON: {json_path}")
-            print(f"  CSV:  {csv_path}")
-            print(f"  Output_CSV: {output_csv_file}")
-           
+
+            print(f"Creating report from:")
+            print(f"  Result File: {downloaded_result_path}") # This will show .json or .tsv
+            print(f"  CSV Metadata:  {csv_metadata_path}")
+            print(f"  Output CSV: {output_csv_file}")
+
             from .validate import validateResult
-            validateResult(json_path=json_path, csv_path=csv_path, output_csv_path=output_csv_file)
-           
+            # MODIFIED: Use the actual downloaded file path for validation
+            validateResult(json_path=downloaded_result_path, csv_path=csv_metadata_path, output_csv_path=output_csv_file)
+
         except Exception as e:
             print(f"Error during validation: {e}")
-            print("JSON and CSV files are available for manual processing")
+            print("Result files are available for manual processing")

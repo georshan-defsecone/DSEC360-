@@ -228,45 +228,76 @@ def mssql_connection(result_csv,excluded_audit, user_name, password_name, host_n
 
 
 
-def linux_connection(script_name, username, password, ip, port, result_name="results.json"):
-    """
-    Uploads and executes a local Bash audit script on a remote host using sudo,
-    then downloads the resulting JSON output back to the local system.
-    """
+# In remote.py
+import os
+from fabric import Connection, Config
 
-    remote_script_path=f"/tmp/{script_name}"
-    remote_result_path=f"/tmp/{result_name}"
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    local_result_path=os.path.join(BASE_DIR, result_name)
+def linux_connection(script_path, username, password, ip, port, remote_result_name, local_result_path):
+    """
+    Uploads and executes a script, then downloads the resulting JSON or TSV output.
+    It returns the local path of the successfully downloaded file.
+    """
+    # Use the basename of the script for the remote path
+    remote_script_path = f"/tmp/{os.path.basename(script_path)}"
 
-    config = Config(overrides={"sudo":{"password":password}})
+    config = Config(overrides={"sudo": {"password": password}})
     conn = Connection(
         host=ip,
         user=username,
         port=port,
         connect_kwargs={
-            "password":password,
+            "password": password,
             "allow_agent": False,
-            "look_for_keys": False
-            },
+            "look_for_keys": False,
+        },
         config=config
     )
 
-    print(f"Uploading script: {script_name} → {remote_script_path}")
-    conn.put(script_name, remote=remote_script_path)
+    print(f"Uploading script: {script_path} → {remote_script_path}")
+    conn.put(script_path, remote=remote_script_path)
     conn.run(f"chmod +x {remote_script_path}")
 
     print("Running script remotely with sudo...")
     result = conn.sudo(remote_script_path, pty=True)
-
     print("stdout:\n", result.stdout)
     print("stderr:\n", result.stderr)
 
-    print("Downloading result JSON from remote...")
-    conn.get(remote_result_path, local=local_result_path)
-    print(f"Result saved to: {local_result_path}")
+    # --- Start of Modified Logic ---
 
-    print("Cleaning up remote files...")
-    conn.sudo(f"rm -f {remote_script_path} {remote_result_path}", pty=True)
+    # Define potential remote and local paths for both JSON and TSV
+    remote_json_path = f"/tmp/{remote_result_name}"
+    remote_tsv_path = f"/tmp/{remote_result_name.replace('.json', '.tsv')}"
 
+    local_json_path = local_result_path
+    local_tsv_path = local_result_path.replace('.json', '.tsv')
+    
+    downloaded_file = None
+
+    print("Attempting to download result file...")
+    try:
+        # 1. Attempt to download the JSON file first
+        print(f"Trying to download {remote_json_path}...")
+        conn.get(remote_json_path, local=local_json_path)
+        print(f"Result saved to: {local_json_path}")
+        downloaded_file = local_json_path
+        conn.sudo(f"rm -f {remote_json_path}", pty=True) # Clean up the remote file
+    except Exception:
+        print(f"Could not download JSON file. Trying TSV instead.")
+        try:
+            # 2. If JSON fails, attempt to download the TSV file
+            print(f"Trying to download {remote_tsv_path}...")
+            conn.get(remote_tsv_path, local=local_tsv_path)
+            print(f"Result saved to: {local_tsv_path}")
+            downloaded_file = local_tsv_path
+            conn.sudo(f"rm -f {remote_tsv_path}", pty=True) # Clean up the remote file
+        except Exception as e2:
+            print(f"Could not download TSV file either: {e2}")
+
+    print("Cleaning up remote script...")
+    conn.sudo(f"rm -f {remote_script_path}", pty=True)
     conn.close()
+    
+    # Return the path of the file that was found, or None
+    return downloaded_file
+
+    # --- End of Modified Logic ---
