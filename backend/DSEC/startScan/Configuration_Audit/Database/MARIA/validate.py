@@ -4,6 +4,11 @@ import csv
 import os
 import chardet
 import re
+def ensure_output_directory_exists(output_file_path):
+    directory = os.path.dirname(output_file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
 
 # Detect file encoding
 def detect_encoding(file_path):
@@ -467,6 +472,7 @@ def validate_maria_db(result_json,validate_csv,report_csv):
         csv_data = load_csv(csv_file)
         getting_names=get_included_names(json_data)
         result_lookup = build_result_lookup(json_data)
+        ensure_output_directory_exists(output_csv) 
         write_filtered_csv(csv_data, output_csv, result_lookup,getting_names)
     except Exception as e:
         print(f"Error processing CSV: {e}")

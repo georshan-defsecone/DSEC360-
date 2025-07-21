@@ -5,6 +5,14 @@ import ast
 import pandas as pd
 from collections import defaultdict
 
+import os
+
+def ensure_output_directory_exists(output_file_path):
+    directory = os.path.dirname(output_file_path)
+    if directory and not os.path.exists(directory):
+        os.makedirs(directory)
+
+
 # ──────────────────────────────
 # Manual condition evaluator
 # ──────────────────────────────
@@ -202,6 +210,7 @@ def validate_mssql(json_path, csv_path, output_path): # output_path is now the e
     
     # --- CRITICAL CHANGE HERE: Use output_path directly without "_final" ---
     # `output_path` is the argument passed to validate_mssql, which is the desired name.
+    ensure_output_directory_exists(output_path)
     df.to_csv(output_path, index=False, encoding='utf-8')
     print(f"✅ CSV generated: {output_path}")
     # --- END CRITICAL CHANGE ---
