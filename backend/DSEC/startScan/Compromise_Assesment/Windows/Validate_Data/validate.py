@@ -168,6 +168,93 @@ def validate_lolbins(entries):
     
     return results
 
+def validate_config_files(entries):
+    results = []
+    checked_hashes = {}  # Avoid duplicate VT lookups
+
+    for entry in entries:
+        file_name = entry.get("FileName", "Unknown File")
+        file_hash = entry.get("HashSHA256") or entry.get("Hash") or ""
+        permissions = entry.get("Permissions", "")
+
+        # Flag if 'Everyone' or BUILTIN\Users has write/modify/fullcontrol
+        lowered = permissions.lower()
+        if "everyone:" in lowered or ("builtin\\users" in lowered and any(p in lowered for p in ["write", "modify", "fullcontrol"])):
+            final_status = "Fail"
+            malicious = "N/A"
+            notes = "Insecure Permissions (Everyone/Users Write)"
+            results.append([file_name, file_hash, final_status, malicious, notes])
+            continue
+
+        # Check for missing/invalid hash
+        if not file_hash or file_hash in ["File Not Found", "N/A", "", "Hash Error"]:
+            results.append([file_name, file_hash, "Missing or Invalid Hash", 0, ""])
+            continue
+
+        # Reuse result if already checked
+        if file_hash in checked_hashes:
+            status, malicious, vendors = checked_hashes[file_hash]
+            print(f"Reusing result for: {file_name} → {file_hash}")
+        else:
+            print(f"Checking Config File: {file_name} → {file_hash}")
+            status, malicious, vendors = check_virustotal(file_hash)
+            checked_hashes[file_hash] = (status, malicious, vendors)
+            time.sleep(10)
+
+        final_status = "Pass" if status == "Pass" else "Fail"
+        results.append([file_name, file_hash, final_status, malicious, vendors])
+
+    return results
+
+def validate_user_accounts(entries):
+    results = []
+    privileged_levels = set()
+    trusted_admins = set()
+
+    # First pass: find baseline admin privilege(s)
+    for entry in entries:
+        username = entry.get("Username", "")
+        description = entry.get("Description", "")
+        privileges = entry.get("Privileges", "")
+
+        if "administering" in description.lower():
+            privileged_levels.add(privileges.strip().lower())
+            trusted_admins.add(username.lower())
+
+    # Second pass: validate all users
+    for entry in entries:
+        username = entry.get("Username", "")
+        fullname = entry.get("FullName", "")
+        privileges = entry.get("Privileges", "")
+        privilege_clean = privileges.strip().lower()
+
+        if username.lower() not in trusted_admins and privilege_clean in privileged_levels:
+            status = "Fail"
+            notes = "User has elevated privileges similar to admin"
+        else:
+            status = "Pass"
+            notes = ""
+
+        results.append([username, fullname, privileges, status, notes])
+
+    return results
+
+def validate_powershell_history(entries):
+    results = []
+    for entry in entries:
+        username = entry.get("Username", "Unknown")
+        command = entry.get("Command", "")
+        keyword = entry.get("MatchedKeyword", "")
+        line_number = entry.get("LineNumber", "N/A")
+
+        # Consider all matches risky
+        status = "Fail"
+        notes = f"Line {line_number} matched dangerous keyword: {keyword}"
+
+        results.append([username, command, status])
+    return results
+
+
 
 # === Mapping Check Names to Validation Functions ===
 validation_map = {
@@ -178,6 +265,11 @@ validation_map = {
     "Visual Basic for Applications": validate_vba_settings,
     "Startup files": validate_startup_files,
     "Living off the Land": validate_lolbins,
+    "Configuration Files": validate_config_files,
+    "List all user accounts": validate_user_accounts,
+    "PowerShell History" : validate_powershell_history
+
+
 }
 
 # === Load JSON file ===
@@ -191,28 +283,6 @@ with open(JSON_FILE, "r", encoding="utf-8-sig") as f:
     except json.JSONDecodeError as e:
         print(f"Error parsing JSON: {e}")
         exit()
-
-# === Process each block ===
-final_results = []
-
-for check_name, entries in data.items():
-    print(f"\nProcessing: {check_name}")
-
-    if isinstance(entries, dict):
-        entries = [entries]
-
-    if not isinstance(entries, list):
-        print(f"Skipping '{check_name}' as it is not a list or dict.")
-        continue
-
-    validate_function = validation_map.get(check_name)
-    if not validate_function:
-        print(f"No validation function defined for '{check_name}'. Skipping.")
-        continue
-
-    block_results = validate_function(entries)
-    for res in block_results:
-        final_results.append([check_name] + res)
 
 # === CSV Headers Mapping ===
 
@@ -231,7 +301,15 @@ csv_headers_map = {
 
     "Living off the Land": ["IOC_Control", "File Name", "Status"],
 
-    "default": ["IOC_Control", "File Name", "Hash", "Status", "Malicious Count", "Vendors Name"]
+    "Configuration Files": ["IOC_Control", "File Name", "Hash", "Status", "Malicious Count", "Everyone Access/Vendor Info"],
+
+    "List all user accounts": ["IOC_Control", "Username", "Full Name", "Privileges", "Status", "Notes"],
+
+    "PowerShell History": ["IOC_Control", "Username", "Command", "Status"],
+
+
+
+    "default": ["IOC_Control","Username" "File Name", "Hash", "Status", "Malicious Count", "Vendors Name"]
 
 }
 
