@@ -343,6 +343,34 @@ def validate_windows_events(entries):
         results.append(["Suspicious_Open_Ports", "No suspicious ports or logons", "Pass"])
 
     return results
+def validate_scheduled_tasks(entries):
+    results = []
+    checked_hashes = {}
+
+    for entry in entries:
+        file_name = entry.get("Execute") or "Unknown Executable"
+        file_hash = entry.get("Hash") or ""
+
+        # Skip if hash is invalid
+        if not file_hash or file_hash in ["File Not Found", "N/A", "", "Hash Error"]:
+            results.append([file_name, file_hash, "Missing or Invalid Hash", 0, ""])
+            continue
+
+        # Reuse previous result if hash was already checked
+        if file_hash in checked_hashes:
+            print(f"Reusing result for: {file_name} → {file_hash}")
+            status, malicious, vendors = checked_hashes[file_hash]
+        else:
+            print(f"Checking Scheduled Task: {file_name} → {file_hash}")
+            status, malicious, vendors = check_virustotal(file_hash)
+            checked_hashes[file_hash] = (status, malicious, vendors)
+            time.sleep(10)
+
+        results.append([file_name, file_hash, status, malicious, vendors])
+
+    return results
+
+
 
 
 # === Mapping Check Names to Validation Functions ===
@@ -355,11 +383,10 @@ validation_map = {
     "Startup files": validate_startup_files,
     "Living off the Land": validate_lolbins,
     "Configuration Files": validate_config_files,
-    "List all user accounts": validate_user_accounts,
+    "List All User Accounts": validate_user_accounts,
     "PowerShell History" : validate_powershell_history,
-    "Windows Events" : validate_windows_events
-
-
+    "Windows Events" : validate_windows_events,
+    "Schedule Task": validate_scheduled_tasks,
 }
 
 # === Load JSON file ===
@@ -393,11 +420,13 @@ csv_headers_map = {
 
     "Configuration Files": ["IOC_Control", "File Name", "Hash", "Status", "Malicious Count", "Everyone Access/Vendor Info"],
 
-    "List all user accounts": ["IOC_Control", "Username", "Full Name", "Privileges", "Status", "Notes"],
+    "List All User Accounts": ["IOC_Control", "Username", "Full Name", "Privileges", "Status", "Notes"],
 
     "PowerShell History": ["IOC_Control", "Username", "Command", "Status"],
 
     "Windows Events": ["IOC_Control", "Event Summary", "Status"],
+
+    "Schedule Task": ["IOC_Control", "Executable", "Hash", "Status", "Malicious Count", "Vendors/Permission Info"],
 
 
     "default": ["IOC_Control","Username" "File Name", "Hash", "Status", "Malicious Count", "Vendors Name"]
