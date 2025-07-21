@@ -1,0 +1,25 @@
+audit_id: "6.4.1.3"
+audit_name: "Ensure auditing for processes that start prior to auditd is enabled"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# Find all grub.cfg files and check linux lines missing audit=1
+while IFS= read -r line; do
+    failures+=(" - Missing 'audit=1': $line")
+done < <(find /boot -type f -name 'grub.cfg' -exec grep -Ph '^\s*linux' {} + | grep -v 'audit=1')
+
+# Output result
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - All GRUB kernel entries include 'audit=1'"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    echo " - Reason(s) for audit failure:"
+    printf '%s\n' "${failures[@]}"
+fi
+
+}
+"""

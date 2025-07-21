@@ -1,0 +1,41 @@
+audit_id: "5.4.2.6"
+audit_name: "Ensure root user umask is configured"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# Check .bash_profile and .bashrc for weak umask values
+while IFS= read -r match; do
+    failures+=(" - Weak umask found: $match")
+done < <(grep -Psi -- '^\h*umask\h+((0[0-7]{3})|(u=[rwx]{0,3}(,g=[rwx]{0,3})?(,o=[rwx]{0,3})?))' /root/.bash_profile /root/.bashrc 2>/dev/null | \
+    awk '
+        {
+            umask_line = tolower($0);
+            if (umask_line ~ /umask\s+0[0-7]{3}/) {
+                split(umask_line, a, /umask\s+/); val = a[2];
+                if (val ~ /^[0-7]{3}$/ && val > 027) print $0;
+            } else if (umask_line ~ /u=/ || umask_line ~ /g=/ || umask_line ~ /o=/) {
+                # Check symbolic umask - only allow restrictive combinations
+                if (umask_line ~ /o=[rwx]/ || umask_line ~ /g=w/) {
+                    print $0;
+                }
+            }
+        }
+    ')
+
+# Output results
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - root's umask setting is 027 or more restrictive in /root/.bash_profile and /root/.bashrc"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    echo " - Reason(s) for audit failure:"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

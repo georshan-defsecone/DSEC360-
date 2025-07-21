@@ -1,0 +1,20 @@
+audit_id: "4.1.2"
+audit_name: "Ensure iptables-persistent is not installed with ufw"
+audit_script: """
+{
+if dpkg-query -s iptables-persistent &>/dev/null; then
+    echo ""
+    echo "- Audit Result:"
+    echo " ** FAIL **"
+    echo " - Reason(s) for audit failure:"
+    echo " - iptables-persistent package is installed"
+    echo ""
+else
+    echo ""
+    echo "- Audit Result:"
+    echo " ** PASS **"
+    echo " - iptables-persistent package is not installed"
+    echo ""
+fi
+}
+"""

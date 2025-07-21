@@ -1,0 +1,33 @@
+audit_id: "5.3.3.2.8"
+audit_name: "Ensure password quality is enforced for the root user"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# List of pwquality configuration files
+config_files=(/etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf)
+
+found=false
+for file in "${config_files[@]}"; do
+    [ -f "$file" ] || continue
+    if grep -Psiq '^\s*enforce_for_root\b' "$file"; then
+        found=true
+        break
+    fi
+done
+
+# Evaluate result
+if $found; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - enforce_for_root is enabled in a pwquality configuration file"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    echo " - enforce_for_root is not enabled in any pwquality configuration file"
+    echo "- End List"
+fi
+
+}
+"""

@@ -1,0 +1,58 @@
+audit_id: "6.4.3.1"
+audit_name: "Ensure changes to system administration scope is collected"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# Define expected audit rules
+expected_rules=(
+  "-w /etc/sudoers -p wa -k scope"
+  "-w /etc/sudoers.d -p wa -k scope"
+)
+
+# Normalize whitespace
+normalize_rule() {
+  sed -E 's/[[:space:]]+/ /g; s/^[[:space:]]+//; s/[[:space:]]+$//'
+}
+
+# Get on-disk rules
+ondisk_rules=$(awk '/^ *-w/ && /\/etc\/sudoers/ && / +-p *wa/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules 2>/dev/null | normalize_rule)
+
+# Get active rules
+active_rules=$(auditctl -l 2>/dev/null | awk '/^ *-w/ && /\/etc\/sudoers/ && / +-p *wa/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' | normalize_rule)
+
+# Function to safely check presence
+contains_rule() {
+  rule="$1"
+  input="$2"
+  echo "$input" | grep -Fqx -- "$rule"
+}
+
+# Check on-disk rules
+for rule in "${expected_rules[@]}"; do
+  if ! contains_rule "$rule" "$ondisk_rules"; then
+    failures+=(" - On-disk rule missing or incorrect: $rule")
+  fi
+done
+
+# Check active rules
+for rule in "${expected_rules[@]}"; do
+  if ! contains_rule "$rule" "$active_rules"; then
+    failures+=(" - Active audit rule missing or incorrect: $rule")
+  fi
+done
+
+# Output
+if [ "${#failures[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  echo " - All required audit rules are present (on-disk and active)"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  echo " - Reason(s) for audit failure:"
+  printf '%s\n' "${failures[@]}"
+fi
+
+}
+"""

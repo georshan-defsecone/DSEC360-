@@ -1,0 +1,15 @@
+audit_id: "1.5.4"
+audit_name: "Ensure prelink is not installed"
+audit_script: """
+{
+# Audit: Verify that the prelink package is not installed
+
+if dpkg-query -s prelink &>/dev/null; then
+    echo "** FAIL ** prelink is installed"
+    exit 1
+else
+    echo "** PASS ** prelink is not installed"
+    exit 0
+fi
+}
+"""

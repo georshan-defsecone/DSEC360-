@@ -1,0 +1,55 @@
+audit_id: "5.1.11"
+audit_name: "Ensure sshd IgnoreRhosts is enabled"
+audit_script: """
+{
+failures=()
+users_failed=()
+
+# Detect if Match blocks exist
+match_present=$(grep -iE '^match\s' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null)
+
+# Function to validate that IgnoreRhosts is set to yes
+check_ignorerhosts() {
+    local config="$1"
+    [[ "$config" =~ ^ignorerhosts[[:space:]]+yes$ ]]
+}
+
+if [ -z "$match_present" ]; then
+    # No Match blocks — check global config
+    config=$(sudo sshd -T 2>/dev/null | grep -i '^ignorerhosts')
+    if check_ignorerhosts "$config"; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - IgnoreRhosts is set to 'yes' globally"
+        echo "- End List"
+    else
+        failures+=(" - IgnoreRhosts is not set to 'yes'")
+        [ -n "$config" ] && failures+=("   Actual value: $config") || failures+=("   Directive not found")
+
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        printf '%s\n' "${failures[@]}"
+        echo "- End List"
+    fi
+else
+    # Match blocks exist — check setting per user
+    while IFS=: read -r username _ uid _ _ _ shell; do
+        if [[ "$uid" -ge 1000 && "$shell" != *false && "$shell" != *nologin ]]; then
+            config=$(sudo sshd -T -C user="$username" 2>/dev/null | grep -i '^ignorerhosts')
+            if ! check_ignorerhosts "$config"; then
+                users_failed+=("$username")
+            fi
+        fi
+    done < /etc/passwd
+
+    if [ "${#users_failed[@]}" -eq 0 ]; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - All users have IgnoreRhosts set to 'yes'"
+        echo "- End List"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        echo " - The following users do NOT have IgnoreRhosts set to 'yes':"
+        printf '   %s\n' "${users_failed[@]}"
+        echo "- End List"
+    fi
+fi
+}
+"""

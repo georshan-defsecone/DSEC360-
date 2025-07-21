@@ -1,0 +1,17 @@
+audit_id: "1.7.8"
+audit_name: "Ensure GDM autorun-never is enabled"
+audit_script: """
+{
+# Get current settings
+autorun=$(gsettings get org.gnome.desktop.media-handling autorun-never 2>/dev/null)
+
+# Check autorun
+if [ "$autorun" != "true" ]; then
+    echo "** FAIL ** autorun-never is not enabled (current: $autorun)"
+    exit 1
+fi
+
+# All good
+echo "** PASS ** autorun-never is enabled (current: $autorun)"
+}    
+"""

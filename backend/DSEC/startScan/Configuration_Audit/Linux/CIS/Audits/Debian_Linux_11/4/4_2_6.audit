@@ -1,0 +1,46 @@
+audit_id: "4.2.6"
+audit_name: "Ensure nftables loopback traffic is configured"
+audit_script: """
+{
+failures=()
+nft_input_section="$(nft list ruleset 2>/dev/null | awk '/hook input/,/}/')"
+
+# Check for accepting traffic on loopback interface
+if grep -q 'iif "lo" accept' <<< "$nft_input_section"; then
+    echo " - Loopback interface configured to accept traffic (iif \"lo\" accept)"
+else
+    failures+=(" - Missing rule to accept traffic on loopback interface (iif \"lo\" accept)")
+fi
+
+# Check for dropping IPv4 loopback spoofed traffic
+if grep -q 'ip saddr 127.0.0.0/8.*drop' <<< "$nft_input_section"; then
+    echo " - IPv4 loopback spoofed traffic is dropped (ip saddr 127.0.0.0/8 ... drop)"
+else
+    failures+=(" - Missing rule to drop IPv4 loopback spoofed traffic (ip saddr 127.0.0.0/8 ... drop)")
+fi
+
+# Check if IPv6 is enabled
+if [ -e /proc/sys/net/ipv6/conf/all/disable_ipv6 ]; then
+    ipv6_disabled=$(< /proc/sys/net/ipv6/conf/all/disable_ipv6)
+    if [ "$ipv6_disabled" -eq 0 ]; then
+        if grep -q 'ip6 saddr ::1.*drop' <<< "$nft_input_section"; then
+            echo " - IPv6 loopback spoofed traffic is dropped (ip6 saddr ::1 ... drop)"
+        else
+            failures+=(" - Missing rule to drop IPv6 loopback spoofed traffic (ip6 saddr ::1 ... drop)")
+        fi
+    else
+        echo " - IPv6 is disabled, skipping IPv6 loopback spoof check"
+    fi
+else
+    echo " - Cannot determine IPv6 status, skipping IPv6 loopback spoof check"
+fi
+
+# Audit Result
+if [ ${#failures[@]} -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+fi
+}
+"""

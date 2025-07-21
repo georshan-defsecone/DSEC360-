@@ -1,0 +1,27 @@
+audit_id: "7.1.10"
+audit_name: "Ensure permissions on /etc/security/opasswd are configured"
+audit_script: """
+{
+failures=()
+files=("/etc/security/opasswd" "/etc/security/opasswd.old")
+
+for file in "${files[@]}"; do
+    if [ -e "$file" ]; then
+        read -r mode perms uid user gid group <<< "$(stat -Lc '%a %A %u %U %g %G' "$file")"
+
+        (( mode > 600 )) && failures+=(" - $file has permission $mode ($perms), should be 600 or more restrictive")
+        [[ "$uid" -ne 0 || "$user" != "root" ]] && failures+=(" - $file is owned by UID=$uid ($user), should be root")
+        [[ "$gid" -ne 0 || "$group" != "root" ]] && failures+=(" - $file is group-owned by GID=$gid ($group), should be root")
+    fi
+done
+
+# Output result
+if [ ${#failures[@]} -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - All relevant files (if present) are securely configured"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+fi
+}
+"""

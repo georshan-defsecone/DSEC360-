@@ -1,0 +1,21 @@
+audit_id: "1.4.2"
+audit_name: "Ensure access to bootloader config is configured"
+audit_script: """
+{
+file="/boot/grub/grub.cfg"
+
+perm=$(stat -Lc '%a' "$file")
+uid=$(stat -Lc '%u' "$file")
+gid=$(stat -Lc '%g' "$file")
+
+perm_num=$((8#$perm))
+
+if [[ "$uid" -eq 0 && "$gid" -eq 0 && $perm_num -le 0600 ]]; then
+    echo "** PASS **"
+    exit 0
+fi
+
+echo "** FAIL **"
+exit 1
+}
+"""

@@ -1,0 +1,46 @@
+audit_id: "6.4.3.16"
+audit_name: "Ensure successful and unsuccessful attempts to use the setfacl command are collected"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+expected="-a always,exit -F path=/usr/bin/setfacl -F perm=x -F auid>=1000 -F auid!=unset -k perm_chng"
+
+# Extract UID_MIN from login.defs
+UID_MIN=$(awk '/^\s*UID_MIN/ { print $2 }' /etc/login.defs)
+
+# On-disk audit rule check
+ondisk=$(grep -P '^\s*-a\s+always,exit' /etc/audit/rules.d/*.rules 2>/dev/null |
+         grep -P '\s+-F\s+auid!=(unset|-1|4294967295)' |
+         grep -P "\s+-F\s+auid>=${UID_MIN}" |
+         grep -P '\s+-F\s+perm=x' |
+         grep -P '\s+-F\s+path=/usr/bin/setfacl' |
+         grep -P '\s+(-k\s+\S+|\s+key=\S+)')
+
+# Runtime audit rule check
+runtime=$(auditctl -l 2>/dev/null |
+          grep -P '^\s*-a\s+always,exit' |
+          grep -P '\s+-F\s+auid!=(unset|-1|4294967295)' |
+          grep -P "\s+-F\s+auid>=${UID_MIN}" |
+          grep -P '\s+-F\s+perm=x' |
+          grep -P '\s+-F\s+path=/usr/bin/setfacl' |
+          grep -P '\s+(-k\s+\S+|\s+key=\S+)')
+
+# Validation
+grep -Fq -- "$expected" <<< "$ondisk" || failures+=(" - On-disk rule missing or incorrect: $expected")
+grep -Fq -- "$expected" <<< "$runtime" || failures+=(" - Active audit rule missing or incorrect: $expected")
+
+# Result Output
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - Auditing of /usr/bin/setfacl execution is correctly configured"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+fi
+
+
+}
+"""

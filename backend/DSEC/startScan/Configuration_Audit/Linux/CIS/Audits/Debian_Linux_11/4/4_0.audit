@@ -1,0 +1,50 @@
+audit_id: "4.0"
+audit_name: "Ensure a single firewall configuration utility is in use"
+audit_script: """
+{
+    active_firewall=()
+    firewalls=("ufw" "nftables" "iptables")
+
+    # Determine which firewall is active and enabled
+    for firewall in "${firewalls[@]}"; do
+        case "$firewall" in
+            nftables) cmd="nft" ;;
+            *)        cmd="$firewall" ;;
+        esac
+
+        if command -v "$cmd" &>/dev/null && \
+           systemctl is-enabled --quiet "$firewall" && \
+           systemctl is-active --quiet "$firewall"; then
+            active_firewall+=("$firewall")
+        fi
+    done
+
+    # Display audit results
+    if [ ${#active_firewall[@]} -eq 1 ]; then
+        printf '%s\n' "" "Audit Results:" " ** PASS **" \
+               " - A single firewall is in use: ${active_firewall[0]}" \
+               "   Follow recommendations for '${active_firewall[0]}' only."
+    elif [ ${#active_firewall[@]} -eq 0 ]; then
+        printf '%s\n' "" "Audit Results:" " ** FAIL **" \
+               " - No firewall is in use or firewall status could not be determined."
+    else
+        printf '%s\n' "" "Audit Results:" " ** FAIL **" \
+               " - Multiple firewalls are active: ${active_firewall[*]}" \
+               "   Only one firewall should be active to avoid conflict."
+    fi
+}
+"""
+
+depended_audits: "4.1.1, 4.1.2, 4.1.3, 4.1.4, 4.1.6, 4.1.7, 4.2.1, 4.2.2, 4.2.3, 4.2.4, 4.2.5, 4.2.6, 4.2.7, 4.2.8, 4.2.9, 4.3.1.1, 4.3.1.2, 4.3.1.3, 4.3.2.1, 4.3.2.2, 4.3.3.1, 4.3.3.2"
+condition:
+  match: output_regex
+  cases:
+    - value: 'A single firewall is in use: ufw'
+      run: ["4.1.1", "4.1.2", "4.1.3", "4.1.4", "4.1.6", "4.1.7"]
+    - value: 'A single firewall is in use: nftables'
+      run: ["4.2.1", "4.2.2", "4.2.3", "4.2.4", "4.2.5", "4.2.6", "4.2.8", "4.2.9"]
+    - value: 'A single firewall is in use: iptables'
+      run: ["4.3.1.1", "4.3.1.2", "4.3.1.3", "4.3.2.1", "4.3.2.2", "4.3.3.1", "4.3.3.2"]
+  default:
+    action: skip
+    status: PASS

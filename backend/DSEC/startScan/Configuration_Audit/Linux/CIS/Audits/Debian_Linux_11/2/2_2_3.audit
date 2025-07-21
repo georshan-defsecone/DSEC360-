@@ -1,0 +1,13 @@
+audit_id: "2.2.3"
+audit_name: "Ensure talk client is not installed"
+audit_script: """
+{
+if dpkg-query -s talk &>/dev/null; then
+    echo "** FAIL ** talk is installed"
+    exit 1
+else
+    echo "** PASS ** talk is not installed"
+    exit 0
+fi
+}
+"""

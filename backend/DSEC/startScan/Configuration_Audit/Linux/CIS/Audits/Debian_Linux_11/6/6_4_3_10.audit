@@ -1,0 +1,47 @@
+audit_id: "6.4.3.10"
+audit_name: "Ensure successful file system mounts are collected"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+expected_rules=(
+  "-a always,exit -F arch=b64 -S mount -F auid>=1000 -F auid!=unset -F key=mounts"
+  "-a always,exit -F arch=b32 -S mount -F auid>=1000 -F auid!=unset -F key=mounts"
+)
+
+UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+
+# On-disk rules
+ondisk=$(awk "/^ *-a *always,exit/ \
+&&/ -F *arch=b(32|64)/ \
+&&(/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) \
+&&/ -F *auid>=$UID_MIN/ \
+&&/ -S/ && /mount/ \
+&&(/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)" /etc/audit/rules.d/*.rules 2>/dev/null)
+
+# Running configuration
+runtime=$(auditctl -l | awk "/^ *-a *always,exit/ \
+&&/ -F *arch=b(32|64)/ \
+&&(/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) \
+&&/ -F *auid>=$UID_MIN/ \
+&&/ -S/ && /mount/ \
+&&(/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)")
+
+# Compare
+for rule in "${expected_rules[@]}"; do
+  grep -Fq -- "$rule" <<< "$ondisk" || failures+=(" - On-disk rule missing or incorrect: $rule")
+  grep -Fq -- "$rule" <<< "$runtime" || failures+=(" - Active audit rule missing or incorrect: $rule")
+done
+
+# Output
+if [ "${#failures[@]}" -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  echo " - All required mount syscall audit rules are present (on-disk and active)"
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${failures[@]}"
+fi
+
+}
+"""

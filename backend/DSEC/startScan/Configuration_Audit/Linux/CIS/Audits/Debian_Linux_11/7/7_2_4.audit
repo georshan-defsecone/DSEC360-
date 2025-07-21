@@ -1,0 +1,32 @@
+audit_id: "7.2.4"
+audit_name: "Ensure shadow group is empty"
+audit_script: """
+{
+failures=()
+
+# Check for any unexpected fields in shadow group entry (i.e., shell/home)
+extra_info=$(awk -F: '($1=="shadow") {print $NF}' /etc/group)
+[ "$extra_info" != "" ] && failures+=(" - 'shadow' group should not have extra fields: '$extra_info'")
+
+# Get shadow GID
+shadow_gid=$(getent group shadow | awk -F: '{print $3}')
+
+# Check for users whose primary group is 'shadow'
+if [ -n "$shadow_gid" ]; then
+  while IFS=: read -r user _ _ user_gid _; do
+    [ "$user_gid" = "$shadow_gid" ] && failures+=(" - User: \"$user\" has shadow as primary group (GID $shadow_gid)")
+  done < /etc/passwd
+else
+  failures+=(" - 'shadow' group not found in /etc/group")
+fi
+
+# Output result
+if [ ${#failures[@]} -eq 0 ]; then
+  echo -e "\n- Audit Result:\n ** PASS **"
+  echo " - No misuse of 'shadow' group found."
+else
+  echo -e "\n- Audit Result:\n ** FAIL **"
+  printf '%s\n' "${failures[@]}"
+fi
+}
+"""

@@ -1,0 +1,24 @@
+audit_id: "4.3.2.1"
+audit_name: "Ensure iptables default deny firewall policy"
+audit_script: """
+{
+failures=()
+
+input_policy=$(iptables -L | awk '/^Chain INPUT/ {print $4}')
+[[ "$input_policy" != "DROP" && "$input_policy" != "REJECT" ]] && failures+=(" - INPUT chain policy is $input_policy (expected DROP or REJECT)")
+
+forward_policy=$(iptables -L | awk '/^Chain FORWARD/ {print $4}')
+[[ "$forward_policy" != "DROP" && "$forward_policy" != "REJECT" ]] && failures+=(" - FORWARD chain policy is $forward_policy (expected DROP or REJECT)")
+
+output_policy=$(iptables -L | awk '/^Chain OUTPUT/ {print $4}')
+[[ "$output_policy" != "DROP" && "$output_policy" != "REJECT" ]] && failures+=(" - OUTPUT chain policy is $output_policy (expected DROP or REJECT)")
+
+if [ ${#failures[@]} -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n - All iptables default policies are set to DROP or REJECT\n- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+}
+"""

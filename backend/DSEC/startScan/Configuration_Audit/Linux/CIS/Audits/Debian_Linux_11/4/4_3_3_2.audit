@@ -1,0 +1,51 @@
+audit_id: "4.3.3.2"
+audit_name: "Ensure ip6tables loopback traffic is configured"
+audit_script: """
+{
+failures=()
+
+# Step 1: Check if IPv6 is disabled
+ipv6_disabled="no"
+
+if grep -Pqs '^\h*0\b' /sys/module/ipv6/parameters/disable; then
+    ipv6_disabled="yes"
+fi
+
+if sysctl net.ipv6.conf.all.disable_ipv6 2>/dev/null | grep -Pqs '^\h*net\.ipv6\.conf\.all\.disable_ipv6\h*=\h*1\b' &&
+   sysctl net.ipv6.conf.default.disable_ipv6 2>/dev/null | grep -Pqs '^\h*net\.ipv6\.conf\.default\.disable_ipv6\h*=\h*1\b'; then
+    ipv6_disabled="yes"
+fi
+
+if [ "$ipv6_disabled" = "yes" ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n - IPv6 is disabled on the system\n- End List"
+    exit 0
+fi
+
+# Step 2: Check ip6tables rules if IPv6 is enabled
+
+# Check for ACCEPT on lo in INPUT
+if ! ip6tables -L INPUT -v -n | grep -qE '\bACCEPT\b.*\blo\b.*::/0\s+::/0'; then
+    failures+=(" - Missing: ACCEPT all traffic on loopback interface (INPUT chain)")
+fi
+
+# Check for DROP ::1 in INPUT
+if ! ip6tables -L INPUT -v -n | grep -qE '\bDROP\b.*::1\s+::/0'; then
+    failures+=(" - Missing: DROP spoofed loopback traffic (::1) from non-loopback interfaces (INPUT chain)")
+fi
+
+# Check for ACCEPT on lo in OUTPUT
+if ! ip6tables -L OUTPUT -v -n | grep -qE '\bACCEPT\b.*\blo\b.*::/0\s+::/0'; then
+    failures+=(" - Missing: ACCEPT all traffic from loopback interface (OUTPUT chain)")
+fi
+
+# Final report
+if [ ${#failures[@]} -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n - ip6tables loopback traffic is properly configured\n- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

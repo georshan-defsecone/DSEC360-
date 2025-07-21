@@ -1,0 +1,39 @@
+audit_id: "1.5.5"
+audit_name: "Ensure Automatic Error Reporting is not enabled"
+audit_script: """
+{
+fail_output=""
+pass_output=""
+
+# Check if apport package is installed and enabled
+if dpkg-query -s apport &>/dev/null; then
+    if grep -Psi -- '^\h*enabled\h*=\h*[^0]\b' /etc/default/apport &>/dev/null; then
+        fail_output+="\n - Apport is installed and 'enabled=1' found in /etc/default/apport"
+    else
+        pass_output+="\n - Apport is installed but not enabled in /etc/default/apport"
+    fi
+else
+    pass_output+="\n - Apport package is not installed"
+fi
+
+# Check if the apport service is active
+if systemctl is-active apport.service | grep '^active' &>/dev/null; then
+    fail_output+="\n - apport.service is active"
+else
+    pass_output+="\n - apport.service is not active"
+fi
+
+# Final result
+if [ -z "$fail_output" ]; then
+    echo -e "\n** PASS **"
+    echo -e "$pass_output"
+else
+    echo -e "\n** FAIL **"
+    echo -e "$fail_output"
+    if [ -n "$pass_output" ]; then
+        echo -e "\n- Correctly configured aspects:"
+        echo -e "$pass_output"
+    fi
+fi
+}
+"""

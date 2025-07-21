@@ -1,0 +1,29 @@
+audit_id: "2.1.12"
+audit_name: "Ensure rpcbind services are not in use"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+# Check if rpcbind package is installed
+if dpkg-query -s rpcbind &>/dev/null; then
+    echo "- rpcbind is installed"
+
+    # Check if rpcbind.service or rpcbind.socket are enabled
+    if systemctl is-enabled rpcbind.service rpcbind.socket 2>/dev/null | grep -q '^enabled'; then
+        echo "** FAIL ** rpcbind.service or rpcbind.socket is enabled"
+        exit 1
+    fi
+
+    # Check if rpcbind.service or rpcbind.socket are active
+    if systemctl is-active rpcbind.service rpcbind.socket 2>/dev/null | grep -q '^active'; then
+        echo "** FAIL ** rpcbind.service or rpcbind.socket is active"
+        exit 1
+    fi
+
+    echo "** PASS ** rpcbind is installed but services are neither enabled nor active"
+else
+    echo "** PASS ** rpcbind is not installed"
+fi
+
+}
+"""

@@ -1,0 +1,38 @@
+audit_id: "2.3.3.3"
+audit_name: "Ensure chrony is enabled and running"
+audit_script: """
+{
+    output=""
+    fail_output=""
+
+    service="chrony.service"
+
+    # Check if chrony is in use
+    if systemctl list-units --type=service --state=active | grep -q "$service"; then
+        # Check if enabled
+        if systemctl is-enabled "$service" 2>/dev/null | grep -q '^enabled$'; then
+            output+=" - Service is enabled.\n"
+        else
+            fail_output+=" - $service is not enabled.\n"
+        fi
+
+        # Check if active
+        if systemctl is-active "$service" 2>/dev/null | grep -q '^active$'; then
+            output+=" - Service is active.\n"
+        else
+            fail_output+=" - $service is not active.\n"
+        fi
+    else
+        fail_output+=" - $service is not in use (not active on the system).\n"
+    fi
+
+    echo -e "\n- Audit Result:"
+    if [ -z "$fail_output" ]; then
+        echo " ** PASS **"
+        echo -e "$output"
+    else
+        echo " ** FAIL **"
+        echo -e " - Reason(s) for audit failure:\n$fail_output"
+    fi
+}
+"""

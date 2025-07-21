@@ -1,0 +1,40 @@
+audit_id: "4.1.6"
+audit_name: "Ensure ufw firewall rules exist for all open ports"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+# Collect UFW-allowed ports
+ufw_ports=()
+while read -r port; do
+    [ -n "$port" ] && ufw_ports+=("$port")
+done < <(ufw status verbose | grep -Po '^\h*\d+\b' | sort -u)
+
+# Collect actually open ports (excluding loopback)
+open_ports=()
+while read -r port; do
+    [ -n "$port" ] && open_ports+=("$port")
+done < <(ss -tuln | awk '
+    $5 !~ /%lo:/ && 
+    $5 !~ /127\.0\.0\.1:/ && 
+    $5 !~ /\[?::1\]?:/ {
+        split($5, a, ":"); print a[2]
+    }
+' | sort -u)
+
+# Find difference: open ports not covered by UFW
+diff_ports=($(printf '%s\n' "${open_ports[@]}" "${ufw_ports[@]}" "${ufw_ports[@]}" | sort | uniq -u))
+
+# Report result
+if [[ -n "${diff_ports[*]}" ]]; then
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    echo "- The following port(s) don't have a rule in UFW:"
+    printf '  - %s\n' "${diff_ports[@]}"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo "- All open ports have a rule in UFW"
+fi
+
+}
+"""

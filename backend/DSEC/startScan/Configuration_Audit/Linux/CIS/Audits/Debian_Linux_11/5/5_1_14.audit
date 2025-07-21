@@ -1,0 +1,61 @@
+audit_id: "5.1.14"
+audit_name: "Ensure sshd LogLevel is configured"
+audit_script: """
+{
+failures=()
+users_failed=()
+
+# Detect if Match blocks are present
+match_present=$(grep -iE '^match\s' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null)
+
+# Acceptable values
+valid_values=("INFO" "VERBOSE")
+
+# Validate a given loglevel string
+check_loglevel() {
+    local val="$1"
+    for level in "${valid_values[@]}"; do
+        [[ "$val" =~ ^loglevel[[:space:]]+$level$ ]] && return 0
+    done
+    return 1
+}
+
+if [ -z "$match_present" ]; then
+    # No Match blocks — check global sshd config
+    config=$(sudo sshd -T 2>/dev/null | grep -i '^loglevel')
+    if check_loglevel "$config"; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - LogLevel is set correctly: $config"
+        echo "- End List"
+    else
+        failures+=(" - LogLevel is not set to INFO or VERBOSE")
+        [ -n "$config" ] && failures+=("   Actual value: $config") || failures+=("   Directive not found")
+
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        printf '%s\n' "${failures[@]}"
+        echo "- End List"
+    fi
+else
+    # Match blocks present — check per user
+    while IFS=: read -r username _ uid _ _ _ shell; do
+        if [[ "$uid" -ge 1000 && "$shell" != *nologin && "$shell" != *false ]]; then
+            config=$(sudo sshd -T -C user="$username" 2>/dev/null | grep -i '^loglevel')
+            if ! check_loglevel "$config"; then
+                users_failed+=("$username")
+            fi
+        fi
+    done < /etc/passwd
+
+    if [ "${#users_failed[@]}" -eq 0 ]; then
+        echo -e "\n- Audit Result:\n ** PASS **"
+        echo " - All users have LogLevel set to INFO or VERBOSE"
+        echo "- End List"
+    else
+        echo -e "\n- Audit Result:\n ** FAIL **"
+        echo " - The following users do NOT have LogLevel set to INFO or VERBOSE:"
+        printf '   %s\n' "${users_failed[@]}"
+        echo "- End List"
+    fi
+fi
+}
+"""

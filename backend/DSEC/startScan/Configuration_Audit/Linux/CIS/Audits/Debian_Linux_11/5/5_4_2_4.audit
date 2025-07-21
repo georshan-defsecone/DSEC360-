@@ -1,0 +1,22 @@
+audit_id: "5.4.2.4"
+audit_name: "Ensure root account access is controlled"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+status=$(passwd -S root 2>/dev/null | awk '{print $2}')
+
+if [[ "$status" == "P" || "$status" == "L" ]]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - User: \"root\" Password is status: $status"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    echo " - User: \"root\" has unexpected password status: $status (expected P or L)"
+    echo "- End List"
+fi
+
+}
+"""

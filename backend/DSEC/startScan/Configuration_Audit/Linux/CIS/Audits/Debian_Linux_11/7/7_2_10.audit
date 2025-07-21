@@ -1,0 +1,98 @@
+audit_id: "7.2.10"
+audit_name: "Ensure local interactive user dot files access is configured"
+audit_script: """
+{
+failures=()
+warnings=()
+max_users=1000
+
+# Build regex of valid shells from /etc/shells
+valid_shells_regex="^($(awk -F/ '$NF != "nologin" {print}' /etc/shells | sed -rn '/^\//{s,/,\\/,g;p}' | paste -sd'|' -))$"
+
+# Build user:home pairs for interactive users
+declare -a user_homes
+while read -r user home; do
+    [[ -n "$user" && -n "$home" ]] && user_homes+=("$user:$home")
+done < <(awk -v pat="$valid_shells_regex" -F: '$NF ~ pat { print $1 ":" $(NF-1) }' /etc/passwd)
+
+# Warn if excessive users
+[ "${#user_homes[@]}" -gt "$max_users" ] && echo -e "\n ** INFO **\n - ${#user_homes[@]} interactive users found.\n - This may take a while."
+
+check_file_security() {
+    local file="$1" user="$2" group="$3" mask="$4"
+    local mode owner gowner; read -r mode owner gowner < <(stat -Lc '%#a %U %G' "$file")
+    local max_mode; max_mode="$(printf '%o' $((0777 & ~$mask)))"
+    local issues=()
+
+    (( mode & mask )) && issues+=("   • Insecure permissions: \"$mode\" (should be $max_mode or more restrictive)")
+    [[ "$owner" != "$user" ]] && issues+=("   • Incorrect owner: \"$owner\" (expected: \"$user\")")
+    [[ "$gowner" != "$group" ]] && issues+=("   • Incorrect group: \"$gowner\" (expected: \"$group\")")
+
+    printf '%s\n' "${issues[@]}"
+}
+
+for entry in "${user_homes[@]}"; do
+    user="${entry%%:*}"
+    home="${entry##*:}"
+    group="$(id -gn "$user" 2>/dev/null || echo root)"
+
+    dot_issues=()
+    netrc_issues=()
+    bash_hist_issues=()
+    generic_issues=()
+    netrc_warnings=()
+
+    if [ -d "$home" ]; then
+        while IFS= read -r -d $'\0' file; do
+            fname="$(basename "$file")"
+            case "$fname" in
+                .forward | .rhost)
+                    dot_issues+=("   • Insecure file exists: \"$file\" (should be removed)")
+                    ;;
+                .netrc)
+                    output=$(check_file_security "$file" "$user" "$group" 0177)
+                    if [ -n "$output" ]; then
+                        netrc_issues+=("$output")
+                    else
+                        netrc_warnings+=("   • Secure .netrc exists: \"$file\" (review if needed)")
+                    fi
+                    ;;
+                .bash_history)
+                    output=$(check_file_security "$file" "$user" "$group" 0177)
+                    [ -n "$output" ] && bash_hist_issues+=("$output")
+                    ;;
+                *)
+                    output=$(check_file_security "$file" "$user" "$group" 0133)
+                    [ -n "$output" ] && generic_issues+=("$output")
+                    ;;
+            esac
+        done < <(find "$home" -xdev -type f -name '.*' -print0)
+    fi
+
+    # Collect findings
+    if [[ ${#dot_issues[@]} -gt 0 || ${#netrc_issues[@]} -gt 0 || ${#bash_hist_issues[@]} -gt 0 || ${#generic_issues[@]} -gt 0 ]]; then
+        failures+=("")
+        failures+=(" User: \"$user\" | Home: \"$home\"")
+        failures+=("${dot_issues[@]}" "${netrc_issues[@]}" "${bash_hist_issues[@]}" "${generic_issues[@]}")
+    fi
+
+    if [ ${#netrc_warnings[@]} -gt 0 ]; then
+        warnings+=("")
+        warnings+=(" Advisory: \"$user\" has secure but present .netrc in \"$home\"")
+        warnings+=("${netrc_warnings[@]}")
+    fi
+done
+
+# Final Output
+if [ ${#failures[@]} -eq 0 ]; then
+    echo -e "\n- Audit Result:\n  ** PASS **"
+    echo " - All interactive users' dotfiles are secure and correctly configured."
+    [ ${#warnings[@]} -gt 0 ] && printf '\n- Advisory:\n%s\n' "${warnings[@]}"
+else
+    echo -e "\n- Audit Result:\n  ** FAIL **"
+    echo " - Some users have insecure hidden dotfiles or ownership issues."
+    printf '%s\n' "${failures[@]}"
+    [ ${#warnings[@]} -gt 0 ] && printf '\n- Advisory:\n%s\n' "${warnings[@]}"
+fi
+}
+"""

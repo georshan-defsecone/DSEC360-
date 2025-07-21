@@ -1,0 +1,19 @@
+audit_id: "4.3.1.3"
+audit_name: "Ensure ufw is uninstalled or disabled with iptables"
+audit_script: """
+{
+if ! dpkg-query -s ufw &>/dev/null; then
+    echo -e "\n- Audit Result:\n ** PASS **\n - ufw is not installed\n- End List"
+elif [[ "$(ufw status 2>/dev/null)" == "Status: inactive" ]]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n - ufw is installed but status is inactive\n- End List"
+elif [[ "$(systemctl is-enabled ufw 2>/dev/null)" != "enabled" ]]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n - ufw is installed but ufw.service is not enabled\n- End List"
+elif [[ "$(systemctl is-active ufw.service 2>/dev/null)" != "active" ]]; then
+    echo -e "\n- Audit Result:\n ** PASS **\n - ufw is installed but ufw.service is not active\n- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    echo " - ufw is installed, active, and enabled"
+    echo "- End List"
+fi
+}
+"""

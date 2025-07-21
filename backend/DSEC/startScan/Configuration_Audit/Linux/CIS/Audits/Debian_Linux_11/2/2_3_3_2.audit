@@ -1,0 +1,36 @@
+audit_id: "2.3.3.2"
+audit_name: "Ensure chrony is running as user _chrony"
+audit_script: """
+{
+    output=""
+    output_fail=""
+
+    # Check if chrony service is active/enabled
+    if systemctl is-enabled chrony.service >/dev/null 2>&1 || systemctl is-active chrony.service >/dev/null 2>&1; then
+        # Run the check for chronyd running under incorrect user
+        unauthorized_users=$(ps -eo user:20,comm | awk '$2 == "chronyd" && $1 != "_chrony" { print $1 }' | sort -u)
+
+        if [ -z "$unauthorized_users" ]; then
+            output=" - chronyd is running as expected under the _chrony user"
+            status="PASS"
+        else
+            output_fail=" - chronyd is running as the following unexpected user(s): $unauthorized_users"
+            status="FAIL"
+        fi
+    else
+        output_fail=" - chrony service is not active or enabled, skipping user check"
+        status="FAIL"
+    fi
+
+    # Output the result
+    echo -e "\n- Audit Result:"
+    if [ "$status" == "PASS" ]; then
+        echo " ** PASS **"
+        echo "$output"
+    else
+        echo " ** FAIL **"
+        echo " - Reason(s) for audit failure:"
+        echo "$output_fail"
+    fi
+}
+"""

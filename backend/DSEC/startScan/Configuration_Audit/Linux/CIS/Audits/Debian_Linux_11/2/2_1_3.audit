@@ -1,0 +1,26 @@
+audit_id: "2.1.3"
+audit_name: "Ensure dhcp server services are not in use"
+audit_script: """
+{    
+# Check if isc-dhcp-server package is installed
+if dpkg-query -s isc-dhcp-server &>/dev/null; then
+    echo "- isc-dhcp-server is installed"
+
+    # Check if either service is enabled
+    if systemctl is-enabled isc-dhcp-server.service isc-dhcp-server6.service 2>/dev/null | grep -q '^enabled'; then
+        echo "** FAIL ** isc-dhcp-server.service or isc-dhcp-server6.service is enabled"
+        exit 1
+    fi
+
+    # Check if either service is active
+    if systemctl is-active isc-dhcp-server.service isc-dhcp-server6.service 2>/dev/null | grep -q '^active'; then
+        echo "** FAIL ** isc-dhcp-server.service or isc-dhcp-server6.service is active"
+        exit 1
+    fi
+
+    echo "** PASS ** isc-dhcp-server is installed but services are neither enabled nor active"
+else
+    echo "** PASS ** isc-dhcp-server is not installed"
+fi
+}
+"""

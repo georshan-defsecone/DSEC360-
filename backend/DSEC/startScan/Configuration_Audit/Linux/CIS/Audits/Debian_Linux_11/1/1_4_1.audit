@@ -1,0 +1,27 @@
+audit_id: "1.4.1"
+audit_name: "Ensure bootloader password is set"
+audit_script: """
+# Check if 'set superusers' line exists in /boot/grub/grub.cfg
+if ! grep -q '^set superusers' /boot/grub/grub.cfg; then
+  echo '** FAIL **: No superusers set in grub.cfg'
+  echo '** FAIL **'
+  exit 1
+fi
+
+# Check if 'password_pbkdf2' line exists in /boot/grub/grub.cfg
+if ! grep -q '^password_pbkdf2' /boot/grub/grub.cfg; then
+  echo '** FAIL **: No password_pbkdf2 set in grub.cfg'
+  echo '** FAIL **'
+  exit 1
+fi
+
+echo '** PASS **'
+"""
+audit_description: |
+  This audit ensures that a bootloader password is set in GRUB configuration to
+  prevent unauthorized users from editing boot parameters or booting insecurely.
+
+audit_rationale: |
+  Requiring a password for GRUB protects the system during boot by preventing
+  unauthorized modifications to boot parameters.
+"""

@@ -1,0 +1,44 @@
+audit_id: "5.3.3.2.1"
+audit_name: "Ensure password number of changed characters is configured"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+# --- 1. Check difok in pwquality.conf and .d/*.conf ---
+config_files=("/etc/security/pwquality.conf" /etc/security/pwquality.conf.d/*.conf)
+
+found_valid_difok=false
+for file in "${config_files[@]}"; do
+    if [ -f "$file" ]; then
+        if grep -Psiq '^\s*difok\s*=\s*([2-9]|[1-9][0-9]+)\b' "$file"; then
+            found_valid_difok=true
+            break
+        fi
+    fi
+done
+
+if ! $found_valid_difok; then
+    failures+=(" - difok not found or set to less than 2 in pwquality configuration files")
+fi
+
+# --- 2. Ensure pam_pwquality.so does not override difok < 2 ---
+pam_file="/etc/pam.d/common-password"
+if grep -Psiq '^\s*password\s+(requisite|required|sufficient)\s+pam_pwquality\.so\s+[^#\n\r]*\bdifok\s*=\s*[01]\b' "$pam_file"; then
+    failures+=(" - pam_pwquality.so in $pam_file sets difok < 2, which violates policy")
+fi
+
+# --- Final Output ---
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - difok is properly set to 2 or greater and not overridden improperly"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""

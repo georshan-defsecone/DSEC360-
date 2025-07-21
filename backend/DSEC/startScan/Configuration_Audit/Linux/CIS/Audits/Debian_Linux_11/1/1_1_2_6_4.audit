@@ -1,0 +1,20 @@
+audit_id: "1.1.2.6.4"
+audit_name: "Ensure noexec option set on /var/log partition"
+audit_script: """
+{
+mount_info=$(findmnt -kn /var/log)
+
+if [[ -z "$mount_info" ]]; then
+    echo "** FAIL ** /var/log is not a separate mount — this audit is not applicable"
+    return 0
+fi
+
+if echo "$mount_info" | grep -qw noexec; then
+    echo "** PASS ** /var/log is mounted separately with noexec option"
+    return 0
+else
+    echo "** FAIL ** /var/log is mounted separately but missing noexec option"
+    return 1
+fi
+}
+"""

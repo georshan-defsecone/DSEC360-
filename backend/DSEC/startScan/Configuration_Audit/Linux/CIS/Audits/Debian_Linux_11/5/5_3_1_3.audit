@@ -1,0 +1,34 @@
+audit_id: "5.3.1.3"
+audit_name: "Ensure libpam-pwquality is installed"
+audit_script: """
+{
+#!/usr/bin/env bash
+
+failures=()
+
+if dpkg-query -s libpam-pwquality &>/dev/null; then
+    status_line=$(dpkg-query -s libpam-pwquality | grep -Pi '^Status:')
+    version_line=$(dpkg-query -s libpam-pwquality | grep -Pi '^Version:')
+
+    if ! grep -q 'install ok installed' <<< "$status_line"; then
+        failures+=(" - libpam-pwquality is present but not properly installed (Status: $status_line)")
+    fi
+
+    echo -e " - Detected:\n   $status_line\n   $version_line"
+else
+    failures+=(" - libpam-pwquality is NOT installed")
+fi
+
+# Final output
+if [ "${#failures[@]}" -eq 0 ]; then
+    echo -e "\n- Audit Result:\n ** PASS **"
+    echo " - libpam-pwquality is installed and properly registered"
+    echo "- End List"
+else
+    echo -e "\n- Audit Result:\n ** FAIL **"
+    printf '%s\n' "${failures[@]}"
+    echo "- End List"
+fi
+
+}
+"""
