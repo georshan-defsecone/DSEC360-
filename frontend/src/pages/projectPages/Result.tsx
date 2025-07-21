@@ -153,58 +153,76 @@ export default function ProjectScans() {
                           </td>
                         </tr>
                       ) : (
-                        filteredScans.map((scan, i) => (
-                          <tr
-                            key={i}
-                            className={`cursor-pointer hover:bg-gray-100 border-b ${
-                              i % 2 === 0 ? "bg-white" : "bg-gray-50"
-                            }`}
-                            onClick={() =>
-                              navigate(
-                                `/project/${scan.project}/scan/${scan.scan_name}`
-                              )
-                            }
-                          >
-                            <td className="py-3 px-4 font-medium">
-                              {scan.scan_name}
-                            </td>
-                            <td className="py-3 px-4">{scan.scan_author}</td>
-                            <td className="py-3 px-4">{scan.scan_status}</td>
-                            <td
-                              className="py-3 px-4"
-                              onClick={(e) => e.stopPropagation()}
+                        filteredScans.map((scan, i) => {
+                          // Check if scan_result exists and is not an empty object
+                          const hasResults =
+                            scan.scan_result &&
+                            Object.keys(scan.scan_result).length > 0;
+
+                          return (
+                            <tr
+                              key={i}
+                              className={`border-b ${
+                                i % 2 === 0 ? "bg-white" : "bg-gray-50"
+                              } ${
+                                hasResults
+                                  ? "cursor-pointer hover:bg-gray-100"
+                                  : "opacity-60 cursor-not-allowed"
+                              }`}
+                              onClick={() => {
+                                if (hasResults) {
+                                  navigate(
+                                    `/scan/scanresult/${encodeURIComponent(
+                                      scan.project_name
+                                    )}/${encodeURIComponent(scan.scan_name)}`
+                                  );
+                                }
+                              }}
                             >
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <button className="p-1 rounded hover:bg-gray-200">
-                                    <MoreVertical size={18} />
-                                  </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    className="text-red-600"
-                                    onClick={() => {
-                                      setSelectedScan(scan);
-                                      setShowDeletePrompt(true);
-                                    }}
-                                  >
-                                    Delete
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      downloadScan(
-                                        scan.project_name,
-                                        scan.scan_name
-                                      )
-                                    }
-                                  >
-                                    Download
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </td>
-                          </tr>
-                        ))
+                              <td className="py-3 px-4 font-medium">
+                                {scan.scan_name}
+                              </td>
+                              <td className="py-3 px-4">{scan.scan_author}</td>
+                              <td className="py-3 px-4">{scan.scan_status}</td>
+                              <td
+                                className="py-3 px-4"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button className="p-1 rounded hover:bg-gray-200">
+                                      <MoreVertical size={18} />
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      className="text-red-600"
+                                      onClick={() => {
+                                        setSelectedScan(scan);
+                                        setShowDeletePrompt(true);
+                                      }}
+                                    >
+                                      Delete
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      disabled={!hasResults} // Disable download if no results
+                                      onClick={() => {
+                                        if (hasResults) {
+                                            downloadScan(
+                                              scan.project_name,
+                                              scan.scan_name
+                                            );
+                                        }
+                                      }}
+                                    >
+                                      Download
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </td>
+                            </tr>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>
