@@ -381,103 +381,120 @@ const ScanCADatabases = () => {
         return;
     }
     setErrors("");
+
     const scanPayload = {
-      project_name: formData.projectName,
-      scan_name: formData.scanName,
-      scan_author: userName || "unknown",
-      scan_status: "Pending",
-      scan_type:"Configuration Audit",
+        project_name: formData.projectName,
+        scan_name: formData.scanName,
+        scan_author: userName || "unknown",
+        scan_status: "Pending",
+        scan_type: "Configuration Audit",
 
-      scan_data: {
-        scanType: "Configuration Audit",
-        description: formData.description,
-        category: "database",
-        os: formData.OS,
-        auditMethod: formData.auditMethod,
-        target: formData.target,
-        elevatePrivilege: formData.elevatePrivilege,
-        authMethod: formData.authMethod,
-        username: formData.username,
-        password: formData.password,
-        domain: formData.domain,
-        ntlmHash: formData.ntlmHash,
-        lmHash: formData.lmHash,
-        kdc: formData.kdc,
-        kdcPort: formData.kdcPort,
-        kdcTransport: formData.kdcTransport,
-        certificate: formData.certificate,
-        publicKey: formData.publicKey,
-        privateKeyPassphrase: formData.privateKeyPassphrase,
-        port: formData.port,
-        clientVersion: formData.clientVersion,
-        attemptLeastPrivilege: formData.attemptLeastPrivilege,
+        scan_data: {
+            scanType: "Configuration Audit",
+            description: formData.description,
+            category: "database",
+            os: formData.OS,
+            auditMethod: formData.auditMethod,
+            target: formData.target,
+            elevatePrivilege: formData.elevatePrivilege,
+            authMethod: formData.authMethod,
+            username: formData.username,
+            password: formData.password,
+            domain: formData.domain,
+            ntlmHash: formData.ntlmHash,
+            lmHash: formData.lmHash,
+            kdc: formData.kdc,
+            kdcPort: formData.kdcPort,
+            kdcTransport: formData.kdcTransport,
+            certificate: formData.certificate,
+            publicKey: formData.publicKey,
+            privateKeyPassphrase: formData.privateKeyPassphrase,
+            port: formData.port,
+            clientVersion: formData.clientVersion,
+            attemptLeastPrivilege: formData.attemptLeastPrivilege,
 
-        EP_escalationAccount: formData.EP_escalationAccount,
-        EP_escalationPassword: formData.EP_escalationPassword,
-        EP_dzdoDirectory: formData.EP_dzdoDirectory,
-        EP_suDirectory: formData.EP_suDirectory,
-        EP_pbrunDirectory: formData.EP_pbrunDirectory,
-        EP_su_sudoDirectory: formData.EP_su_sudoDirectory,
-        EP_su_login: formData.EP_su_login,
-        EP_su_user: formData.EP_su_user,
-        EP_sudoUser: formData.EP_sudoUser,
-        EPsshUserPassword: formData.EPsshUserPassword,
-        EPenablePassword: formData.EPenablePassword,
+            EP_escalationAccount: formData.EP_escalationAccount,
+            EP_escalationPassword: formData.EP_escalationPassword,
+            EP_dzdoDirectory: formData.EP_dzdoDirectory,
+            EP_suDirectory: formData.EP_suDirectory,
+            EP_pbrunDirectory: formData.EP_pbrunDirectory,
+            EP_su_sudoDirectory: formData.EP_su_sudoDirectory,
+            EP_su_login: formData.EP_su_login,
+            EP_su_user: formData.EP_su_user,
+            EP_sudoUser: formData.EP_sudoUser,
+            EPsshUserPassword: formData.EPsshUserPassword,
+            EPenablePassword: formData.EPenablePassword,
 
-        globalCredentials: {
-          neverSendCredentials: formData.globalCredentials.neverSendCredentials,
-          dontUseNTLMv1: formData.globalCredentials.dontUseNTLMv1,
-          startRemoteRegistryService:
-            formData.globalCredentials.startRemoteRegistryService,
-          enableAdministrativeShares:
-            formData.globalCredentials.enableAdministrativeShares,
-          startServerService: formData.globalCredentials.startServerService,
+            globalCredentials: {
+                neverSendCredentials: formData.globalCredentials.neverSendCredentials,
+                dontUseNTLMv1: formData.globalCredentials.dontUseNTLMv1,
+                startRemoteRegistryService:
+                    formData.globalCredentials.startRemoteRegistryService,
+                enableAdministrativeShares:
+                    formData.globalCredentials.enableAdministrativeShares,
+                startServerService: formData.globalCredentials.startServerService,
+            },
+
+            complianceCategory: formData.complianceCategory,
+            complianceSecurityStandard: formData.complianceSecurityStandard,
+            flavour: formData.selectedFlavour,
+
+            schedule: formData.schedule,
+            scheduleFrequency: formData.scheduleFrequency,
+            scheduleStartDate: formData.scheduleStartDate,
+            scheduleStartTime: formData.scheduleStartTime,
+            scheduleTimezone: formData.scheduleTimezone,
+            notification: formData.notification,
+            notificationEmail: formData.notificationEmail,
+            uncheckedComplianceItems: uncheckedComplianceItems,
         },
-
-        complianceCategory: formData.complianceCategory,
-        complianceSecurityStandard: formData.complianceSecurityStandard,
-        flavour: formData.selectedFlavour,
-
-        schedule: formData.schedule,
-        scheduleFrequency: formData.scheduleFrequency,
-        scheduleStartDate: formData.scheduleStartDate,
-        scheduleStartTime: formData.scheduleStartTime,
-        scheduleTimezone: formData.scheduleTimezone,
-        notification: formData.notification,
-        notificationEmail: formData.notificationEmail,
-        uncheckedComplianceItems: uncheckedComplianceItems,
-      },
     };
 
     try {
-      const response = await api.post("/scans/create-scan/", scanPayload, {
-        responseType: "blob",
-      });
+        const response = await api.post("/scans/create-scan/", scanPayload, {
+            responseType: "blob",
+        });
+        console.log("All response headers:", response.headers); // <<< ADD THIS LINE
+    const contentDisposition = response.headers["content-disposition"];
+    console.log("Content-Disposition header received (from JS):", contentDisposition);
 
-      const contentDisposition = response.headers["content-disposition"];
-      let filename = "script.sql";
+        
+        let filename = "script.sql"; // Default fallback if parsing fails
 
-      if (contentDisposition) {
-        const match = contentDisposition.match(/filename="?(.+)"?/);
-        if (match?.[1]) filename = match[1];
-      }
+        if (contentDisposition) {
+            // Updated regex to specifically target the 'filename=' part
+            // and capture content inside quotes, if present.
+            const filenameMatch = /filename="([^"]+)"/.exec(contentDisposition);
+            if (filenameMatch && filenameMatch[1]) {
+                filename = filenameMatch[1];
+            } else {
+                // Fallback for cases where quotes might be missing,
+                // though your example shows them.
+                const fallbackMatch = /filename=([^;]+)/.exec(contentDisposition);
+                if (fallbackMatch && fallbackMatch[1]) {
+                    filename = fallbackMatch[1].trim();
+                }
+            }
+        }
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+        console.log("Final filename for download:", filename); // Keep this for debugging
+
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error(
-        "Error downloading script:",
-        error.response?.data || error.message
-      );
-      alert("Failed to download the script.");
+        console.error(
+            "Error downloading script:",
+            error.response?.data || error.message
+        );
+        alert("Failed to download the script.");
     }
-  };
+};
 
   const handleSubmit = async () => {
     try {
