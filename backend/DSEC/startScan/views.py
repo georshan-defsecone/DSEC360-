@@ -374,6 +374,39 @@ def windows_config_audit(data):
     selected_os = (scan_data.get("complianceCategory"))
     audit_method = (scan_data.get("auditMethod")).strip().lower()
 
+    # Normalize compliance and standard names
+    compliance_name = (scan_data.get("complianceCategory") or "").strip().lower()
+    print(compliance_name)
+    standard = (scan_data.get("complianceSecurityStandard") or "").strip().lower()
+
+    normalized_compliance = re.sub(r'[^\w._-]+', '', compliance_name)
+    normalized_standard = re.sub(r'[^\w._-]+', '', compliance_name)
+    print(f"[DEBUG] normalized_compliance: {normalized_compliance}")
+    print(f"[DEBUG] normalized_standard: {normalized_standard}")
+    project_name = (data.get("project_name") or "unknown_project").strip().replace(" ", "_")
+    scan_name = (data.get("scan_name") or "unknown_scan").strip().replace(" ", "_")
+    safe_compliance_name = normalized_compliance or "unknown_compliance"
+    safe_standard = normalized_standard or "unknown_standard"
+    safe_project_name = project_name
+    safe_scan_name = scan_name
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    project_folder = os.path.join(
+                                base_dir,
+                                "Projects",
+                                project_name,
+                                scan_name
+                            )
+    
+    base_dynamic_filename = f"{safe_compliance_name}_{safe_standard}_{safe_project_name}_{safe_scan_name}"
+    dynamic_filename_extension = ".csv"
+    dynamic_filename = f"{base_dynamic_filename}{dynamic_filename_extension}"
+    result_csv = os.path.join(project_folder, dynamic_filename)
+    version = 1
+    while os.path.exists(result_csv):
+            version += 1
+            dynamic_filename = f"{base_dynamic_filename}_v{version}{dynamic_filename_extension}"
+            result_csv = os.path.join(project_folder, dynamic_filename)
+
     try:
         # Dynamically find the query CSV
         queries_dir = os.path.join(base_dir,windows_dir,"CIS" , "Queries_Data")
@@ -393,17 +426,17 @@ def windows_config_audit(data):
             return None, None
         validate_csv_path = os.path.join(validate_dir, validate_csv_name)
         
-
-
         output_json_remote_path = f"C:\\Windows\\Temp\\{os.path.basename(csv_path).replace('.csv', '_output.json')}"
-        output_json_local_path = os.path.join(base_dir,windows_dir, "Output", os.path.basename(csv_path).replace('.csv', '_output.json'))
+        
+        output_json_local_path = os.path.join(project_folder,f"{base_dynamic_filename}.json")
 
-        script_file_name = f"Generate_Script_{selected_os}.ps1"
+        script_file_name = f"{base_dynamic_filename}.ps1"
+
         generate_script_path = os.path.join(base_dir, windows_dir, "Output", script_file_name)
+
         print(f"[DEBUG] PowerShell script will be generated at: {generate_script_path}")
 
         remote_script_path = "C:\\Windows\\Temp\\generate_script.ps1"
-
         excluded_queries = scan_data.get("uncheckedComplianceItems", [])
 
 
