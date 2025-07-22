@@ -427,8 +427,8 @@ const ScanCAWindows = () => {
       let filename = `${formData.complianceCategory}_Script.ps1`;
 
       if (contentDisposition) {
-        const match = contentDisposition.match(/filename="?(.+)"?/);
-        if (match?.[1]) filename = match[1];
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (match?.[1]?.trim()) filename = match[1].trim();
       }
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
