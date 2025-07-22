@@ -179,8 +179,9 @@ def database_config_audit(data):
                 
                 if db_access_method == "agent":
                     path_for_sql = os.path.join(Maria_dir, "CIS", "MariaDB_10_6_cis_query.sql")
-                    #path_for_linux = os.path.join(Maria_dir, "CIS", "linux_commands.sh")
-                    path_for_script=download_script(path_for_sql)
+                    path_for_linux = os.path.join(Maria_dir, "CIS", "MariaDB_10_6_linux_commands.sh")
+                    path_for_readme=os.path.join(Maria_dir,"CIS","Queries","Workflow.docx")
+                    path_for_script=download_script(path_for_sql,path_for_linux,path_for_readme)
                     return path_for_script,None
                 if db_access_method == "remoteAccess":
                     path_for_json = os.path.join(Maria_dir, "CIS", "mariaDB_10_6_query_result.json")
@@ -194,8 +195,10 @@ def database_config_audit(data):
                 remote.mariadb_connection(result_csv,excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
                 if db_access_method == "agent":
                     path_for_sql = os.path.join(Maria_dir, "CIS", "MariaDB_10_11_cis_query.sql")
-                    path_for_script= download_script(path_for_sql)
-                    #path_for_linux = os.path.join(Maria_dir, "CIS_standard", "linux_commands.sh")
+                    path_for_linux = os.path.join(Maria_dir, "CIS", "MariaDB_10_6_linux_commands.sh")
+                    path_for_readme=os.path.join(Maria_dir,"CIS","Queries","Workflow.docx")
+                    path_for_script= download_script(path_for_sql,path_for_linux,path_for_readme)
+                    
                     return path_for_script,None
                 if db_access_method=="remoteAccess":
                     path_for_json = os.path.join(Maria_dir, "CIS", "mariaDB_10_11_query_result.json")
@@ -449,33 +452,47 @@ def windows_config_audit(data):
             return None, None
 
 
+import os
+import zipfile
 
-def download_script(script_path, second_file_path=None):
+def download_script(script_path, second_file_path=None, third_file_path=None):
     print("[*] Entered download_script()")
 
-    # Case 1: Only one file to download
-    if second_file_path is None:
-        if not os.path.isfile(script_path):
-            print(f"[-] Script file not found: {script_path}")
-            return None
-        print(f"[+] Script ready for direct download: {script_path}")
-        return script_path
+    # Collect valid file paths
+    file_paths = []
 
-    # Case 2: ZIP both files
-    if not os.path.isfile(script_path):
+    # Check and collect primary script
+    if script_path is None or not os.path.isfile(script_path):
         print(f"[-] Primary script not found: {script_path}")
         return None
+    file_paths.append(script_path)
 
-    if not os.path.isfile(second_file_path):
-        print(f"[-] Second file not found: {second_file_path}")
-        return None
+    # Check and collect second file if provided
+    if second_file_path:
+        if not os.path.isfile(second_file_path):
+            print(f"[-] Second file not found: {second_file_path}")
+            return None
+        file_paths.append(second_file_path)
 
+    # Check and collect third file if provided
+    if third_file_path:
+        if not os.path.isfile(third_file_path):
+            print(f"[-] Third file not found: {third_file_path}")
+            return None
+        file_paths.append(third_file_path)
+
+    # Case 1: Only one file — return directly
+    if len(file_paths) == 1:
+        print(f"[+] Single file ready for download: {file_paths[0]}")
+        return file_paths[0]
+
+    # Case 2: Multiple files — ZIP them
     zip_filename = os.path.join(os.path.dirname(script_path), "scripts_bundle.zip")
     try:
         with zipfile.ZipFile(zip_filename, 'w') as zipf:
-            zipf.write(script_path, arcname=os.path.basename(script_path))
-            zipf.write(second_file_path, arcname=os.path.basename(second_file_path))
-        print(f"[+] Both files compressed into: {zip_filename}")
+            for file_path in file_paths:
+                zipf.write(file_path, arcname=os.path.basename(file_path))
+        print(f"[+] Files compressed into ZIP: {zip_filename}")
         return zip_filename
     except Exception as e:
         print(f"[!] Failed to create ZIP file: {e}")
