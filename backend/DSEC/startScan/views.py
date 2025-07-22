@@ -87,7 +87,7 @@ def database_config_audit(data):
             # Create the nested directory structure if it doesn't exist
             os.makedirs(project_folder, exist_ok=True)
 
-            sql_output = os.path.join(project_folder, "output.sql")
+            
             # Normalize components for filename
             safe_compliance_name = normalized_compliance or "unknown_compliance"
             safe_standard = normalized_standard or "unknown_standard"
@@ -98,6 +98,7 @@ def database_config_audit(data):
             dynamic_filename_extension = ".csv"
             dynamic_filename = f"{base_dynamic_filename}{dynamic_filename_extension}"
             result_csv = os.path.join(project_folder, dynamic_filename)
+            sql_output = os.path.join(project_folder, f"{base_dynamic_filename}.sql")
             version = 1
             while os.path.exists(result_csv):
                   version += 1
@@ -147,7 +148,6 @@ def database_config_audit(data):
         except Exception as e:
             print(f"[!] Exception running Oracle audit: {e}")
             return None,None
-
     elif normalized_compliance=="mariadb106" or normalized_compliance=="mariadb1011":
         try:
             print(f"[DEBUG] Running MariaDB audit for compliance: {normalized_compliance}")
@@ -453,44 +453,34 @@ def windows_config_audit(data):
 def download_script(script_path, second_file_path=None):
     print("[*] Entered download_script()")
 
-    # Check if the primary script exists
-    if not script_path or not os.path.isfile(script_path):
-        print(f"[-] Script file not found: {script_path}")
+    # Case 1: Only one file to download
+    if second_file_path is None:
+        if not os.path.isfile(script_path):
+            print(f"[-] Script file not found: {script_path}")
+            return None
+        print(f"[+] Script ready for direct download: {script_path}")
+        return script_path
+
+    # Case 2: ZIP both files
+    if not os.path.isfile(script_path):
+        print(f"[-] Primary script not found: {script_path}")
         return None
 
-    # Get the directory of the script and prepare download directory
-    script_dir = os.path.dirname(script_path)
-    download_dir = os.path.join(script_dir, "downloads")
-    os.makedirs(download_dir, exist_ok=True)
+    if not os.path.isfile(second_file_path):
+        print(f"[-] Second file not found: {second_file_path}")
+        return None
 
-    # Case 1: Only one file to download (no compression)
-    if second_file_path is None:
-        dest_path = os.path.join(download_dir, os.path.basename(script_path))
-        try:
-            shutil.copy(script_path, dest_path)
-            print(f"[+] Script copied to download location: {dest_path}")
-            return dest_path
-        except Exception as e:
-            print(f"[!] Failed to copy script for download: {e}")
-            return None
+    zip_filename = os.path.join(os.path.dirname(script_path), "scripts_bundle.zip")
+    try:
+        with zipfile.ZipFile(zip_filename, 'w') as zipf:
+            zipf.write(script_path, arcname=os.path.basename(script_path))
+            zipf.write(second_file_path, arcname=os.path.basename(second_file_path))
+        print(f"[+] Both files compressed into: {zip_filename}")
+        return zip_filename
+    except Exception as e:
+        print(f"[!] Failed to create ZIP file: {e}")
+        return None
 
-    # Case 2: Second file provided, compress both into a ZIP
-    else:
-        # Validate the second file
-        if not os.path.isfile(second_file_path):
-            print(f"[-] Second file not found: {second_file_path}")
-            return None
-
-        zip_filename = os.path.join(download_dir, "scripts_bundle.zip")
-        try:
-            with zipfile.ZipFile(zip_filename, 'w') as zipf:
-                zipf.write(script_path, arcname=os.path.basename(script_path))
-                zipf.write(second_file_path, arcname=os.path.basename(second_file_path))
-            print(f"[+] Both files compressed into: {zip_filename}")
-            return zip_filename
-        except Exception as e:
-            print(f"[!] Failed to create ZIP file: {e}")
-            return None
     
 
 

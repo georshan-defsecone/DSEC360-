@@ -25,18 +25,6 @@ if [ -f "$input_file" ]; then
   done < <(jq -c '.[]' "$input_file")
 fi
 
-result=$( ps -ef | egrep "^mysql.*$" 2>&1 | sed 's/"/\\\"/g' )
-json_map["1_2_Use_Dedicated_Least_Privileged_Account_for_MariaDB_Daemon_Service_Automated_"]="{\"Name\": \"1_2_Use_Dedicated_Least_Privileged_Account_for_MariaDB_Daemon_Service_Automated_\", \"Result\": [{\"VARIABLE_NAME\": \"Command\", \"VARIABLE_VALUE\": \"$result\"}]}"
-
-result=$( [ -L /root/.mysql_history ] && [ "$(readlink /root/.mysql_history)" = "/dev/null" ] && echo "PASS" || echo "FAIL" 2>&1 | sed 's/"/\\\"/g' )
-json_map["1_3_Disable_MariaDB_Command_History_Automated_"]="{\"Name\": \"1_3_Disable_MariaDB_Command_History_Automated_\", \"Result\": [{\"VARIABLE_NAME\": \"Command\", \"VARIABLE_VALUE\": \"$result\"}]}"
-
-result=$( grep MYSQL_PWD /proc/*/environ 2>&1 | sed 's/"/\\\"/g' )
-json_map["1_4_Verify_That_the_MYSQL_PWD_Environment_Variable_is_Not_in_Use_Automated_"]="{\"Name\": \"1_4_Verify_That_the_MYSQL_PWD_Environment_Variable_is_Not_in_Use_Automated_\", \"Result\": [{\"VARIABLE_NAME\": \"Command\", \"VARIABLE_VALUE\": \"$result\"}]}"
-
-result=$( getent passwd mysql | egrep "^.*[\/bin\/false|\/sbin\/nologin]$" 2>&1 | sed 's/"/\\\"/g' )
-json_map["1_5_Ensure_Interactive_Login_is_Disabled_Automated_"]="{\"Name\": \"1_5_Ensure_Interactive_Login_is_Disabled_Automated_\", \"Result\": [{\"VARIABLE_NAME\": \"Command\", \"VARIABLE_VALUE\": \"$result\"}]}"
-
 result=$( grep MYSQL_PWD /home/*/.{bashrc,profile,bash_profile} 2>&1 | sed 's/"/\\\"/g' )
 json_map["1_6_Verify_That_MYSQL_PWD_is_Not_Set_in_Users_Profiles_Automated_"]="{\"Name\": \"1_6_Verify_That_MYSQL_PWD_is_Not_Set_in_Users_Profiles_Automated_\", \"Result\": [{\"VARIABLE_NAME\": \"Command\", \"VARIABLE_VALUE\": \"$result\"}]}"
 

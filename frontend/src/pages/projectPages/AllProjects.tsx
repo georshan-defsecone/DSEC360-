@@ -122,6 +122,15 @@ const AllProjects = () => {
       console.error("Error saving project:", error);
     }
   };
+  
+  // Handle keyboard events for inline editing
+  const handleKeyDown = (event, projectId) => {
+      if (event.key === 'Enter') {
+          saveEdit(projectId);
+      } else if (event.key === 'Escape') {
+          cancelEditing();
+      }
+  };
 
   useEffect(() => {
     fetchProjects();
@@ -182,91 +191,86 @@ const AllProjects = () => {
                             return (
                               <tr
                                 key={pro.project_id}
-                                className={`cursor-pointer hover:bg-gray-100 border-b border-gray-100 ${
+                                className={`border-b border-gray-100 ${
                                   idx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                                }`}
+                                } ${!isEditing ? "hover:bg-gray-100 cursor-pointer" : ""}`}
                                 onClick={() =>
                                   !isEditing && navigate(`/project/${pro.project_id}`)
                                 }
                               >
-                                <td className="py-3 px-4 font-medium border-none">
+                                <td className="py-2 px-4 font-medium border-none">
                                   {isEditing ? (
                                     <Input
                                       value={editName}
                                       onChange={(e) => setEditName(e.target.value)}
-                                      className="text-sm"
+                                      onKeyDown={(e) => handleKeyDown(e, pro.project_id)}
+                                      className="text-sm h-8"
+                                      autoFocus
+                                      onClick={(e) => e.stopPropagation()} // Prevent row click
                                     />
                                   ) : (
                                     pro.project_name
                                   )}
                                 </td>
-                                <td className="py-3 px-4 border-none">
+                                <td className="py-2 px-4 border-none">
                                   {isEditing ? (
                                     <Input
                                       value={editAuthor}
                                       onChange={(e) => setEditAuthor(e.target.value)}
-                                      className="text-sm"
+                                      onKeyDown={(e) => handleKeyDown(e, pro.project_id)}
+                                      className="text-sm h-8"
+                                      onClick={(e) => e.stopPropagation()} // Prevent row click
                                     />
                                   ) : (
                                     pro.project_author
                                   )}
                                 </td>
-                                <td className="py-3 px-4 border-none">
+                                <td className="py-2 px-4 border-none">
                                   {scanCounts[pro.project_id] || 0}
                                 </td>
                                 <td
-                                  className="py-3 px-4 border-none"
+                                  className="py-2 px-4 border-none"
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <button className="p-1 rounded hover:bg-gray-200">
-                                        <MoreVertical size={18} />
-                                      </button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      {isEditing ? (
-                                        <>
-                                          <DropdownMenuItem
-                                            onClick={() => saveEdit(pro.project_id)}
-                                            className="text-green-600"
-                                          >
-                                            <Save size={14} className="mr-2" />
-                                            Save
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                            onClick={cancelEditing}
-                                            className="text-red-500"
-                                          >
-                                            <X size={14} className="mr-2" />
-                                            Cancel
-                                          </DropdownMenuItem>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <DropdownMenuItem
-                                            onClick={() => startEditing(pro)}
-                                          >
-                                            Edit
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                            onClick={() => {
-                                              setSelectedProjectForDelete(pro);
-                                              setShowDeleteModal(true);
-                                            }}
-                                            className="text-red-600"
-                                          >
-                                            Delete
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                            onClick={() => console.log("Download")}
-                                          >
-                                            Download
-                                          </DropdownMenuItem>
-                                        </>
-                                      )}
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
+                                  {isEditing ? (
+                                    <div className="flex items-center justify-start gap-1">
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:bg-green-100" onClick={() => saveEdit(pro.project_id)}>
+                                        <Save size={16} />
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-100" onClick={cancelEditing}>
+                                        <X size={16} />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <button className="p-1 rounded hover:bg-gray-200">
+                                          <MoreVertical size={18} />
+                                        </button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem
+                                          onClick={() => startEditing(pro)}
+                                        >
+                                          Edit
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onClick={() => {
+                                            setSelectedProjectForDelete(pro);
+                                            setShowDeleteModal(true);
+                                          }}
+                                          className="text-red-600"
+                                        >
+                                          Delete
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onClick={() => console.log("Download")}
+                                        >
+                                          Download
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  )}
                                 </td>
                               </tr>
                             );
@@ -290,13 +294,13 @@ const AllProjects = () => {
         </div>
       </div>
 
-      {/* ✅ Custom Delete Modal without background overlay */}
+      {/* Custom Delete Modal */}
       {showDeleteModal && (
-        <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center z-50">
+        <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white rounded-md shadow-xl p-6 w-[400px] border border-gray-300">
             <h2 className="text-lg font-semibold mb-2">Are you sure?</h2>
             <p className="text-sm text-gray-600 mb-6">
-              This will move the project to trash.
+              This will move the project to trash. You can recover it later.
             </p>
             <div className="flex justify-end gap-4">
               <Button variant="outline" onClick={() => setShowDeleteModal(false)}>

@@ -30,6 +30,7 @@ class ScanSerializer(serializers.ModelSerializer):
         fields = [
             'scan_id', 'scan_name', 'scan_author', 'scan_status', 'scan_type',
             'project', 'project_name', 'scan_data', 'scan_output', 'scan_time',
+            'scan_result',
             'trash', 'scan_result_version', 
             'available_result_versions',     
             'parsed_result_versions_data',   

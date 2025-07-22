@@ -487,6 +487,21 @@ def update_scan_result(request, scan_id, audit_id):
         print("\n🔥 Internal Server Error in update_scan_result:")
         traceback.print_exc()
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+class DeletableFileResponse(FileResponse):
+    def __init__(self, file, *args, delete_path=None, **kwargs):
+        self.delete_path = delete_path
+        super().__init__(file, *args, **kwargs)
+
+    def close(self):
+        super().close()
+        if self.delete_path and os.path.exists(self.delete_path):
+            try:
+                os.remove(self.delete_path)
+                print(f"[INFO] Deleted file after sending: {self.delete_path}")
+            except Exception as e:
+                print(f"[ERROR] Failed to delete file: {e}")
 
 
 def update_excel_status(scan, audit_id: str, new_status: str) -> str:
@@ -855,12 +870,16 @@ def create_scan(request):
         filename_for_download = os.path.basename(file_path)
         mime_type, _ = mimetypes.guess_type(file_path)
         mime_type = mime_type or "application/octet-stream"
-        response_file_to_return = FileResponse(
-            open(file_path, "rb"),
-            as_attachment=True,
-            filename=filename_for_download,
-            content_type=mime_type
+        response_file_to_return = DeletableFileResponse(
+        open(file_path, "rb"),
+        as_attachment=True,
+        content_type=mime_type,
+        delete_path=file_path  # Pass the file path to delete
         )
+        response_file_to_return['Content-Disposition'] = f'attachment; filename="{filename_for_download}"'
+        # --- ADD THIS LINE ---
+        response_file_to_return['Access-Control-Expose-Headers'] = 'Content-Disposition'
+        # ---------------------
         scan_result_content_to_store = None 
         print("[DEBUG] Agent script prepared for download.")
 
