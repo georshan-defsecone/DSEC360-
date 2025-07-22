@@ -21,9 +21,9 @@ def start_servers():
     # Command to activate virtual environment and run the server
     if platform.system() == "Windows":
         # Note: Ensure your venv is named 'venv'
-        backend_command = f'cd {dsec_dir} && ..\\venv\\Scripts\\activate && python manage.py runserver'
+        backend_command = f'cd {dsec_dir} && ..\\env\\Scripts\\activate && python manage.py runserver'
     else: # macOS and Linux
-        backend_command = f'cd {dsec_dir} && . ../venv/bin/activate && python manage.py runserver'
+        backend_command = f'cd {dsec_dir} && . ../env/bin/activate && python manage.py runserver'
 
     # --- Execute commands in new terminal windows ---
     print("Attempting to start servers...")
