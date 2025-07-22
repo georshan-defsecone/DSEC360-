@@ -21,7 +21,7 @@ interface AuditResultItem {
   "CIS.NO"?: string;
   Subject?: string;
   Description?: string;
-  "Current Settings"?: string | null;
+  "Current Settings"?: string | null; // Correctly typed
   Status?: string;
   Remediation?: string;
   name?: string;
@@ -73,7 +73,7 @@ const ScanResult = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>("none");
   const [isRescanning, setIsRescanning] = useState(false);
   const [selectedVersionKey, setSelectedVersionKey] = useState<string | null>(null);
-  const [notificationMessage, setNotificationMessage] = useState<NotificationType>(null); // Renamed from uploadMessage
+  const [notificationMessage, setNotificationMessage] = useState<NotificationType>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingValue, setEditingValue] = useState<string>("");
 
@@ -245,7 +245,7 @@ const ScanResult = () => {
   
   const handleConfirmDownload = useCallback(async () => {
     if (!projectName) {
-      alert("Project name is missing!"); // Keeping this alert as it's client-side validation, not part of the primary request
+      alert("Project name is missing!");
       return;
     }
     try {
@@ -261,7 +261,7 @@ const ScanResult = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Failed to download project excels:", error);
-      alert("Failed to download the file."); // Keeping this alert for now
+      alert("Failed to download the file.");
     } finally {
         setShowDownloadModal(false);
     }
@@ -270,17 +270,17 @@ const ScanResult = () => {
   const handleAgentRescan = useCallback(async () => {
     if (!scanDetails?.scan_id || !fileToUpload) return;
     setIsRescanning(true);
-    setNotificationMessage({ type: 'success', message: "Uploading file..." }); // Initial upload message
+    setNotificationMessage({ type: 'success', message: "Uploading file..." });
     setError("");
     const formData = new FormData();
     formData.append("file", fileToUpload);
     try {
       await api.post(`/scans/upload/${scanDetails.scan_id}/`, formData, { headers: { "Content-Type": "multipart/form-data" } });
-      setNotificationMessage({ type: 'success', message: "Scan result uploaded successfully! ✅" }); // Success message
+      setNotificationMessage({ type: 'success', message: "Scan result uploaded successfully! ✅" });
       await fetchScanData();
     } catch (err: any) {
       const errorMsg = err.response?.data?.error || `Server Error: ${err.response?.status}` || "Network error.";
-      setNotificationMessage({ type: 'error', message: `Upload failed: ${errorMsg}` }); // Error message
+      setNotificationMessage({ type: 'error', message: `Upload failed: ${errorMsg}` });
       setError(errorMsg);
     } finally {
       setIsRescanning(false);
@@ -297,11 +297,11 @@ const ScanResult = () => {
       const payload = { project_name: scanDetails.project_name, scan_name: scanDetails.scan_name, scan_author: scanDetails.scan_author, scan_type: scanDetails.scan_type, scan_data: scanDetails.scan_data };
       const response = await api.post('/scans/create-scan/', payload);
       const newVersion = response.data.scan?.scan_result_version;
-      setNotificationMessage({ type: 'success', message: newVersion ? `Rescan initiated! New version created: v${newVersion}` : "Rescan initiated successfully." }); // Success message
+      setNotificationMessage({ type: 'success', message: newVersion ? `Rescan initiated! New version created: v${newVersion}` : "Rescan initiated successfully." });
       await fetchScanData();
     } catch (err: any) {
       const errorMsg = err.response?.data?.error?.detail || err.response?.data?.error || `Server Error: ${err.response?.status}` || "Network error.";
-      setNotificationMessage({ type: 'error', message: `Rescan failed: ${errorMsg}` }); // Error message
+      setNotificationMessage({ type: 'error', message: `Rescan failed: ${errorMsg}` });
       setError(errorMsg);
     } finally {
       setIsRescanning(false);
@@ -323,10 +323,10 @@ const ScanResult = () => {
     if (editingIndex === null) return;
     const item = sortedResults[editingIndex];
     const newStatus = editingValue.trim().toUpperCase();
-    if (!newStatus) return alert("Status cannot be empty."); // Keeping this alert for now
+    if (!newStatus) return alert("Status cannot be empty.");
     const isNew = 'name' in item && 'results' in item;
     const id = isNew && item.name ? item.name : item["CIS.NO"];
-    if (!id) return alert("Cannot update item without a valid identifier."); // Keeping this alert for now
+    if (!id) return alert("Cannot update item without a valid identifier.");
     try {
         await api.put(`/scans/${scanDetails?.scan_id}/audit/${id}/`, { status: newStatus });
         const updatedDetails = { ...scanDetails! };
@@ -347,7 +347,7 @@ const ScanResult = () => {
             setSummary({ Passed: passed, Failed: failed });
         }
     } catch (error) {
-        alert("Error updating status."); // Keeping this alert for now
+        alert("Error updating status.");
     } finally {
         handleCancelEdit();
     }
@@ -452,7 +452,32 @@ const ScanResult = () => {
                                 </td>
                                 <td className="px-4 py-3 text-right"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Open menu</span><MoreVertical className="h-4 w-4 text-gray-600" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => handleEditClick(index, status)} disabled={isEditing}>Edit</DropdownMenuItem><DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem></DropdownMenuContent></DropdownMenu></td>
                               </tr>
-                              {isExpanded && !isEditing && <tr className="bg-gray-100 border-b"><td colSpan={4} className="px-6 py-4 text-sm text-gray-700"><div className="grid grid-cols-[120px_1fr] gap-y-2 gap-x-4"><div className="font-semibold">Description:</div><div>{item.Description ? item.Description : isNew && item.results != null ? typeof item.results === 'string' ? item.results : Array.isArray(item.results) ? <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-2 rounded-md">{JSON.stringify(item.results, null, 2)}</pre> : "N/A" : "No results provided."}</div><div className="font-semibold">Remediation:</div><div>{item.Remediation ? item.Remediation : isNew ? "N/A (Remediation not available in this format)" : "N/A"}</div></div></td></tr>}
+                              {isExpanded && !isEditing && 
+                                <tr className="bg-gray-100 border-b">
+                                  <td colSpan={4} className="px-6 py-4 text-sm text-gray-700">
+                                    <div className="grid grid-cols-[120px_1fr] gap-y-2 gap-x-4">
+                                      <div className="font-semibold">Description:</div>
+                                      <div>
+                                        {item.Description ? item.Description : 
+                                         isNew && item.results != null ? 
+                                           typeof item.results === 'string' ? item.results : 
+                                           Array.isArray(item.results) ? 
+                                             <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-2 rounded-md">{JSON.stringify(item.results, null, 2)}</pre> : 
+                                           "N/A" : 
+                                         "No results provided."
+                                        }
+                                      </div>
+                                      {/* New: Current Settings */}
+                                      <div className="font-semibold">Current Settings:</div>
+                                      <div>
+                                        {item["Current Settings"] !== undefined && item["Current Settings"] !== null ? String(item["Current Settings"]) : "N/A"}
+                                      </div>
+                                      <div className="font-semibold">Remediation:</div>
+                                      <div>{item.Remediation ? item.Remediation : isNew ? "N/A (Remediation not available in this format)" : "N/A"}</div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              }
                             </React.Fragment>
                           );
                         })}
