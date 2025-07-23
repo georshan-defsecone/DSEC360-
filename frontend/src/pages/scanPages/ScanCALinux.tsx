@@ -538,7 +538,7 @@ const ScanCALinux = () => {
 
   const handleSubmit = async () => {
     try {
-      const toastId = toast.info("Processing scan ...", { duration: Infinity });
+      const toastId = toast.info("Processing scan ...", { duration: 10000 });
       const payload = {
         project_name: formData.projectName,
         scan_name: formData.scan_name,
