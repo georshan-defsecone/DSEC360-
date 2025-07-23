@@ -396,6 +396,8 @@ def windows_config_audit(data):
                                 project_name,
                                 scan_name
                             )
+    # Create the nested directory structure if it doesn't exist
+    os.makedirs(project_folder, exist_ok=True)
     
     base_dynamic_filename = f"{safe_compliance_name}_{safe_standard}_{safe_project_name}_{safe_scan_name}"
     dynamic_filename_extension = ".csv"
