@@ -1,19 +1,27 @@
 import csv
 import json
 import ast
-import codecs
 
 def load_json(path):
     with open(path, "r", encoding="utf-8-sig") as f:
         return json.load(f)
 
 def load_csv(path):
-    with open(path, "r", encoding="utf-8-sig") as f:
-        reader = csv.DictReader(f)
-        return list(reader)
+    try:
+        with open(path, "r", encoding="utf-8-sig") as f:
+            reader = csv.DictReader(f)
+            return list(reader)
+    except UnicodeDecodeError:
+        with open(path, "r", encoding="cp1252") as f:  # fallback to Windows encoding
+            reader = csv.DictReader(f)
+            return list(reader)
+
 
 def extract_audit_id(name):
-    return name.split()[0].strip()
+    if not name or not isinstance(name, str):
+        return ""
+    parts = name.strip().split()
+    return parts[0] if parts else ""
 
 def try_convert(value):
     try:
@@ -30,7 +38,18 @@ def normalize_value(val):
     elif isinstance(val, str) and ',' in val:
         return set(part.strip() for part in val.split(',') if part)
     else:
-        val = str(val).strip()
+        return str(val).strip()
+    
+def remove_null_chars(value):
+    if isinstance(value, str):
+        return value.replace('\x00', '')
+    elif isinstance(value, dict):
+        return {k: remove_null_chars(v) for k, v in value.items()}
+    elif isinstance(value, list):
+        return [remove_null_chars(v) for v in value]
+    else:
+        return value
+
 
 def evaluate_custom_condition(condition, result_dict):
     comparisons = []
@@ -110,15 +129,19 @@ def evaluate_compliance(json_data, csv_rules):
         condition = rule["condition"]
         remediation = rule.get("remediation", "")
         map_str = rule.get("map", "")
+        description = rule.get("description", "")
+        cis_no = rule.get("CISNo", "")
         csv_audit_id = extract_audit_id(audit_name)
 
+        csv_audit_id = rule.get("CISNo", "").strip()
         matched_entry = next(
-            (entry for entry in json_data if extract_audit_id(entry["audit_name"]) == csv_audit_id),
+            (entry for entry in json_data if entry.get("audit_name", "").startswith(csv_audit_id)),
             None
         )
 
+
         if not matched_entry:
-            results.append([audit_name, "Not Found", "Fail", remediation])
+            results.append( [cis_no,"Not Found", description, remediation, "Fail", audit_name])
             continue
 
         if ':' in condition:
@@ -164,10 +187,11 @@ def evaluate_compliance(json_data, csv_rules):
 
                 status = "Pass" if all_passed else "Fail"
                 current_settings = " | ".join(settings_details)
-                results.append([audit_name, current_settings, status, remediation])
+                results.append([cis_no, current_settings, description, remediation, status, audit_name])
 
             else:
-                results.append([audit_name, "Unreadable result format", "Fail", remediation])
+                results.append([cis_no, "Unreadable result format", description, remediation, "Fail", audit_name])
+
 
         else:
             # Single condition processing
@@ -184,7 +208,7 @@ def evaluate_compliance(json_data, csv_rules):
             is_pass, _ = evaluate_custom_condition(condition, merged_result)
             status = "Pass" if is_pass else "Fail"
             current_settings = stringify_current_settings(merged_result, map_str)
-            results.append([audit_name, current_settings, status, remediation])
+            results.append([cis_no, current_settings, description, remediation, status, audit_name])
 
     return results
 
@@ -192,13 +216,14 @@ def evaluate_compliance(json_data, csv_rules):
 def write_csv(path, rows):
     with open(path, "w", newline='', encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["audit_name", "current_settings", "status", "remediation"])
+        writer.writerow(["CIS.NO", "Current Settings","Description","Remediation","Status","Subject"])
         writer.writerows(rows)
 
 # 🔁 MAIN FUNCTION (can be called from main.py)
 def validate_compliance(json_path, input_csv_path, output_csv_path):
     json_data = load_json(json_path)
     csv_rules = load_csv(input_csv_path)
+    json_data = remove_null_chars(json_data)
     output = evaluate_compliance(json_data, csv_rules)
     write_csv(output_csv_path, output)
     print(f"Compliance evaluation written to: {output_csv_path}")

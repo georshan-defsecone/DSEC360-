@@ -41,6 +41,7 @@ from startScan.Configuration_Audit.Database.ORACLE import oraclevalidate as orac
 from startScan.Configuration_Audit.Database.MARIA import validate as mariavalidator
 from startScan.Configuration_Audit.Database.MSSQL import validate_result as mssqlvalidator
 from startScan.Configuration_Audit.Linux import validate as linuxvalidator
+from startScan.Configuration_Audit.Windows import validate as windowsvalidator
 
 def sanitize(name):
     return re.sub(r'\W+', '', name).lower()
@@ -644,8 +645,7 @@ def upload_scan_output(request, scan_id):
         safe_standard = sanitize(compliance_standard)
         safe_project_name = sanitize(project.project_name)
         safe_scan_name = sanitize(scan.scan_name)
-        safe_compliance_category = sanitize(compliance_category)
-        print(safe_compliance_category) # Debug print from original code
+        safe_compliance_category = sanitize(compliance_category) # Debug print from original code
 
         # Original lines for dynamic_filename and output_report_path
         # Keeping these as per your instruction "don't change anything else"
@@ -706,7 +706,24 @@ def upload_scan_output(request, scan_id):
             # Call the Linux validator function
             # It takes the uploaded file (json/tsv), the metadata file, and the output path
             linuxvalidator.validateResult(json_path=file_path, csv_path=csv_metadata_path, output_csv_path=output_report_path)
-        
+        elif safe_flavour == 'windows':
+            # Construct the path to the Linux metadata CSV file
+            # This path is based on the pattern from your generate.py script
+            # Convert name to match file system expectations (remove special characters if needed)
+            compliance_filename = re.sub(r'[^\w._-]+', '', compliance_category) + '_Validate.csv'
+            csv_file_path = base_dir / 'startScan' / 'Configuration_Audit' / 'Windows' /'CIS'/ 'Validate_Data'/compliance_filename
+
+            print(f"[DEBUG] compliance_filename: {compliance_filename}")
+            print(f"[DEBUG] csv_file_path: {csv_file_path}")
+
+            
+            if not csv_file_path.exists():
+                return JsonResponse({"error": f"Windows metadata CSV not found at: {csv_file_path}"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Call the Linux validator function
+            # It takes the uploaded file (json/tsv), the metadata file, and the output path
+            windowsvalidator.validate_compliance(json_path=file_path,input_csv_path=csv_file_path,output_csv_path=output_report_path)
+
         else:
             return JsonResponse({"error": f"Validation for flavour '{flavour}' is not implemented."}, status=status.HTTP_400_BAD_REQUEST)
 

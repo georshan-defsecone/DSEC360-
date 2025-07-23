@@ -79,6 +79,7 @@ const ScanCAWindows = () => {
     //Get compliance info
     complianceCategory: "",
     complianceSecurityStandard: "",
+    flavour: "windows",
 
     //Scan settings
     schedule: "",
@@ -375,6 +376,7 @@ const ScanCAWindows = () => {
         scanType: "Configuration Audit",
         description: formData.description,
         category: "windows",
+        flavour:formData.flavour,
         auditMethod: formData.auditMethod,
         target: formData.target,
         elevatePrivilege: formData.elevatePrivilege,
@@ -479,6 +481,7 @@ const ScanCAWindows = () => {
           globalCredentials: formData.globalCredentials,
           complianceCategory: formData.complianceCategory,
           complianceSecurityStandard: formData.complianceSecurityStandard,
+          flavour:formData.flavour,
 
           schedule: formData.schedule,
           scheduleFrequency: formData.scheduleFrequency,
