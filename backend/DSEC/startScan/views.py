@@ -343,6 +343,11 @@ def firewall_config_audit(data):
                 # Create the nested directory structure if it doesn't exist
                 # Create the nested directory structure if it doesn't exist
                 os.makedirs(project_folder, exist_ok=True)
+                check_output_folder = os.path.join(base_dir, "Configuration_Audit", "Firewall", "FORTIGATE", "Data_input")
+                os.makedirs(check_output_folder, exist_ok=True)
+                check_Data_input_folder = os.path.join(base_dir, "Configuration_Audit", "Firewall", "FORTIGATE", "Output_csv")
+                os.makedirs(check_Data_input_folder, exist_ok=True)
+
 
                 output_file = os.path.join(base_dir, "Configuration_Audit", "Firewall", "FORTIGATE", "Data_input", "Config.conf")
                 Fortigate_Remote.connect_to_fortigate_and_backup(ssh_info, output_file)
