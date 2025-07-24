@@ -421,7 +421,7 @@ def linux_config_audit(data):
         "username": scan_data.get("username"),
         "password": scan_data.get("password"),
         "ip": ip,
-        "port": int(port),
+        "port": int(port) or 22,
     }
 
     try:

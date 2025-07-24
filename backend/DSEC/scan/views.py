@@ -636,11 +636,13 @@ def upload_scan_output(request, scan_id):
             return JsonResponse({"error": "Uploaded file is empty."}, status=status.HTTP_400_BAD_REQUEST)
 
         scan_data = scan.scan_data or {}
+        print(scan_data)
         flavour = scan_data.get('flavour', '')
         compliance_standard = scan_data.get('complianceSecurityStandard', '')
         compliance_category = scan_data.get('complianceCategory','')
 
         safe_flavour = sanitize(flavour)
+        category = scan_data.get('category', '').lower()  # Ensure category is lowercase
         safe_standard = sanitize(compliance_standard)
         safe_project_name = sanitize(project.project_name)
         safe_scan_name = sanitize(scan.scan_name)
@@ -695,9 +697,10 @@ def upload_scan_output(request, scan_id):
 
             mssqlvalidator.validate_mssql(file_path, csv_file_path , output_report_path)
 
-        elif safe_flavour == 'linux':
+        elif category == 'linux':
             # Construct the path to the Linux metadata CSV file
             # This path is based on the pattern from your generate.py script
+            compliance_category = compliance_category.lower().replace(" ", "_")  # Ensure it's lowercase and underscores
             csv_metadata_path = base_dir / 'startScan' / 'Configuration_Audit' / 'Linux' / compliance_standard / (compliance_category + '.csv')
             
             if not csv_metadata_path.exists():
@@ -705,7 +708,7 @@ def upload_scan_output(request, scan_id):
             
             # Call the Linux validator function
             # It takes the uploaded file (json/tsv), the metadata file, and the output path
-            linuxvalidator.validateResult(json_path=file_path, csv_path=csv_metadata_path, output_csv_path=output_report_path)
+            linuxvalidator.validateResult(json_path=str(file_path), csv_path=str(csv_metadata_path), output_csv_path=str(output_report_path))
         
         else:
             return JsonResponse({"error": f"Validation for flavour '{flavour}' is not implemented."}, status=status.HTTP_400_BAD_REQUEST)

@@ -138,10 +138,11 @@ const ScanIOCWindows = () => {
         const contentDisposition = response.headers["content-disposition"];
         let filename = "IOC_Script.ps1";
 
-        if (contentDisposition) {
-            const match = contentDisposition.match(/filename="?(.+)"?/);
-            if (match?.[1]) filename = match[1];
-        }
+
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (match?.[1]?.trim()) filename = match[1].trim();
+      }
 
         // Trigger the download
         const url = window.URL.createObjectURL(new Blob([response.data]));

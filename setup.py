@@ -726,41 +726,54 @@ def find_django_project():
             return path
     
     return None
-
 def activate_venv_and_install_deps():
-    """Activate virtual environment and install dependencies"""
+    """Activate virtual environment and install dependencies based on OS."""
     print("Installing Python dependencies...")
     
-    os_type = get_os_type()
-    if os_type == "windows":
+    # Use platform.system() for more specific OS name ('windows', 'linux', 'darwin')
+    system_name = platform.system().lower()
+    
+    if system_name == "windows":
         pip_path = os.path.join(VENV_DIR, "Scripts", "pip.exe")
         python_path = os.path.join(VENV_DIR, "Scripts", "python.exe")
-    else:
+    else: # unix-like
         pip_path = os.path.join(VENV_DIR, "bin", "pip")
         python_path = os.path.join(VENV_DIR, "bin", "python")
     
     # Upgrade pip
     run_command(f"{pip_path} install --upgrade pip")
     
-    # Install requirements - check multiple possible locations
-    requirements_paths = [
-        os.path.join("backend", "DSEC", "requirements.txt"),  # Your specific structure
-        os.path.join("backend", "requirements.txt"),
-        "requirements.txt"
+    # Define potential locations for the requirements file
+    search_dirs = [
+        os.path.join("backend", "DSEC"),
+        os.path.join("backend"),
+        "."
     ]
+
+    # Prioritize OS-specific requirements file, then fall back to generic
+    os_specific_file = f"requirements-{system_name}.txt"
+    generic_file = "requirements.txt"
     
+    files_to_try = []
+    if system_name in ["windows", "linux"]:
+        files_to_try.append(os_specific_file)
+    files_to_try.append(generic_file)
+
     requirements_found = False
-    for req_path in requirements_paths:
-        if os.path.exists(req_path):
-            print(f"Installing dependencies from {req_path}...")
-            run_command(f"{pip_path} install -r {req_path}")
-            requirements_found = True
-            break
+    for filename in files_to_try:
+        for directory in search_dirs:
+            req_path = os.path.join(directory, filename)
+            if os.path.exists(req_path):
+                print(f"✅ Found requirements file. Installing dependencies from {req_path}...")
+                run_command(f"{pip_path} install -r {req_path}")
+                requirements_found = True
+                break  # Exit inner loop (directories) once found
+        if requirements_found:
+            break # Exit outer loop (filenames)
     
     if not requirements_found:
-        print("No requirements.txt found in expected locations.")
-        print("Installing basic Django requirements...")
-        # Install basic requirements if no requirements.txt found
+        print("No requirements.txt file found in expected locations.")
+        print("Installing basic Django requirements as a fallback...")
         run_command(f"{pip_path} install django psycopg2-binary python-dotenv")
     
     return os.path.abspath(python_path)
