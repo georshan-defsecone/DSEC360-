@@ -1,0 +1,42 @@
+﻿name,query,type,check
+1.3 Ensure systemd Service Files Are Enabled,$ systemctl is-enabled postgresql-17.service,linux,TRUE
+1.4 Ensure Data Cluster Initialized Successfully,"PGSETUP_INITDB_OPTIONS=""-k"" /usr/pgsql-1*/bin/postgresql-17-setup initdb",linux,TRUE
+2.2 Ensure extension directory has appropriate ownership and permissions,ls -ld $(/usr/pgsql-17/bin/pg_config --sharedir)/extension,linux,TRUE
+2.3 Disable PostgreSQL Command History,"find /home -name "".psql_history"" -exec ls -la {} \;  find /root -name "".psql_history"" -exec ls -la {} \;",linux,TRUE
+3.1.2 Ensure the log destinations are set correctly,show log_destination;,sql,TRUE
+3.1.3 Ensure the logging collector is enabled ,show logging_collector; ,sql,TRUE
+3.1.4 Ensure the log file destination directory is set correctly,show log_directory; ,sql,TRUE
+3.1.5 Ensure the filename pattern for log files is set correctly ,show log_filename; ,sql,TRUE
+3.1.6 Ensure the log file permissions are set correctly,show log_file_mode; ,sql,TRUE
+3.1.7 Ensure 'log_truncate_on_rotation' is enabled,show log_truncate_on_rotation; ,sql,TRUE
+3.1.8 Ensure the maximum log file lifetime is set correctly,show log_rotation_age; ,sql,TRUE
+3.1.9 Ensure the maximum log file size is set correctly,show log_rotation_size;,sql,TRUE
+3.1.11 Ensure syslog messages are not suppressed,show syslog_sequence_numbers; ,sql,TRUE
+3.1.12 Ensure syslog messages are not lost due to size,show syslog_split_messages; ,sql,TRUE
+3.1.13 Ensure the program name for PostgreSQL syslog messages are correct,show syslog_ident;,sql,TRUE
+3.1.14 Ensure the correct messages are written to the server log,show log_min_messages;,sql,TRUE
+3.1.15 Ensure the correct SQL statements generating errors are recorded,show log_min_error_statement; ,sql,TRUE
+3.1.16 Ensure 'debug_print_parse' is disabled ,show debug_print_parse;,sql,TRUE
+3.1.17 Ensure 'debug_print_rewritten' is disabled,show debug_print_rewritten;,sql,TRUE
+3.1.18 Ensure 'debug_print_plan' is disabled,show debug_print_plan; ,sql,TRUE
+3.1.19 Ensure 'debug_pretty_print' is enabled ,show debug_pretty_print;,sql,TRUE
+3.1.20 Ensure 'log_connections' is enabled,show log_connections;,sql,TRUE
+3.1.21 Ensure 'log_disconnections' is enabled,show log_disconnections;,sql,TRUE
+3.1.22 Ensure 'log_error_verbosity' is set correctly,show log_error_verbosity;,sql,TRUE
+3.1.23 Ensure 'log_hostname' is set correctly,show log_hostname;,sql,TRUE
+3.1.24 Ensure 'log_line_prefix' is set correctly,show log_line_prefix;,sql,TRUE
+3.1.25 Ensure 'log_statement' is set correctly,show log_statement;,sql,TRUE
+3.2 Ensure the PostgreSQL Audit Extension (pgAudit) is enabled ,show shared_preload_libraries;show pgaudit.log;,sql,TRUE
+4.1 Ensure Interactive Login is Disabled,grep postgres /etc/shadow | cut -d: -f1-2,linux,TRUE
+4.5 Ensure excessive function privileges are revoked ,"psql -c ""SELECT nspname, proname, proargtypes, prosecdef, rolname, proconfig FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid JOIN pg_authid a ON a.oid = p.proowner WHERE proname NOT LIKE 'pgaudit%' AND (prosecdef OR NOT proconfig IS NULL);""",linux,TRUE
+4.8 Ensure the set_user extension is installed,select * from pg_available_extensions where name = 'set_user';,sql,TRUE
+5.2 Ensure PostgreSQL is Bound to an IP Address,psql -c 'SHOW listen_addresses',linux,TRUE
+6.2 Ensure 'backend' runtime parameters are configured correctly,"SELECT name, setting FROM pg_settings WHERE context IN ('backend','superuser-backend') ORDER BY 1;",sql,TRUE
+6.7 Ensure FIPS 140-2 OpenSSL Cryptography Is Used,fips-mode-setup --check,linux,TRUE
+6.8 Ensure TLS is enabled and configured correctly,SHOW ssl;,sql,TRUE
+"6.9 Ensure that TLSv1.3, or later, is configured",SHOW ssl_min_protocol_version;,sql,TRUE
+6.10 Ensure Weak SSL/TLS Ciphers Are Disabled,"grep ""ssl_ciphers"" ~postgres/17/data/postgresql.conf | cut -d ' ' -f",linux,TRUE
+6.11 Ensure the pgcrypto extension is installed and configured correctly,SELECT * FROM pg_available_extensions WHERE name='pgcrypto';,sql,TRUE
+7.2 Ensure logging of replication commands is configured,SHOW log_replication_commands;,sql,TRUE
+7.4 Ensure WAL archiving is configured and functional,"SELECT name, setting FROM pg_settings WHERE name IN ('archive_mode','archive_command','archive_library') AND setting IS NOT NULL AND setting <> 'off' AND setting <> '(disabled)' AND setting <> '';",sql,TRUE
+"8.2 Ensure the backup and restore tool, 'pgBackRest', is installed and configured",pgbackrest,linux,TRUE

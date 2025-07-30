@@ -38,6 +38,9 @@ import json
 import mimetypes
 from django.shortcuts import get_object_or_404
 from startScan.Configuration_Audit.Database.ORACLE import oraclevalidate as oraclevalidator
+from startScan.Configuration_Audit.Database.ORACLE import generate_sql as oracle_generate_sql
+from startScan.Configuration_Audit.Database.POSTGRESQL import postgresqlgenerator as postgresql_generator
+from startScan.Configuration_Audit.Database.POSTGRESQL import postgresqlvalidator 
 from startScan.Configuration_Audit.Database.MARIA import validate as mariavalidator
 from startScan.Configuration_Audit.Database.MSSQL import validate_result as mssqlvalidator
 from startScan.Configuration_Audit.Linux import validate as linuxvalidator
@@ -638,8 +641,8 @@ def upload_scan_output(request, scan_id):
         scan_data = scan.scan_data or {}
         print(scan_data)
         flavour = scan_data.get('flavour', '')
-        compliance_standard = scan_data.get('complianceSecurityStandard', '')
-        compliance_category = scan_data.get('complianceCategory','')
+        compliance_standard = (scan_data.get('complianceSecurityStandard', '')).strip().lower()
+        compliance_category = (scan_data.get('complianceCategory','')).strip().lower()
 
         safe_flavour = sanitize(flavour)
         category = scan_data.get('category', '').lower()  # Ensure category is lowercase
@@ -666,6 +669,11 @@ def upload_scan_output(request, scan_id):
 
             expected_dict = oraclevalidator.load_csv(csv_file_path)
             oraclevalidator.validate(file_path, expected_dict, output_report_path)
+
+        elif safe_flavour == "postgresql":
+            csv_file_path = base_dir / 'startScan' / 'Configuration_Audit' / 'Database' / 'POSTGRESQL' / 'CIS' / 'Validators' / f'{compliance_category}_{compliance_standard}_validate.csv'
+            postgresqlvalidator.validate_results(file_path,csv_file_path,output_report_path)
+
 
         elif safe_flavour == 'maria':
             if safe_compliance_category == "mariadb10_11":
@@ -761,6 +769,82 @@ def upload_scan_output(request, scan_id):
         "validation_report_xlsx": str(output_report_path.with_suffix('.xlsx')), # This path is from the original calculation
         "new_scan_version": scan.scan_result_version # This will be the new version
     }, status=status.HTTP_200_OK)
+
+
+@csrf_exempt
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def re_download(request, scan_id):
+    print(f"\n[DEBUG] Entered re_download for scan_id: {scan_id}")
+    try:
+        scan = get_object_or_404(Scan, scan_id=scan_id)
+        project = scan.project
+        scan_data = scan.scan_data or {}
+
+        flavour = sanitize(scan_data.get('flavour', '')).lower()
+        compliance_standard = sanitize(scan_data.get('complianceSecurityStandard', ''))
+        compliance_category = sanitize(scan_data.get('complianceCategory', ''))
+        compliance_name=(scan_data.get('complianceCategory')).strip().lower()
+        safe_standard=(scan_data.get('complianceSecurityStandard'))
+        project_name = sanitize(project.project_name)
+        scan_name = sanitize(scan.scan_name)
+        unchecked_items = scan_data.get('uncheckedComplianceItems', [])
+
+        base_dir = Path(__file__).resolve().parent.parent
+        project_folder = base_dir / 'startScan' / 'Projects' / project_name / scan_name
+        os.makedirs(project_folder, exist_ok=True)
+
+        base_dynamic_filename = f"{compliance_category}_{compliance_standard}_{project_name}_{scan_name}"
+        sql_output = project_folder / f"{base_dynamic_filename}.sql"
+       
+
+        
+        # Branch based on flavour
+        if flavour == 'oracle':
+            csv_path = base_dir /  'startScan' / 'Configuration_Audit' / 'Database' / 'ORACLE' / 'CIS' / 'Queries' /"oracle_12c_cis.csv"
+            print(csv_path)
+            queries = oracle_generate_sql.extract_db_queries(csv_path, unchecked_items)
+            if not queries:
+                print("[!] No queries extracted from CSV.")
+                return JsonResponse({"error": "No queries could be extracted from the CSV."}, status=status.HTTP_400_BAD_REQUEST)
+
+            oracle_generate_sql.write_queries_to_file(queries, sql_output, unchecked_items)
+
+        
+        elif flavour == 'postgresql':
+            csv_path = base_dir /  'startScan' / 'Configuration_Audit' / 'Database' / 'POSTGRESQL' / 'CIS' / 'Queries' / f"{compliance_name}_{safe_standard}.csv"
+            print(csv_path)
+            linux_output = project_folder / f"{base_dynamic_filename}"
+            try:
+              postgresql_generator.process_csv_file(csv_path,sql_output,linux_output,unchecked_items)
+            except Exception as e:
+              print("\nCannot generate script in postgresql (main try-except):")
+              traceback.print_exc()
+              return JsonResponse({"error": f"Generate  process failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+        else:
+            return JsonResponse({"error": f"Re-download for flavour '{flavour}' is not implemented."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Call download_script
+        final_script_path = download_script(sql_output)
+        if not final_script_path or not os.path.isfile(final_script_path):
+            return JsonResponse({"error": "Script generation failed."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Return the file response with auto-delete
+        file_handle = open(final_script_path, 'rb')
+        response = DeletableFileResponse(file_handle, delete_path=final_script_path)
+        response['Content-Disposition'] = f'attachment; filename="{os.path.basename(final_script_path)}"'
+        return response
+        
+        
+    
+
+    except Exception as e:
+        print("\n🔥 Internal Server Error in re_download (main try-except):")
+        traceback.print_exc()
+        return JsonResponse({"error": f"Re-download process failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 

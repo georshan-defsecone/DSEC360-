@@ -1,0 +1,758 @@
+name,expected_value,comparison_type,field_to_check,description,remediation
+"1.3 Ensure systemd Service Files Are Enabled				",enabled,s,s,"Confirm, and correct if necessary, the PostgreSQL systemd service is enabled.","Irrespective of package source, PostgreSQL services can be identified because it 
+typically includes the text string ""postgresql"". PGDG installs do not automatically 
+register the service as a ""want"" of the default systemd target. Multiple instances of 
+PostgreSQL services often distinguish themselves using a version number. 
+# whoami 
+root 
+# systemctl enable postgresql-17 
+Created symlink /etc/systemd/system/multi-user.target.wants/postgresql
+17.service ? /usr/lib/systemd/system/postgresql-17.service. 
+# systemctl is-enabled postgresql-17.service 
+enabled"
+"1.4 Ensure Data Cluster Initialized Successfully				",Initializing database ... OK,,,First-time installs of a given PostgreSQL major release require the instantiation of the database cluster. A database cluster is a collection of databases that are managed by a single server instance.,"Attempting to instantiate a data cluster to an existing non-empty directory will fail:
+
+# whoami 
+root 
+# PGSETUP_INITDB_OPTIONS=""-k"" /usr/pgsql-17/bin/postgresql-17-setup initdb 
+Data directory is not empty! 
+
+In the case of a cluster instantiation failure, one must delete/remove the entire data 
+cluster directory and repeat the initdb command: 
+
+# whoami 
+root 
+# rm -rf ~postgres/17 
+# PGSETUP_INITDB_OPTIONS=""-k"" /usr/pgsql-17/bin/postgresql-17-setup initdb 
+Initializing database ... OK
+"
+"2.2 Ensure extension directory has appropriate ownership and permissions				",drwxr-xr-x,s,s,The extension directory is the location of the PostgreSQL extensions. Extensions are storage engines or user defined functions (UDFs).,"If needed, correct the permissions on the extension dir by executing: 
+
+# whoami 
+root 
+# chown -c root:root $(/usr/pgsql-17/bin/pg_config --sharedir)/extension 
+# chmod -c 0755 $(/usr/pgsql-17/bin/pg_config --sharedir)/extension 
+
+If the permissions needed correct, it is imperative that all extensions found in 
+$(/usr/pgsql-17/bin/pg_config --sharedir)/extension are evaluated to ensure 
+they have not been modified! "
+"2.3 Disable PostgreSQL Command History				",/dev/null,s,s,"On Linux/UNIX, the PostgreSQL client logs most interactive statements to a history file. The default PostgreSQL history file is named .psql_history in the user's home directory. The PostgreSQL command history should be disabled.","For each OS user on the PostgreSQL server, perform the following steps to implement 
+this setting: 
+
+1. Remove .psql_history if it exists. 
+# whoami 
+root 
+# rm -f ~<user>/.psql_history || true 
+
+2. Use either of the techniques below to prevent it from being created again: 
+     1. Set the HISTFILE variable to /dev/null in ~<user>/.psqlrc 
+          # whoami 
+          root 
+          # cat << EOF >> ~<user>/.psqlrc 
+          \set HISTFILE /dev/null 
+          EOF 
+
+      2. Create ~<user>/.psql_history as a symbolic to /dev/null. 
+           # whoami 
+           root 
+           # ln -s /dev/null $HOME/.psql_history 
+           ``
+      3. Set the PSQL_HISTORY variable for all users:
+           # whoami 
+           root 
+           # echo 'PSQL_HISTORY=/dev/null' >> /etc/environment"
+"3.1.2 Ensure the log destinations are set correctly				",s,s,s,"PostgreSQL supports several methods for logging server messages, including stderr, csvlog, syslog, and jsonlog. On Windows, eventlog is also supported. One or more of these destinations should be set for server log output.","Execute the following SQL statements to remediate this setting (in this example, setting 
+the log destination to csvlog): 
+
+postgres=# alter system set log_destination = 'csvlog'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row) 
+
+Note: If more than one log destination is to be used, set this parameter to a list of 
+desired log destinations separated by commas (e.g. 'csvlog, stderr'). "
+"3.1.3 Ensure the logging collector is enabled 				",on,equals,logging_collector,The logging collector is a background process that captures log messages sent to stderr and redirects them into log files. The logging_collector setting must be enabled in order for this process to run. It can only be set at the server start.,"Execute the following SQL statement(s) to remediate this setting: 
+
+postgres=# alter system set logging_collector = 'on'; 
+ALTER SYSTEM 
+
+Unfortunately, this setting can only be changed at the server (re)start. As root, restart 
+the PostgreSQL service for this change to take effect: 
+
+# whoami 
+root 
+# systemctl restart postgresql-17 
+# systemctl status postgresql-17|grep 'ago$' 
+Active: active (running) since <date>; <count>s ago "
+"3.1.4 Ensure the log file destination directory is set correctly				",log,equals,log_directory,The log_directory setting specifies the destination directory for log files when log_destination is stderr or csvlog. It can be specified as relative to the cluster data directory ($PGDATA) or as an absolute path. log_directory should be set according to your organization's logging policy.,"Execute the following SQL statement(s) to remediate this setting: 
+
+postgres=# alter system set log_directory='/var/log/postgres'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row) 
+postgres=# show log_directory; 
+log_directory --------------- 
+/var/log/postgres 
+(1 row)"
+"3.1.5 Ensure the filename pattern for log files is set correctly 				",postgresql-%a.log,equals,log_filename,"The log_filename setting specifies the filename pattern for log files. The value for log_filename should match your organization's logging policy. The value is treated as a strftime pattern, so %-escapes can be used to specify time varying file names. The supported %-escapes are similar to those listed in the Open Group's strftime specification. If you specify a file name without escapes, you should plan to use a log rotation utility to avoid eventually filling the partition that contains log_directory. If there are any time-zone-dependent %-escapes, the computation is done in the zone specified by log_timezone. Also, the system's strftime is not used directly, so platform-specific (nonstandard) extensions do not work. If CSV-format output is enabled in log_destination, .csv will be appended to the log filename. (If log_filename ends in .log, the suffix is replaced instead.)","Execute the following SQL statement(s) to remediate this setting:
+
+postgres=# alter system set log_filename='postgresql-%Y%m%d.log'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+ pg_reload_conf ---------------- 
+ t 
+(1 row) 
+postgres=# show log_filename; 
+   log_filename ------------------- 
+ postgresql-%Y%m%d.log 
+(1 row) "
+"3.1.6 Ensure the log file permissions are set correctly				","""0600"",""0640""",in_list,log_file_mode,"The log_file_mode setting determines the file permissions for log files when logging_collector is enabled. The parameter value is expected to be a numeric mode specification in the form accepted by the chmod and umask system calls. (To use the customary octal format, the number must start with a 0 (zero).) The permissions should be set to allow only the necessary access to authorized personnel. In most cases, the best setting is 0600, so that only the server owner can read or write the log files. The other commonly useful setting is 0640, allowing members of the owner's group to read the files, although to make use of that, you will need to either alter the log_directory setting to store the log files outside the cluster data directory or use PGSETUP_INITDB_OPTIONS=""-k -g"" when initializing the cluster.","Execute the following SQL statement(s) to remediate this setting (with the example 
+assuming the desired value of 0600):
+
+postgres=# alter system set log_file_mode = '0600'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+ pg_reload_conf ---------------- 
+ t 
+(1 row) 
+postgres=# show log_file_mode; 
+ log_file_mode --------------- 
+ 0600 
+(1 row)"
+"3.1.7 Ensure 'log_truncate_on_rotation' is enabled				",on,equals,log_truncate_on_rotation,"Enabling the log_truncate_on_rotation setting when logging_collector is 
+enabled causes PostgreSQL to truncate (overwrite) existing log files with the same 
+name during log rotation instead of appending to them. For example, using this setting 
+in combination with a log_filename setting value like postgresql-%H.log would 
+result in generating 24 hourly log files and then cyclically overwriting them:
+ 
+postgresql-00.log 
+postgresql-01.log 
+[...] 
+postgresql-23.log","Execute the following SQL statement(s) to remediate this setting: 
+
+postgres=# alter system set log_truncate_on_rotation = 'on'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+ pg_reload_conf ---------------- 
+ t 
+(1 row) 
+postgres=# show log_truncate_on_rotation; 
+ log_truncate_on_rotation -------------------------- 
+ on 
+(1 row) "
+"3.1.8 Ensure the maximum log file lifetime is set correctly				",s,s,s,"When logging_collector is enabled, the log_rotation_age parameter determines the maximum lifetime of an individual log file (depending on the value of log_filename). After this many minutes have elapsed, a new log file will be created via automatic log file rotation. Current best practices advise log rotation at least daily, but your organization's logging policy should dictate your rotation schedule.","Execute the following SQL statement(s) to remediate this setting (in this example, 
+setting it to one hour): 
+
+postgres=# alter system set log_rotation_age='1h'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row)"
+"3.1.9 Ensure the maximum log file size is set correctly				",0,not_equals,log_rotation_size,"The log_rotation_size setting determines the maximum size of an individual log file. 
+Once the maximum size is reached, automatic log file rotation will occur. ","Execute the following SQL statement(s) to remediate this setting (in this example, 
+setting it to 1GB): 
+
+postgres=# alter system set log_rotation_size = '1GB'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row)"
+"3.1.11 Ensure syslog messages are not suppressed				",on,equals,syslog_sequence_numbers,"When logging to Syslog and syslog_sequence_numbers is on, then each message will be prefixed by an increasing sequence number (such as [2]).","Execute the following SQL statement(s) to remediate this setting: 
+postgres=# alter system set syslog_sequence_numbers = 'on'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row) "
+"3.1.12 Ensure syslog messages are not lost due to size				",on,equals,syslog_split_messages,"PostgreSQL log messages can exceed 1024 bytes, which is a typical size limit for traditional Syslog implementations. When syslog_split_messages is off, PostgreSQL server log messages are delivered to the Syslog service as is, and it is up to the Syslog service to cope with the potentially bulky messages. When syslog_split_messages is on, messages are split by lines, and long lines are split so that they will fit into 1024 bytes. If syslog is ultimately logging to a text file, then the effect will be the same either way, and it is best to leave the setting on, since most syslog implementations either cannot handle large messages or would need to be specially configured to handle them. But if syslog is ultimately writing into some other medium, it might be necessary or more useful to keep messages logically together.","Execute the following SQL statement(s) to remediate this setting: 
+
+postgres=# alter system set syslog_split_messages = 'on'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row) "
+"3.1.13 Ensure the program name for PostgreSQL syslog messages are correct				",s,s,s,The syslog_ident setting specifies the program name used to identify PostgreSQL messages in syslog logs. An example of a possible program name is postgres.,"Execute the following SQL statement(s) to remediate this setting (in this example, 
+assuming a program name of proddb): 
+
+postgres=# alter system set syslog_ident = 'proddb'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row) 
+postgres=# show syslog_ident; 
+syslog_ident -------------- 
+proddb 
+(1 row) "
+"3.1.14 Ensure the correct messages are written to the server log				","ERROR,LOG,FATAL,PANIC",not_in_list,log_min_messages,"The log_min_messages setting specifies the message levels that are written to the 
+server log. Each level includes all the levels that follow it. The lower the level (vertically, 
+below), the fewer messages are logged. 
+Valid values are: 
+• DEBUG5 <-- exceedingly chatty 
+• DEBUG4  
+• DEBUG3  
+• DEBUG2  
+• DEBUG1  
+• INFO  
+• NOTICE  
+• WARNING <-- default 
+• ERROR  
+• LOG  
+• FATAL  
+• PANIC <-- practically mute 
+WARNING is considered the best practice unless indicated otherwise by your 
+organization's logging policy. ","Execute the following SQL statement(s) as superuser to remediate this setting (in this 
+example, to set it to warning): 
+postgres=# alter system set log_min_messages = 'warning'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row) "
+"3.1.15 Ensure the correct SQL statements generating errors are recorded				","LOG,FATAL,PANIC",not_in_list,log_min_error_statement,"The log_min_error_statement setting causes all SQL statements generating errors 
+at or above the specified severity level to be recorded in the server log. Each level 
+includes all the levels that follow it. The lower the level (vertically, below), the fewer 
+messages are recorded. Valid values are: 
+• DEBUG5 <-- exceedingly chatty 
+• DEBUG4  
+• DEBUG3  
+• DEBUG2  
+• DEBUG1  
+• INFO  
+• NOTICE  
+• WARNING  
+• ERROR <-- default 
+• LOG  
+• FATAL  
+• PANIC <-- practically mute 
+ERROR is considered the best practice setting. Changes should only be made in 
+accordance with your organization's logging policy. ","Execute the following SQL statement(s) as superuser to remediate this setting (in the 
+example, to error): 
+postgres=# alter system set log_min_error_statement = 'error'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row)"
+"3.1.16 Ensure 'debug_print_parse' is disabled 				",off,equals,debug_print_parse,"The debug_print_parse setting enables printing the resulting parse tree for each executed query. These messages are emitted at the LOG message level. Unless directed otherwise by your organization's logging policy, it is recommended this setting be disabled by setting it to off.","Execute the following SQL statement(s) to remediate this setting:
+ 
+postgres=# alter system set debug_print_parse='off'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row)"
+"3.1.17 Ensure 'debug_print_rewritten' is disabled				",off,equals,debug_print_rewritten,"The debug_print_rewritten setting enables printing the query rewriter output for each executed query. These messages are emitted at the LOG message level. Unless directed otherwise by your organization's logging policy, it is recommended this setting be disabled by setting it to off.","Execute the following SQL statement(s) to disable this setting: 
+
+postgres=# alter system set debug_print_rewritten = 'off'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row)"
+"3.1.18 Ensure 'debug_print_plan' is disabled				",off,equals,debug_print_plan,"The debug_print_plan setting enables printing the execution plan for each executed query. These messages are emitted at the LOG message level. Unless directed otherwise by your organization's logging policy, it is recommended this setting be disabled by setting it to off.","Execute the following SQL statement(s) to disable this setting: 
+
+postgres=# alter system set debug_print_plan = 'off'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row)"
+"3.1.19 Ensure 'debug_pretty_print' is enabled 				",on,equals,debug_pretty_print,"Enabling debug_pretty_print indents the messages produced by debug_print_parse, debug_print_rewritten, or debug_print_plan making them significantly easier to read.","Execute the following SQL statement(s) to enable this setting: 
+
+postgres=# alter system set debug_pretty_print = 'on'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row) "
+"3.1.20 Ensure 'log_connections' is enabled				",on,equals,log_connections,"Enabling the log_connections setting causes each attempted connection to the server to be logged, as well as successful completion of client authentication. This parameter cannot be changed after the session start.","Execute the following SQL statement(s) to enable this setting: 
+
+postgres=# alter system set log_connections = 'on'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row)
+ 
+Then, in a new connection to the database, verify the change:
+ 
+postgres=# show log_connections; 
+log_connections ----------------- 
+on 
+(1 row)
+ 
+Note that you cannot verify this change in the same connection in which it was changed; 
+a new connection is needed."
+"3.1.21 Ensure 'log_disconnections' is enabled				",on,equals,log_disconnections,"Enabling the log_disconnections setting logs the end of each session, including session duration. This parameter cannot be changed after the session start.","Execute the following SQL statement(s) to enable this setting: 
+
+postgres=# alter system set log_disconnections = 'on'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row) 
+postgres=# show log_disconnections; 
+log_disconnections -------------------- 
+on 
+(1 row)"
+"3.1.22 Ensure 'log_error_verbosity' is set correctly				",s,s,s,"The log_error_verbosity setting specifies the verbosity (amount of detail) of logged 
+messages. Valid values are: 
+• TERSE  
+• DEFAULT  
+• VERBOSE  
+with each containing the fields of the level above it as well as additional fields. 
+TERSE excludes the logging of DETAIL, HINT, QUERY, and CONTEXT error information. 
+VERBOSE output includes the SQLSTATE, error code, and the source code file name, 
+function name, and line number that generated the error. 
+The appropriate value should be set based on your organization's logging policy.","Execute the following SQL statement(s) as superuser to remediate this setting (in this 
+example, to verbose): 
+
+postgres=# alter system set log_error_verbosity = 'verbose'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row) "
+"3.1.23 Ensure 'log_hostname' is set correctly				",off,equals,log_hostname,"Enabling the log_hostname setting causes the hostname of the connecting host to be logged in addition to the host's IP address for connection log messages. Disabling the setting causes only the connecting host's IP address to be logged, and not the hostname. Unless your organization's logging policy requires hostname logging, it is best to disable this setting so as not to incur the overhead of DNS resolution for each statement that is logged.","Execute the following SQL statement(s) to remediate this setting (in this example, to 
+off): 
+
+postgres=# alter system set log_hostname='off'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row)"
+"3.1.24 Ensure 'log_line_prefix' is set correctly				","%m [%r] [%p]: [l-%l] %u@%d,app=%a,e=%e",atleast,log_line_prefix,"The log_line_prefix setting specifies a printf-style string that is prefixed to each 
+log line. If blank, no prefix is used. You should configure this as recommended by the 
+pgBadger development team unless directed otherwise by your organization's logging 
+policy. 
+% characters begin ""escape sequences"" that are replaced with status information as 
+outlined below. Unrecognized escapes are ignored. Other characters are copied straight 
+to the logline. Some escapes are only recognized by session processes and will be 
+treated as empty by background processes such as the main server process. Status 
+information may be aligned either left or right by specifying a numeric literal after the % 
+and before the option. A negative value will cause the status information to be padded 
+on the right with spaces to give it a minimum width, whereas a positive value will pad on 
+the left. Padding can be useful to aid human readability in log files. 
+Any of the following escape sequences can be used: 
+%a = application name 
+%u = user name 
+%d = database name 
+%r = remote host and port 
+%h = remote host 
+%b = backend type 
+%p = process ID 
+%P = process ID of parallel group leader 
+%t = timestamp without milliseconds 
+%m = timestamp with milliseconds 
+%n = timestamp with milliseconds (as a Unix epoch) 
+%Q = query ID (0 if none or not computed) 
+%i = command tag 
+%e = SQL state 
+%c = session ID 
+%l = session line number 
+%s = session start timestamp 
+%v = virtual transaction ID 
+%x = transaction ID (0 if none) 
+%q = stop here in non-session processes 
+%% = '%'","Execute the following SQL statement(s) to remediate this setting: 
+
+postgres=# alter system set log_line_prefix = '%m [%r] [%p]: [l-%l] 
+%u@%d,app=%a,e=%e '; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+ pg_reload_conf ---------------- 
+ t 
+(1 row) "
+"3.1.25 Ensure 'log_statement' is set correctly				",none,not_equals,log_statement,"The log_statement setting specifies the types of SQL statements that are logged. 
+Valid values are: 
+• none (off) 
+• ddl  
+• mod  
+• all (all statements) 
+It is recommended this be set to ddl unless otherwise directed by your organization's 
+logging policy. 
+ddl logs all data definition statements: 
+• CREATE  
+• ALTER  
+• DROP  
+mod logs all ddl statements, plus data-modifying statements: 
+• INSERT  
+• UPDATE  
+• DELETE  
+• TRUNCATE  
+• COPY FROM  
+(PREPARE, EXECUTE, and EXPLAIN ANALYZE statements are also logged if their 
+contained command is of an appropriate type.) 
+For clients using extended query protocol, logging occurs when an Execute message is 
+received, and values of the Bind parameters are included (with any embedded single
+quote marks doubled).","Execute the following SQL statement(s) as superuser to remediate this setting: 
+
+postgres=# alter system set log_statement='ddl'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+ pg_reload_conf ---------------- 
+ t 
+(1 row)"
+"3.2 Ensure the PostgreSQL Audit Extension (pgAudit) is enabled 				",pgaudit,equals,shared_preload_diaries,"The PostgreSQL Audit Extension (pgAudit) provides detailed session and/or object audit logging via the standard PostgreSQL logging facility. The goal of pgAudit is to provide PostgreSQL users with the capability to produce audit logs often required to comply with government, financial, or ISO certifications.","To install and enable pgAudit, simply install the appropriate rpm from the PGDG repo: 
+# whoami 
+root 
+# dnf -y install pgaudit_17 
+[snip] 
+Installed: 
+pgaudit_17-17.0-1PGDG.rhel9.x86_64 
+Complete! 
+pgAudit is now installed and ready to be configured. Next, we need to alter the 
+postgresql.conf configuration file to: 
+• enable pgAudit as an extension in the shared_preload_libraries parameter 
+• indicate which classes of statements we want to log via the pgaudit.log 
+parameter 
+and, finally, restart the PostgreSQL service: 
+# whoami 
+root 
+# vi ~postgres/17/data/postgresql.conf 
+Find the shared_preload_libraries entry, and add 'pgaudit' to it (preserving any 
+existing entries): 
+shared_preload_libraries = 'pgaudit' 
+OR 
+shared_preload_libraries = 'pgaudit,somethingelse' 
+Now, add a new pgaudit-specific entry at the end of the file: 
+# for this example we are logging the ddl and write operations 
+pgaudit.log='ddl,write'
+Restart the PostgreSQL server for changes to take affect: 
+# whoami 
+root 
+# systemctl restart postgresql-17 
+# systemctl status postgresql-17|grep 'ago$' 
+Active: active (running) since [date] 10s ago "
+"4.1 Ensure Interactive Login is Disabled				",s,s,s,"When created, the PostgreSQL user may have interactive access to the operating system, which means that the PostgreSQL user could login to the host as any other user would.","Execute the following command: 
+
+# whoami 
+root 
+# passwd -l postgres "
+"4.5 Ensure excessive function privileges are revoked 				",s,s,s,"In certain situations, to provide the required functionality, PostgreSQL needs to execute internal logic (stored procedures, functions, triggers, etc.) and/or external code modules with elevated privileges. However, if the privileges required for execution are at a higher level than the privileges assigned to organizational users invoking the functionality applications/programs, those users are indirectly provided with greater privileges than assigned by their organization. This is known as privilege elevation. Privilege elevation must be utilized only where necessary. Execute privileges for application functions should be restricted to authorized users only.","Where possible, revoke SECURITY DEFINER on PostgreSQL functions. To change a 
+SECURITY DEFINER function to SECURITY INVOKER, run the following SQL: 
+
+# whoami 
+root 
+# sudo -iu postgres 
+# psql -c ""ALTER FUNCTION [functionname] SECURITY INVOKER;"" 
+If it is not possible to revoke SECURITY DEFINER, ensure the function can be executed 
+by only the accounts that absolutely need such functionality: 
+postgres=# SELECT proname, proacl FROM pg_proc WHERE proname = 
+'delete_customer'; 
+proname     |                         proacl -----------------+-------------------------------------------------------- 
+delete_customer | {=X/postgres,postgres=X/postgres,appreader=X/postgres} 
+(1 row) 
+postgres=# REVOKE EXECUTE ON FUNCTION delete_customer(integer,boolean) FROM 
+appreader; 
+REVOKE 
+postgres=# SELECT proname, proacl FROM pg_proc WHERE proname = 
+'delete_customer'; 
+proname     |                         proacl -----------------+-------------------------------------------------------- 
+delete_customer | {=X/postgres,postgres=X/postgres} 
+(1 row) 
+
+Based on the output above, appreader=X/postgres no longer exists in the proacl 
+column results returned from the query and confirms appreader is no longer granted 
+execute privilege on the function."
+"4.8 Ensure the set_user extension is installed				",null,not_equals,-,PostgreSQL access to the superuser database role must be controlled and audited to prevent unauthorized access.,"We will install the set_user extension: 
+
+# whoami 
+root 
+# dnf -y install set_user_17 
+[snip] 
+Installed: 
+  set_user_17-4.1.0-1.rhel9.1.x86_64 
+ 
+Complete! 
+Now that set_user is installed, we need to tell PostgreSQL to load its library: 
+
+# whoami 
+root 
+# vi ~postgres/17/data/postgresql.conf
+
+Find the shared_preload_libraries entry, and add 'set_user' to it (preserving any 
+existing entries): 
+shared_preload_libraries = 'set_user' 
+ 
+OR 
+ 
+shared_preload_libraries = 'set_user,pgaudit,somethingelse' 
+Restart the PostgreSQL server for changes to take effect: 
+# systemctl restart postgresql-17 
+# systemctl status postgresql-17|grep 'ago$' 
+   Active: active (running) since [timestamp]; 1s ago 
+And now, we can install the extension with SQL: 
+# su - postgres 
+# psql 
+postgres=# select * from pg_available_extensions where name = 'set_user'; 
+  name   | default_version | installed_version |                  comment ---------+-----------------+-------------------+----------------------------- 
+set_user | 4.1.0           |                   | similar to SET ROLE but with 
+         |                 |                   | added logging 
+(1 row) 
+ 
+postgres=# create extension set_user; 
+CREATE EXTENSION 
+postgres=# select * from pg_available_extensions where name = 'set_user'; 
+  name   | default_version | installed_version |                  comment ---------+-----------------+-------------------+----------------------------- 
+set_user | 4.1.0           | 4.1.0             | similar to SET ROLE but with 
+         |                 |                   | added logging 
+(1 row) 
+Now, we use GRANT to configure each DBA role to allow it to use the set_user 
+functions. In the example below, we will configure my db user doug. (You would do this 
+for each DBA's normal user role.) 
+postgres=# grant execute on function set_user(text) to doug; 
+GRANT 
+postgres=# grant execute on function set_user_u(text) to doug; 
+GRANT 
+Connect to PostgreSQL as yourself and verify it works as expected:
+
+# whoami 
+psql 
+# psql -U doug -d postgres -h 127.0.0.1 
+postgres=> select set_user('postgres'); 
+ERROR:  switching to superuser not allowed 
+HINT:  Use 'set_user_u' to escalate. 
+postgres=> select set_user_u('postgres'); 
+ set_user_u ------------ 
+ OK 
+(1 row) 
+postgres=# select current_user, session_user; 
+ current_user | session_user --------------+-------------- 
+ postgres     | doug 
+(1 row) 
+postgres=# select reset_user(); 
+ reset_user ------------ 
+ OK 
+(1 row) 
+postgres=> select current_user, session_user; 
+ current_user | session_user --------------+-------------- 
+ doug         | doug 
+(1 row) 
+Once all DBA's normal user accounts have been GRANTed permission, revoke the ability 
+to login as the postgres (superuser) user: 
+postgres=# ALTER USER postgres NOLOGIN; 
+ALTER ROLE 
+Which results in: 
+$ psql 
+psql: FATAL:  role ""postgres"" is not permitted to log in 
+$ psql -U doug -d postgres -h 127.0.0.1 
+psql (1*.0) 
+Revoke SUPERUSER and/or LOGIN from any other roles that were previously 
+identified: 
+postgres=# ALTER USER usera NOSUPERUSER; -- revoke superuser 
+ALTER ROLE 
+postgres=# ALTER USER usera NOLOGIN; -- revoke login 
+ALTER ROLE 
+postgres=# ALTER USER usera NOSUPERUSER NOLOGIN; -- revoke both at once 
+ALTER ROLE 
+Note that we show dropping the privileges both individually and as one. Pick an 
+appropriate version based on your application/business needs. 
+Remove any escalated privileges on users granted indirectly that were previously 
+identified using the roletree view:
+
+postgres=# REVOKE name_of_granting_role FROM bob; -- an example only 
+REVOKE ROLE 
+"
+"5.2 Ensure PostgreSQL is Bound to an IP Address				",s,s,s,"By default, listen_addresses is set to localhost which prevents any and all remote TCP connections to the PostgreSQL port. Some Docker images may set listen_addesses to *, which corresponds to all available IP interfaces; thus, the PostgreSQL server then accepts TCP connections on all the container's/server's IPv6 and IPv4 interfaces. (The same is true for a setting of 0.0.0.0.) You can make this configuration more restrictive by setting the listen_addresses configuration option to a specific list of IPv4 or IPv6 address so that the server only accepts TCP connections on those addresses. This parameter can only be set at server start.","To have the PostgreSQL server only accept connections on a specific IP address, add 
+an entry similar to this in the PostgreSQL configuration file postgresql.conf: 
+
+listen_addresses = '<your IP>'
+ 
+To listen on multiple addresses, a comma-separated list may be used:
+ 
+listen_addresses = '<your first IP>, <your second IP>' 
+
+In this case, clients can connect to the server using --host=<your IP>, while 
+connections on other server host addresses are not possible. "
+"6.2 Ensure 'backend' runtime parameters are configured correctly				",s,s,s,"In order to serve multiple clients efficiently, the PostgreSQL server launches a new ""backend"" process for each client. The runtime parameters in this benchmark section are controlled by the backend process. The server's performance, in the form of slow queries causing a denial of service, and the RDBM's auditing abilities for determining root cause analysis can be potentially compromised via these parameters.","Once detected, the unauthorized/undesired change can be corrected by altering the 
+configuration file and executing a server restart. In the case where the parameter has 
+been specified on the command-line invocation of pg_ctl the restart invocation is 
+insufficient and an explicit stop and start must instead be made. 
+
+1. Query the view pg_settings and compare with previous query outputs for any 
+changes. 
+2. Review configuration files postgresql.conf and postgresql.auto.conf and 
+compare them with previously archived file copies for any changes. 
+3. Examine the process output and look for parameters that were used at server 
+startup: 
+ps -few | grep -E -- '[p]ost.*-[D]' 
+4. Examine the contents of $PGDATA/postmaster.opts"
+"6.7 Ensure FIPS 140-2 OpenSSL Cryptography Is Used				",s,s,s,"Install, configure, and use OpenSSL on a platform that has a NIST certified FIPS 140-2 installation of OpenSSL. This provides PostgreSQL instances the ability to generate and validate cryptographic hashes to protect unclassified information requiring confidentiality and cryptographic protection, in accordance with the data owner's requirements.","Configure OpenSSL to be FIPS compliant as PostgreSQL uses OpenSSL for 
+cryptographic modules. To configure OpenSSL to be FIPS 140-2 compliant, see the 
+official RHEL Documentation. Below is a general summary of the steps required: 
+To switch the system to FIPS mode in RHEL 9: 
+# whoami 
+root 
+# fips-mode-setup --enable 
+Kernel initramdisks are being regenerated. This might take some time. 
+Setting system policy to FIPS 
+Note: System-wide crypto policies are applied on application start-up. 
+It is recommended to restart the system for the change of policies 
+to fully take place. 
+FIPS mode will be enabled. 
+Please reboot the system for the setting to take effect. 
+Restart your system to allow the kernel to switch to FIPS mode: 
+# whoami 
+root 
+# reboot 
+After the restart, you can check the current state of FIPS mode: 
+# whoami 
+root 
+# fips-mode-setup --check 
+FIPS mode is enabled."
+"6.8 Ensure TLS is enabled and configured correctly				",on,equals,ssl,TLS on a PostgreSQL server should be enabled and configured to encrypt TCP traffic to and from the server.,"For this example, and ease of illustration, we will be using a self-signed certificate 
+(generated via openssl) for the server, and the PostgreSQL defaults for file naming and 
+location in the PostgreSQL $PGDATA directory. 
+# whoami 
+postgres 
+# # create new certificate and enter details at prompts 
+# openssl req -new -text -out server.req 
+Generating a 2048 bit RSA private key 
+.....................+++ 
+..................................................................+++ 
+writing new private key to 'privkey.pem' 
+Enter PEM pass phrase: 
+Verifying - Enter PEM pass phrase: ----- 
+You are about to be asked to enter information that will be incorporated 
+into your certificate request. 
+What you are about to enter is what is called a Distinguished Name or a DN. 
+There are quite a few fields but you can leave some blank 
+For some fields there will be a default value, 
+If you enter '.', the field will be left blank. ----- 
+Country Name (2 letter code) [XX]:US 
+State or Province Name (full name) []:Ohio 
+Locality Name (eg, city) [Default City]:Columbus 
+Organization Name (eg, company) [Default Company Ltd]:Me Inc 
+Organizational Unit Name (eg, section) []:IT 
+Common Name (eg, your name or your server's hostname) []:my.me.inc 
+Email Address []:me@meinc.com 
+ 
+Please enter the following 'extra' attributes 
+to be sent with your certificate request 
+A challenge password []: 
+An optional company name []: 
+ 
+# # remove passphrase (required for automatic server start up, if not using 
+`ssl_passphrase_command`) 
+# openssl rsa -in privkey.pem -out server.key && rm privkey.pem 
+Enter pass phrase for privkey.pem: 
+writing RSA key 
+ 
+# # modify certificate to self signed, generate .key and .crt files 
+# openssl req -x509 -in server.req -text -key server.key -out server.crt 
+ 
+# # copy .key and .crt files to appropriate location, here default $PGDATA 
+$ cp server.key server.crt $PGDATA 
+ 
+# # restrict file mode for server.key 
+$ chmod og-rwx server.key 
+Edit the PostgreSQL configuration file postgresql.conf to ensure the following items 
+are set. Again, we are using defaults. Note that altering these parameters will require 
+restarting the cluster.
+
+# (change requires restart) 
+ssl = on 
+ 
+# force clients to use TLS v1.3 or newer 
+ssl_min_protocol_version = 'TLSv1.3' 
+ 
+# (change requires restart) 
+ssl_cert_file = 'server.crt' 
+ 
+# (change requires restart) 
+ssl_key_file = 'server.key' 
+
+Finally, restart PostgreSQL and confirm ssl using commands outlined in Audit 
+Procedures: 
+
+postgres=# show ssl; 
+ ssl ----- 
+ on 
+(1 row)"
+6.9 Ensure that TLSv1.3,TLSv1.3,greater,ssl_min_protocol_version,"Transport Layer Security (TLS), and its predecessor Secure Sockets Layer (SSL) are cryptographic protocols which can be used to encrypt data sent between client and server","Adjust the ssl_min_protocol_version to at least TLSv1.3:
+
+postgres=# ALTER SYSTEM SET ssl_min_protocol_version = 'TLSv1.3'; 
+ALTER SYSTEM
+
+Make the change active:
+
+postgres=# SELECT pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row) 
+postgres=# SHOW ssl_min_protocol_version; 
+ssl_min_protocol_version -------------------------- 
+TLSv1.3 
+(1 row)"
+"6.10 Ensure Weak SSL/TLS Ciphers Are Disabled				",s,s,s,"The PostgreSQL ssl_ciphers directive specifies which Cipher Suites are allowed in the negotiation with the client. In cryptography, perfect forward secrecy (PFS), also known as forward secrecy (FS), is a feature of specific key exchange protocols that give assurance that the session keys will not be compromised even if the private key of the server is compromised. For instance, RSA does not provide PFS, while the ECDHE (Elliptic-Curve Diffie-Hellman Ephemeral) and DHE (Diffie-Hellman Ephemeral) provides PFS. ECDHE is the stronger protocol and should be preferred, while DHE may be allowed for greater compatibility with older clients. Only Cipher Suites with either the ECDHE or the DHE key exchange are allowed.","Add or modify the ssl_ciphers directive to the following value in the PostgreSQL 
+configuration file (postgresql.conf): 
+
+ssl_ciphers = 
+'TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_AES_128_CCM_SHA256,TLS_CHA
+ CHA20_POLY1305_SHA256,ECDHE-ECDSA-AES256-CCM,ECDHE-ECDSA-AES128-CCM,DHE-RSA
+AES256-CCM,DHE-RSA-AES128-CCM,ECDHE-RSA-AES256-GCM-SHA384,ECDHE-RSA-AES128
+GCM-SHA256,ECDHE-ECDSA-AES256-GCM-SHA384,ECDHE-ECDSA-AES128-GCM-SHA256,DHE
+DSS-AES256-GCM-SHA384,DHE-DSS-AES128-GCM-SHA256,DHE-RSA-AES256-GCM
+SHA384,DHE-RSA-AES128-GCM-SHA256'"
+"6.11 Ensure the pgcrypto extension is installed and configured correctly				",null,not_equals,installed_version,"PostgreSQL must implement cryptographic mechanisms to prevent unauthorized disclosure or modification of organization-defined information at rest (to include, at a minimum, PII and classified information) on organization-defined information system components","The pgcrypto extension is included with the PostgreSQL contrib package. Although 
+included, it needs to be created in the database. 
+As the database administrator, run the following: 
+postgres=# CREATE EXTENSION pgcrypto; 
+CREATE EXTENSION 
+Verify pgcrypto is installed: 
+postgres=# SELECT * FROM pg_available_extensions WHERE name='pgcrypto'; 
+name   | default_version | installed_version |         comment ----------+-----------------+-------------------+------------------------- 
+pgcrypto | 1.3             | 1.3               
+| cryptographic functions 
+(1 row) "
+"7.2 Ensure logging of replication commands is configured				",on,equals,log_replication_commands,Enabling the log_replication_commands setting causes each attempted replication from the server to be logged.,"To enable the logging of replication commands, execute the following: 
+postgres=# ALTER SYSTEM SET log_replication_commands = 'on'; 
+ALTER SYSTEM 
+postgres=# SELECT pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row) 
+postgres=# SHOW log_replication_commands ; 
+log_replication_commands -------------------------- 
+on 
+(1 row)"
+"7.4 Ensure WAL archiving is configured and functional				",null,not_equals,-,"Write Ahead Log (WAL) Archiving, or Log Shipping, is the process of sending transaction log files from the PRIMARY host either to one or more STANDBY hosts or to be archived on a remote storage device for later use, e.g. PITR. There are several utilities that can copy WALs including, but not limited to, cp, scp, sftp, and rynsc. Basically, the server follows a set of runtime parameters which define when the WAL should be copied using one of the aforementioned utilities.",Change parameters and restart the server as required
+8.2 Ensure the backup and restore tool,s,s,s,"pgBackRest aims to be a simple, reliable backup and restore system that can seamlessly scale up to the largest databases and workloads. Instead of relying on traditional backup tools like tar and rsync, pgBackRest implements all backup features internally and uses a custom protocol for communicating with remote systems. Removing reliance on tar and rsync allows for better solutions to database-specific backup challenges. The custom remote protocol allows for more flexibility and limits the types of connections that are required to perform a backup which increases security.","pgBackRest is not installed nor configured for PostgreSQL by default, but instead is 
+maintained as a GitHub project. Fortunately, it is a part of the PGDG repository and can 
+be easily installed: 
+# whoami 
+root 
+# subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)
+rpms && dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release
+latest-9.noarch.rpm 
+<snip> 
+Installed: 
+  epel-release-9-8.el9.noarch 
+ 
+Complete! 
+# dnf -y install pgbackrest 
+<snip> 
+Installed: 
+  libssh2-1.11.0-1.el9.x86_64                           pgbackrest-2.53.1
+1PGDG.rhel9.x86_64 
+ 
+Complete!
+
+Once installed, pgBackRest must be configured for things like stanza name, backup 
+location, retention policy, logging, etc. Please consult the configuration guide. 
+If employing pgBackRest for your backup/recovery solution, ensure the repository, base 
+backups, and WAL archives are stored on a reliable file system separate from the 
+database server. Further, the external storage system where backups reside should 
+have limited access to only those system administrators as necessary. Finally, as with 
+any backup/recovery solution, stringent testing must be conducted. A backup is only 
+good if it can be restored successfully. "

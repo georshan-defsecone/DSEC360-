@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# --- Audit: 1.3 Ensure systemd Service Files Are Enabled ---
+$ systemctl is-enabled postgresql-17.service
+
+# --- Audit: 1.4 Ensure Data Cluster Initialized Successfully ---
+PGSETUP_INITDB_OPTIONS="-k" /usr/pgsql-1*/bin/postgresql-17-setup initdb
+
+# --- Audit: 2.2 Ensure extension directory has appropriate ownership and permissions ---
+ls -ld $(/usr/pgsql-17/bin/pg_config --sharedir)/extension
+
+# --- Audit: 2.3 Disable PostgreSQL Command History ---
+find /home -name ".psql_history" -exec ls -la {} \;  find /root -name ".psql_history" -exec ls -la {} \;
+
+# --- Audit: 4.1 Ensure Interactive Login is Disabled ---
+grep postgres /etc/shadow | cut -d: -f1-2
+
+# --- Audit: 4.5 Ensure excessive function privileges are revoked ---
+psql -c "SELECT nspname, proname, proargtypes, prosecdef, rolname, proconfig FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid JOIN pg_authid a ON a.oid = p.proowner WHERE proname NOT LIKE 'pgaudit%' AND (prosecdef OR NOT proconfig IS NULL);"
+
+# --- Audit: 5.2 Ensure PostgreSQL is Bound to an IP Address ---
+psql -c 'SHOW listen_addresses'
+
+# --- Audit: 6.7 Ensure FIPS 140-2 OpenSSL Cryptography Is Used ---
+fips-mode-setup --check
+
+# --- Audit: 6.10 Ensure Weak SSL/TLS Ciphers Are Disabled ---
+grep "ssl_ciphers" ~postgres/17/data/postgresql.conf | cut -d ' ' -f
+
+# --- Audit: 8.2 Ensure the backup and restore tool, 'pgBackRest', is installed and configured ---
+pgbackrest
+

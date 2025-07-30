@@ -13,6 +13,18 @@ def normalize(s):
 def is_null_like(s):
     return s is None or s.strip().lower() == 'null' or s.strip() == ''
 
+def remove_aliases_in_where_clause(query):
+    pattern = re.compile(r'(where\b.*?)(order\s+by\b|group\s+by\b|$)', re.IGNORECASE | re.DOTALL)
+
+    def remove_aliases(where_clause):
+        return re.sub(r'\s+AS\s+\w+', '', where_clause, flags=re.IGNORECASE)
+
+    def replacer(match):
+        where_part = remove_aliases(match.group(1))
+        return where_part + match.group(2)
+
+    return pattern.sub(replacer, query)
+
 def add_missing_aliases(query):
     query = re.sub(r'\bUPPER\s*\(\s*VALUE\s*\)(?!\s+AS\s+\w+)', 'UPPER(VALUE) AS value', query, flags=re.IGNORECASE)
     query = re.sub(r'\bUPPER\s*\(\s*V\.VALUE\s*\)(?!\s+AS\s+\w+)', 'UPPER(V.VALUE) AS value', query, flags=re.IGNORECASE)
@@ -66,7 +78,47 @@ def add_missing_aliases(query):
                 i += 1
         return ''.join(result)
 
-    return fix_decode_aliases(query)
+    query = fix_decode_aliases(query)
+
+    # --- START: Added fix for CTE union alias error ---
+    # This section specifically targets queries with CTEs like DIRECT_PRIVS and INDIRECT_PRIVS
+    # that are later UNIONed. It now ONLY adds an alias for the 'HOW_GRANTED' column.
+    if 'DIRECT_PRIVS AS' in query and 'INDIRECT_PRIVS AS' in query and 'HOW_GRANTED' in query:
+        # Define a pattern for the SELECT list in DIRECT_PRIVS that is missing an alias for the literal string.
+        direct_privs_pattern = re.compile(
+            r"(DIRECT_PRIVS\s+AS\s+\(\s*SELECT\s+DISTINCT\s+)(.*?)(,'Direct Grant')",
+            re.IGNORECASE | re.DOTALL
+        )
+        # The replacement string adds ONLY the 'AS HOW_GRANTED' alias to the literal string.
+        direct_privs_replacement = r"\1\2\3 AS HOW_GRANTED"
+        # Use a function for replacement to avoid altering already correct queries
+        def direct_repl(match):
+            # Only add alias if it's not already there
+            if not re.search(r"AS\s+HOW_GRANTED", match.group(0), re.IGNORECASE):
+                return match.group(1) + match.group(2) + match.group(3) + " AS HOW_GRANTED"
+            return match.group(0) # Return original match if alias exists
+        
+        # A more precise pattern to avoid accidentally matching too much
+        direct_privs_pattern = re.compile(
+            r"(DIRECT_PRIVS\s+AS\s+\(\s*SELECT\s+DISTINCT\s+CON_ID_TO_CON_NAME\(CON_ID\),\s*GRANTEE,\s*GRANTED_ROLE,\s*)('Direct Grant')",
+            re.IGNORECASE | re.DOTALL
+        )
+        direct_privs_replacement = r"\1\2 AS HOW_GRANTED"
+        query = direct_privs_pattern.sub(direct_privs_replacement, query)
+
+
+        # Define a similar pattern for the INDIRECT_PRIVS CTE.
+        indirect_privs_pattern = re.compile(
+            r"(INDIRECT_PRIVS\s+AS\s+\(\s*SELECT\s+DISTINCT\s+CON_ID_TO_CON_NAME\(CON_ID\),\s*GRANTEE,\s*GRANTED_ROLE,\s*)('Privileges Through Role')",
+            re.IGNORECASE | re.DOTALL
+        )
+        # The replacement string adds ONLY the 'AS HOW_GRANTED' alias.
+        indirect_privs_replacement = r"\1\2 AS HOW_GRANTED"
+        query = indirect_privs_pattern.sub(indirect_privs_replacement, query)
+    # --- END: Added fix for CTE union alias error ---
+
+    query = remove_aliases_in_where_clause(query)
+    return query
 
 def extract_db_queries(file_path, unchecked_items=None):
     if unchecked_items is None:
@@ -78,7 +130,7 @@ def extract_db_queries(file_path, unchecked_items=None):
         return []
     for encoding in ['utf-8-sig', 'utf-8']:
         try:
-            with open(file_path, 'r', encoding=encoding) as f:
+            with open(file_path, 'r', encoding=encoding, errors='replace') as f:
                 reader = csv.DictReader(f)
                 col_map = {}
                 expected_keys = {
@@ -105,10 +157,10 @@ def extract_db_queries(file_path, unchecked_items=None):
                     query = row.get(col_map['query'], '').strip().rstrip(';')
                     multitenant = row.get(col_map['multitenant'], '').strip()
                     nonmultitenant = row.get(col_map['nonmultitenant'], '').strip()
-                    
+
                     safe_name = re.sub(r'[^\w]+', '_', name)
                     if safe_name in unchecked_normalized:
-                       continue 
+                        continue
 
                     query = add_missing_aliases(query)
                     queries.append({
@@ -117,7 +169,7 @@ def extract_db_queries(file_path, unchecked_items=None):
                         'multitenant': None if is_null_like(multitenant) else add_missing_aliases(multitenant.strip().rstrip(';')),
                         'nonmultitenant': None if is_null_like(nonmultitenant) else add_missing_aliases(nonmultitenant.strip().rstrip(';'))
                     })
-                return queries
+            return queries
         except UnicodeDecodeError:
             print(f"Failed to decode {file_path} using encoding {encoding}")
             continue
@@ -138,15 +190,15 @@ BEGIN
   SELECT cdb INTO v_line FROM v$database;
 
   BEGIN
-    v_sql := q'#  
+    v_sql := q'#   
         SELECT JSON_OBJECT(
-                 'name' VALUE '{name_literal}',
-                 'results' VALUE JSON_ARRAYAGG(JSON_OBJECT('value' VALUE value))
-               )
+                   'name' VALUE '{name_literal}',
+                   'results' VALUE JSON_ARRAYAGG(JSON_OBJECT('value' VALUE value))
+                  )
         FROM (
           SELECT UPPER(VALUE) AS value FROM V$SYSTEM_PARAMETER WHERE UPPER(NAME) = 'AUDIT_SYS_OPERATIONS'
         )
-      #';
+       #';
 
     OPEN v_cursor FOR v_sql;
     FETCH v_cursor INTO v_json;
@@ -176,22 +228,22 @@ BEGIN
   BEGIN
 """
     if mt or nmt:
-        block += f"""    IF v_line = 'YES' THEN
-      v_sql := q'[  
+        block += f"""     IF v_line = 'YES' THEN
+      v_sql := q'[   
         SELECT JSON_OBJECT(
-                 'name' VALUE '{name_literal}',
-                 'results' VALUE JSON_ARRAYAGG(JSON_OBJECT(*))
-               )
+                   'name' VALUE '{name_literal}',
+                   'results' VALUE JSON_ARRAYAGG(JSON_OBJECT(*))
+                  )
         FROM (
           {mt if mt else "SELECT 'Multitenant query not defined.' AS error_msg FROM dual"}
         )
       ]';
     ELSE
-      v_sql := q'[  
+      v_sql := q'[   
         SELECT JSON_OBJECT(
-                 'name' VALUE '{name_literal}',
-                 'results' VALUE JSON_ARRAYAGG(JSON_OBJECT(*))
-               )
+                   'name' VALUE '{name_literal}',
+                   'results' VALUE JSON_ARRAYAGG(JSON_OBJECT(*))
+                  )
         FROM (
           {nmt if nmt else "SELECT 'Non-multitenant query not defined.' AS error_msg FROM dual"}
         )
@@ -199,18 +251,18 @@ BEGIN
     END IF;
 """
     elif common:
-        block += f"""    v_sql := q'[  
+        block += f"""     v_sql := q'[   
         SELECT JSON_OBJECT(
-                 'name' VALUE '{name_literal}',
-                 'results' VALUE JSON_ARRAYAGG(JSON_OBJECT(*))
-               )
+                   'name' VALUE '{name_literal}',
+                   'results' VALUE JSON_ARRAYAGG(JSON_OBJECT(*))
+                  )
         FROM (
           {common}
         )
       ]';
 """
     else:
-        block += f"""    v_json := JSON_OBJECT(
+        block += f"""     v_json := JSON_OBJECT(
         'name' VALUE '{name_literal}',
         'results' VALUE 'No valid query defined.'
       );
@@ -224,7 +276,7 @@ BEGIN
     CLOSE v_cursor;
     DBMS_OUTPUT.PUT_LINE(v_json);
 """
-    block += f"""  EXCEPTION
+    block += f"""   EXCEPTION
     WHEN OTHERS THEN
       DBMS_OUTPUT.PUT_LINE(
         JSON_OBJECT(
@@ -238,7 +290,7 @@ END;
 """
     return block
 
-def write_queries_to_file(queries, output_file,unchecked_items=None):
+def write_queries_to_file(queries, output_file, unchecked_items=None):
     if unchecked_items is None:
         unchecked_items = []
     unchecked_normalized = {re.sub(r'[^\w]+', '_', name).lower() for name in unchecked_items} 
@@ -251,7 +303,6 @@ def write_queries_to_file(queries, output_file,unchecked_items=None):
                 continue
             sqlfile.write(conditional_plsql_block(q['name'], q['common'], q['multitenant'], q['nonmultitenant']))
             sqlfile.write("\n")
-
 
 def main():
     if len(sys.argv) < 3:

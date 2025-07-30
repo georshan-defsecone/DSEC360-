@@ -1,0 +1,556 @@
+CIS.NO,Subject,Description,Current Settings,Status,Remediation
+1.3,Ensure systemd Service Files Are Enabled,1.3 Ensure systemd Service Files Are Enabled,Audit not performed,FAIL,"Irrespective of package source, PostgreSQL services can be identified because it 
+typically includes the text string ""postgresql"". PGDG installs do not automatically 
+register the service as a ""want"" of the default systemd target. Multiple instances of 
+PostgreSQL services often distinguish themselves using a version number. 
+# whoami 
+root 
+# systemctl enable postgresql-17 
+Created symlink /etc/systemd/system/multi-user.target.wants/postgresql
+17.service ? /usr/lib/systemd/system/postgresql-17.service. 
+# systemctl is-enabled postgresql-17.service 
+enabled"
+1.4,Ensure Data Cluster Initialized Successfully,1.4 Ensure Data Cluster Initialized Successfully,Audit not performed,FAIL,"Attempting to instantiate a data cluster to an existing non-empty directory will fail:
+
+# whoami 
+root 
+# PGSETUP_INITDB_OPTIONS=""-k"" /usr/pgsql-17/bin/postgresql-17-setup initdb 
+Data directory is not empty! 
+
+In the case of a cluster instantiation failure, one must delete/remove the entire data 
+cluster directory and repeat the initdb command: 
+
+# whoami 
+root 
+# rm -rf ~postgres/17 
+# PGSETUP_INITDB_OPTIONS=""-k"" /usr/pgsql-17/bin/postgresql-17-setup initdb 
+Initializing database ... OK"
+2.2,Ensure extension directory has appropriate ownership and permissions,2.2 Ensure extension directory has appropriate ownership and permissions,Audit not performed,FAIL,"If needed, correct the permissions on the extension dir by executing: 
+
+# whoami 
+root 
+# chown -c root:root $(/usr/pgsql-17/bin/pg_config --sharedir)/extension 
+# chmod -c 0755 $(/usr/pgsql-17/bin/pg_config --sharedir)/extension 
+
+If the permissions needed correct, it is imperative that all extensions found in 
+$(/usr/pgsql-17/bin/pg_config --sharedir)/extension are evaluated to ensure 
+they have not been modified!"
+2.3,Disable PostgreSQL Command History,2.3 Disable PostgreSQL Command History,Audit not performed,FAIL,"For each OS user on the PostgreSQL server, perform the following steps to implement 
+this setting: 
+
+1. Remove .psql_history if it exists. 
+# whoami 
+root 
+# rm -f ~<user>/.psql_history || true 
+
+2. Use either of the techniques below to prevent it from being created again: 
+     1. Set the HISTFILE variable to /dev/null in ~<user>/.psqlrc 
+          # whoami 
+          root 
+          # cat << EOF >> ~<user>/.psqlrc 
+          \set HISTFILE /dev/null 
+          EOF 
+
+      2. Create ~<user>/.psql_history as a symbolic to /dev/null. 
+           # whoami 
+           root 
+           # ln -s /dev/null $HOME/.psql_history 
+           ``
+      3. Set the PSQL_HISTORY variable for all users:
+           # whoami 
+           root 
+           # echo 'PSQL_HISTORY=/dev/null' >> /etc/environment"
+3.1.2,Ensure the log destinations are set correctly,3.1.2 Ensure the log destinations are set correctly,null,FAIL,"Execute the following SQL statements to remediate this setting (in this example, setting 
+the log destination to csvlog): 
+
+postgres=# alter system set log_destination = 'csvlog'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row) 
+
+Note: If more than one log destination is to be used, set this parameter to a list of 
+desired log destinations separated by commas (e.g. 'csvlog, stderr')."
+3.1.3,Ensure the logging collector is enabled,3.1.3 Ensure the logging collector is enabled,"""on""",PASS,
+3.1.4,Ensure the log file destination directory is set correctly,3.1.4 Ensure the log file destination directory is set correctly,"Error: ERROR:  permission denied to examine ""log_directory""
+DETAIL:  Only roles with privileges of the ""pg_read_all_settings"" role may examine this parameter.",FAIL,"Execute the following SQL statement(s) to remediate this setting: 
+
+postgres=# alter system set log_directory='/var/log/postgres'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row) 
+postgres=# show log_directory; 
+log_directory --------------- 
+/var/log/postgres 
+(1 row)"
+3.1.5,Ensure the filename pattern for log files is set correctly,3.1.5 Ensure the filename pattern for log files is set correctly,"Error: ERROR:  permission denied to examine ""log_filename""
+DETAIL:  Only roles with privileges of the ""pg_read_all_settings"" role may examine this parameter.",FAIL,"Execute the following SQL statement(s) to remediate this setting:
+
+postgres=# alter system set log_filename='postgresql-%Y%m%d.log'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+ pg_reload_conf ---------------- 
+ t 
+(1 row) 
+postgres=# show log_filename; 
+   log_filename ------------------- 
+ postgresql-%Y%m%d.log 
+(1 row)"
+3.1.6,Ensure the log file permissions are set correctly,3.1.6 Ensure the log file permissions are set correctly,"""0640""",PASS,
+3.1.7,Ensure 'log_truncate_on_rotation' is enabled,3.1.7 Ensure 'log_truncate_on_rotation' is enabled,"""off""",FAIL,"Execute the following SQL statement(s) to remediate this setting: 
+
+postgres=# alter system set log_truncate_on_rotation = 'on'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+ pg_reload_conf ---------------- 
+ t 
+(1 row) 
+postgres=# show log_truncate_on_rotation; 
+ log_truncate_on_rotation -------------------------- 
+ on 
+(1 row)"
+3.1.8,Ensure the maximum log file lifetime is set correctly,3.1.8 Ensure the maximum log file lifetime is set correctly,null,FAIL,"Execute the following SQL statement(s) to remediate this setting (in this example, 
+setting it to one hour): 
+
+postgres=# alter system set log_rotation_age='1h'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row)"
+3.1.9,Ensure the maximum log file size is set correctly,3.1.9 Ensure the maximum log file size is set correctly,"""10MB""",PASS,
+3.1.11,Ensure syslog messages are not suppressed,3.1.11 Ensure syslog messages are not suppressed,"""on""",PASS,
+3.1.12,Ensure syslog messages are not lost due to size,3.1.12 Ensure syslog messages are not lost due to size,"""on""",PASS,
+3.1.13,Ensure the program name for PostgreSQL syslog messages are correct,3.1.13 Ensure the program name for PostgreSQL syslog messages are correct,null,FAIL,"Execute the following SQL statement(s) to remediate this setting (in this example, 
+assuming a program name of proddb): 
+
+postgres=# alter system set syslog_ident = 'proddb'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row) 
+postgres=# show syslog_ident; 
+syslog_ident -------------- 
+proddb 
+(1 row)"
+3.1.14,Ensure the correct messages are written to the server log,3.1.14 Ensure the correct messages are written to the server log,"""warning""",PASS,
+3.1.15,Ensure the correct SQL statements generating errors are recorded,3.1.15 Ensure the correct SQL statements generating errors are recorded,"""error""",PASS,
+3.1.16,Ensure 'debug_print_parse' is disabled,3.1.16 Ensure 'debug_print_parse' is disabled,"""off""",PASS,
+3.1.17,Ensure 'debug_print_rewritten' is disabled,3.1.17 Ensure 'debug_print_rewritten' is disabled,"""off""",PASS,
+3.1.18,Ensure 'debug_print_plan' is disabled,3.1.18 Ensure 'debug_print_plan' is disabled,"""off""",PASS,
+3.1.19,Ensure 'debug_pretty_print' is enabled,3.1.19 Ensure 'debug_pretty_print' is enabled,"""on""",PASS,
+3.1.20,Ensure 'log_connections' is enabled,3.1.20 Ensure 'log_connections' is enabled,"""off""",FAIL,"Execute the following SQL statement(s) to enable this setting: 
+
+postgres=# alter system set log_connections = 'on'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row)
+ 
+Then, in a new connection to the database, verify the change:
+ 
+postgres=# show log_connections; 
+log_connections ----------------- 
+on 
+(1 row)
+ 
+Note that you cannot verify this change in the same connection in which it was changed; 
+a new connection is needed."
+3.1.21,Ensure 'log_disconnections' is enabled,3.1.21 Ensure 'log_disconnections' is enabled,"""off""",FAIL,"Execute the following SQL statement(s) to enable this setting: 
+
+postgres=# alter system set log_disconnections = 'on'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row) 
+postgres=# show log_disconnections; 
+log_disconnections -------------------- 
+on 
+(1 row)"
+3.1.22,Ensure 'log_error_verbosity' is set correctly,3.1.22 Ensure 'log_error_verbosity' is set correctly,null,FAIL,"Execute the following SQL statement(s) as superuser to remediate this setting (in this 
+example, to verbose): 
+
+postgres=# alter system set log_error_verbosity = 'verbose'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row)"
+3.1.23,Ensure 'log_hostname' is set correctly,3.1.23 Ensure 'log_hostname' is set correctly,"""off""",PASS,
+3.1.24,Ensure 'log_line_prefix' is set correctly,3.1.24 Ensure 'log_line_prefix' is set correctly,"""%t """,FAIL,"Execute the following SQL statement(s) to remediate this setting: 
+
+postgres=# alter system set log_line_prefix = '%m [%r] [%p]: [l-%l] 
+%u@%d,app=%a,e=%e '; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+ pg_reload_conf ---------------- 
+ t 
+(1 row)"
+3.1.25,Ensure 'log_statement' is set correctly,3.1.25 Ensure 'log_statement' is set correctly,"""none""",FAIL,"Execute the following SQL statement(s) as superuser to remediate this setting: 
+
+postgres=# alter system set log_statement='ddl'; 
+ALTER SYSTEM 
+postgres=# select pg_reload_conf(); 
+ pg_reload_conf ---------------- 
+ t 
+(1 row)"
+3.2,Ensure the PostgreSQL Audit Extension (pgAudit) is enabled,3.2 Ensure the PostgreSQL Audit Extension (pgAudit) is enabled,"Error: ERROR:  permission denied to examine ""shared_preload_libraries""
+DETAIL:  Only roles with privileges of the ""pg_read_all_settings"" role may examine this parameter.",FAIL,"To install and enable pgAudit, simply install the appropriate rpm from the PGDG repo: 
+# whoami 
+root 
+# dnf -y install pgaudit_17 
+[snip] 
+Installed: 
+pgaudit_17-17.0-1PGDG.rhel9.x86_64 
+Complete! 
+pgAudit is now installed and ready to be configured. Next, we need to alter the 
+postgresql.conf configuration file to: 
+� enable pgAudit as an extension in the shared_preload_libraries parameter 
+� indicate which classes of statements we want to log via the pgaudit.log 
+parameter 
+and, finally, restart the PostgreSQL service: 
+# whoami 
+root 
+# vi ~postgres/17/data/postgresql.conf 
+Find the shared_preload_libraries entry, and add 'pgaudit' to it (preserving any 
+existing entries): 
+shared_preload_libraries = 'pgaudit' 
+OR 
+shared_preload_libraries = 'pgaudit,somethingelse' 
+Now, add a new pgaudit-specific entry at the end of the file: 
+# for this example we are logging the ddl and write operations 
+pgaudit.log='ddl,write'
+Restart the PostgreSQL server for changes to take affect: 
+# whoami 
+root 
+# systemctl restart postgresql-17 
+# systemctl status postgresql-17|grep 'ago$' 
+Active: active (running) since [date] 10s ago"
+4.1,Ensure Interactive Login is Disabled,4.1 Ensure Interactive Login is Disabled,Audit not performed,FAIL,"Execute the following command: 
+
+# whoami 
+root 
+# passwd -l postgres"
+4.5,Ensure excessive function privileges are revoked,4.5 Ensure excessive function privileges are revoked,Audit not performed,FAIL,"Where possible, revoke SECURITY DEFINER on PostgreSQL functions. To change a 
+SECURITY DEFINER function to SECURITY INVOKER, run the following SQL: 
+
+# whoami 
+root 
+# sudo -iu postgres 
+# psql -c ""ALTER FUNCTION [functionname] SECURITY INVOKER;"" 
+If it is not possible to revoke SECURITY DEFINER, ensure the function can be executed 
+by only the accounts that absolutely need such functionality: 
+postgres=# SELECT proname, proacl FROM pg_proc WHERE proname = 
+'delete_customer'; 
+proname     |                         proacl -----------------+-------------------------------------------------------- 
+delete_customer | {=X/postgres,postgres=X/postgres,appreader=X/postgres} 
+(1 row) 
+postgres=# REVOKE EXECUTE ON FUNCTION delete_customer(integer,boolean) FROM 
+appreader; 
+REVOKE 
+postgres=# SELECT proname, proacl FROM pg_proc WHERE proname = 
+'delete_customer'; 
+proname     |                         proacl -----------------+-------------------------------------------------------- 
+delete_customer | {=X/postgres,postgres=X/postgres} 
+(1 row) 
+
+Based on the output above, appreader=X/postgres no longer exists in the proacl 
+column results returned from the query and confirms appreader is no longer granted 
+execute privilege on the function."
+4.8,Ensure the set_user extension is installed,4.8 Ensure the set_user extension is installed,null,FAIL,"We will install the set_user extension: 
+
+# whoami 
+root 
+# dnf -y install set_user_17 
+[snip] 
+Installed: 
+  set_user_17-4.1.0-1.rhel9.1.x86_64 
+ 
+Complete! 
+Now that set_user is installed, we need to tell PostgreSQL to load its library: 
+
+# whoami 
+root 
+# vi ~postgres/17/data/postgresql.conf
+
+Find the shared_preload_libraries entry, and add 'set_user' to it (preserving any 
+existing entries): 
+shared_preload_libraries = 'set_user' 
+ 
+OR 
+ 
+shared_preload_libraries = 'set_user,pgaudit,somethingelse' 
+Restart the PostgreSQL server for changes to take effect: 
+# systemctl restart postgresql-17 
+# systemctl status postgresql-17|grep 'ago$' 
+   Active: active (running) since [timestamp]; 1s ago 
+And now, we can install the extension with SQL: 
+# su - postgres 
+# psql 
+postgres=# select * from pg_available_extensions where name = 'set_user'; 
+  name   | default_version | installed_version |                  comment ---------+-----------------+-------------------+----------------------------- 
+set_user | 4.1.0           |                   | similar to SET ROLE but with 
+         |                 |                   | added logging 
+(1 row) 
+ 
+postgres=# create extension set_user; 
+CREATE EXTENSION 
+postgres=# select * from pg_available_extensions where name = 'set_user'; 
+  name   | default_version | installed_version |                  comment ---------+-----------------+-------------------+----------------------------- 
+set_user | 4.1.0           | 4.1.0             | similar to SET ROLE but with 
+         |                 |                   | added logging 
+(1 row) 
+Now, we use GRANT to configure each DBA role to allow it to use the set_user 
+functions. In the example below, we will configure my db user doug. (You would do this 
+for each DBA's normal user role.) 
+postgres=# grant execute on function set_user(text) to doug; 
+GRANT 
+postgres=# grant execute on function set_user_u(text) to doug; 
+GRANT 
+Connect to PostgreSQL as yourself and verify it works as expected:
+
+# whoami 
+psql 
+# psql -U doug -d postgres -h 127.0.0.1 
+postgres=> select set_user('postgres'); 
+ERROR:  switching to superuser not allowed 
+HINT:  Use 'set_user_u' to escalate. 
+postgres=> select set_user_u('postgres'); 
+ set_user_u ------------ 
+ OK 
+(1 row) 
+postgres=# select current_user, session_user; 
+ current_user | session_user --------------+-------------- 
+ postgres     | doug 
+(1 row) 
+postgres=# select reset_user(); 
+ reset_user ------------ 
+ OK 
+(1 row) 
+postgres=> select current_user, session_user; 
+ current_user | session_user --------------+-------------- 
+ doug         | doug 
+(1 row) 
+Once all DBA's normal user accounts have been GRANTed permission, revoke the ability 
+to login as the postgres (superuser) user: 
+postgres=# ALTER USER postgres NOLOGIN; 
+ALTER ROLE 
+Which results in: 
+$ psql 
+psql: FATAL:  role ""postgres"" is not permitted to log in 
+$ psql -U doug -d postgres -h 127.0.0.1 
+psql (1*.0) 
+Revoke SUPERUSER and/or LOGIN from any other roles that were previously 
+identified: 
+postgres=# ALTER USER usera NOSUPERUSER; -- revoke superuser 
+ALTER ROLE 
+postgres=# ALTER USER usera NOLOGIN; -- revoke login 
+ALTER ROLE 
+postgres=# ALTER USER usera NOSUPERUSER NOLOGIN; -- revoke both at once 
+ALTER ROLE 
+Note that we show dropping the privileges both individually and as one. Pick an 
+appropriate version based on your application/business needs. 
+Remove any escalated privileges on users granted indirectly that were previously 
+identified using the roletree view:
+
+postgres=# REVOKE name_of_granting_role FROM bob; -- an example only 
+REVOKE ROLE"
+5.2,Ensure PostgreSQL is Bound to an IP Address,5.2 Ensure PostgreSQL is Bound to an IP Address,Audit not performed,FAIL,"To have the PostgreSQL server only accept connections on a specific IP address, add 
+an entry similar to this in the PostgreSQL configuration file postgresql.conf: 
+
+listen_addresses = '<your IP>'
+ 
+To listen on multiple addresses, a comma-separated list may be used:
+ 
+listen_addresses = '<your first IP>, <your second IP>' 
+
+In this case, clients can connect to the server using --host=<your IP>, while 
+connections on other server host addresses are not possible."
+6.2,Ensure 'backend' runtime parameters are configured correctly,6.2 Ensure 'backend' runtime parameters are configured correctly,null,FAIL,"Once detected, the unauthorized/undesired change can be corrected by altering the 
+configuration file and executing a server restart. In the case where the parameter has 
+been specified on the command-line invocation of pg_ctl the restart invocation is 
+insufficient and an explicit stop and start must instead be made. 
+
+1. Query the view pg_settings and compare with previous query outputs for any 
+changes. 
+2. Review configuration files postgresql.conf and postgresql.auto.conf and 
+compare them with previously archived file copies for any changes. 
+3. Examine the process output and look for parameters that were used at server 
+startup: 
+ps -few | grep -E -- '[p]ost.*-[D]' 
+4. Examine the contents of $PGDATA/postmaster.opts"
+6.7,Ensure FIPS 140-2 OpenSSL Cryptography Is Used,6.7 Ensure FIPS 140-2 OpenSSL Cryptography Is Used,Audit not performed,FAIL,"Configure OpenSSL to be FIPS compliant as PostgreSQL uses OpenSSL for 
+cryptographic modules. To configure OpenSSL to be FIPS 140-2 compliant, see the 
+official RHEL Documentation. Below is a general summary of the steps required: 
+To switch the system to FIPS mode in RHEL 9: 
+# whoami 
+root 
+# fips-mode-setup --enable 
+Kernel initramdisks are being regenerated. This might take some time. 
+Setting system policy to FIPS 
+Note: System-wide crypto policies are applied on application start-up. 
+It is recommended to restart the system for the change of policies 
+to fully take place. 
+FIPS mode will be enabled. 
+Please reboot the system for the setting to take effect. 
+Restart your system to allow the kernel to switch to FIPS mode: 
+# whoami 
+root 
+# reboot 
+After the restart, you can check the current state of FIPS mode: 
+# whoami 
+root 
+# fips-mode-setup --check 
+FIPS mode is enabled."
+6.8,Ensure TLS is enabled and configured correctly,6.8 Ensure TLS is enabled and configured correctly,"""off""",FAIL,"For this example, and ease of illustration, we will be using a self-signed certificate 
+(generated via openssl) for the server, and the PostgreSQL defaults for file naming and 
+location in the PostgreSQL $PGDATA directory. 
+# whoami 
+postgres 
+# # create new certificate and enter details at prompts 
+# openssl req -new -text -out server.req 
+Generating a 2048 bit RSA private key 
+.....................+++ 
+..................................................................+++ 
+writing new private key to 'privkey.pem' 
+Enter PEM pass phrase: 
+Verifying - Enter PEM pass phrase: ----- 
+You are about to be asked to enter information that will be incorporated 
+into your certificate request. 
+What you are about to enter is what is called a Distinguished Name or a DN. 
+There are quite a few fields but you can leave some blank 
+For some fields there will be a default value, 
+If you enter '.', the field will be left blank. ----- 
+Country Name (2 letter code) [XX]:US 
+State or Province Name (full name) []:Ohio 
+Locality Name (eg, city) [Default City]:Columbus 
+Organization Name (eg, company) [Default Company Ltd]:Me Inc 
+Organizational Unit Name (eg, section) []:IT 
+Common Name (eg, your name or your server's hostname) []:my.me.inc 
+Email Address []:me@meinc.com 
+ 
+Please enter the following 'extra' attributes 
+to be sent with your certificate request 
+A challenge password []: 
+An optional company name []: 
+ 
+# # remove passphrase (required for automatic server start up, if not using 
+`ssl_passphrase_command`) 
+# openssl rsa -in privkey.pem -out server.key && rm privkey.pem 
+Enter pass phrase for privkey.pem: 
+writing RSA key 
+ 
+# # modify certificate to self signed, generate .key and .crt files 
+# openssl req -x509 -in server.req -text -key server.key -out server.crt 
+ 
+# # copy .key and .crt files to appropriate location, here default $PGDATA 
+$ cp server.key server.crt $PGDATA 
+ 
+# # restrict file mode for server.key 
+$ chmod og-rwx server.key 
+Edit the PostgreSQL configuration file postgresql.conf to ensure the following items 
+are set. Again, we are using defaults. Note that altering these parameters will require 
+restarting the cluster.
+
+# (change requires restart) 
+ssl = on 
+ 
+# force clients to use TLS v1.3 or newer 
+ssl_min_protocol_version = 'TLSv1.3' 
+ 
+# (change requires restart) 
+ssl_cert_file = 'server.crt' 
+ 
+# (change requires restart) 
+ssl_key_file = 'server.key' 
+
+Finally, restart PostgreSQL and confirm ssl using commands outlined in Audit 
+Procedures: 
+
+postgres=# show ssl; 
+ ssl ----- 
+ on 
+(1 row)"
+6.9,Ensure that TLSv1.3,6.9 Ensure that TLSv1.3,Audit not performed,FAIL,"Adjust the ssl_min_protocol_version to at least TLSv1.3:
+
+postgres=# ALTER SYSTEM SET ssl_min_protocol_version = 'TLSv1.3'; 
+ALTER SYSTEM
+
+Make the change active:
+
+postgres=# SELECT pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row) 
+postgres=# SHOW ssl_min_protocol_version; 
+ssl_min_protocol_version -------------------------- 
+TLSv1.3 
+(1 row)"
+6.10,Ensure Weak SSL/TLS Ciphers Are Disabled,6.10 Ensure Weak SSL/TLS Ciphers Are Disabled,Audit not performed,FAIL,"Add or modify the ssl_ciphers directive to the following value in the PostgreSQL 
+configuration file (postgresql.conf): 
+
+ssl_ciphers = 
+'TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_AES_128_CCM_SHA256,TLS_CHA
+ CHA20_POLY1305_SHA256,ECDHE-ECDSA-AES256-CCM,ECDHE-ECDSA-AES128-CCM,DHE-RSA
+AES256-CCM,DHE-RSA-AES128-CCM,ECDHE-RSA-AES256-GCM-SHA384,ECDHE-RSA-AES128
+GCM-SHA256,ECDHE-ECDSA-AES256-GCM-SHA384,ECDHE-ECDSA-AES128-GCM-SHA256,DHE
+DSS-AES256-GCM-SHA384,DHE-DSS-AES128-GCM-SHA256,DHE-RSA-AES256-GCM
+SHA384,DHE-RSA-AES128-GCM-SHA256'"
+6.11,Ensure the pgcrypto extension is installed and configured correctly,6.11 Ensure the pgcrypto extension is installed and configured correctly,null,FAIL,"The pgcrypto extension is included with the PostgreSQL contrib package. Although 
+included, it needs to be created in the database. 
+As the database administrator, run the following: 
+postgres=# CREATE EXTENSION pgcrypto; 
+CREATE EXTENSION 
+Verify pgcrypto is installed: 
+postgres=# SELECT * FROM pg_available_extensions WHERE name='pgcrypto'; 
+name   | default_version | installed_version |         comment ----------+-----------------+-------------------+------------------------- 
+pgcrypto | 1.3             | 1.3               
+| cryptographic functions 
+(1 row)"
+7.2,Ensure logging of replication commands is configured,7.2 Ensure logging of replication commands is configured,"""off""",FAIL,"To enable the logging of replication commands, execute the following: 
+postgres=# ALTER SYSTEM SET log_replication_commands = 'on'; 
+ALTER SYSTEM 
+postgres=# SELECT pg_reload_conf(); 
+pg_reload_conf ---------------- 
+t 
+(1 row) 
+postgres=# SHOW log_replication_commands ; 
+log_replication_commands -------------------------- 
+on 
+(1 row)"
+7.4,Ensure WAL archiving is configured and functional,7.4 Ensure WAL archiving is configured and functional,null,FAIL,Change parameters and restart the server as required
+8.2,Ensure the backup and restore tool,8.2 Ensure the backup and restore tool,Audit not performed,FAIL,"pgBackRest is not installed nor configured for PostgreSQL by default, but instead is 
+maintained as a GitHub project. Fortunately, it is a part of the PGDG repository and can 
+be easily installed: 
+# whoami 
+root 
+# subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)
+rpms && dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release
+latest-9.noarch.rpm 
+<snip> 
+Installed: 
+  epel-release-9-8.el9.noarch 
+ 
+Complete! 
+# dnf -y install pgbackrest 
+<snip> 
+Installed: 
+  libssh2-1.11.0-1.el9.x86_64                           pgbackrest-2.53.1
+1PGDG.rhel9.x86_64 
+ 
+Complete!
+
+Once installed, pgBackRest must be configured for things like stanza name, backup 
+location, retention policy, logging, etc. Please consult the configuration guide. 
+If employing pgBackRest for your backup/recovery solution, ensure the repository, base 
+backups, and WAL archives are stored on a reliable file system separate from the 
+database server. Further, the external storage system where backups reside should 
+have limited access to only those system administrators as necessary. Finally, as with 
+any backup/recovery solution, stringent testing must be conducted. A backup is only 
+good if it can be restored successfully."

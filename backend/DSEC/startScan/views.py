@@ -7,6 +7,7 @@ from io import BytesIO
 from .Configuration_Audit.Database.MARIA import connection_maria
 from . import remote
 from .Configuration_Audit.Database.ORACLE import generate_sql
+from .Configuration_Audit.Database.POSTGRESQL import postgresql_remote,postgresqlgenerator,postgresqlvalidator
 import zipfile
 from django.http import HttpResponse, JsonResponse
 from django.views import View
@@ -68,43 +69,12 @@ def database_config_audit(data):
 
     if normalized_compliance == "oracle_12c" or normalized_compliance == "oracle12c":
         try:
-            base_dir = os.path.dirname(os.path.abspath(__file__))
             oracle_dir = os.path.join(base_dir,"Configuration_Audit","Database","ORACLE","CIS","Queries")
             csv_name = "oracle_12c_cis.csv"
             csv_path = os.path.join(oracle_dir, csv_name)
             
-            project_name = (data.get("project_name") or "unknown_project").strip().replace(" ", "_")
-            scan_name = (data.get("scan_name") or "unknown_scan").strip().replace(" ", "_")
-
-            project_folder = os.path.join(
-                                base_dir,
-                                "Projects",
-                                project_name,
-                                scan_name
-                            )
-
-
-            # Create the nested directory structure if it doesn't exist
-            os.makedirs(project_folder, exist_ok=True)
-
-            
-            # Normalize components for filename
-            safe_compliance_name = normalized_compliance or "unknown_compliance"
-            safe_standard = normalized_standard or "unknown_standard"
-            safe_project_name = project_name
-            safe_scan_name = scan_name
-
-            base_dynamic_filename = f"{safe_compliance_name}_{safe_standard}_{safe_project_name}_{safe_scan_name}"
-            dynamic_filename_extension = ".csv"
-            dynamic_filename = f"{base_dynamic_filename}{dynamic_filename_extension}"
-            result_csv = os.path.join(project_folder, dynamic_filename)
+           
             sql_output = os.path.join(project_folder, f"{base_dynamic_filename}.sql")
-            version = 1
-            while os.path.exists(result_csv):
-                  version += 1
-                  dynamic_filename = f"{base_dynamic_filename}_v{version}{dynamic_filename_extension}"
-                  result_csv = os.path.join(project_folder, dynamic_filename)
-        # --- MODIFICATION END ---
 
             json_output = os.path.join(project_folder, "output.json")
 
@@ -148,6 +118,65 @@ def database_config_audit(data):
         except Exception as e:
             print(f"[!] Exception running Oracle audit: {e}")
             return None,None
+        
+    elif normalized_compliance=="postgresql17":
+        try:
+            print("postgres")
+            postgresql_dir = os.path.join(base_dir,"Configuration_Audit","Database","POSTGRESQL","CIS","Queries")
+            csv_name = f"{compliance_name}_{safe_standard}.csv"
+            csv_path = os.path.join(postgresql_dir, csv_name)
+            validator=os.path.join(base_dir,"Configuration_Audit","Database","POSTGRESQL","CIS","Validators")
+            csv_validator=f"{validator}/{compliance_name}_{safe_standard}_validate.csv"
+           
+            sql_output = os.path.join(project_folder, f"{base_dynamic_filename}.sql")
+            linux_output= os.path.join(project_folder, f"{base_dynamic_filename}")
+
+            json_output = os.path.join(project_folder, "output.json")
+
+            print(json_output)
+
+            if not os.path.exists(csv_path):
+                print(f"[!] CSV input file not found: {csv_path}")
+                return None,None
+
+            # Step 1: Generate the SQL script
+            queries = postgresqlgenerator.process_csv_file(csv_path,sql_output,linux_output, unchecked_items)
+            if not queries:
+                print("[!] No queries extracted from CSV.")
+                return None,None
+
+
+            print(f"[+] SQL script generated at: {sql_output}")
+
+            # Step 2: Choose execution method based on auditMethod
+            audit_method = (scan_data.get("auditMethod") or "").strip().lower()
+            print(audit_method)
+
+            if audit_method == "remoteaccess":
+                print("[*] Using remote access method.")
+                postgresql_remote.execute_remote_sql(sql_output, scan_data, json_output)
+                postgresqlvalidator.validate_results(json_output,csv_validator,result_csv)
+                print("returning ",result_csv,json_output)
+                convert_csv_to_excel(result_csv)
+                
+
+                return result_csv,json_output
+            elif audit_method == "agent":
+                print("[*] Using agent method.")
+                script_path= download_script(sql_output)
+                print(f"[+] Script downloaded to: {script_path}")
+                return script_path, json_output
+            else:
+                print(f"[-] Unsupported audit method: {audit_method}")
+                return None,None
+
+        except Exception as e:
+            print(f"[!] Exception running Postgresql audit: {e}")
+            return None,None
+
+        
+
+
     elif normalized_compliance=="mariadb106" or normalized_compliance=="mariadb1011":
         try:
             print(f"[DEBUG] Running MariaDB audit for compliance: {normalized_compliance}")
@@ -762,3 +791,7 @@ def download_project_scan_excels(request, project_name, scan_name):
 
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+
+

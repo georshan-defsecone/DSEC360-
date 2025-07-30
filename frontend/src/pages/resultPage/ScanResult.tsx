@@ -3,7 +3,7 @@ import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import api from "../api";
 import { useEffect, useState, useCallback, useRef, DragEvent, useMemo } from "react";
-import { CircleCheck, CircleX, MoreVertical, Check, X, Download, RefreshCw, UploadCloud, File as FileIcon, AlertTriangle } from "lucide-react";
+import { CircleCheck, CircleX, MoreVertical, Check, X, Download, RefreshCw, UploadCloud, File as FileIcon, AlertTriangle, Play } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import React from "react";
-import ScanPieChart from "@/components/ScanPieChart";
+import ScanPieChart from "@/components/ScanPieChart"; // Assuming this component is available
 import { Input } from "@/components/ui/input";
 
 // Define interfaces
@@ -21,13 +21,13 @@ interface AuditResultItem {
   "CIS.NO"?: string;
   Subject?: string;
   Description?: string;
-  "Current Settings"?: string | null; // Correctly typed
+  "Current Setting"?: string | null; // Corrected interface to singular "Setting"
+  "Current Settings"?: string | null; // Added plural for flexibility
   Status?: string;
   Remediation?: string;
   name?: string;
   results?: any;
   status_type?: string;
-  script_filename?: string;
   message?: string;
 }
 
@@ -74,6 +74,7 @@ const ScanResult = () => {
   const [isRescanning, setIsRescanning] = useState(false);
   const [selectedVersionKey, setSelectedVersionKey] = useState<string | null>(null);
   const [notificationMessage, setNotificationMessage] = useState<NotificationType>(null);
+  const [showNotification, setShowNotification] = useState(false); // New state for controlling notification visibility/animation
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingValue, setEditingValue] = useState<string>("");
 
@@ -85,61 +86,69 @@ const ScanResult = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Effect to clear notification message after a few seconds
+  // Effect to manage notification message visibility and animation
   useEffect(() => {
     if (notificationMessage) {
+      setShowNotification(true); // Show notification
       const timer = setTimeout(() => {
-        setNotificationMessage(null);
-      }, 5000); // Notification disappears after 5 seconds
-      return () => clearTimeout(timer);
+        setShowNotification(false); // Start fade-out
+        // After transition, clear the message completely
+        setTimeout(() => setNotificationMessage(null), 300); // Matches transition duration
+      }, 5000); // Notification remains visible for 5 seconds
+      return () => {
+        clearTimeout(timer);
+        setShowNotification(false); // Ensure it hides if component unmounts or message changes
+      };
+    } else {
+      setShowNotification(false); // Ensure it's false if message is null
     }
   }, [notificationMessage]);
 
   const getStatusForItem = useCallback((item: AuditResultItem): string => {
     if (item.status_type === 'script_generated') {
-        return 'SCRIPT_GENERATED';
+      return 'SCRIPT_GENERATED';
     }
     if (item.Status) {
-        return item.Status.toLowerCase().trim();
+      return item.Status.toLowerCase().trim();
     }
     if (item.name?.includes("All_checks_passed_Scored")) return "pass";
     if (item.results === null) return "fail";
     if (typeof item.results === 'string' && item.results.includes("ERROR:")) return "fail";
     if (Array.isArray(item.results) && item.results.length > 0) {
-        const firstResult = item.results[0];
-        if (firstResult && typeof firstResult === 'object') {
-            const value = firstResult.VALUE?.toLowerCase();
-            const val = firstResult.value?.toLowerCase();
-            const limit = firstResult.LIMIT?.toLowerCase();
-            if (item.name?.includes("OS_ROLES") && value === "false") return "pass";
-            if (item.name?.includes("SERVER_RELEASE_BANNER") && value === "false") return "pass";
-            if (item.name?.includes("SQL92_SECURITY") && value === "true") return "pass";
-            if (item.name?.includes("AUDIT_SYS_OPERATIONS") && val === "false") return "fail";
-            if (item.name?.includes("PROTOCOL_ERROR_TRACE_ACTION") && value === "trace") return "fail";
-            if (item.name?.includes("REMOTE_LOGIN_PASSWORDFILE") && value === "exclusive") return "fail";
-            if (item.name?.includes("AUDIT_TRAIL") && value === "none") return "fail";
-            if (item.name?.includes("GLOBAL_NAMES") && value === "false") return "fail";
-            if (item.name?.includes("SESSIONS_PER_USER") && limit === "unlimited") return "fail";
-            if (item.name?.includes("PASSWORD_LIFE_TIME") && limit === "180") return "fail";
-            if (item.name?.includes("PASSWORD_GRACE_TIME") && limit === "7") return "fail";
-            if (item.name?.includes("PASSWORD_VERIFY_FUNCTION") && limit === "null") return "fail";
-            if (item.name?.includes("INACTIVE_ACCOUNT_TIME") && limit === "365") return "fail";
-            if (item.name?.includes("SEC_MAX_FAILED_LOGIN_ATTEMPTS") && value === "3") return "pass";
-            if (item.name?.includes("SEC_PROTOCOL_ERROR_FURTHER_ACTION") && value === "(drop,3)") return "pass";
-            if (item.name?.includes("RESOURCE_LIMIT") && value === "true") return "pass";
-            if (item.name?.includes("FAILED_LOGIN_ATTEMPTS") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
-            if (item.name?.includes("PASSWORD_LOCK_TIME") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
-            if (item.name?.includes("PASSWORD_REUSE_MAX") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
-            if (item.name?.includes("PASSWORD_REUSE_TIME") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
-            if (item.name?.includes("All_Default_Passwords_Are_Changed") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
-            if (item.name?.includes("All_Sample_Data_And_Users_Have_Been_Removed") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
-            if (item.name?.includes("AUTHENTICATION_TYPE_Is_Not_Set_to_EXTERNAL") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
-            if (item.name?.includes("SYS_USER_MIG_Has_Been_Dropped") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
-            if (item.name?.includes("No_Public_Database_Links_Exist") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
-            if (item.name?.includes("USER_Audit_Option_Is_Enabled") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
-            if (firstResult.message?.toLowerCase().includes("all checks passed")) return "pass";
-            if (item.name?.includes("All_checks_passed_Scored")) return "pass";
-        }
+      const firstResult = item.results[0];
+      if (firstResult && typeof firstResult === 'object') {
+        const value = firstResult.VALUE?.toLowerCase();
+        const val = firstResult.value?.toLowerCase();
+        const limit = firstResult.LIMIT?.toLowerCase();
+        if (item.name?.includes("OS_ROLES") && value === "false") return "pass";
+        if (item.name?.includes("SERVER_RELEASE_BANNER") && value === "false") return "pass";
+        if (item.name?.includes("SQL92_SECURITY") && value === "true") return "pass";
+        if (item.name?.includes("AUDIT_SYS_OPERATIONS") && val === "false") return "fail";
+        if (item.name?.includes("PROTOCOL_ERROR_TRACE_ACTION") && value === "trace") return "fail";
+        if (item.name?.includes("REMOTE_LOGIN_PASSWORDFILE") && value === "exclusive") return "fail";
+        if (item.name?.includes("AUDIT_TRAIL") && value === "none") return "fail";
+        if (item.name?.includes("GLOBAL_NAMES") && value === "false") return "fail";
+        if (item.name?.includes("SESSIONS_PER_USER") && limit === "unlimited") return "fail";
+        if (item.name?.includes("PASSWORD_LIFE_TIME") && limit === "180") return "fail";
+        if (item.name?.includes("PASSWORD_GRACE_TIME") && limit === "7") return "fail";
+        if (item.name?.includes("PASSWORD_VERIFY_FUNCTION") && limit === "null") return "fail";
+        if (item.name?.includes("INACTIVE_ACCOUNT_TIME") && limit === "365") return "fail";
+        if (item.name?.includes("SEC_MAX_FAILED_LOGIN_ATTEMPTS") && value === "3") return "pass";
+        if (item.name?.includes("SEC_PROTOCOL_ERROR_FURTHER_ACTION") && value === "(drop,3)") return "pass";
+        if (item.name?.includes("RESOURCE_LIMIT") && value === "true") return "pass";
+        if (item.name?.includes("FAILED_LOGIN_ATTEMPTS") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
+        if (item.name?.includes("PASSWORD_LOCK_TIME") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
+        if (item.name?.includes("PASSWORD_REUSE_MAX") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
+        if (item.name?.includes("PASSWORD_REUSE_TIME") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
+        if (item.name?.includes("All_Default_Passwords_Are_Changed") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
+        if (item.name?.includes("All_Sample_Data_And_Users_Have_Been_Removed") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
+        if (item.name?.includes("AUTHENTICATION_TYPE_Is_Not_Set_to_EXTERNAL") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
+        if (item.name?.includes("SYS_USER_MIG_Has_Been_Dropped") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
+        if (item.name?.includes("No_Public_Database_Links_Exist") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
+        if (item.name?.includes("USER_Audit_Option_Is_Enabled") && (item.results === null || (Array.isArray(item.results) && item.results.length === 0))) return "pass";
+        if (firstResult.message?.toLowerCase().includes("all checks passed")) return "pass";
+        if (item.name?.includes("All_checks_passed_Scored")) return "pass";
+      }
     }
     return "unknown";
   }, []);
@@ -150,6 +159,7 @@ const ScanResult = () => {
     try {
       const response = await api.get(`/scans/scan-result/${projectName}/${scanName}`);
       const fullScanData: ScanDetailsBackend = response.data;
+      console.log(fullScanData)
       const auditResultsForLatest: AuditResultItem[] = fullScanData.parsed_latest_scan_result || [];
       let Passed = 0;
       let Failed = 0;
@@ -245,7 +255,8 @@ const ScanResult = () => {
   
   const handleConfirmDownload = useCallback(async () => {
     if (!projectName) {
-      alert("Project name is missing!");
+      // Use a custom modal or notification instead of alert
+      setNotificationMessage({ type: 'error', message: "Project name is missing!" });
       return;
     }
     try {
@@ -259,9 +270,10 @@ const ScanResult = () => {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
+      setNotificationMessage({ type: 'success', message: "Download initiated successfully! ✅" });
     } catch (error) {
       console.error("Failed to download project excels:", error);
-      alert("Failed to download the file.");
+      setNotificationMessage({ type: 'error', message: "Failed to download the file." });
     } finally {
         setShowDownloadModal(false);
     }
@@ -309,6 +321,34 @@ const ScanResult = () => {
     }
   }, [scanDetails, fetchScanData]);
 
+  const handleReDownloadAgentScript = useCallback(async () => {
+    if (!scanDetails?.scan_id) {
+      setNotificationMessage({ type: 'error', message: "Scan ID is missing for re-download." });
+      return;
+    }
+    setNotificationMessage({ type: 'success', message: "Initiating script re-download..." });
+    try {
+      const response = await api.get(`/scans/re-download/${scanDetails.scan_id}/`, { responseType: "blob" });
+      const blob = new Blob([response.data], { type: "application/sql" }); // Assuming SQL, adjust if needed
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${scanName}_agent_script.sql`; // Dynamic filename
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      setNotificationMessage({ type: 'success', message: "Agent script re-downloaded successfully! ✅" });
+    } catch (error: any) {
+      console.error("Failed to re-download agent script:", error);
+      const errorMsg = error.response?.data?.error || `Server Error: ${error.response?.status}` || "Network error.";
+      setNotificationMessage({ type: 'error', message: `Failed to re-download agent script: ${errorMsg}` });
+    } finally {
+      setShowRescanModal(false);
+    }
+  }, [scanDetails, scanName]);
+
+
   const handleEditClick = (index: number, currentStatus: string) => {
     setEditingIndex(index);
     setEditingValue(currentStatus.toUpperCase());
@@ -323,10 +363,16 @@ const ScanResult = () => {
     if (editingIndex === null) return;
     const item = sortedResults[editingIndex];
     const newStatus = editingValue.trim().toUpperCase();
-    if (!newStatus) return alert("Status cannot be empty.");
+    if (!newStatus) {
+      setNotificationMessage({ type: 'error', message: "Status cannot be empty." });
+      return;
+    }
     const isNew = 'name' in item && 'results' in item;
     const id = isNew && item.name ? item.name : item["CIS.NO"];
-    if (!id) return alert("Cannot update item without a valid identifier.");
+    if (!id) {
+      setNotificationMessage({ type: 'error', message: "Cannot update item without a valid identifier." });
+      return;
+    }
     try {
         await api.put(`/scans/${scanDetails?.scan_id}/audit/${id}/`, { status: newStatus });
         const updatedDetails = { ...scanDetails! };
@@ -345,9 +391,11 @@ const ScanResult = () => {
                 else if (status === "fail") failed++;
             });
             setSummary({ Passed: passed, Failed: failed });
+            setNotificationMessage({ type: 'success', message: `Status updated to ${newStatus} for ${id} ✅` });
         }
     } catch (error) {
-        alert("Error updating status.");
+        console.error("Error updating status:", error);
+        setNotificationMessage({ type: 'error', message: "Error updating status." });
     } finally {
         handleCancelEdit();
     }
@@ -389,7 +437,7 @@ const ScanResult = () => {
 
           {/* Notification Message */}
           {notificationMessage && (
-            <div className={`fixed top-24 right-8 z-50 flex items-center gap-2 px-6 py-3 rounded-lg shadow-lg text-white transition-all duration-300 transform ${notificationMessage.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
+            <div className={`fixed top-24 right-8 z-50 flex items-center gap-2 px-6 py-3 rounded-lg shadow-lg text-white transition-all duration-300 transform ${notificationMessage.type === "success" ? "bg-gradient-to-r from-green-500 to-green-600 border border-green-700" : "bg-red-600 border border-red-700"} ${showNotification ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
               {notificationMessage.type === "success" ? <CircleCheck size={20} /> : <CircleX size={20} />}
               <span>{notificationMessage.message}</span>
             </div>
@@ -432,7 +480,7 @@ const ScanResult = () => {
               </div>
               <Card className="w-full mt-2 shadow-lg border border-gray-200 bg-white rounded-none">
                 <div className="p-5">
-                  <div className="flex justify-between items-center mb-2"><h2 className="text-xl font-semibold text-gray-800">Audit Results {selectedVersionKey && `(Version ${selectedVersionKey.substring(1)})`}</h2></div>
+                  <div className="flex justify-between items-center mb-2"><h2 className="text-xl font-semibold text-gray-800">Audit Results {selectedVersionKey && (`Version ${selectedVersionKey.substring(1)}`)}</h2></div>
                   <div className="h-[450px] overflow-y-auto">
                     <table className="table-auto w-full text-sm">
                       <thead className="sticky top-0 z-10 bg-gray-100"><tr className="text-gray-700 border-b border-gray-400"><th className="text-left px-4 py-2 w-[20%]">Audit ID</th><th className="text-left px-4 py-2 w-[55%]">Audit Name</th><th className="text-left px-4 py-2 w-[15%] cursor-pointer hover:underline" onClick={toggleSortDirection}><div className="flex items-center gap-1">Status {sortDirection !== "none" && (<span className="text-xs bg-gray-200 px-1 py-0.5 rounded">{sortDirection.toUpperCase()}</span>)}</div></th><th className="px-4 py-2 w-[10%]"></th></tr></thead>
@@ -459,18 +507,77 @@ const ScanResult = () => {
                                       <div className="font-semibold">Description:</div>
                                       <div>
                                         {item.Description ? item.Description : 
-                                         isNew && item.results != null ? 
-                                           typeof item.results === 'string' ? item.results : 
-                                           Array.isArray(item.results) ? 
-                                             <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-2 rounded-md">{JSON.stringify(item.results, null, 2)}</pre> : 
-                                           "N/A" : 
-                                         "No results provided."
+                                          isNew && item.results != null ? 
+                                            typeof item.results === 'string' ? item.results : 
+                                            Array.isArray(item.results) ? 
+                                              <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-2 rounded-md">{JSON.stringify(item.results, null, 2)}</pre> : 
+                                            "N/A" : 
+                                          "No results provided."
                                         }
                                       </div>
-                                      {/* New: Current Settings */}
+                                      {/* Enhanced Current Settings Display */}
                                       <div className="font-semibold">Current Settings:</div>
                                       <div>
-                                        {item["Current Settings"] !== undefined && item["Current Settings"] !== null ? String(item["Current Settings"]) : "N/A"}
+                                        {(() => {
+                                          // Prioritize "Current Settings" (plural) then fallback to "Current Setting" (singular)
+                                          const settings = item["Current Settings"] ?? item["Current Setting"];
+
+                                          if (settings === undefined || settings === null || settings === "") {
+                                            return "N/A";
+                                          }
+                                          if (typeof settings !== 'string') {
+                                            // If it's already an object/array, stringify it
+                                            return <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-2 rounded-md">{JSON.stringify(settings, null, 2)}</pre>;
+                                          }
+
+                                          // Attempt to parse if it looks like JSON
+                                          const cleanedSettings = settings.replace(/'/g, '"'); // Replace single quotes with double quotes
+                                          
+                                          try {
+                                            const parsedSettings = JSON.parse(cleanedSettings);
+                                            
+                                            // Check if it's an array of objects for custom rendering
+                                            if (Array.isArray(parsedSettings) && parsedSettings.every(s => typeof s === 'object' && s !== null)) {
+                                                return (
+                                                    <div className="space-y-2">
+                                                        {parsedSettings.map((settingObj, idx) => (
+                                                            <Card key={idx} className="p-3 bg-gray-100 border border-gray-200 rounded-md">
+                                                                {Object.entries(settingObj).map(([key, value]) => (
+                                                                    <div key={key} className="flex text-xs">
+                                                                        <span className="font-semibold mr-1 text-gray-700">{key.replace(/_/g, ' ')}:</span>
+                                                                        <span className="text-gray-900">{String(value)}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </Card>
+                                                        ))}
+                                                    </div>
+                                                );
+                                            }
+                                            // If it's a single object, display it neatly
+                                            if (typeof parsedSettings === 'object' && parsedSettings !== null) {
+                                                return (
+                                                    <Card className="p-3 bg-gray-100 border border-gray-200 rounded-md">
+                                                        {Object.entries(parsedSettings).map(([key, value]) => (
+                                                            <div key={key} className="flex text-xs">
+                                                                <span className="font-semibold mr-1 text-gray-700">{key.replace(/_/g, ' ')}:</span>
+                                                                <span className="text-gray-900">{String(value)}</span>
+                                                            </div>
+                                                        ))}
+                                                    </Card>
+                                                );
+                                            }
+                                            // If parsed but not an object/array (e.g., "true", 123)
+                                            return String(parsedSettings);
+
+                                          } catch (e) {
+                                            // Parsing failed, it's not valid JSON (even after cleaning)
+                                            console.error("Failed to parse Current Setting as JSON:", e);
+                                            // Fallback to displaying the cleaned string if parsing fails
+                                          }
+                                          
+                                          // If not JSON, or parsing failed, display as plain text
+                                          return cleanedSettings;
+                                        })()}
                                       </div>
                                       <div className="font-semibold">Remediation:</div>
                                       <div>{item.Remediation ? item.Remediation : isNew ? "N/A (Remediation not available in this format)" : "N/A"}</div>
@@ -513,15 +620,25 @@ const ScanResult = () => {
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md m-4">
             {scanDetails?.scan_data?.auditMethod === 'agent' ? <>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Upload New Agent Result</h3>
-              <div className={`relative border-2 border-dashed rounded-lg p-6 text-center hover:border-gray-400 transition-colors ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} onClick={() => fileInputRef.current?.click()}>
-                <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
-                <p className="mt-2 text-sm text-gray-600"><span className="font-semibold text-blue-600">Click to upload</span> or drag & drop</p>
-                <p className="text-xs text-gray-500">JSON or CSV files</p>
-                <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".csv,.json" className="hidden" />
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Agent Scan Options</h3>
+              <div className="space-y-4">
+                <Button onClick={handleReDownloadAgentScript} className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white cursor-pointer hover:bg-blue-700 transition rounded-none">
+                  <Play size={16} className="mr-2"/> Re-Download Agent Script
+                </Button>
+                <div className={`relative border-2 border-dashed rounded-lg p-6 text-center hover:border-gray-400 transition-colors ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} onClick={() => fileInputRef.current?.click()}>
+                  <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
+                  <p className="mt-2 text-sm text-gray-600"><span className="font-semibold text-blue-600">Click to upload</span> or drag & drop</p>
+                  <p className="text-xs text-gray-500">JSON or CSV files</p>
+                  <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".csv,.json" className="hidden" />
+                </div>
+                {fileToUpload && <div className="mt-4 flex items-center justify-between bg-gray-50 p-2 rounded-md border"><div className="flex items-center gap-2"><FileIcon className="h-5 w-5 text-gray-500" /><span className="text-sm font-medium text-gray-700">{fileToUpload.name}</span></div><button onClick={() => setFileToUpload(null)} className="text-red-500 hover:text-red-700"><X size={16}/></button></div>}
               </div>
-              {fileToUpload && <div className="mt-4 flex items-center justify-between bg-gray-50 p-2 rounded-md border"><div className="flex items-center gap-2"><FileIcon className="h-5 w-5 text-gray-500" /><span className="text-sm font-medium text-gray-700">{fileToUpload.name}</span></div><button onClick={() => setFileToUpload(null)} className="text-red-500 hover:text-red-700"><X size={16}/></button></div>}
-              <div className="mt-6 flex justify-end gap-3"><Button variant="outline" onClick={() => setShowRescanModal(false)}>Cancel</Button><Button onClick={handleAgentRescan} disabled={!fileToUpload || isRescanning} className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300">{isRescanning ? 'Uploading...' : 'Upload & Rescan'}</Button></div>
+              <div className="mt-6 flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setShowRescanModal(false)}>Cancel</Button>
+                <Button onClick={handleAgentRescan} disabled={!fileToUpload || isRescanning} className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300">
+                  {isRescanning ? 'Uploading...' : 'Upload & Rescan'}
+                </Button>
+              </div>
             </> : <>
               <div className="flex items-start">
                 <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 sm:mx-0 sm:h-10 sm:w-10"><AlertTriangle className="h-6 w-6 text-yellow-600" /></div>
