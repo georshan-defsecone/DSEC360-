@@ -350,6 +350,7 @@ def write_linux_script(linux_commands, db_and_terminal_commands, output_file, ex
         # Usage check
         script.write("if [ $# -lt 1 ]; then\n")
         script.write('  echo "Usage: $0 <input.json>"\n')
+        script.write('  echo "The  <input.josn> is the output file of the executed query file"\n')
         script.write("  exit 1\n")
         script.write("fi\n\n")
 

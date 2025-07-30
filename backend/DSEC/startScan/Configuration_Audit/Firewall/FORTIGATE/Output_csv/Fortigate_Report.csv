@@ -1,0 +1,258 @@
+CIS.NO,Subject,Description,Status,Current_Setting,Remediation
+1.1,Ensure DNS server is configured,"Fortinet uses the Domain Name Service (DNS) to translate host names into IP addresses. 
+To enable DNS lookups, you must specify the primary DNS server for your system. 
+You can also specify secondary and tertiary DNS servers. 
+When resolving host names, the system consults the primary name server. 
+If a failure or time-out occurs, the system consults the secondary name server. 
+For security purpose, trusted DNS servers should be configured to prevent man-in-the middle attacks. ",PASS,"Primary: 96.45.45.45
+Secondary: 96.45.46.46",
+2.1.1,Ensure 'Pre-Login Banner' is set,"Configure a pre-login banner, ideally approved by the organization’s legal team. 
+This banner should, at minimum, prohibit unauthorized access, provide notice of logging or monitoring, and avoid using the word “welcome” or similar words of invitation. ",FAIL,Pre-Login-Banner: disable,"Reason:
+    Pre-Login-Banner is set to 'disable', but it must be 'enable'
+
+Remediation:
+    Run the following command in the CLI to enable the pre-login-banner: 
+        FG1 # config system global  
+        FG1 (global) # set pre-login-banner enable 
+        FG1 (global) # end 
+        FG1 # 
+
+    In the GUI, to edit the content of the pre-login disclaimer message: 
+        1. Go to 'System' -> 'Replacement Messages' -> 'Extended View' -> 'Pre-login Disclaimer Message'. 
+        The edit screen is on the bottom right corner of the page. 
+        Click on ""Save"" after the editing is done."
+2.1.2,Ensure 'Post-Login-Banner' is set,"Sets the banner after users successfully log in. 
+This is equivalent to Message of the Day (MOTD) in some other systems.",FAIL,Post-Login-Banner: disable,"Reason:
+    Post-Login-Banner is set to 'disable', but it must be 'enable'
+
+Remediation:
+    Run the following command in the CLI to enable the post-login-banner: 
+        FG1 # config system global 
+        FG1 (global) # set post-login-banner enable 
+        FG1 (global) # end 
+        FG1 # 
+
+    In the GUI, to edit the content of the post-login disclaimer message, go to System -> Replace Messages -> Extended View -> ""Post-login Disclaimer Message"". 
+        The edit screen is on the bottom right corner of the page. 
+        Click on ""Save"" after the editing is done."
+2.1.4,Ensure correct system time is configured through NTP,"You can either manually set the FortiOS system time, or configure the device to automatically keep its system time correct by synchronizing with a Network Time Protocol (NTP) server. 
+These settings enable the use of primary and secondary NTP servers to provide redundancy in case of a failure involving the primary NTP server.",FAIL,"Type: fortiguard, NTP Sync: enable, Servers: Not Found","Reason:
+    NTP type is not 'custom'; No NTP servers are configured
+
+Remediation:
+    You can only customize NTP setting using CLI. 
+    In this example, we'll assign pool.ntp.org as primary NTP server and 1.1.1.1 as secondary NTP server. 
+
+        FGT1 # config system ntp 
+        FGT1 (ntp) # set type custom 
+        FGT1 (ntp) # config ntpserver 
+        FGT1 (ntpserver) # edit 1 
+        FGT1 (1) # set server pool.ntp.org 
+        FGT1 (1) # next 
+        FGT1 (ntpserver) # edit 2 
+        FGT1 (2) # set server 1.1.1.1 
+        FGT1 (2) # end 
+        FGT1 (ntp) # end 
+        FGT1 # "
+2.1.5,Ensure hostname is set,Changes the device default hostname.,PASS,Hostname: FortiGate-VM64,
+2.1.7,Disable USB Firmware and configuration installation ,Disable USB port auto install feature for config and firmware.,FAIL,"Auto-install-config: enable
+Auto-install-image: enable","Reason:
+    auto-install-config is not set to disable; auto-install-image is not set to disable
+
+Remediation:
+     CLI: 
+        config system auto-install 
+            set auto-install-config disable 
+            set auto-install-image disable  
+        end"
+2.1.8,Disable static keys for TLS,Disable support for static keys on TLS sessions terminating on the FortiGate,FAIL,ssl-static-key-ciphers: enable,"Reason:
+    ssl-static-key-ciphers is set to 'enable' instead of 'disable'
+
+Remediation:
+     CLI: 
+         config system global 
+         set ssl-static-key-ciphers disable 
+         end"
+2.1.9,Enable Global Strong Encryption,Enable FortiOS to only use strong encryption and allow only strong ciphers for communication,FAIL,strong-crypto: Not Found,"Reason:
+    strong-crypto not configured (explicit 'enable' required)
+
+Remediation:
+    CLI: 
+        config system global 
+        set strong-crypto enable 
+        end "
+2.2.1,Ensure 'Password Policy' is enabled,It is important to use secure and complex passwords for preventing unauthorized access to the FortiGate device. ,FAIL,status: disable,"Reason:
+    Missing fields: apply-to, minimum-length, min-lower-case-letter, min-upper-case-letter, min-non-alphanumeric, min-number, expire-status, expire-day, reuse-password
+
+Remediation:
+    Can be modified from CLI or GUI. 
+
+    From CLI, do the following: 
+        config system password-policy 
+             set status enable 
+             set apply-to admin-password ipsec-preshared-key 
+             set minimum-length 8 
+             set min-lower-case-letter 1 
+             set min-upper-case-letter 1 
+             set min-non-alphanumeric 1 
+             set min-number 1 
+             set expire-status enable 
+             set expire-day 90 
+             set reuse-password disable 
+        end 
+
+    Or from GUI, do the following: 
+        1) Log in to FortiGate as Super Admin   
+        2) Go to 'System' > 'Settings' 
+        3) Find the 'Password Policy' section 
+        4) Default 'Password scope' is 'Off', change it to 'Both' 
+        5) set 'Minimum length' to '8' 
+        6) Enable 'Character requirements' 
+        7) set minimum '1' in the filed of 'Upper Case', 'Lower Case', 'Numbers (0
+        9)' and 'Special' 
+        8) Disable 'Allow password reuse' 
+        9) Enable 'Password expiration' and set it to 90"
+2.2.2,Ensure administrator password retries and lockout time are configured ,"Failed login attempts can indicate malicious attempts to gain access to your network. 
+To prevent this security risk, FortiGate is preconfigured to limit the number of failed administrator login attempts. 
+After the maximum number of failed login attempts is reached, access to the account is blocked for the configured lockout period.",FAIL,"admin-lockout-threshold: 3
+admin-lockout-duration: 60","Reason:
+    admin-lockout-duration is not set to 900
+
+Remediation:
+    To configure the lockout options, from CLI: 
+
+        config system global 
+            set admin-lockout-threshold 3 
+            set admin-lockout-duration 900 
+        end 
+
+    Lockout affects the offending IP address, not the entire account."
+2.3.1,Ensure only SNMPv3 is enabled,"Ensuring that only SNMPv3 service is enabled and SNMPv1, SNMPv2c are disabled.",PASS,"SNMP Agent Status: disable
+SNMP is disabled",
+2.4.4,Ensure idle timeout time is configured,The idle timeout period is the amount of time that an administrator will stay logged in to the GUI without any activity. ,PASS,admintimeout: 5,
+2.4.5,Ensure only encrypted access channels are enabled,Allow only HTTPS access to the GUI and SSH access to the CLI. ,FAIL,"Interface: port1
+Status: up
+AllowAccess: ping,, https,, ssh,, http
+=> Non-compliant (uses: http)
+
+Interface: naf.root
+Status: up
+AllowAccess: Not Found
+=> Compliant
+
+Interface: l2t.root
+Status: up
+AllowAccess: Not Found
+=> Compliant
+
+Interface: ssl.root
+Status: up
+AllowAccess: Not Found
+=> Compliant
+
+Interface: fortilink
+Status: up
+AllowAccess: ping,, fabric
+=> Compliant","Reason:
+    port1 allows: http
+
+Remediation:
+    If HTTP or Telnet is in the allowaccess list, you will have to set that list again with the same elements except for http or telnet. 
+
+    On CLI: 
+        FG1 # config system interface 
+        FG1 (interface) # edit port1 
+        FG1 (port1) # set allowaccess ssh https ping snmp 
+        FG1 (port1) # end 
+        FG1 # 
+
+    In the web GUI, click on: 
+        1. Network > Interfaces, select the interface and click ""Edit"".  
+        2. In the interface setting page, uncheck HTTP and Telnet in the section ""Administrative Access""."
+2.5.1,Ensure High Availability configuration is enabled,Ensure that FortiGate devices are configured for High Availability (HA).,FAIL,"mode: standalone, group-name: Not Set, hbdev: NOT SET, password_set: Yes","Reason:
+    HA mode is 'standalone' (should be a-p or a-a); group-name not set; heartbeat interface (hbdev) not configured
+
+Remediation:
+    In GUI: 
+        1. Navigate to ""System"" and then ""HA"" 
+        2. Ensure ""Mode"" is set to proper setting ""Active-Active"" or ""Active-Passive"" 
+        3. Review Configuration settings: 
+             - ""Cluster Name"" must match on devices 
+             - ""Password"" Must match on devices 
+             - ""Heartbeat Interfaces"" need to be defined on devices 
+         4. Click ""OK"" to save changes and exit 
+
+    In CLI: 
+        FGT1 # config system ha  
+        FGT1 (ha) # set mode a-p                                              ###(Active-Passive) 
+        FGT1 (ha) # set group-name ""FGT-HA""                       ###(Set cluster name) 
+        FGT1 (ha) # set password *******                             ###(Set password)  
+        FGT1 (ha) # set hbdev port10 50                                 ###(Set Heartbeat Interface and priority) 
+        FGT1 (ha) # end 
+
+    To review configuration in CLI: 
+        FGT1 # config system ha 
+        FGT1 (ha) # show 
+        config system ha 
+            set group-name ""FGT-HA"" 
+            set mode a-p 
+            set password ENC    
+  enrwD467hJmO6j6YW/l6FEOa1YNVYdo8Z5mCcTDEKUFpOVXcNYnPBmQDGX//ViXk6TkwNH0il5aJr/fZY25lq+husndQHZVWp2LIlXmCv/n81U43nkZUWaIKvqkellGFbhv0/IHoOLzQPCsVcBbyrsgoprYMvh6w7F+nRriBtMNQxpOV5V+e388EcwsOOMsXBZOw== 
+            set hbdev ""port10"" 50  
+            set override disable 
+         end"
+2.5.2,"Ensure ""Monitor Interfaces"" for High Availability devices is enabled",Configure Interface Monitoring within High Availability settings. Interface Monitoring should be enabled on all critical interfaces. ,FAIL,monitor_interfaces: NOT SET,"Reason:
+    No monitor interfaces are defined in the HA configuration.
+
+Remediation:
+    To remediate from GUI: 
+        1. Go to System > HA. 
+        2. Under ""Monitor Interfaces"" select all applicable interfaces. 
+        3. Select ""OK"". 
+
+    To validate from CLI: 
+        FGT1 # config system ha 
+        FGT1 (ha) # set monitor ""port6"" ""port7"" 
+        FGT1 (ha) # show                            ###To Review changes to monitored interfaces before applying 
+        config system ha 
+            set group-name ""FGT-HA"" 
+            set mode a-p 
+            set password ENC enrwD467hJmO6j6YW/l6FEOa1YNVYdo8Z5mCcTDEKUFpOVXcNYnPBmQDGX//ViXk6TkwNH0il5aJr/fZY25lq+husndQHZVWp2LIlXmCv/n81U43nkZUWaIKvqkellGFbhv0/IHoOLzQPCsVcBbyrsgoprYMvh6w7F06+nRriBtMNQxpiTE+12xAHz7lA3EoYZzf8A== 
+            set override disable 
+            set monitor ""port6"" ""port7""    
+        end "
+3.2,"Ensure that policies do not use ""ALL"" as Service",Ensure that all security policies in effect clearly state which protocols / services they are allowing. ,PASS,"No firewall policy uses service ""ALL""",
+4.2.1,Ensure Antivirus Definition Push Updates are Configured,Ensure FortiGate is configured to accept antivirus definition push updates. ,PASS,"status: enable, frequency: automatic",
+4.2.3,Enable Outbreak Prevention Database,Ensure FortiGate AV inspection uses outbreak prevention database as an added layer  of protection on top of antivirus' signature-based detection.,FAIL,"Profile: default => outbreak-prevention: disable
+Profile: sniffer-profile => outbreak-prevention: disable
+Profile: wifi-default => outbreak-prevention: disable","Reason:
+    Outbreak prevention not properly configured in profiles: default, sniffer-profile, wifi-default
+
+Remediation:
+    Review Antivirus Security Profiles and validate that ""Use FortiGuard outbreak prevention database"" is enabled. "
+4.2.4,Enable AI /heuristic based malware detection,AI /heuristic based detection should be enabled.,PASS,machine-learning-detection: enable,
+4.2.5,Enable grayware detection on antivirus,Grayware detection should be enabled. ,PASS,grayware: enable,
+4.4.2,Block applications running on non-default ports,Ensure FortiGate Application Control blocks applications running on non-default ports. ,FAIL,"default: DISABLED, sniffer-profile: DISABLED, wifi-default: DISABLED, block-high-risk: DISABLED","Reason:
+    One or more Application Control profiles do not have enforce-default-app-port enabled.
+
+Remediation:
+    GUI: 
+        1. Go to ""Security Profiles"" > ""Application Control"". 
+        2. Select relevant App Control profile. 
+
+    Enable ""Block applications detected on non-default ports"" option. 
+
+    On CLI: 
+        FGT1 # config application list 
+        FGT1 (list) # edit <profile name> 
+        FGT1 (<profile name>) # set enforce-default-app-port enable"
+7.1.1,Enable Event Logging,Enabling event logging to allow for log generation and review.,PASS,event:enable,
+7.2.1,Encrypt Log Transmission to FortiAnalyzer / FortiManager ,Enable encryption for logs that are sent to FortiAnalyzer or FortiManager. ,FAIL,"enc-algorithm: UNSET, reliable: UNSET","Reason:
+    enc-algorithm not set to 'high'; reliable not set to 'enable'
+
+Remediation:
+    Secure log transfer settings can only be configured on CLI: 
+        config log fortianalyzer setting 
+        set reliable enable 
+        set enc-algorithm high 
+        end "

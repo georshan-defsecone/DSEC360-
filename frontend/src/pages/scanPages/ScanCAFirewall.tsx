@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -23,6 +24,7 @@ import { CheckCircle2 } from "lucide-react";
 import api from "../api";
 
 const ScanCAFirewall = () => {
+    const navigate = useNavigate();
     const [complianceData, setComplianceData] = useState([]);
     const [errors, setErrors] = useState("");
     const [fileIPs, setFileIPs] = useState<string[]>([]);
@@ -331,7 +333,7 @@ setUserName(response1.data.username);
 
   const handleSubmit = async () => {
   try {
-    const response = await api.post("/api/create-scan/", {
+    const response = await api.post("/scans/create-scan/", {
       project_name: formData.projectName,
       scan_name: formData.scanName,
       scan_author: userName,  // or get from auth context
@@ -393,6 +395,9 @@ setUserName(response1.data.username);
     toast.success("Scan created succesfully", {
   icon: <CheckCircle2 className="text-green-500" />,
 });
+ setTimeout(() => {
+   navigate(`/scan/scanresult/${formData.projectName}/${formData.scanName}`);
+ }, 2000);
     // Optionally reset form
     // setFormData(initialFormState);
   } catch (error) {
@@ -502,7 +507,6 @@ setUserName(response1.data.username);
                                     <SelectValue placeholder="Select Audit Method" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="agent">Agent</SelectItem>
                                     <SelectItem value="remoteAccess">
                                         Remote Access
                                     </SelectItem>

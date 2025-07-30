@@ -9,6 +9,7 @@ from . import remote
 from .Configuration_Audit.Database.ORACLE import generate_sql
 from .Configuration_Audit.Database.POSTGRESQL import postgresql_remote,postgresqlgenerator,postgresqlvalidator
 import zipfile
+from .Configuration_Audit.Firewall.FORTIGATE import Fortigate_Remote
 from django.http import HttpResponse, JsonResponse
 from django.views import View
 from django.conf import settings
@@ -25,7 +26,7 @@ import os
 from openpyxl.styles import Font, PatternFill,Alignment
 from openpyxl.utils import get_column_letter
 from .Compromise_Assesment.Windows.make import generate_powershell_script
-
+from .Configuration_Audit.Firewall.FORTIGATE.Fortigate import fortigate_acl_report,fortigate_cis_audit
 from .Configuration_Audit.Windows.generate_PowerShell import generate_script
 from .Configuration_Audit.Windows.validate import validate_compliance
 from .Configuration_Audit.Windows.Windows_Remote_exec.wmi import run_remote_audit, cleanup_remote_files
@@ -208,8 +209,9 @@ def database_config_audit(data):
                 
                 if db_access_method == "agent":
                     path_for_sql = os.path.join(Maria_dir, "CIS", "MariaDB_10_6_cis_query.sql")
-                    #path_for_linux = os.path.join(Maria_dir, "CIS", "linux_commands.sh")
-                    path_for_script=download_script(path_for_sql)
+                    path_for_linux = os.path.join(Maria_dir, "CIS", "MariaDB_10_6_linux_commands.sh")
+                    path_for_readme=os.path.join(Maria_dir,"CIS","Queries","Workflow.docx")
+                    path_for_script=download_script(path_for_sql,path_for_linux,path_for_readme)
                     return path_for_script,None
                 if db_access_method == "remoteAccess":
                     path_for_json = os.path.join(Maria_dir, "CIS", "mariaDB_10_6_query_result.json")
@@ -223,8 +225,10 @@ def database_config_audit(data):
                 remote.mariadb_connection(result_csv,excluded_audit, user_name, password_name, host_name, port_number,database_name, domain_name, db_access_method, input_csv_path, sql_commands, linux_file,normalized_compliance)
                 if db_access_method == "agent":
                     path_for_sql = os.path.join(Maria_dir, "CIS", "MariaDB_10_11_cis_query.sql")
-                    path_for_script= download_script(path_for_sql)
-                    #path_for_linux = os.path.join(Maria_dir, "CIS_standard", "linux_commands.sh")
+                    path_for_linux = os.path.join(Maria_dir, "CIS", "MariaDB_10_6_linux_commands.sh")
+                    path_for_readme=os.path.join(Maria_dir,"CIS","Queries","Workflow.docx")
+                    path_for_script= download_script(path_for_sql,path_for_linux,path_for_readme)
+                    
                     return path_for_script,None
                 if db_access_method=="remoteAccess":
                     path_for_json = os.path.join(Maria_dir, "CIS", "mariaDB_10_11_query_result.json")
@@ -304,6 +308,88 @@ def database_config_audit(data):
         return None,None
 
 # In views.py
+def firewall_config_audit(data):
+    print("[*] Entered firewall_config_audit()")
+    scan_data = data.get("scan_data", {})
+
+    compliance_name = (scan_data.get("complianceCategory") or "").strip().lower()
+    standard = (scan_data.get("complianceSecurityStandard") or "").strip().lower()
+
+    normalized_compliance = re.sub(r'[\W_]+', '', compliance_name)
+    normalized_standard = re.sub(r'[\W_]+', '', standard)
+    print(f"[DEBUG] normalized_compliance: {normalized_compliance}")    
+
+    # Get project and scan names for dynamic paths
+    project_name = (data.get("project_name") or "unknown_project").strip().replace(" ", "_")
+    scan_name = (data.get("scan_name") or "unknown_scan").strip().replace(" ", "_")
+    audit_method = (scan_data.get("auditMethod") or "").strip().lower()
+
+     # SSH connection info
+    target = scan_data.get("target", "")
+    port = scan_data.get("port", 22)
+    ip = target
+
+    ssh_info = {
+        "username": scan_data.get("username"),
+        "password": scan_data.get("password"),
+        "ip": ip,
+        "port": int(port) if port.strip() else 22,  # default to 22 if blank
+    }
+
+    #check the firewall type
+    if normalized_compliance=="fortigate70":
+        if standard=='cis':
+            if audit_method=="remoteaccess":
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+
+                print("Base dir: ",base_dir)
+                project_name = (data.get("project_name") or "unknown_project").strip().replace(" ", "_")
+                scan_name = (data.get("scan_name") or "unknown_scan").strip().replace(" ", "_")
+                project_folder = os.path.join(
+                                    base_dir,
+                                    "Projects",
+                                    project_name,
+                                    scan_name
+                                )
+                
+                safe_compliance_name = normalized_compliance or "unknown_compliance"
+                safe_standard = normalized_standard or "unknown_standard"
+                safe_project_name = project_name
+                safe_scan_name = scan_name
+
+                base_dynamic_filename = f"{safe_compliance_name}_{safe_standard}_{safe_project_name}_{safe_scan_name}"
+                dynamic_filename_extension = ".csv"
+                dynamic_filename = f"{base_dynamic_filename}{dynamic_filename_extension}"
+
+                result_csv = os.path.join(project_folder, dynamic_filename)
+                version = 1
+                while os.path.exists(result_csv):
+                    version += 1
+                    dynamic_filename = f"{base_dynamic_filename}_v{version}{dynamic_filename_extension}"
+                    result_csv = os.path.join(project_folder, dynamic_filename)
+
+
+                # Create the nested directory structure if it doesn't exist
+                # Create the nested directory structure if it doesn't exist
+                os.makedirs(project_folder, exist_ok=True)
+
+                output_file = os.path.join(base_dir, "Configuration_Audit", "Firewall", "FORTIGATE", "Data_input", "Config.conf")
+                Fortigate_Remote.connect_to_fortigate_and_backup(ssh_info, output_file)
+
+                input_config_file = os.path.join(base_dir, "Configuration_Audit", "Firewall", "FORTIGATE", "Data_input", "Config.conf")
+                metadata_file = os.path.join(base_dir, "Configuration_Audit", "Firewall", "FORTIGATE", "CIS", "Fortigate_Metadata.csv")
+
+                # ✅ Store report in project folder instead of fixed output_csv path
+                output_csv_for_audit = os.path.join(project_folder, "Fortigate_Report.csv")
+                fortigate_cis_audit(input_config_file, metadata_file, output_csv_for_audit)
+
+                output_acl_csv = os.path.join(base_dir, "Configuration_Audit", "Firewall", "FORTIGATE", "Output_csv", "Fortigate_acl_Report.csv")
+                fortigate_acl_report(input_config_file, output_acl_csv)
+                convert_csv_to_excel(output_csv_for_audit)
+                print("End of remote access of fortigate")
+
+    return output_csv_for_audit,None
+    
 
 def linux_config_audit(data):
     print("[*] Entered linux_config_audit()")
@@ -478,33 +564,47 @@ def windows_config_audit(data):
             return None, None
 
 
+import os
+import zipfile
 
-def download_script(script_path, second_file_path=None):
+def download_script(script_path, second_file_path=None, third_file_path=None):
     print("[*] Entered download_script()")
 
-    # Case 1: Only one file to download
-    if second_file_path is None:
-        if not os.path.isfile(script_path):
-            print(f"[-] Script file not found: {script_path}")
-            return None
-        print(f"[+] Script ready for direct download: {script_path}")
-        return script_path
+    # Collect valid file paths
+    file_paths = []
 
-    # Case 2: ZIP both files
-    if not os.path.isfile(script_path):
+    # Check and collect primary script
+    if script_path is None or not os.path.isfile(script_path):
         print(f"[-] Primary script not found: {script_path}")
         return None
+    file_paths.append(script_path)
 
-    if not os.path.isfile(second_file_path):
-        print(f"[-] Second file not found: {second_file_path}")
-        return None
+    # Check and collect second file if provided
+    if second_file_path:
+        if not os.path.isfile(second_file_path):
+            print(f"[-] Second file not found: {second_file_path}")
+            return None
+        file_paths.append(second_file_path)
 
+    # Check and collect third file if provided
+    if third_file_path:
+        if not os.path.isfile(third_file_path):
+            print(f"[-] Third file not found: {third_file_path}")
+            return None
+        file_paths.append(third_file_path)
+
+    # Case 1: Only one file — return directly
+    if len(file_paths) == 1:
+        print(f"[+] Single file ready for download: {file_paths[0]}")
+        return file_paths[0]
+
+    # Case 2: Multiple files — ZIP them
     zip_filename = os.path.join(os.path.dirname(script_path), "scripts_bundle.zip")
     try:
         with zipfile.ZipFile(zip_filename, 'w') as zipf:
-            zipf.write(script_path, arcname=os.path.basename(script_path))
-            zipf.write(second_file_path, arcname=os.path.basename(second_file_path))
-        print(f"[+] Both files compressed into: {zip_filename}")
+            for file_path in file_paths:
+                zipf.write(file_path, arcname=os.path.basename(file_path))
+        print(f"[+] Files compressed into ZIP: {zip_filename}")
         return zip_filename
     except Exception as e:
         print(f"[!] Failed to create ZIP file: {e}")

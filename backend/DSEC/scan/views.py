@@ -29,7 +29,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
-from startScan.views import database_config_audit, windows_config_audit, linux_config_audit
+from startScan.views import database_config_audit, windows_config_audit, linux_config_audit,firewall_config_audit
 from startScan.views import windows_compromise_assesment
 from startScan.views import download_script
 from startScan.views import convert_csv_to_excel
@@ -1057,10 +1057,7 @@ def launch_scan(data):
             return linux_config_audit(data)
 
         if category=="firewall":
-            return None,None
-        
-        if category == "firewall":
-            return None, None
+            return firewall_config_audit(data)
 
     elif scan_type == "compromiseassessment":
         if category == "windows":
